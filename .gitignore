@@ -1,0 +1,28 @@
+.autoresearch/
+.demo/
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+*.py[cod]
+tmp/
+runs/code/.venv/
+runs/science/
+runs/sources/
+runs/data_manifest.json
+runs/scope.json
+runs/execution*.json
+runs/*STATUS.json
+runs/*_STATE.json
+runs/*.log
+runs/*.out
+AI_papers/
+papers/
+
+# Profiling artifacts and large captures
+*.nsys-rep
+*.qdstrm
+runs/worker_pool*.log
+
+# Deployment secrets
+.env

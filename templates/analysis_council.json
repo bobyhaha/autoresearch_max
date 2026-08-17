@@ -1,0 +1,37 @@
+{
+  "generated_at": "replace-with-UTC-timestamp",
+  "reviews": [
+    {
+      "role": "optimist",
+      "agent_id": "replace-with-independent-agent",
+      "session_id": "replace-with-independent-session",
+      "assessment": "State the strongest result supported by executed evidence.",
+      "evidence_ids": ["decision_replace_with_immutable_id"],
+      "concerns": ["State limits rather than hiding them."]
+    },
+    {
+      "role": "skeptic",
+      "agent_id": "replace-with-independent-agent",
+      "session_id": "replace-with-independent-session",
+      "assessment": "Challenge effect size, variance, confounds, and alternate explanations.",
+      "evidence_ids": ["decision_replace_with_immutable_id"],
+      "concerns": ["Name every unresolved threat to inference."]
+    },
+    {
+      "role": "methodologist",
+      "agent_id": "replace-with-independent-agent",
+      "session_id": "replace-with-independent-session",
+      "assessment": "Audit protocol, activation, code-method alignment, and reproducibility.",
+      "evidence_ids": ["decision_replace_with_immutable_id"],
+      "concerns": ["Name any integrity or scope deviation."]
+    }
+  ],
+  "synthesis": {
+    "agent_id": "replace-with-independent-synthesizer",
+    "session_id": "replace-with-independent-session",
+    "verdict": "inconclusive",
+    "accepted_points": ["List conclusions that survive all three reviews."],
+    "rejected_points": ["List attractive interpretations rejected by the evidence."],
+    "claim_limit": "State the narrowest defensible claim and its boundary conditions."
+  }
+}
