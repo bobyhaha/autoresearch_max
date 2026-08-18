@@ -1,28 +1,33 @@
-.autoresearch/
-.demo/
-.pytest_cache/
-.ruff_cache/
+# --- Python / env -----------------------------------------------------------
 .venv/
 __pycache__/
 *.py[cod]
-tmp/
-runs/code/.venv/
-runs/science/
-runs/sources/
-runs/data_manifest.json
-runs/scope.json
-runs/execution*.json
-runs/*STATUS.json
-runs/*_STATE.json
-runs/*.log
-runs/*.out
-AI_papers/
-papers/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
 
-# Profiling artifacts and large captures
+# --- secrets ----------------------------------------------------------------
+.env
+
+# --- per-operator runtime state ---------------------------------------------
+# runs/ is this operator's campaign: results, queue, generated variants, health and
+# gate snapshots, logs. It is machine- and host-specific and is never the shared
+# artifact. The transferable science lives in lit/ and is committed.
+runs/
+tmp/
+
+# --- literature corpus ------------------------------------------------------
+# Fetched full texts are large, re-fetchable with `tools/lit.py fetch`, and are
+# third-party content. The corpus INDEX is derived and per-operator. What IS committed
+# is the knowledge extracted from them -- claims, mechanisms, hypotheses, lessons --
+# because that is the part a future run needs and cannot regenerate.
+lit/sources/
+lit/index.json
+lit/ACTIVE_DIRECTION.json
+
+# --- profiling captures -----------------------------------------------------
 *.nsys-rep
 *.qdstrm
-runs/worker_pool*.log
 
-# Deployment secrets
-.env
+# --- remote host config (address, login, port) ---
+.ophis_host

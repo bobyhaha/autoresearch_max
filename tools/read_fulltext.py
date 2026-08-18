@@ -158,29 +158,7 @@ def agenda_topics(path: Path) -> set[str]:
     }
 
 
-TAG_TO_AXIS = {
-    "speedrun": "axis_optimizer_geometry",
-    "optimizer_adam_variants": "axis_optimizer_geometry",
-    "optimizer_secondorder": "axis_optimizer_geometry",
-    "optimizer_muon": "axis_optimizer_geometry",
-    "optimizer_orthogonal": "axis_optimizer_geometry",
-    "weight_decay": "axis_optimizer_geometry",
-    "mup": "axis_optimizer_geometry",
-    "lr_wsd": "axis_schedule_horizon",
-    "lr_schedule": "axis_schedule_horizon",
-    "lr_warmup": "axis_schedule_horizon",
-    "batch_size_law": "axis_schedule_horizon",
-    "attention_window": "axis_architecture_signal_path",
-    "normalization": "axis_architecture_signal_path",
-    "activation": "axis_architecture_signal_path",
-    "data_quality": "axis_data_token_efficiency",
-    "data_selection": "axis_data_token_efficiency",
-    "curriculum": "axis_data_token_efficiency",
-    "fp8_training": "axis_systems_throughput",
-    "kernel_efficiency": "axis_systems_throughput",
-    "memory_efficiency": "axis_systems_throughput",
-    "stability": "axis_measurement_integrity",
-}
+TAG_TO_AXIS = {'fp8_training': 'topic_systems_throughput', 'fp8': 'topic_systems_throughput', 'int8': 'topic_systems_throughput', 'bf16': 'topic_systems_throughput', 'lr_schedule': 'topic_temporal_update_dynamics', 'lr_warmup': 'topic_temporal_update_dynamics', 'lr_wsd': 'topic_temporal_update_dynamics', 'lr_horizon_free': 'topic_temporal_update_dynamics', 'weight_decay': 'topic_temporal_update_dynamics', 'compute_budget': 'topic_temporal_update_dynamics', 'optimizer_muon': 'topic_gradient_geometry', 'optimizer_orthogonal': 'topic_gradient_geometry', 'optimizer_adam_variants': 'topic_gradient_geometry', 'optimizer_secondorder': 'topic_gradient_geometry', 'optimizer_benchmark': 'topic_gradient_geometry', 'gradient_clip': 'topic_gradient_geometry', 'mup': 'topic_gradient_geometry', 'init_scaling': 'topic_gradient_geometry', 'stability': 'topic_gradient_geometry', 'norm_rmsnorm': 'topic_gradient_geometry', 'norm_placement': 'topic_gradient_geometry', 'residual_scaling': 'topic_gradient_geometry', 'activation': 'topic_gradient_geometry', 'softmax_logit': 'topic_gradient_geometry', 'value_residual': 'topic_gradient_geometry', 'batch_size_law': 'topic_stochastic_exposure', 'data_curriculum': 'topic_stochastic_exposure', 'data_ordering': 'topic_stochastic_exposure', 'data_quality': 'topic_stochastic_exposure', 'sample_efficiency': 'topic_stochastic_exposure', 'scaling_law_small': 'topic_stochastic_exposure', 'depth_width': 'topic_stochastic_exposure', 'tokenizer_effect': 'topic_stochastic_exposure', 'embedding_tying': 'topic_stochastic_exposure', 'multi_token': 'topic_stochastic_exposure', 'loss_objective': 'topic_stochastic_exposure', 'ngram_memory': 'topic_stochastic_exposure', 'distillation_small': 'topic_stochastic_exposure', 'moe_small': 'topic_stochastic_exposure', 'positional': 'topic_stochastic_exposure', 'fp': 'topic_systems_throughput', 'low_precision': 'topic_systems_throughput', 'kernel_fusion': 'topic_systems_throughput', 'speedrun': 'topic_systems_throughput', 'efficient_pretraining': 'topic_systems_throughput', 'attention_sparse': 'topic_systems_throughput', 'attention_efficient': 'topic_systems_throughput', 'attention_window': 'topic_systems_throughput', 'attention_local_global': 'topic_systems_throughput', 'attention_linear': 'topic_systems_throughput', 'deepseek': 'topic_systems_throughput'}
 
 
 def slug(text: str) -> str:
