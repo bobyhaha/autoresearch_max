@@ -43,11 +43,29 @@ try: cur = json.loads(q.read_text())
 except Exception: cur = []
 try: inc = json.loads(open('/tmp/ophis_queue_incoming.json').read())
 except Exception: inc = []
-have = {e['name'] for e in cur}
-new = [e for e in inc if e['name'] not in have]
-if new:
-    q.write_text(json.dumps(cur + new, indent=1))
-print(f'queue: {len(cur)} on host + {len(new)} merged in')
+# Merge by name, and UPDATE entries that already exist. Appending only new names
+# silently pins the host to whatever an entry looked like when it first arrived: a
+# locally corrected variant hash or a newly attached hypothesis_id never lands, and
+# the run executes stale code while the local queue says otherwise. That happened --
+# ns3 launched from a variant missing its telemetry, and every entry still carried
+# hypothesis_id null, which would have made the precond arm inconclusive by
+# construction. An entry that has already RUN or been CLAIMED is left untouched:
+# rewriting a launched entry would misdescribe a run that is already on disk.
+import os
+have = {e['name']: i for i, e in enumerate(cur)}
+added = updated = 0
+for e in inc:
+    i = have.get(e['name'])
+    if i is None:
+        cur.append(e); added += 1
+        continue
+    launched = (os.path.exists(os.path.join('results', e['name'] + '.json'))
+                or os.path.exists(os.path.join('claims', e['name'])))
+    if launched or cur[i] == e:
+        continue
+    cur[i] = e; updated += 1
+q.write_text(json.dumps(cur, indent=1))
+print(f'queue: {len(cur)} on host, {added} added, {updated} updated in place')
 PYMERGE"
   fi
   python3 tools/council.py status
