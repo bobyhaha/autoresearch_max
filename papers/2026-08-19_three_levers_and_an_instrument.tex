@@ -142,9 +142,10 @@ intervention & mean $\Delta$ & verdict\\
 \texttt{qk\_suppress} 0.1 & $+0.001226$ & \emph{inconclusive}\\
 \texttt{unet} & $+0.004123$ & worse\\
 \texttt{tbs} 19$\to$20 & $+0.022545$ & worse\\
+\texttt{mtp} 0.1 & $+0.079484$ & worse\textsuperscript{\ddag}\\
 \bottomrule
 \end{tabular}\\[0.4ex]
-{\footnotesize \textsuperscript{\dag}confounded; see \S\ref{sec:sixlegs}.}
+{\footnotesize \textsuperscript{\dag}confounded; see \S\ref{sec:sixlegs}.\quad\textsuperscript{\ddag}three replicates; see \S\ref{sec:mtp}.}
 \end{center}
 
 \subsection{Halving the short attention span}
@@ -219,6 +220,37 @@ expected. At fixed time this model sits far \emph{above} its critical batch size
 halving the optimizer update count costs far more than reduced gradient noise returns. The
 step law cannot explain this away: it was fitted at 524288 tokens per step and this arm
 moves that very quantity.
+
+\subsection{A mechanism that worked and lost anyway}
+\label{sec:mtp}
+
+Multi-token prediction is the largest effect this campaign has measured and it is a
+\emph{negative}: $+0.079484$, roughly thirty times the largest slot offset ever observed on
+this host, reproduced across three independent pairs whose deltas agree to $6\times10^{-4}$
+($+0.079681$, $+0.079288$, $+0.079131$).
+
+It is worth reporting because the mechanism plainly \emph{engaged}. The auxiliary head's
+loss fell by $1.967$ nats over the run against an activation threshold of $0.1$, so this is
+a valid negative and not a non-activation: the $t+2$ objective learned, and the model was
+still worse. The cost is entirely throughput. The extra $[B,T,V]$ backward pass through the
+vocabulary head ran at $834$\,ms per step against the control's $300$\,ms, delivering $371$
+optimizer steps against $1011$, and reserving $107.5$\,GB against $45.1$\,GB. At a fixed
+$300$-second budget the treatment never reached the second epoch its control completed.
+
+The result generalises less far than its size suggests. It says nothing about MTP at larger
+vocabularies, longer budgets, or with a factorised head; it says that at this operating
+point a mechanism which doubles per-step cost cannot be rescued by being right. The
+practical rule we now apply is that any intervention adding a full-width logits pass is
+screened on step count \emph{before} it is screened on \texttt{val\_bpb}.
+
+This result also broke the reporting tool. Our verdict code voids any comparison whose
+treatment and control finish at different epochs, on the reasonable ground that a run which
+crossed the two-epoch boundary is a different operating point. Here \emph{every} arm showed
+the gap, in the same direction, because the treatment was too slow to reach the boundary at
+all --- and the tool printed no verdict for the largest effect on record. Direction
+consistency alone is not evidence of cause, so the rule now additionally requires a large
+throughput change and an effect the instrument can resolve; a sub-band delta with a $1\%$
+step wobble straddling the boundary is still excluded.
 
 \subsection{One honest inconclusive}
 
