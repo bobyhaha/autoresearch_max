@@ -1,0 +1,14 @@
+[
+ "attention_linear",
+ "data_curriculum",
+ "distillation_small",
+ "init_scaling",
+ "loss_objective",
+ "ngram_memory",
+ "optimizer_adam_variants",
+ "optimizer_benchmark",
+ "optimizer_orthogonal",
+ "optimizer_secondorder",
+ "residual_scaling",
+ "speedrun"
+]

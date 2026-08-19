@@ -76,9 +76,19 @@ def main():
           f"({rows[0]['name']}) ===\n")
 
     if band:
-        print(f"CONTROL BAND  n={band['n']}  mean {band['mean']:.6f}  sd {band['sd']:.6f}  "
-              f"range {band['range']:.6f}  (steps {band['steps_min']:.0f}-{band['steps_max']:.0f})")
-        print(f"  -> an effect below {2*band['sd']:.6f} is not distinguishable at n=1.\n")
+        print(f"ALL-CONTROL SPREAD (UNPAIRED)  n={band['n']}  mean {band['mean']:.6f}  "
+              f"sd {band['sd']:.6f}  range {band['range']:.6f}  "
+              f"(steps {band['steps_min']:.0f}-{band['steps_max']:.0f})")
+        print(f"  -> an effect below {2*band['sd']:.6f} is not distinguishable by an "
+              f"UNPAIRED single run.")
+        # Two different bands are printed by this campaign and confusing them inverts
+        # verdicts. This one pools controls across waves, so it carries the host drift
+        # BETWEEN waves. The band the policy actually judges against is the WITHIN-WAVE
+        # one that direction.py measures from concurrent controls, printed in the footer
+        # below; it is the resolution a yoked pair buys and it is much smaller. Read a
+        # yoked treatment-vs-control delta against the footer band, never against this.
+        print(f"  -> this pools across waves and therefore contains host drift; for a "
+              f"YOKED pair use the within-wave band in the footer.\n")
     else:
         print("CONTROL BAND  unmeasured: fewer than 2 control runs. Until it exists, no "
               "effect size means anything. Queue controls.\n")

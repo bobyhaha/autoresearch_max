@@ -25,6 +25,12 @@ def setup(claims=(), mechs=(), hyps=(), results=(), index=None):
     lit.load_index = lambda: (index or {})
 
 
+# Idempotent setup. The first assertion below requires SRC to be ABSENT, and the cleanup
+# that removes it sits at the very end of this file -- so any earlier failure exits before
+# cleanup and leaves the fixture behind, making every subsequent run fail on assertion one
+# for a reason that has nothing to do with the code under test. Clear it up front instead.
+SRC.unlink(missing_ok=True)
+
 print("E1 SOURCE -- an abstract may never back a claim")
 setup(claims=[{"belief_key": "k", "source_id": "2599.00001", "locator": "table 1"}])
 ok(any("no snapshot on disk" in p for p in coe.e1_source()), "missing snapshot caught")
@@ -100,7 +106,13 @@ probs = coe.e5_numeric()
 ok(any("0.987654" in p for p in probs), "fabricated number caught")
 ok(not any("1.023456" in p for p in probs), "genuine registry number accepted")
 doc.write_text("We measured val_bpb 1.023456 at 640 steps.\n")
-ok(coe.e5_numeric() == [], "a fully grounded document passes")
+# Scope the assertion to THIS document. e5_numeric() walks every strict doc in the repo,
+# so a bare `== []` was silently asserting that papers/, rounds/ and critiques/ were all
+# empty -- true when the campaign had produced no artifacts, and false the moment it wrote
+# its first round. The claim being proved here is about a grounded document, not about the
+# repository being empty.
+ok([p for p in coe.e5_numeric() if doc.name in p] == [],
+   "a fully grounded document passes")
 doc.unlink()
 
 SRC.unlink()

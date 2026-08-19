@@ -1,0 +1,15 @@
+[
+ "attention_efficient",
+ "attention_window",
+ "data_ordering",
+ "deepseek",
+ "lr_wsd",
+ "moe_small",
+ "mup",
+ "optimizer_adam_variants",
+ "optimizer_benchmark",
+ "optimizer_muon",
+ "optimizer_orthogonal",
+ "optimizer_secondorder",
+ "stability"
+]

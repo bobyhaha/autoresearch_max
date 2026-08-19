@@ -80,18 +80,61 @@ def families_for(paper: dict) -> list[str]:
     return hit or ["unassigned"]
 
 
-def load_index() -> dict:
-    if INDEX.exists():
+def load_index(path: pathlib.Path | None = None) -> dict:
+    path = path or INDEX
+    if path.exists():
         try:
-            return json.loads(INDEX.read_text())
+            return json.loads(path.read_text())
         except ValueError:
             pass
     return {}
 
 
-def save_index(ix: dict) -> None:
+def save_index(ix: dict, path: pathlib.Path | None = None) -> None:
     LIT.mkdir(parents=True, exist_ok=True)
-    INDEX.write_text(json.dumps(ix, indent=1, sort_keys=True))
+    (path or INDEX).write_text(json.dumps(ix, indent=1, sort_keys=True))
+
+
+def cmd_merge(args) -> int:
+    """Fold sharded index files back into lit/index.json.
+
+    Shards exist because concurrent writers on one index clobber each other. Merging is
+    a union keyed on arXiv id; where both carry the same paper the richer record wins on
+    `queries` (which query found it) so the provenance of a hit is not lost, and any
+    `status`/`sha256` already recorded for a fetched full text is preserved.
+    """
+    ix = load_index()
+    added = 0
+    for f in sorted(LIT.glob(args.pattern)):
+        if f.resolve() == INDEX.resolve() or f.name.endswith("_progress.json"):
+            continue        # the per-shard resume ledger is a LIST of query names
+        try:
+            shard = json.loads(f.read_text())
+        except (OSError, ValueError) as exc:
+            print(f"  {f.name}: unreadable ({exc})")
+            continue
+        for pid, rec in shard.items():
+            prev = ix.get(pid)
+            if prev is None:
+                ix[pid] = rec
+                added += 1
+            else:
+                # Whichever side actually has the full text on disk wins the
+                # fetch bookkeeping. Preferring `prev` unconditionally would keep a
+                # stale "screened" over a real "fetched" and hide a snapshot the
+                # claim validator needs.
+                fetched = prev if prev.get("status") == "fetched" else (
+                    rec if rec.get("status") == "fetched" else prev)
+                merged = {**rec, **{k: v for k, v in fetched.items()
+                                    if k in ("status", "sha256", "chars", "error")
+                                    and v not in (None, "")}}
+                merged["queries"] = sorted(set(prev.get("queries", []))
+                                           | set(rec.get("queries", [])))
+                ix[pid] = merged
+        print(f"  {f.name}: {len(shard)} papers")
+    save_index(ix)
+    print(f"corpus {len(ix)} papers ({added} new from shards)")
+    return 0
 
 
 def year_of(paper: dict) -> int:
@@ -104,14 +147,51 @@ def year_of(paper: dict) -> int:
 
 
 def cmd_screen(args) -> int:
-    """Run every query, dedupe, score, and record. Abstracts only -- this is triage."""
-    ix = load_index()
+    """Run every query, dedupe, score, and record. Abstracts only -- this is triage.
+
+    SAVE AFTER EVERY QUERY, and remember which queries actually returned something.
+    The first run of this took 17+ minutes with nothing on disk, because the index was
+    written once at the end: the arXiv export API throttles a sustained sweep, each
+    throttled query burns up to three 60-second curl timeouts inside cp.curl(), and a
+    kill or a crash anywhere in that window would have thrown away the entire corpus.
+    Persisting per query also makes the sweep RESUMABLE -- `--resume` skips the queries
+    that already yielded, so a throttled sweep can be finished in a second pass instead
+    of re-paying for the queries that worked.
+    """
+    # SHARDING. A cold relevance-sorted arXiv query costs 50-110s to build server-side
+    # (measured: 68.2s, 108.3s, 51.0s, then 0.3s once warm), so a serial 48-query sweep is
+    # ~45-90 minutes of wall clock on the critical path. Shards split the query list and
+    # run concurrently, each writing its OWN index file -- concurrent writers on one index
+    # would clobber each other, since save_index() writes a whole in-memory dict. Merge
+    # afterwards with `lit.py merge`.
+    ix_path = pathlib.Path(args.index) if getattr(args, "index", None) else INDEX
+    ix = load_index(ix_path)
     seen_before = len(ix)
-    for name, query in cp.QUERIES:
+    done_f = ix_path.with_name(ix_path.stem + "_progress.json")
+    queries = list(cp.QUERIES)
+    if getattr(args, "shard", None):
+        i, n = (int(x) for x in args.shard.split("/"))
+        queries = [q for k, q in enumerate(queries) if k % n == i]
+        print(f"shard {i}/{n}: {len(queries)} of {len(cp.QUERIES)} queries -> {ix_path.name}",
+              flush=True)
+    try:
+        done = set(json.loads(done_f.read_text()))
+    except (OSError, ValueError):
+        done = set()
+    for name, query in queries:
+        if args.resume and name in done:
+            continue
         try:
             found = cp.search(query, args.per_query)
         except Exception as exc:                    # noqa: BLE001 - one bad query must
             print(f"  {name}: query failed ({exc})")  # not abort a 47-query sweep
+            continue
+        if not found:
+            # A throttled or malformed query is NOT progress: leave it out of `done` so
+            # --resume retries it rather than silently baking a hole into the corpus.
+            print(f"  {name:26s}   0 found  (throttled or no match; will retry on --resume)",
+                  flush=True)
+            time.sleep(args.sleep)
             continue
         kept = 0
         for p in found:
@@ -132,12 +212,15 @@ def cmd_screen(args) -> int:
                        "status": prev.get("status", "screened")}
             kept += 1
         print(f"  {name:26s} {len(found):3d} found, {kept:3d} kept  "
-              f"(corpus {len(ix)})")
+              f"(corpus {len(ix)})", flush=True)
+        done.add(name)
+        save_index(ix, ix_path)         # per query: a kill must not cost the sweep
+        done_f.write_text(json.dumps(sorted(done), indent=1))
         time.sleep(args.sleep)          # arXiv asks for >=3s between API calls
         if len(ix) >= args.target:
             print(f"  target {args.target} reached")
             break
-    save_index(ix)
+    save_index(ix, ix_path)
     print(f"\ncorpus {len(ix)} papers ({len(ix)-seen_before} new). "
           f"2025+: {sum(1 for p in ix.values() if year_of(p) >= 2025)}")
     return 0
@@ -153,6 +236,16 @@ def cmd_fetch(args) -> int:
     # 2025-2026 first, as requested, then by relevance score
     todo.sort(key=lambda p: (-(year_of(p) >= 2025), -p.get("score", 0)))
     todo = todo[: args.limit]
+    # Same reason screen shards: this is on the critical path and each LaTeXML render is
+    # a separate HTTP fetch of a large page. Shards take disjoint slices of the SAME
+    # sorted todo list, so concurrent fetchers never download the same paper twice. Each
+    # shard's index bookkeeping is thrown away; the authoritative pass is a final serial
+    # `fetch` with no shard, which sees every file already on disk, records its digest,
+    # and makes no network call for it.
+    if getattr(args, "shard", None):
+        i, n = (int(x) for x in args.shard.split("/"))
+        todo = [t for k, t in enumerate(todo) if k % n == i]
+        print(f"shard {i}/{n}: {len(todo)} papers to fetch", flush=True)
     if not todo:
         print("nothing to fetch")
         return 0
@@ -186,9 +279,58 @@ def cmd_fetch(args) -> int:
         ok += 1
         print(f"  {p['id']}  {len(text):>7,} chars  {p['title'][:60]}")
         time.sleep(args.sleep)
+    # RE-READ before writing. A fetch run holds its index copy for many minutes while it
+    # downloads, and in that window the corpus can grow (a screen sweep merging in, or a
+    # sibling fetch shard). Writing the stale in-memory copy back would delete every
+    # paper added meanwhile -- four concurrent shards started at 190 papers would each
+    # have clobbered the 233 the corpus had grown to. Only our own per-paper fields are
+    # written over the current file.
+    cur = load_index()
+    for pid, rec in ix.items():
+        if pid not in cur:
+            cur[pid] = rec
+            continue
+        for k in ("status", "sha256", "chars", "error"):
+            if rec.get(k) not in (None, ""):
+                cur[pid][k] = rec[k]
+    ix = cur
     save_index(ix)
     print(f"\nfetched {ok}/{len(todo)}; corpus now "
           f"{sum(1 for q in ix.values() if q.get('status') == 'fetched')} full texts")
+    return 0
+
+
+def cmd_reindex(args) -> int:
+    """Record status/sha256/chars for every snapshot already on disk. No network.
+
+    The index and lit/sources/ can disagree whenever a fetch is interrupted, sharded, or
+    (as happened here) still running while claims are registered against papers whose
+    text is already downloaded. coe.py E1 rightly refuses such a claim -- "2512.05620 is
+    not marked fetched" -- even though the full text is sitting on disk. This reconciles
+    the two from the FILES, which are the authority: a snapshot that exists and hashes is
+    fetched, whatever the index last remembered.
+    """
+    ix = load_index()
+    fixed = missing = 0
+    for f in sorted(SOURCES.glob("arxiv_*_fulltext.txt")):
+        pid = f.name[len("arxiv_"):-len("_fulltext.txt")]
+        if f.stat().st_size <= 2000:
+            continue
+        if pid not in ix:
+            missing += 1
+            continue
+        rec = ix[pid]
+        digest = hashlib.sha256(f.read_bytes()).hexdigest()
+        if rec.get("status") != "fetched" or rec.get("sha256") != digest:
+            rec["status"] = "fetched"
+            rec["sha256"] = digest
+            rec["chars"] = f.stat().st_size
+            rec.pop("error", None)
+            fixed += 1
+    save_index(ix)
+    print(f"reindexed {fixed} snapshot(s); corpus now "
+          f"{sum(1 for q in ix.values() if q.get('status') == 'fetched')} full texts"
+          + (f"; {missing} snapshot(s) on disk are not in the index" if missing else ""))
     return 0
 
 
@@ -247,12 +389,20 @@ def main() -> int:
     s.add_argument("--per-query", type=int, default=14)
     s.add_argument("--min-score", type=int, default=6)
     s.add_argument("--sleep", type=float, default=3.0)
+    s.add_argument("--resume", action="store_true",
+                   help="skip queries that already returned hits (lit/screen_progress.json)")
+    s.add_argument("--shard", default=None, metavar="I/N",
+                   help="run only every Nth query starting at I, for concurrent sweeps")
+    s.add_argument("--index", default=None,
+                   help="write to this index file instead of lit/index.json (use with --shard)")
     s.set_defaults(fn=cmd_screen)
 
     f = sub.add_parser("fetch", help="download full text for the best unfetched papers")
     f.add_argument("--limit", type=int, default=40)
     f.add_argument("--family", default=None)
     f.add_argument("--sleep", type=float, default=3.0)
+    f.add_argument("--shard", default=None, metavar="I/N",
+                   help="fetch only every Nth paper of the todo list, for concurrent runs")
     f.set_defaults(fn=cmd_fetch)
 
     t = sub.add_parser("status", help="corpus coverage per direction family")
@@ -262,6 +412,13 @@ def main() -> int:
     r.add_argument("family")
     r.add_argument("--limit", type=int, default=15)
     r.set_defaults(fn=cmd_read)
+
+    ri = sub.add_parser("reindex", help="record digests for snapshots already on disk (no network)")
+    ri.set_defaults(fn=cmd_reindex)
+
+    m = sub.add_parser("merge", help="fold sharded index files into lit/index.json")
+    m.add_argument("--pattern", default="index_shard*.json")
+    m.set_defaults(fn=cmd_merge)
 
     args = ap.parse_args()
     return args.fn(args)

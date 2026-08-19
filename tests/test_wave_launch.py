@@ -19,6 +19,7 @@ start = src.index("def runnable(")
 end = src.index("def release(")
 mod = types.ModuleType("dispatch_logic")
 mod.__dict__.update({"os": __import__("os"), "time": __import__("time"),
+                     "collections": __import__("collections"),
                      "log": lambda m: None, "release": lambda it: None})
 exec(compile(src[start:end], "dispatch_logic", "exec"), mod.__dict__)
 
@@ -69,6 +70,25 @@ with tempfile.TemporaryDirectory() as tmp:
     released.clear()
     got = mod.claim_all([{"name": "A"}, {"name": "B"}])
     ok([g["name"] for g in got] == ["A", "B"], "a free wave claims every member")
+
+print("\n5b. a wave already split does NOT run as a smaller wave")
+# Observed on the host: W03a was queued as ONE 4-wide group; two members were claimed,
+# and the next pass grouped only the two that remained -- so a 4-wide wave launched as
+# two pairs. Harmless for controls, fatal for a treatment, whose pairing is the entire
+# reason the wave exists. next_batch sizes a wave from the QUEUE, not from the
+# unclaimed remainder, and refuses the remnant.
+quad = [{"name": f"W_{i}", "wave_group": "w4split", "cfg": {}} for i in range(4)]
+mod.runnable = lambda cutoff: (quad[2:], 0, 0)          # two members already claimed
+mod.load_queue = lambda: quad                            # but four were queued
+batch, waiting = mod.next_batch(0, 4)
+ok(batch == [], f"the 2 surviving members of a 4-wide wave do not launch (got "
+                f"{[b['name'] for b in batch]})")
+ok(waiting and "split" in waiting, f"and it says why: {waiting}")
+
+mod.runnable = lambda cutoff: (list(quad), 0, 0)          # nothing claimed yet
+batch, _ = mod.next_batch(0, 4)
+ok(len(batch) == 4, "an intact 4-wide wave still launches in full")
+mod.load_queue = lambda: []                               # restore for later cases
 
 print("\n6. the cap really is 4")
 ok("MAX_GPUS = 4" in src, "MAX_GPUS = 4 in host/dispatch.py")

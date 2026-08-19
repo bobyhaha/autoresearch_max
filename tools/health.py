@@ -129,7 +129,14 @@ nvidia-smi --query-gpu=index,uuid,memory.used,utilization.gpu --format=csv,nohea
     st["gpus_free"] = sorted(g["index"] for g in st["gpus"]
                              if not g["ours"] and not g["foreign"])
     st["trainers"] = [p for p in st["our_procs"] if "train.py" in p["args"]]
-    st["dispatchers"] = [p for p in st["our_procs"] if "dispatch.py" in p["args"]]
+    # Count the PYTHON dispatcher, not the shell that launched it. `nohup ... & disown`
+    # can leave a bash wrapper resident whose command line also contains "dispatch.py",
+    # and counting it reported "2 dispatchers - double-booking risk" against a single
+    # healthy dispatcher. A false alarm here is expensive: it is the same signal that
+    # would report a genuine double-dispatcher, so it must not cry wolf.
+    st["dispatchers"] = [p for p in st["our_procs"]
+                         if "dispatch.py" in p["args"]
+                         and "/bin/bash" not in p["args"] and "bash -c" not in p["args"]]
     return st
 
 

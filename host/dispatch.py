@@ -51,6 +51,13 @@ MAX_GPUS = 4              # operator allocation on a shared box; never exceed
 # between them, and their spread measured drift rather than resolution. Concurrent
 # launches share the contention, which is the whole point of pairing.
 WAIT_LOG_EVERY_S = 30 * 60   # how often to report that we are waiting for capacity
+# L002_burned_gpu_reused: the free-GPU test is an INSTANTANEOUS memory poll, so a device
+# whose foreign tenant is between jobs passes it and reclaims memory seconds later. That
+# is not hypothetical: C01_control was voided by a co-tenant on gpu5, gpu5 was selected
+# again ten minutes later, and C02_control was co-tenanted 11 seconds after launch. Two
+# 300-second budgets bought nothing. A device that has just destroyed one of our runs is
+# excluded for this long; the cost of being wrong is a GPU we skip while others are free.
+COTENANT_QUARANTINE_S = 45 * 60
 CORES_PER_JOB = 12        # disjoint taskset block per trainer
 CORE_BASE = 96            # start high: low cores are where foreign tenants cluster
 GATE_MAX_AGE = 20 * 60
@@ -145,6 +152,28 @@ def runnable(cutoff):
     return out, frozen, policy
 
 
+def wave_sizes():
+    """How many entries each wave_group has IN THE QUEUE, regardless of their state.
+
+    next_batch() must size a wave from this, not from the entries that happen to be
+    unclaimed. Grouping the runnable remainder means a 4-wide wave that has already had
+    two members claimed presents itself as a 2-wide wave and launches -- which is how
+    W03a, queued as a single 4-wide group, ran as two pairs. For a control block that is
+    merely untidy; for a treatment it silently destroys the pairing the wave existed to
+    create, which is the one thing this dispatcher is supposed to guarantee.
+    """
+    try:
+        queue = load_queue()
+    except NameError:           # pure-logic import in tests/test_wave_launch.py
+        return {}
+    sizes = collections.Counter()
+    for item in queue:
+        g = item.get("wave_group")
+        if g:
+            sizes[g] += 1
+    return sizes
+
+
 def next_batch(cutoff, n_free):
     """Entries to launch on this pass: the largest wave_group that fits in n_free GPUs.
 
@@ -163,12 +192,30 @@ def next_batch(cutoff, n_free):
     for it in items:
         groups.setdefault(it.get("wave_group") or f"__solo__{it['name']}", []).append(it)
 
+    # A wave is launchable only if EVERY member it was queued with is still available.
+    # A group whose runnable members are fewer than its queued size has already been
+    # split -- launching the remnant would hand back a pair that never shared a wave.
+    sizes = wave_sizes()
+    intact, broken = {}, []
+    for key, members in groups.items():
+        want = sizes.get(key, len(members))
+        if len(members) == want:
+            intact[key] = members
+        else:
+            broken.append((key, len(members), want))
+    for key, have, want in broken:
+        log(f"WAVE SPLIT {key}: {have} of {want} members still runnable; refusing to "
+            f"launch the remnant (a partial wave is not a yoked comparison)")
+    if not intact:
+        return [], (f"every pending wave is split: "
+                    f"{', '.join(k for k, _, _ in broken)}") if broken else None
+
     # Largest group that fits, so the box is filled and pairs stay intact.
-    fits = sorted([g for g in groups.values() if len(g) <= n_free],
+    fits = sorted([g for g in intact.values() if len(g) <= n_free],
                   key=lambda g: -len(g))
     if fits:
         return fits[0], None
-    smallest = min(len(g) for g in groups.values())
+    smallest = min(len(g) for g in intact.values())
     return [], f"waiting for {smallest} free GPUs to launch a wave ({n_free} free now)"
 
 
@@ -256,14 +303,79 @@ def release_stranded_claims():
         log(f"released {freed} stranded claim(s) with no result and no work dir")
 
 
+class AdoptedProc:
+    """A live trainer this dispatcher did not start, addressed by pid.
+
+    Adoption is what makes restarting the dispatcher safe. Without it a restart forgets
+    every in-flight run, and because a trainer holds no GPU memory during its long CPU
+    tokenization phase, the fresh dispatcher re-launches straight onto the same GPUs.
+    """
+
+    def __init__(self, pid):
+        self.pid = pid
+        self.returncode = None
+
+    def poll(self):
+        try:
+            os.kill(self.pid, 0)
+        except ProcessLookupError:
+            self.returncode = 0     # exited; the verdict comes from out.log, as for orphans
+            return 0
+        except PermissionError:
+            pass                    # alive, owned by someone else -- treat as running
+        return None
+
+    def wait(self):
+        while self.poll() is None:
+            time.sleep(5)
+        return self.returncode
+
+
+def adopt_running():
+    """Re-attach to trainers still alive from a previous dispatcher, keyed by GPU.
+
+    A claim with a work directory and no result is an in-flight run. `launch.json` says
+    which GPU it holds and which pid to watch, so the loop can finish, monitor and
+    exclude it exactly as if this process had started it.
+    """
+    out = {}
+    cdir = ROOT / "claims"
+    if not cdir.is_dir():
+        return out
+    for c in sorted(cdir.iterdir()):
+        if not c.is_dir() or (ROOT / "results" / f"{c.name}.json").exists():
+            continue
+        d = ROOT / "work" / c.name
+        try:
+            rec = json.loads((d / "launch.json").read_text())
+        except (OSError, ValueError):
+            continue
+        proc = AdoptedProc(int(rec["pid"]))
+        if proc.poll() is not None:
+            continue                # already dead; recover_orphans() will write it up
+        item = next((e for e in load_queue() if e["name"] == c.name), None)
+        if item is None:
+            continue
+        out[int(rec["gpu"])] = {"proc": proc, "item": item, "dir": d,
+                                "started": float(rec.get("started") or time.time()),
+                                "uuid": rec["uuid"], "cotenant": False,
+                                "slot": int(rec["slot"]), "cores": rec["cores"]}
+        log(f"ADOPTED {c.name} on gpu{rec['gpu']} pid={rec['pid']} "
+            f"(in flight from a previous dispatcher)")
+    return out
+
+
 def cores_for(slot):
     lo = CORE_BASE + slot * CORES_PER_JOB
     return f"{lo}-{lo + CORES_PER_JOB - 1}"
 
 
 def main():
-    release_stranded_claims()   # safe here: we hold the singleton lock, nothing running
-    running = {}
+    # Adopt BEFORE releasing stranded claims: an in-flight run has a work dir, so it is
+    # not stranded, but it must be in `running` before the first pass computes free GPUs.
+    running = adopt_running()
+    release_stranded_claims()   # claims with neither a result nor a work dir
+    quarantine = {}             # gpu uuid -> epoch seconds until it may be used again
     launched = 0
     last_wait_log = 0.0
     while time.time() < DEADLINE:
@@ -285,9 +397,18 @@ def main():
                                      capture_output=True, text=True, check=False).stdout.strip()
                 byuuid[uu].append(own)
             for g, job in running.items():
-                if any(o and o != me for o in byuuid.get(job["uuid"], [])):
+                owners = byuuid.get(job["uuid"], [])
+                # Two of OUR OWN trainers on one GPU corrupt the measurement exactly as
+                # badly as a stranger's job, and `o != me` is blind to it by construction.
+                mine_here = sum(1 for o in owners if o == me)
+                if any(o and o != me for o in owners) or mine_here > 1:
                     if not job["cotenant"]:
-                        log(f"CO-TENANT on gpu{g} during {job['item']['name']} -> INVALID")
+                        who = "another of OURS" if mine_here > 1 else "a foreign tenant"
+                        log(f"CO-TENANT ({who}) on gpu{g} during "
+                            f"{job['item']['name']} -> INVALID")
+                        quarantine[job["uuid"]] = time.time() + COTENANT_QUARANTINE_S
+                        log(f"QUARANTINE gpu{g} for {COTENANT_QUARANTINE_S//60} min "
+                            f"(L002_burned_gpu_reused)")
                     job["cotenant"] = True
         except OSError:
             pass
@@ -318,8 +439,12 @@ def main():
 
         free_slots = [s for s in range(MAX_GPUS)
                       if s not in {j["slot"] for j in running.values()}]
+        now = time.time()
+        for _u in [u for u, until in quarantine.items() if until <= now]:
+            del quarantine[_u]
         free_gpus = [(g, uuid) for g, (used, uuid) in sorted(gpu_state().items())
-                     if g not in running and used <= MINFREE_MB]
+                     if g not in running and used <= MINFREE_MB
+                     and uuid not in quarantine]
         capacity = min(len(free_gpus), len(free_slots), MAX_GPUS - len(running))
 
         batch, waiting = ([], None) if capacity <= 0 else next_batch(cutoff, capacity)
@@ -374,6 +499,16 @@ def main():
                 continue
             running[g] = {"proc": p, "item": item, "dir": d, "started": time.time(),
                           "uuid": uuid, "cotenant": False, "slot": slot, "cores": cores}
+            # A trainer spends its first ~200 seconds tokenizing on the CPU and holds NO
+            # GPU memory in that window, so nvidia-smi reports its GPU as free. A
+            # dispatcher restarted during that window saw gpu6 and gpu7 as free and
+            # launched a second pair straight on top of the first -- four of OUR trainers
+            # on two GPUs, which the co-tenancy check does not catch because it only
+            # looks for FOREIGN owners. This file is what lets a fresh dispatcher adopt a
+            # run it did not start instead of double-booking its GPU.
+            (d / "launch.json").write_text(json.dumps(
+                {"pid": p.pid, "gpu": g, "uuid": uuid, "slot": slot, "cores": cores,
+                 "started": running[g]["started"], "name": item["name"]}))
             launched += 1
             log(f"LAUNCH {item['name']} gpu{g} cores={cores} [{label(item['cfg'])}]"
                 f"{' wave=' + item['wave_group'] if item.get('wave_group') else ''} "

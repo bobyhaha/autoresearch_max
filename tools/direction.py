@@ -47,7 +47,7 @@ KNOB_AXES = (
 # New causal structure: adds or removes an operation or an objective term. Not a new
 # value of an existing constant. A mechanism must declare a mediator, an activation
 # observable, a competing explanation and a falsifier.
-MECHANISMS = ("mtp", "unet", "zloss", "noqknorm", "prefetch")
+MECHANISMS = ("mtp", "unet", "zloss", "noqknorm", "prefetch", "precond")
 
 # The noise band is MEASURED, never assumed. A hardcoded constant here was a bug: set
 # from the CROSS-WAVE spread of byte-identical controls, it was far wider than the WITHIN-WAVE
@@ -77,6 +77,46 @@ KNOWN_KEYS = frozenset(KNOB_AXES) | frozenset(MECHANISMS) | frozenset(PLATFORM)
 def unknown_keys(cfg: dict) -> set:
     """Config keys no policy rule covers. Never silently ignored."""
     return {k for k in (cfg or {}) if k not in KNOWN_KEYS}
+
+
+def slot_bias(results: list[dict]) -> dict | None:
+    """The fixed offset between dispatcher slots, measured from concurrent controls.
+
+    Slot is not a nuisance that averages out. Cores 96-107 and 108-119 are not
+    interchangeable on this host: the slot-0 member of a wave lost to the slot-1 member
+    in 7 of 7 control waves by a mean 0.000499 bpb, because its core block runs the
+    frozen packing loop ~2.4ms/step slower and therefore completes ~9 fewer steps. That
+    offset is 70% of the raw within-wave band, so an UNCOUNTERBALANCED yoked pair can
+    manufacture or erase an effect of exactly the size worth chasing. See L006.
+
+    Returns the paired offset and, more usefully, the residual sd once it is removed --
+    which is the resolution a counterbalanced design actually achieves.
+    """
+    import statistics as _st
+    waves = {}
+    for r in results:
+        if not (r.get("ok") and (r.get("metrics") or {}).get("val_bpb")):
+            continue
+        if not is_platform(r.get("cfg") or {}):
+            continue
+        w = (r.get("name") or "").split("_")[0]
+        waves.setdefault(w, {})[r.get("cores")] = r["metrics"]["val_bpb"]
+    deltas = []
+    for w, byslot in waves.items():
+        if len(byslot) != 2:
+            continue
+        # Sort by the NUMERIC start of the core range, not the string: dispatch.py sets
+        # cores = CORE_BASE + slot*CORES_PER_JOB, so slot order is numeric order, and a
+        # lexicographic sort puts "108-119" before "96-107" and silently flips the sign
+        # of the offset -- which is how this function first reported the bias backwards.
+        slot0, slot1 = sorted(byslot, key=lambda c: int(str(c).split("-")[0]))
+        deltas.append(byslot[slot0] - byslot[slot1])
+    if len(deltas) < 3:
+        return None
+    return {"n": len(deltas), "offset": _st.mean(deltas),
+            "resid_sd": _st.stdev(deltas),
+            "same_sign": sum(1 for d in deltas if d > 0),
+            "cores": sorted({c for b in waves.values() for c in b})}
 
 
 def noise_band(results: list[dict]) -> tuple[float | None, str]:
@@ -280,6 +320,13 @@ FAMILIES = {
 MECHANISM_FAMILIES = {
     "objective":       {"mechs": ("mtp", "zloss"), "cost": "GPU + memory; mtp materializes [B,T,V]"},
     "signal_path":     {"mechs": ("unet", "noqknorm"), "cost": "GPU-only, near-free"},
+    # `precond` reorders an operation that already exists rather than retuning a
+    # constant, so it is a MECHANISM, not a knob -- which is what makes it runnable while
+    # every knob axis in this family is still unexplored (a mechanism tested in isolation
+    # is always allowed; a mechanism crossed with a closed knob axis is not).
+    "optimizer_geometry": {"mechs": ("precond",),
+                        "cost": "free: a pure reorder of existing blocks, no new tensor "
+                                "and no added op, so the compiled fused update is intact"},
     "input_pipeline":  {"mechs": ("prefetch",),
                         "cost": "attacks the actual bottleneck; overlap is bounded by the ~10% GPU share"},
     "data_curriculum": {"mechs": (),
@@ -338,6 +385,38 @@ def report(results: list[dict]) -> str:
         b = f"{v['best']:.6f}" if v["best"] is not None else "-"
         lines.append(f"{m:12s} {v['n']:3d} {b:>10s}  "
                      f"{'NEVER TRIED' if v['n'] == 0 else 'tested'}")
+
+    # The MEASURED operating point, recomputed every time, because it moved once already
+    # and silently: the same byte-identical control ran 621-815 steps at one epoch under
+    # heavy host load and 1010-1021 steps at TWO epochs under light load. A cost model
+    # written down in prose ("~90% of the 300s is the packing loop") describes whichever
+    # regime it was measured in, and a council round that reads the prose instead of the
+    # runs will price every proposal against a machine it is not using. See lesson
+    # L005_operating_point_moved.
+    ok = [r for r in results if r.get("ok") and (r.get("metrics") or {}).get("val_bpb")]
+    if ok:
+        st_ = [r["metrics"].get("num_steps", 0) for r in ok]
+        ep = sorted({r["metrics"].get("final_epoch") for r in ok
+                     if r["metrics"].get("final_epoch") is not None})
+        lf = [r["metrics"]["loader_frac"] for r in ok if r["metrics"].get("loader_frac")]
+        lines += ["", "MEASURED OPERATING POINT (recomputed from results, not assumed)",
+                  f"  steps {min(st_):.0f}-{max(st_):.0f}   final_epoch {ep}"]
+        if lf:
+            lines.append(f"  loader_frac {min(lf):.3f}-{max(lf):.3f}  "
+                         f"-- CPU wall-clock share around ASYNC cuda launches, not GPU idle")
+        if len(ep) > 1:
+            lines.append("  WARNING: runs in this set finished at DIFFERENT epoch counts; "
+                         "they are not one operating point and must not be pooled.")
+
+    sb = slot_bias(results)
+    if sb and sb["n"] >= 3:
+        lines += ["", "SLOT BIAS (measured, and it is NOT noise)",
+                  f"  slot0 minus slot1 = {sb['offset']:+.6f} bpb over {sb['n']} concurrent "
+                  f"control waves; same sign in {sb['same_sign']}/{sb['n']}",
+                  f"  residual sd once the offset is removed = {sb['resid_sd']:.6f}",
+                  "  => COUNTERBALANCE: run every comparison twice with the slot order",
+                  "     swapped ([treat,ctrl] then [ctrl,treat]) and average the two deltas.",
+                  "     An uncounterbalanced pair carries this offset as a fake effect."]
 
     lines += ["", "DIRECTION SPACE (least-covered first -- this is where a round should look)",
               f"{'family':17s} {'kind':10s} {'runs':>5s}  gaps / cost"]

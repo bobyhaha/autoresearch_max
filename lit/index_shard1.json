@@ -1,0 +1,954 @@
+{
+ "2502.02732": {
+  "abstract": "Selecting a layer normalization (LN) strategy that stabilizes training and speeds convergence in Transformers remains difficult, even for today's large language models (LLM). We present a comprehensive analytical foundation for understanding how different LN strategies influence training dynamics in large-scale Transformers. Until recently, Pre-LN and Post-LN have long dominated practices despite their limitations in large-scale training. However, several open-source models have recently begun silently adopting a third strategy without much explanation. This strategy places normalization layer peripherally around sublayers, a design we term Peri-LN. While Peri-LN has demonstrated promising performance, its precise mechanisms and benefits remain almost unexplored. Our in-depth analysis delineates the distinct behaviors of LN strategies, showing how each placement shapes activation variance and gradient propagation. To validate our theoretical insight, we conduct extensive experiments on Transformers up to $3.2$B parameters, showing that Peri-LN consistently achieves more balanced variance growth, steadier gradient flow, and convergence stability. Our results suggest that Peri-LN warrants broader consideration for large-scale Transformer architectures, providing renewed insights into the optimal placement of LN.",
+  "comment": "ICML2025 Camera-ready version",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2502.02732",
+  "published": "2025-02-04",
+  "queries": [
+   "norm_placement"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "Peri-LN: Revisiting Normalization Layer in the Transformer Architecture",
+  "why": [
+   "+2 normaliz",
+   "+2 convergence",
+   "+2 stability",
+   "+2 gradient",
+   "+1 open-source",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2502.05795": {
+  "abstract": "In this paper, we introduce the Curse of Depth, a concept that highlights, explains, and addresses the recent observation in modern Large Language Models (LLMs) where nearly half of the layers are less effective than expected. We first confirm the wide existence of this phenomenon across the most popular families of LLMs such as Llama, Mistral, DeepSeek, and Qwen. Our analysis, theoretically and empirically, identifies that the underlying reason for the ineffectiveness of deep layers in LLMs is the widespread usage of Pre-Layer Normalization (Pre-LN). While Pre-LN stabilizes the training of Transformer LLMs, its output variance exponentially grows with the model depth, which undesirably causes the derivative of the deep Transformer blocks to be an identity matrix, and therefore barely contributes to the training. To resolve this training pitfall, we propose LayerNorm Scaling (LNS), which scales the variance of output of the layer normalization inversely by the square root of its depth. This simple modification mitigates the output variance explosion of deeper Transformer layers, improving their contribution. Across a wide range of model sizes (130M to 7B), our experiments show that LNS consistently outperforms previous normalization and scaling techniques in enhancing LLM pre-training performance. Moreover, this improvement seamlessly carries over to supervised fine-tuning. All these gains can be attributed to the fact that LayerNorm Scaling enables deeper layers to contribut",
+  "comment": "Accepted by NeurIPS 2025",
+  "families": [
+   "capacity",
+   "signal_scale"
+  ],
+  "id": "2502.05795",
+  "published": "2025-02-09",
+  "queries": [
+   "norm_placement"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "The Curse of Depth in Large Language Models",
+  "why": [
+   "+3 pre-train",
+   "+2 normaliz",
+   "-3 fine-tun",
+   "+5 neurips",
+   "+3 strong-lab signal",
+   "+2 code released"
+  ]
+ },
+ "2502.11458": {
+  "abstract": "The burgeoning computational demands for training large language models (LLMs) necessitate efficient methods, including quantized training, which leverages low-bit arithmetic operations to reduce costs. While FP8 precision has shown potential, leveraging FP4 remains challenging due to inherent quantization errors and limited representation capability. Based on the Transformer architecture, we present an FP4 training scheme for LLMs, overcoming these obstacles through mixed-precision quantization strategies tailed for different modules and training stages. This allows us to apply the precision level suitable to distinct components within the model, ensuring that multi-head attention and linear layers are handled appropriately. Our pretraining recipe ensures stability in backpropagation by incorporating fine-grained quantization methods with a target precision training schedule. Experimental results demonstrate that our FP4 training scheme achieves accuracy comparable to BF16 and FP8, with smaller theoretical computational cost. With the advent of next-generation hardware supporting FP4, our method sets the foundation for efficient ultra-low precision training.",
+  "comment": "8 pages, 2 figure",
+  "families": [
+   "attention",
+   "schedule",
+   "signal_path",
+   "input_pipeline"
+  ],
+  "id": "2502.11458",
+  "published": "2025-02-17",
+  "queries": [
+   "low_precision"
+  ],
+  "score": 18,
+  "status": "screened",
+  "title": "Towards Efficient Pre-training: Exploring FP4 Precision in Large Language Models",
+  "why": [
+   "+3 pretrain",
+   "+3 pre-train",
+   "+2 schedule",
+   "+2 attention",
+   "+3 fp8",
+   "+2 bf16",
+   "+2 stability",
+   "-2 quantiz"
+  ]
+ },
+ "2503.02844": {
+  "abstract": "The ever-growing availability of unlabeled data presents both opportunities and challenges for training artificial intelligence systems. While self-supervised learning (SSL) has emerged as a powerful paradigm for extracting meaningful representations from vast amounts of unlabeled data, existing methods still struggle to adapt to the non-stationary, non-IID nature of real-world data streams without forgetting previously learned knowledge. Recent works have adopted a repeated cosine annealing schedule for large-scale continual pre-training; however, these schedules (1) inherently cause forgetting during the re-warming phase and (2) have not been systematically compared to existing continual SSL methods. In this work, we systematically compare the widely used cosine schedule with the recently proposed infinite learning rate schedule and empirically find the latter to be a more effective alternative. Our extensive empirical evaluation across diverse image and language datasets demonstrates that the infinite learning rate schedule consistently enhances continual pre-training performance compared to a repeated cosine decay without being restricted to a fixed iteration budget. For instance, in a small-scale MAE pre-training setup, it outperforms several strong baselines from the literature. We then scale up our experiments to larger MAE pre-training and autoregressive language model pre-training. Our results show that the infinite learning rate schedule remains effective at scale, ",
+  "comment": "Accepted (oral) at Fourth Conference on Lifelong Learning Agents - CoLLAs 2025",
+  "families": [
+   "schedule"
+  ],
+  "id": "2503.02844",
+  "published": "2025-03-04",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "Beyond Cosine Decay: On the effectiveness of Infinite Learning Rate Schedule for Continual Pre-training",
+  "why": [
+   "+3 pre-train",
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 small-scale",
+   "-4 agent",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2503.04598": {
+  "abstract": "Transformers have become the de facto architecture for a wide range of machine learning tasks, particularly in large language models (LLMs). Despite their remarkable performance, many challenges remain in training deep transformer networks, especially regarding the position of the layer normalization. While Pre-Norm structures facilitate more stable training owing to their stronger identity path, they often lead to suboptimal performance compared to Post-Norm. In this paper, we propose $\\textbf{HybridNorm}$, a simple yet effective hybrid normalization strategy that integrates the advantages of both Pre-Norm and Post-Norm. Specifically, HybridNorm employs QKV normalization within the attention mechanism and Post-Norm in the feed-forward network (FFN) of each transformer block. We provide both theoretical insights and empirical evidence to demonstrate that HybridNorm improves the gradient flow and the model robustness. Extensive experiments on large-scale transformer models, including both dense and sparse variants, show that HybridNorm consistently outperforms both Pre-Norm and Post-Norm approaches across multiple benchmarks. These findings highlight the potential of HybridNorm as a more stable and effective technique for improving the training and performance of deep transformer models. Code is available at https://github.com/BryceZhuo/HybridNorm.",
+  "comment": "Accepted by NeurIPS 2025",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2503.04598",
+  "published": "2025-03-06",
+  "queries": [
+   "norm_placement"
+  ],
+  "score": 13,
+  "status": "screened",
+  "title": "HybridNorm: Towards Stable and Efficient Transformer Training via Hybrid Normalization",
+  "why": [
+   "+2 normaliz",
+   "+2 attention",
+   "+2 gradient",
+   "+5 neurips",
+   "+2 code released"
+  ]
+ },
+ "2503.12811": {
+  "abstract": "Training large models is both resource-intensive and time-consuming, making it crucial to understand the quantitative relationship between model performance and hyperparameters. In this paper, we present an empirical law that describes how the pretraining loss of large language models evolves under different learning rate schedules, such as constant, cosine, and step decay schedules. Our proposed law takes a multi-power form, combining a power law based on the sum of learning rates and additional power laws to account for a loss reduction effect induced by learning rate decay. We extensively validate this law on various model sizes and architectures, and demonstrate that after fitting on a few learning rate schedules, the law accurately predicts the loss curves for unseen schedules of different shapes and horizons. Moreover, by minimizing the predicted final pretraining loss across learning rate schedules, we are able to find a schedule that outperforms the widely used cosine learning rate schedule. Interestingly, this automatically discovered schedule bears some resemblance to the recently proposed Warmup-Stable-Decay (WSD) schedule (Hu et al, 2024) but achieves a slightly lower final loss. We believe these results could offer valuable insights for understanding the dynamics of pretraining and designing learning rate schedules to improve efficiency.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2503.12811",
+  "published": "2025-03-17",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 16,
+  "status": "screened",
+  "title": "A Multi-Power Law for Loss Curve Prediction Across Learning Rate Schedules",
+  "why": [
+   "+3 pretrain",
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 warmup",
+   "+2 loss",
+   "+3 mup"
+  ]
+ },
+ "2505.01575": {
+  "abstract": "This paper proposes an innovative Transformer model, Single-directional representative from Transformer (SERT), for US large capital stock pricing. It also innovatively applies the pre-trained Transformer models under the stock pricing and factor investment context. They are compared with standard Transformer models and encoder-only Transformer models in three periods covering the entire COVID-19 pandemic to examine the model adaptivity and suitability during the extreme market fluctuations. Namely, pre-COVID-19 period, COVID-19 period and 1-year post-COVID-19. The best proposed SERT model achieves the highest out-of-sample $R^2$, 11.94\\% and 11.47\\% respectively, when extreme market fluctuation takes place, followed by pre-trained Transformer models (11.13\\% and 9.72\\%). Their Trend-following-based strategy's performance also proves their excellent capability for hedging downside risks during market shocks. The proposed SERT model achieves a Sortino ratio 47\\% higher than the buy-and-hold benchmark in the equal-weighted portfolio and 28\\% higher in the value-weighted portfolio in the static transaction cost scenario when the pandemic period is considered. It proves that Transformer models have a strong ability to capture patterns of temporal sparsity in asset pricing factor models, especially with high volatility. I also find the softmax signal filter as the common configuration of Transformer models in alternative contexts, which only eliminates differences between models, ",
+  "comment": "67 pages,25 figures, 13 tables",
+  "families": [
+   "attention",
+   "signal_scale"
+  ],
+  "id": "2505.01575",
+  "published": "2025-05-02",
+  "queries": [
+   "norm_placement"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "Asset Pricing in Pre-trained Transformer",
+  "why": [
+   "+3 pre-train",
+   "+2 normaliz",
+   "+2 attention",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2505.10559": {
+  "abstract": "Beyond neural scaling laws, little is known about the laws underlying large language models (LLMs). We introduce Neural Thermodynamic Laws (NTL) -- a new framework that offers fresh insights into LLM training dynamics. On the theoretical side, we demonstrate that key thermodynamic quantities (e.g., temperature, entropy, heat capacity, thermal conduction) and classical thermodynamic principles (e.g., the three laws of thermodynamics and the equipartition theorem) naturally emerge under river-valley loss landscape assumptions. On the practical side, this scientific perspective yields intuitive guidelines for designing learning rate schedules.",
+  "comment": "18 pages, 10 figures",
+  "families": [
+   "capacity",
+   "schedule"
+  ],
+  "id": "2505.10559",
+  "published": "2025-05-15",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Neural Thermodynamic Laws for Large Language Model Training",
+  "why": [
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 loss"
+  ]
+ },
+ "2506.02285": {
+  "abstract": "During long-duration Large Language Model (LLM) training runs the gradient norm increases rapidly near the end of training. In this short note, we show that this increase is due to an unintended interaction between weight decay, normalization layers, and the learning rate schedule. We propose a simple correction that fixes this behavior while also resulting in lower loss values throughout training.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2506.02285",
+  "published": "2025-06-02",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 14,
+  "status": "screened",
+  "title": "Why Gradients Rapidly Increase Near the End of Training",
+  "why": [
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 weight decay",
+   "+2 normaliz",
+   "+2 loss",
+   "+2 gradient"
+  ]
+ },
+ "2506.16659": {
+  "abstract": "Training large language models (LLMs) relies on adaptive optimizers such as Adam, which introduce extra operations and require significantly more memory to maintain first- and second-order moments than SGD. While recent works such as GaLore, Fira and APOLLO have proposed state-compressed memory-efficient variants, a fundamental question remains: What are the minimum modifications to plain SGD needed to match state-of-the-art pretraining performance? We systematically investigate this question using a bottom-up approach, and identify two simple yet highly (memory- and compute-) efficient techniques: (1) column-wise gradient normalization (normalizing the gradient along the output dimension), that boosts SGD performance without momentum; and (2) applying first-order momentum only to the output layer, where gradient variance is highest. Combining these two techniques lead to SCALE (Stochastic Column-normAlized Last-layer momEntum), a simple optimizer for memory efficient pretraining. Across multiple models (60M-1B), SCALE matches or exceeds the performance of Adam while using only 35-45% of the total memory. It also consistently outperforms memory-efficient optimizers such as GaLore, Fira and APOLLO, making it a strong candidate for large-scale pretraining under memory constraints. For LLaMA 7B, SCALE outperforms the state-of-the-art memory-efficient methods APOLLO and Muon in both perplexity and memory consumption.",
+  "comment": "Accepted at ICML 2026",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2506.16659",
+  "published": "2025-06-20",
+  "queries": [
+   "efficient_pretraining"
+  ],
+  "score": 26,
+  "status": "screened",
+  "title": "Memory-Efficient LLM Pretraining via Minimalist Optimizer Design",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 normaliz",
+   "+3 perplexity",
+   "+2 gradient",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.08404": {
+  "abstract": "We show that a tiny Co$^4$ machine(Adeel,2025) with a single layer, two heads, and 8M parameters, operating at an approximate cost of $O(N)$ (where $N$ is the number of input tokens), outpaces the BabyLM Challenge baselines GPT-2 (124M, 12 layers, $O(N^2))$ and GPT-BERT (30M, 12 layers, $O(N^2))$ in just two epochs, while both are trained for ten. Co$^4$ achieves orders-of-magnitude greater training efficiency on 10M tokens, demonstrating highly sample efficient pretraining. Using the BabyLM challenge evaluation pipeline across complex benchmarks, Co$^4$ exhibits strong zero-shot and fine-tuning performance on SuperGLUE tasks. Specifically, Co$^4$ outperforms GPT-2 on 5 out of 7 zero-shot metrics and 6 out of 7 fine-tuning tasks, and GPT-BERT on 4 out of 7 metrics in both cases. These results suggest the need to rethink prevailing deep learning paradigms and associated scaling laws.",
+  "comment": "",
+  "families": [
+   "capacity"
+  ],
+  "id": "2510.08404",
+  "published": "2025-10-09",
+  "queries": [
+   "efficient_pretraining"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "Single layer tiny Co$^4$ outpaces GPT-2 and GPT-BERT",
+  "why": [
+   "+3 pretrain",
+   "+4 124m",
+   "+3 gpt-2",
+   "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.09904": {
+  "abstract": "Despite their widespread use, training deep Transformers can be unstable. Layer normalization, a standard component, improves training stability, but its placement has often been ad-hoc. In this paper, we conduct a principled study on the forward (hidden states) and backward (gradient) stability of Transformers under different layer normalization placements. Our theory provides key insights into the training dynamics: whether training drives Transformers toward regular solutions or pathological behaviors. For forward stability, we derive explicit bounds on the growth of hidden states in trained Transformers. For backward stability, we analyze how layer normalization affects the backpropagation of gradients, thereby explaining the training dynamics of each layer normalization placement. Our analysis also guides the scaling of residual steps in Transformer blocks, where appropriate choices can further improve stability and performance. Our numerical results corroborate our theoretical findings. Beyond these results, our framework provides a principled way to sanity-check the stability of Transformers under new architectural modifications, offering guidance for future designs.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2510.09904",
+  "published": "2025-10-10",
+  "queries": [
+   "norm_placement"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "Stability of Transformers under Layer Normalization",
+  "why": [
+   "+2 normaliz",
+   "+2 stability",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2511.20516": {
+  "abstract": "The Adam optimizer is a cornerstone of modern deep learning, yet the empirical necessity of each of its individual components is often taken for granted. This paper presents a focused investigation into the role of bias-correction, a feature whose contribution remains poorly understood. Through a series of systematic ablations on vision and language modelling tasks, we demonstrate that the conventional wisdom surrounding bias correction is misleading. In particular, we demonstrate that in the optimal hyper-parameter configuration, the inclusion of bias correction leads to no improvement in final test performance. Moreover, unless appropriate learning rate scheduling is implemented, the inclusion of bias correction can sometimes be detrimental to performance. We further reinterpret bias correction as a form of implicit learning rate scheduling whose behaviour is strongly dependent on the choice of smoothing hyper-parameters $\u03b2_1, \u03b2_2 \\in [0,1)$. Our findings challenge the universal inclusion of this component.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2511.20516",
+  "published": "2025-11-25",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "Adam Simplified: Bias Correction Debunked",
+  "why": [
+   "+3 optimizer",
+   "+3 learning rate",
+   "+3 ablation"
+  ]
+ },
+ "2512.13705": {
+  "abstract": "Learning rate scheduling is crucial for training large language models, yet understanding the optimal annealing strategies across different model configurations remains challenging. In this work, we investigate the transferability of annealing dynamics in large language model training and refine a generalized predictive framework for optimizing annealing strategies under the Warmup-Steady-Decay (WSD) scheduler. Our improved framework incorporates training steps, maximum learning rate, and annealing behavior, enabling more efficient optimization of learning rate schedules. Our work provides a practical guidance for selecting optimal annealing strategies without exhaustive hyperparameter searches, demonstrating that smaller models can serve as reliable proxies for optimizing the training dynamics of larger models. We validate our findings on extensive experiments using both Dense and Mixture-of-Experts (MoE) models, demonstrating that optimal annealing ratios follow consistent patterns and can be transferred across different training configurations.",
+  "comment": "Accepted to AAAI 2026 (camera-ready version)",
+  "families": [
+   "schedule"
+  ],
+  "id": "2512.13705",
+  "published": "2025-12-05",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "Scaling and Transferability of Annealing Strategies in Large Language Model Training",
+  "why": [
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 warmup",
+   "+3 mup"
+  ]
+ },
+ "2601.00417": {
+  "abstract": "Transformer residual streams evolve through additive updates. Although a sufficiently expressive residual block can represent content replacement, standard architectures do not parameterize reading, comparison, and replacement as an explicit residual operation. We introduce Deep Delta Learning (DDL), a structured residual update that preserves the identity path while enabling target-seeking edits to the residual state. Each layer reads the current state along a learned direction, compares the resulting readout with a learned target, and writes back a gated rank-1 correction along the same direction. Closing the gate recovers the identity map, while fully opening it exactly overwrites the selected residual readout. We instantiate DDL with both scalar and expanded residual states. The expanded formulation provides multiple persistent value channels while keeping attention and MLP computation at the original model width, thereby separating residual-state capacity from backbone compute width. Controlled LLM pretraining experiments show that DDL improves language-modeling quality and average one-shot downstream performance over additive residual baselines in the reported runs, while introducing explicit memory and throughput tradeoffs. These results suggest that depth-wise delta-rule updates provide a useful inductive bias for managing Transformer residual streams.",
+  "comment": "Project Page: https://github.com/yifanzhang-pro/deep-delta-learning",
+  "families": [
+   "capacity",
+   "attention",
+   "ve_placement",
+   "signal_path",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2601.00417",
+  "published": "2026-01-01",
+  "queries": [
+   "depth_width"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Deep Delta Learning",
+  "why": [
+   "+3 pretrain",
+   "+2 attention",
+   "+3 throughput"
+  ]
+ },
+ "2601.09000": {
+  "abstract": "The Warmup Stable Decay (WSD) learning rate scheduler has recently become popular, largely due to its good performance and flexibility when training large language models. It remains an open question whether the remarkable performance of WSD - using a decaying learning rate for only a fraction of training compared to cosine decay - is a phenomenon specific to transformer-based language models that can potentially offer new theoretical insights into their training dynamics. Inspired by the usage of learning rate schedulers as a new lens into understanding landscape geometry (e.g., river valley, connected minima, progressive sharpening), in this work we compare the WSD path of the Adam optimizer on a Pythia-like language model to that of a small CNN trained to classify CIFAR10 images. We observe most training signals, optimizer path features, and sharpness dynamics to be qualitatively similar in such architectures. This consistency points to shared geometric characteristics of the loss landscapes of old and new nonconvex problems, and hints to future research questions around the geometry of high dimensional optimization problems.",
+  "comment": "Accepted at the 2025 HiLD and MOSS Workshops at ICML",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2601.09000",
+  "published": "2026-01-13",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 24,
+  "status": "screened",
+  "title": "Universal Dynamics of Warmup Stable Decay: understanding WSD beyond Transformers",
+  "why": [
+   "+3 optimizer",
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 warmup",
+   "+2 loss",
+   "+3 mup",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2601.22966": {
+  "abstract": "We investigate the functional role of emergent outliers in large language models, specifically attention sinks (a few tokens that consistently receive large attention logits) and residual sinks (a few fixed dimensions with persistently large activations across most tokens). We hypothesize that these outliers, in conjunction with the corresponding normalizations (\\textit{e.g.}, softmax attention and RMSNorm), effectively rescale other non-outlier components. We term this phenomenon \\textit{outlier-driven rescaling} and validate this hypothesis across different model architectures and training token counts. This view unifies the origin and mitigation of both sink types. Our main conclusions and observations include: (1) Outliers function jointly with normalization: removing normalization eliminates the corresponding outliers but degrades training stability and performance; directly clipping outliers while retaining normalization leads to degradation, indicating that outlier-driven rescaling contributes to training stability. (2) Outliers serve more as rescale factors rather than contributors, as the final contributions of attention and residual sinks are significantly smaller than those of non-outliers. (3) Outliers can be absorbed into learnable parameters or mitigated via explicit gated rescaling, leading to improved training performance (average gain of 2 points) and enhanced quantization robustness (1.2 points degradation under W4A4 quantization).",
+  "comment": "",
+  "families": [
+   "attention",
+   "signal_scale",
+   "optimizer_numeric",
+   "signal_path",
+   "attention_detail"
+  ],
+  "id": "2601.22966",
+  "published": "2026-01-30",
+  "queries": [
+   "softmax_logit"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "A Unified View of Attention and Residual Sinks: Outlier-Driven Rescaling is Essential for Transformer Training",
+  "why": [
+   "+2 normaliz",
+   "+3 rmsnorm",
+   "+2 attention",
+   "+2 stability",
+   "-2 quantiz",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.00450": {
+  "abstract": "Outside-in multi-camera perception is increasingly important in indoor environments, where networks of static cameras must support multi-target tracking under occlusion and heterogeneous viewpoints. We evaluate Sparse4D, a query-based spatiotemporal 3D detection and tracking framework that fuses multi-view features in a shared world frame and propagates sparse object queries via instance memory. We study reduced input frame rates, post-training quantization (INT8 and FP8), transfer to the WILDTRACK benchmark, and Transformer Engine mixed-precision fine-tuning. To better capture identity stability, we report Average Track Duration (AvgTrackDur), which measures identity persistence in seconds. Sparse4D remains stable under moderate FPS reductions, but below 2 FPS, identity association collapses even when detections are stable. Selective quantization of the backbone and neck offers the best speed-accuracy trade-off, while attention-related modules are consistently sensitive to low precision. On WILDTRACK, low-FPS pretraining yields large zero-shot gains over the base checkpoint, while small-scale fine-tuning provides limited additional benefit. Transformer Engine mixed precision reduces latency and improves camera scalability, but can destabilize identity propagation, motivating stability-aware validation.",
+  "comment": "",
+  "families": [
+   "attention",
+   "schedule",
+   "input_pipeline"
+  ],
+  "id": "2602.00450",
+  "published": "2026-01-31",
+  "queries": [
+   "low_precision"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Model Optimization for Multi-Camera 3D Detection and Tracking",
+  "why": [
+   "+3 pretrain",
+   "+2 attention",
+   "+3 fp8",
+   "+3 small-scale",
+   "+2 stability",
+   "-2 quantiz",
+   "-4 post-training quantization",
+   "-3 fine-tun"
+  ]
+ },
+ "2602.03702": {
+  "abstract": "Large language models are increasingly trained in continual or open-ended settings, where the total training horizon is not known in advance. Despite this, most existing pretraining recipes are not anytime: they rely on horizon-dependent learning rate schedules and extensive tuning under a fixed compute budget. In this work, we provide a theoretical analysis demonstrating the existence of anytime learning schedules for overparameterized linear regression, and we highlight the central role of weight averaging - also known as model merging - in achieving the minimax convergence rates of stochastic gradient descent. We show that these anytime schedules polynomially decay with time, with the decay rate determined by the source and capacity conditions of the problem. Empirically, we evaluate 150M and 300M parameter language models trained at 1-32x Chinchilla scale, comparing constant learning rates with weight averaging and $1/\\sqrt{t}$ schedules with weight averaging against a well-tuned cosine schedule. Across the full training range, the anytime schedules achieve comparable final loss to cosine decay. Taken together, our results suggest that weight averaging combined with simple, horizon-free step sizes offers a practical and effective anytime alternative to cosine learning rate schedules for large language model pretraining.",
+  "comment": "",
+  "families": [
+   "schedule"
+  ],
+  "id": "2602.03702",
+  "published": "2026-02-03",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "Anytime Pretraining: Horizon-Free Learning-Rate Schedules with Weight Averaging",
+  "why": [
+   "+3 pretrain",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 convergence",
+   "+2 loss",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.05813": {
+  "abstract": "We study adaptive learning rate scheduling for norm-constrained optimizers (e.g., Muon and Lion). We introduce a generalized smoothness assumption under which local curvature decreases with the suboptimality gap and empirically verify that this behavior holds along optimization trajectories. Under this assumption, we establish convergence guarantees under an appropriate choice of learning rate, for which warm-up followed by decay arises naturally from the proof rather than being imposed heuristically. Building on this theory, we develop a practical learning rate scheduler that relies only on standard hyperparameters and adapts the warm-up duration automatically at the beginning of training. We evaluate this method on large language model pretraining with LLaMA architectures and show that our adaptive warm-up selection consistently outperforms or at least matches the best manually tuned warm-up schedules across all considered setups, without additional hyperparameter search. Our source code is available at https://github.com/brain-lab-research/llm-baselines/tree/warmup",
+  "comment": "30 pages, 8 figures, 5 tables",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2602.05813",
+  "published": "2026-02-05",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 29,
+  "status": "screened",
+  "title": "Where Does Warm-Up Come From? Adaptive Scheduling for Norm-Constrained Optimizers",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 warmup",
+   "+2 convergence",
+   "+3 mup"
+  ]
+ },
+ "2602.08387": {
+  "abstract": "Today's LLM (pre-) training and research workflows typically allocate a significant amount of compute to large-scale ablation studies. Despite the substantial compute costs of these ablations, existing open-source frameworks provide limited tooling for these experiments, often forcing researchers to write their own wrappers and scripts. We propose Modalities, an end-to-end PyTorch-native framework that integrates data-driven LLM research with large-scale model training from two angles. Firstly, by integrating state-of-the-art parallelization strategies, it enables both efficient pretraining and systematic ablations at trillion-token and billion-parameter scale. Secondly, Modalities adopts modular design with declarative, self-contained configuration, enabling reproducibility and extensibility levels that are difficult to achieve out-of-the-box with existing LLM training frameworks.",
+  "comment": "",
+  "families": [
+   "schedule"
+  ],
+  "id": "2602.08387",
+  "published": "2026-02-09",
+  "queries": [
+   "efficient_pretraining"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Modalities, a PyTorch-native Framework For Large-scale LLM Training and Research",
+  "why": [
+   "+3 pretrain",
+   "+3 ablation",
+   "+2 reproduc",
+   "+1 open-source",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2603.08548": {
+  "abstract": "Continuous-variable (CV) quantum systems provide a versatile platform for quantum information processing, in which quantum states can be represented in the quadrature phase space. In realistic implementations, environmental noise, primarily photon loss and dephasing, progressively degrades these states. Machine-learning-based quantum error mitigation (QEM) has recently emerged as a promising approach to suppress such noise; however, existing methods are typically limited to the training horizon and require training data that cover the entire evolution, which is experimentally demanding. Here we introduce a framework for extrapolative quantum error mitigation based on a time-conditioned Swin Transformer. By explicitly embedding the evolution time via adaptive layer normalization, the model learns a correction map that accounts for the continuous accumulation of noise while capturing nonlocal phase-space correlations. Numerical simulations under both Markovian and non-Markovian noise demonstrate accurate state recovery in the long-time regime, where existing approaches deteriorate. Our results establish extrapolative QEM as a practical route to mitigating noise in CV quantum systems without exhaustive training data.",
+  "comment": "15pages,5 figures",
+  "families": [
+   "ve_placement",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2603.08548",
+  "published": "2026-03-09",
+  "queries": [
+   "norm_placement"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Extrapolative Quantum Error Mitigation in Continuous-Variable Systems beyond the Training Horizon",
+  "why": [
+   "+2 normaliz",
+   "+2 loss",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2603.10301": {
+  "abstract": "A basic unanswered question in neural network training is: what is the best learning rate schedule shape for a given workload? The choice of learning rate schedule is a key factor in the success or failure of the training process, but beyond having some kind of warmup and decay, there is no consensus on what makes a good schedule shape. To answer this question, we designed a search procedure to find the best shapes within a parameterized schedule family. Our approach factors out the schedule shape from the base learning rate, which otherwise would dominate cross-schedule comparisons. We applied our search procedure to a variety of schedule families on three workloads: linear regression, image classification on CIFAR-10, and small-scale language modeling on Wikitext103. We showed that our search procedure indeed generally found near-optimal schedules. We found that warmup and decay are robust features of good schedules, and that commonly used schedule families are not optimal on these workloads. Finally, we explored how the outputs of our shape search depend on other optimization hyperparameters, and found that weight decay can have a strong effect on the optimal schedule shape. To the best of our knowledge, our results represent the most comprehensive results on near-optimal schedule shapes for deep neural network training, to date.",
+  "comment": "",
+  "families": [
+   "schedule"
+  ],
+  "id": "2603.10301",
+  "published": "2026-03-11",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "What do near-optimal learning rate schedules look like?",
+  "why": [
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 warmup",
+   "+3 weight decay",
+   "+3 small-scale",
+   "+3 mup"
+  ]
+ },
+ "2604.15416": {
+  "abstract": "Sign-based optimization algorithms, such as SignSGD, have garnered significant attention for their remarkable performance in distributed learning and training large foundation models. Despite their empirical superiority, SignSGD is known to diverge on non-smooth objectives, which are ubiquitous in modern machine learning due to ReLUs, max-pools, and mixture-of-experts. To overcome this fundamental limitation, we propose \\textbf{StoSignSGD}, an algorithm that injects structural stochasticity into the sign operator while maintaining an unbiased update step. In the regime of (online) convex optimization, our theoretical analysis shows that StoSignSGD rigorously resolves the non-convergence issues of SignSGD, achieving a sharp convergence rate matching the lower bound. For the more challenging non-convex non-smooth optimization, we introduce generalized stationary measures that encompass prior definitions, proving that StoSignSGD improves upon the best-known complexity bounds by dimensional factors. Empirically, StoSignSGD exhibits robust stability and superior efficiency across diverse large language model (LLM) training regimes. Notably, in low-precision FP8 pretraining -- a setting where AdamW fails catastrophically -- StoSignSGD remains highly stable and yields a remarkable 1.44$\\times$ to 2.14$\\times$ speedup relative to established baselines. Furthermore, when fine-tuning 7B LLMs on mathematical reasoning tasks, StoSignSGD delivers substantial performance gains over both Ad",
+  "comment": "",
+  "families": [
+   "attention",
+   "schedule",
+   "optimizer_numeric",
+   "objective",
+   "input_pipeline"
+  ],
+  "id": "2604.15416",
+  "published": "2026-04-16",
+  "queries": [
+   "low_precision"
+  ],
+  "score": 16,
+  "status": "screened",
+  "title": "StoSignSGD: Unbiased Structural Stochasticity Fixes SignSGD for Training Large Language Models",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+2 attention",
+   "+3 fp8",
+   "+2 convergence",
+   "+3 ablation",
+   "+2 stability",
+   "-3 fine-tun"
+  ]
+ },
+ "2605.18383": {
+  "abstract": "We present TabH2O, a foundation model for tabular data that performs classification and regression in a single forward pass via in-context learning. TabH2O builds on the TabICL architecture with several key modifications: (1) unified training, a single model handles both classification and regression via a dual-head architecture, eliminating the need for separate models and reducing total pretraining cost; (2) single-stage pretraining, training stability improvements (bounded scalable softmax, inter-stage normalization, learnable residual scaling, logit soft-capping) eliminate the need for multi-stage curriculum learning, enabling training with full-length sequences from the start; and (3) noise-aware pretraining, synthetic datasets include explicit noise dimensions to teach the model robustness to irrelevant features. We evaluate TabH2O v1.1 (29.2M parameters) on the TALENT benchmark (300 datasets), where it achieves an average rank of 2.54 out of 6 evaluated methods, outperforming tuned CatBoost (4.00), H2O AutoML (4.28), LightGBM (4.98), and TabPFN v2.6 (2.80), and competitive compared to TabICL v2 (2.13), while placing in the top-3 on 80% of the testing datasets across classification and regression tasks. We also achieve state-of-the-art results on TabArena. Moreover, our single model is well-suited to tabular datasets up to roughly 500,000 rows and 100 features.",
+  "comment": "Technical Report - https://tabh2o.h2oai.com/",
+  "families": [
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2605.18383",
+  "published": "2026-05-18",
+  "queries": [
+   "softmax_logit"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "TabH2O: A Unified Foundation Model for Tabular Prediction",
+  "why": [
+   "+3 pretrain",
+   "+2 normaliz",
+   "+2 stability",
+   "+2 curriculum",
+   "-2 in-context learning",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.20005": {
+  "abstract": "Fine-tuning large language models on new data improves task performance but degrades capabilities learned during pretraining, a phenomenon known as catastrophic forgetting. Existing methods mitigate this by modifying the fine-tuning objective to suppress high-loss tokens or sequences, but these tokens are essential for learning new tasks, especially those with poor pretraining coverage. In such settings, hard tokens should still contribute to learning, so forgetting must be controlled without suppressing them. We identify a simple mechanism for doing so: per-step forgetting is bounded by the product of the learning rate and the square root of the current training loss. This suggests that high-loss batches are especially prone to inducing forgetting. Motivated by this observation, we introduce FINCH, a loss-adaptive learning-rate schedule that reduces the learning rate on high-loss batches and increases it as the model converges, while leaving the fine-tuning objective unchanged. Across knowledge acquisition, science, and low-resource language adaptation benchmarks, FINCH reduces forgetting by 93% on average while matching the task performance of standard fine-tuning. On Qwen3-4B knowledge acquisition, FINCH cuts TruthfulQA degradation by 5x and reverses HaluEval degradation, while better preserving confidence calibration. Overall, our results show that learning-rate schedules are an effective tool to shape model behavior during fine-tuning, beyond just target-task optimizatio",
+  "comment": "25 pages",
+  "families": [
+   "schedule",
+   "objective"
+  ],
+  "id": "2605.20005",
+  "published": "2026-05-19",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Fine-Tuning Without Forgetting via Loss-Adaptive Learning Rates",
+  "why": [
+   "+3 pretrain",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 loss",
+   "-4 serving",
+   "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.22432": {
+  "abstract": "Modern deep learning commonly relies on AdamW with prescribed learning rate schedules, but recent works challenge both components: Schedule-Free optimization removes explicit schedules via iterate averaging, and Muon improves the update geometry by orthogonalizing momentum for matrix parameters. Despite Muon's strong empirical performance, its underlying mechanism remains partially understood. We study Muon through the river-valley loss landscape, where useful training progress occurs along a flat, low-curvature bulk subspace (the river), while high-curvature dominant directions form steep valley walls that induce oscillations. We empirically show that while Muon's orthogonalization accelerates river progress by increasing the bulk component, it also amplifies dominant-direction noise, causing oscillatory trajectories. Building on this, we propose Anytime MUon with Stable gradient Evaluation (AMUSE), which integrates Muon's rapid bulk progress with the stabilizing effect of Schedule-Free averaging. AMUSE uses a time-varying interpolation coefficient that initially evaluates gradients near the fast Muon sequence for rapid adaptation, then gradually shifts toward the stable averaged sequence to suppress valley-wall oscillations. As a result, AMUSE requires no learning rate schedules and supports anytime training. Across vision tasks and large language model pretraining, AMUSE consistently improves the performance-iteration Pareto frontier over (Schedule-Free) AdamW and Muon.",
+  "comment": "44 pages, 27 figures",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2605.22432",
+  "published": "2026-05-21",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "AMUSE: Anytime Muon with Stable Gradient Evaluation",
+  "why": [
+   "+3 pretrain",
+   "+5 muon",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 loss",
+   "+2 gradient"
+  ]
+ },
+ "2606.00605": {
+  "abstract": "Transformers have achieved remarkable success across a wide range of applications, and a growing body of work suggests that part of their strength comes from their ability to learn and execute algorithmic procedures. However, our understanding of how transformers learn such algorithms remains limited, especially in the presence of layer normalization (LN). In this work, we study principal component prediction as a concrete testbed for understanding the training dynamics of transformers with LN. We prove that a looped linear transformer with LN, trained by gradient descent, converges to a solution that implements the power method, with each self-attention layer performing one power iteration. Notably, the model is trained only for principal component prediction, rather than being explicitly supervised to implement the power method. Our finding thus reveals an \"algorithmic implicit bias\" of looped transformers with LN: principal-component prediction can in principle be achieved by many mechanisms, yet gradient descent selects one that realizes the power method. We further provide a concrete comparison between transformers with and without LN: even with layerwise guidance from power iterations, a transformer without LN cannot exactly learn the power method, whereas the corresponding transformer with LN can, leading to a provable performance gap in principal component prediction. Our results provide, to our knowledge, the first theoretical analysis of the training dynamics of loo",
+  "comment": "70 pages, 8 figures",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2606.00605",
+  "published": "2026-05-30",
+  "queries": [
+   "norm_placement"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "Looped Transformers with Layer Normalization Provably Learn the Power Method",
+  "why": [
+   "+2 normaliz",
+   "+2 attention",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2606.00703": {
+  "abstract": "Low-precision pretraining (FP8, MXFP4, NVFP4) is now standard for frontier language models, yet the literature is almost entirely achievability -- algorithms and empirical scaling laws -- with no matching characterization of what is information-theoretically possible. We study a B-bit quantized stochastic first-order oracle: an optimizer interacts for T rounds and receives, each round, a B-bit adaptive public-coin description of its stochastic gradient. Our main contribution is an exact reduction from optimizing a strongly convex quadratic family to interactively compressed Gaussian mean estimation -- under the B-bit oracle the query carries no information, so optimization collapses exactly onto a sequential distributed-estimation problem. This yields two unconditional lower bounds, a communication bound TB = Omega(d) and a statistical bound T = Omega(sigma^2 d / eps^2), and the sharp product-form bound T = Omega((sigma^2 d / eps^2) max{1, d/B}). The product form is also unconditional: a B-bit transcript carries at most O(TB / sigma^2) of Fisher trace about the mean, so bits rather than dimension limit the recoverable information, and combined with the multivariate van Trees inequality this gives the bound directly, without bounded-likelihood-ratio truncation. We give a near-matching achievability result with exact per-round bit accounting under a bounded-dynamic-range oracle, tight up to a logarithmic factor; the lower bound is for truly Gaussian (unbounded) gradients, and c",
+  "comment": "",
+  "families": [
+   "capacity",
+   "optimizer_numeric",
+   "input_pipeline"
+  ],
+  "id": "2606.00703",
+  "published": "2026-05-30",
+  "queries": [
+   "low_precision"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Information-Theoretic Lower Bounds for Bit-Constrained Stochastic Optimization via a Reduction to Compressed Gaussian Mean Estimation",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+3 fp8",
+   "+2 gradient",
+   "-2 quantiz",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2606.30460": {
+  "abstract": "In this paper, we aim to combine the advantages of existing sequence parallelism paradigms and overcomes their drawbacks, the most serious of which is the incapability to correctly compute causal attention on the hybrid-context packed sequences, in a stronger sequence parallelism framework. The practical technique of packing sequences for efficiently pretraining and fine-tuning large language models causes cross-contamination problem in attention computation, which can be effectively solved when no parallelism in the sequence length dimension is taken. However, in sequence parallelism, existing approaches either ignore the scenario of hybrid-context sequences or conversely sacrifice and limit parallelism degree for supporting the scenario. To this end, we innovatively propose an efficient Sequence-Aware Parallelism algorithm to conquer the obstacles of intensive tensor transmission and partial attention computation across multiple device groups. Our algorithm utilizes JIT (Just-In-Time) compilation to optimize the communication strategy of all device groups in NCCL level. Further, we integrate existing sequence parallelism paradigms into a Hierarchical Sequence-Aware Parallelism framework which benefits from our sequence-aware algorithm. We additionally elaborate on the memory and communication overhead management of the hierarchical framework to optimize its performance. Through multiple experiments, we demonstrate that our proposed approach outperform other state-of-the-art",
+  "comment": "10 pages, ACL preprint style",
+  "families": [
+   "attention",
+   "input_pipeline"
+  ],
+  "id": "2606.30460",
+  "published": "2026-06-29",
+  "queries": [
+   "efficient_pretraining"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "HSAP: A Hierarchical Sequence-aware Parallelism for Hybrid-Context Generative Models",
+  "why": [
+   "+3 pretrain",
+   "+2 attention",
+   "-3 fine-tun",
+   "+3 acl",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.04422": {
+  "abstract": "Recent NVFP4 pretraining work has primarily optimized Transformer linear projections, leaving persistent optimizer states, optimizer computation, and low-precision attention forward--backward paths less explored. We present \\textbf{Full-Stack FP4}, a modular NVFP4 framework with separate recipes for projections, AdamW states, Root/Muon computation, and attention. \\textbf{LoRA-SVD} protects a compact projection subspace in BF16 while retaining full-shape NVFP4 computation, reducing the linear-only loss gap from \\textbf{1.40\\%} to \\textbf{0.61\\%}. An ordered square-root, tile-mean, and Hadamard pipeline enables stable NVFP4 AdamW momentum storage; shape-dependent coefficients and clipping stabilize direct NVFP4 Root iterations; and mixed-precision attention retains softmax-sensitive operations in BF16. On 3B pretraining with 64B tokens, BF16 and Full-Stack FP4 reach losses of \\textbf{2.267} and \\textbf{2.286}, a \\textbf{0.838\\%} gap. Their average zero-shot perplexities are 26.675 and 26.665, respectively, with Full-Stack FP4 averaging 0.10 percentage points lower in accuracy. Native four-block measurements on one RTX 5090 show 2.50--2.83$\\times$ Root speedups over optimized BF16 and 37.9--42.5\\% lower AdamW peak memory.",
+  "comment": "Fix experiment bugs and some statement, update current developed hardware efficiency result on 5090",
+  "families": [
+   "attention",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2607.04422",
+  "published": "2026-07-05",
+  "queries": [
+   "low_precision"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Full-Stack FP4: Stable LLM Pretraining with Quantized Projections, Optimizers, and Attention",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 attention",
+   "+2 bf16",
+   "+2 loss",
+   "-2 quantiz",
+   "-3 lora"
+  ]
+ },
+ "2607.07494": {
+  "abstract": "Gradient communication is a primary scaling bottleneck in large language model (LLM) pretraining. Communicating gradients in low-precision formats, such as FP8 and NVFP4, can significantly reduce the communication volume. Existing methods quantize gradients via linear or nonlinear mappings in Euclidean space, often degrading model performance because highly anisotropic gradients incur direction-dependent distortion. We present GIFT, a geometry-informed gradient scaling method that performs low-precision communication in geometry-aware coordinates. By transforming gradients into a near-isotropic space before quantization, GIFT makes low-precision representations substantially more faithful to their high-precision counterparts. GIFT only changes the coordinate system used for low-precision gradient communication and does not change the optimizer, training recipe, communication collective, or low-precision format. We also develop a simplified geometry-aware transformation algorithm with low-rank approximation and selective application to balance the computation overhead and communication reduction. We examine the empirical convergence of GIFT using Llama-300M and Llama-600M models. Our results show that GIFT reduces the end-to-end pretraining time of Llama-600M by 7.6% on 64 NVIDIA GH200 Superchips, while improving the downstream task preservation profile over direct Euclidean FP8 communication under the same optimizer and communication path.",
+  "comment": "12 pages, 6 figures, 3 tables",
+  "families": [
+   "optimizer_numeric",
+   "input_pipeline"
+  ],
+  "id": "2607.07494",
+  "published": "2026-07-08",
+  "queries": [
+   "low_precision"
+  ],
+  "score": 14,
+  "status": "screened",
+  "title": "GIFT: Geometry-Informed Low-precision Gradient Communication for LLM Pretraining",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+3 fp8",
+   "+2 convergence",
+   "+2 gradient",
+   "-2 quantiz",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.10593": {
+  "abstract": "Normalization is a critical component for stabilizing Transformer training, yet the choice between static strategies such as Layer Normalization (LN) and adaptive alternatives remains largely task-dependent. In this paper, we investigate a key optimization challenge in differentiable normalization gating. Our experiments show that, on relatively stationary vision tasks, the high gradient variance introduced by Gumbel-Softmax gating can hinder convergence of the routing mechanism, causing learned gates to underperform simple random selection. In contrast, on non-stationary language modeling and classification tasks, sustained gating diversity enables the model to learn more effective layer-wise normalization policies. Motivated by these observations, we propose AutoNorm-S (Stabilized), a training strategy that mitigates optimization instability through a gate-freezing schedule. AutoNorm-S achieves competitive or improved performance across multiple benchmarks, outperforming adaptive normalization baselines on NLP datasets, including PTB and SST-2, while remaining competitive on standard vision benchmarks. These results suggest that decoupling normalization selection from optimization noise provides a practical and principled approach for adaptive normalization in Transformer architectures.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2607.10593",
+  "published": "2026-07-12",
+  "queries": [
+   "norm_placement"
+  ],
+  "score": 13,
+  "status": "screened",
+  "title": "AutoNorm: Understanding Adaptive Normalization in Transformers through Differentiable Gating",
+  "why": [
+   "+2 schedule",
+   "+2 normaliz",
+   "+2 convergence",
+   "+2 stability",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.10611": {
+  "abstract": "Training with quantized weights can reduce costs but often results in degraded accuracy, especially when optimization is carried out in low precision, without storing high-precision copies. We identify a key failure mode: under low precision, standard optimizers can get stuck and not make progress, especially at large weight magnitudes due to coarse mantissa resolution. To overcome this, multiplicative updates have been previously proposed, in place of additive updates in standard optimizers. While successful under extremely low precision, such as under the logarithmic number system, they suffer from failures near zero and across sign changes. The failure modes of additive and multiplicative updates are therefore complementary. To exploit this, we propose M+Adam, which combines both update types: additive steps handle sign changes and small magnitudes, while multiplicative steps ensure progress at large magnitudes when additive updates are zeroed out under rounding. We prove monotone descent for M+Adam under standard smoothness assumptions. Across LLaMA-style pretraining with 60M-1B models, 1x-8x Chinchilla budgets, and using only BF16, FP8, and FP4 master weights, M+Adam consistently improves low-precision training.",
+  "comment": "Accepted at the 43rd International Conference on Machine Learning (ICML 2026). 45 pages",
+  "families": [
+   "optimizer_numeric",
+   "input_pipeline"
+  ],
+  "id": "2607.10611",
+  "published": "2026-07-12",
+  "queries": [
+   "low_precision"
+  ],
+  "score": 14,
+  "status": "screened",
+  "title": "M+Adam: Low-Precision Training via Additive-Multiplicative Optimization",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+3 fp8",
+   "+2 bf16",
+   "-2 quantiz",
+   "+5 icml"
+  ]
+ },
+ "2607.10959": {
+  "abstract": "Standard learning rate schedules such as cosine annealing are tied to a fixed training horizon, limiting their ability to accommodate post hoc horizon extension. Warmup-stable-decay (WSD) partially addresses this issue by maintaining a long constant-rate phase before a short linear cooldown, allowing training to resume from a pre-decay checkpoint. However, its peak learning rate is still tuned based on the original training horizon and can become suboptimal when training is extended. Motivated by stochastic convex optimization, we propose WSqD (Warmup with Square-root base and linear Decay), a learning rate schedule that replaces WSD's constant stable phase with a shifted inverse-square-root base while retaining the final linear cooldown. In the stochastic convex setting, WSqD provably attains the minimax-optimal $O(1/\\sqrt{T})$ last-iterate convergence rate. Importantly, its base learning rate schedule is horizon-independent, and the training horizon is needed only to determine when to begin the final cooldown. Empirically, on language-model pretraining using the SlimPajama corpus, WSqD matches or outperforms carefully tuned WSD and other baselines across multiple training horizons while reusing a single peak learning rate.",
+  "comment": "",
+  "families": [
+   "schedule"
+  ],
+  "id": "2607.10959",
+  "published": "2026-07-12",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 19,
+  "status": "screened",
+  "title": "WSqD: A Horizon-Free Learning Rate Schedule for Large Model Training",
+  "why": [
+   "+3 pretrain",
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 warmup",
+   "+2 convergence",
+   "+3 mup",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.14018": {
+  "abstract": "We investigate how each component of the Transformer feedforward block architecture design determines how much rank survives across depth at initialization. We reinterpret skip connections and normalization, long understood as controlling magnitude, as mechanisms for preserving gradient rank across depth, since the very matrix multiplications and nonlinear activations that make the network expressive also reduce the rank. We show that skip connections trade off rank collapse against ensemble-like behavior, controlled by the relative scales of the branch and the skip: skip connections route the gradient around the residual branch, where rank is lost, rather than along the long gradient paths that encourage the layers to compose. The placement of the normalization layer controls this same tradeoff by setting the branch-to-skip ratio across depth, unifying much of the normalization placement and depth scaling literature, in particular why rank collapses for Post-Norm but plateaus for Pre-Norm. Other aspects of the architecture, like the two-matrix structure that expands and contracts the width, use additional parameters to preserve the representation or branch Jacobian rank. The second matrix decorrelates a coherent mean spike that would grow across blocks with a single matrix and uncentered activation, preventing the residual representation from collapsing. The width expansion between the two matrices keeps the branch Jacobian full rank: applying the rank-reducing activation in",
+  "comment": "40 pages. Code: https://github.com/everettk/transforming-rank-paper",
+  "families": [
+   "capacity",
+   "ve_placement",
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2607.14018",
+  "published": "2026-07-15",
+  "queries": [
+   "depth_width"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Transforming Rank: How Architecture Navigates the Spectral Pathologies of Depth",
+  "why": [
+   "+3 initializ",
+   "+2 normaliz",
+   "+2 gradient",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.15819": {
+  "abstract": "In-context learning is a remarkable property of transformers and has recently received a lot of interest. In many studies of in-context learning, it has been shown that transformers are capable of implementing solver for linear and non-linear regression problems, in which the most of them implement gradient descent algorithm. However, it is still unclear whether those implementations have actually been acquired through training. In this paper, we construct a transformer with linear self-attention, which in-context learns the least squares estimate in a simple regression task. The point here is that the closed form (analytical) solution is approximately obtained by using layer normalization rather than an approximate solution based on gradient descent algorithm. Then, we show an experimental example, in which our implementation is mainly used in the transformer trained with l1 regularization when the target output is the least squares estimate.",
+  "comment": "",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2607.15819",
+  "published": "2026-07-17",
+  "queries": [
+   "norm_placement"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "In-context learning of closed form solution to simple linear regression task using transformer with linear self-attention",
+  "why": [
+   "+2 normaliz",
+   "+2 attention",
+   "+2 gradient",
+   "-2 in-context learning",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.27731": {
+  "abstract": "Modern deep learning typically keeps the batch size static throughout training, thus overlooking the joint effect of learning rate and batch size on the training dynamics. In this paper, we study the deep learning dynamics through the lens of convex optimization and derive a joint characterization of loss in terms of both schedules, applicable to general optimizers and model architectures. This characterization yields a closed-form optimal batch size schedule for any prescribed learning rate schedule, and further leads to joint scaling laws that consistently outperform static batch size baselines, highlighting the significance of dynamic batch size schedule in large language model training.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "token_exposure",
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2607.27731",
+  "published": "2026-07-30",
+  "queries": [
+   "lr_schedule"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Towards joint scaling laws with optimal batch size schedules",
+  "why": [
+   "+3 optimizer",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 batch size",
+   "+2 loss"
+  ]
+ },
+ "2608.10010": {
+  "abstract": "Low-precision formats usually optimize scalar fidelity while inheriting conventional product arithmetic. We introduce CurveFP, a block-scaled family that distributes magnitudes across interleaved logarithmic curves. Uniform curve indices make every nonzero product an exact sign and integer-index update, while a rational radix exposes the finite phase schedule required for accumulation. We instantiate the algebra as CurveFP8 E4C3/E5C2 for training and CurveFP7 E3C3 for compact inference. On four 7B-9B models, CurveFP7 beats tensorwise FP8 perplexity with one fewer element bit and stays within 1.32% of native quality. CurveFP8 lowers error in all 36 paired training-GEMM comparisons. Across three matched 3B-token pretraining triplets, it reaches mean BF16-inference perplexity 22.5366 versus 22.5407 for FP8 and has a lower format penalty in every seed. Downstream evaluation shows transfer parity and a consistent WikiText-103 gain. In a preliminary 4x4 Nangate45 spatial accelerator tile, CurveFP8 uses one fewer product register and 4.6% less area than timing-closing FP8 at 500 MHz. These results support CurveFP as a numerical and arithmetic co-design, while leaving system-level efficiency to future study.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "input_pipeline"
+  ],
+  "id": "2608.10010",
+  "published": "2026-08-08",
+  "queries": [
+   "low_precision"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "CurveFP: Co-Designing Numerical Representation and Product Arithmetic for Language Models",
+  "why": [
+   "+3 pretrain",
+   "+2 schedule",
+   "+3 fp8",
+   "+2 bf16",
+   "+3 perplexity",
+   "-3 inference"
+  ]
+ }
+}

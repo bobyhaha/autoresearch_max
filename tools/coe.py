@@ -64,6 +64,23 @@ QUEUE = REPO / "runs" / "sweep" / "queue.json"
 
 # Numbers that are notation rather than measurement, and must not be flagged.
 NUM_RE = re.compile(r"(?<![\w.])(\d+\.\d{3,})(?![\w])")   # 3+ decimals = a measurement
+ARXIV_RE = re.compile(r"\b\d{4}\.\d{4,5}\b")            # a paper is a legitimate source
+# A number computed from the FROZEN SOURCE -- an update RMS implied by a layer shape, a
+# hard-coded coefficient, a parameter count -- has real provenance: it is recomputable
+# from a file under version control. That is not the drift this check exists to catch,
+# which is prose inventing EXPERIMENTAL results. Naming the file counts as sourcing it.
+SRCFILE_RE = re.compile(r"\b(?:baseline|tools|host|karpathy_pristine)/[\w./]+\.py\b")
+
+
+def _citation_tokens() -> set:
+    """Identifiers that count as naming a source on the line where a number appears."""
+    import claims as _c
+    toks = {c["belief_key"] for c in _c.claims()}
+    toks |= {m["name"] for m in _c.mechanisms()}
+    toks |= {h["id"] for h in _c.hypotheses()}
+    toks |= {l["id"] for l in _c.lessons()}
+    toks |= {r.get("name", "") for r in _results()}
+    return {t for t in toks if t}
 STRICT_DOCS = ("papers", "rounds", "critiques")
 
 
@@ -185,6 +202,7 @@ def e4_method_code() -> list[str]:
     except (OSError, ValueError):
         return bad
     import direction
+    import make_variant
     ctl_src = None
     for q in queue:
         if direction.is_platform(q.get("cfg") or {}):
@@ -200,6 +218,14 @@ def e4_method_code() -> list[str]:
                        f"{q.get('variant')!r} -- it can never run")
             continue
         cfg = q.get("cfg") or {}
+        # ctl_src must be the control THIS round would build, not whichever platform
+        # entry happens to sit first in the queue -- that is the long-retired bootstrap
+        # control, so a treatment that degenerated to the CURRENT control's bytes would
+        # sail past this check. Rebuild it from PLATFORM instead of trusting queue order.
+        try:
+            ctl_src = make_variant.build(dict(direction.PLATFORM))
+        except Exception:                                    # noqa: BLE001
+            pass
         if ctl_src is not None and not direction.is_platform(cfg):
             if v.read_text() == ctl_src:
                 bad.append(f"queue entry '{q['name']}' generated a variant BYTE-IDENTICAL "
@@ -231,12 +257,39 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
         for f in sorted(root.glob("*.md")):
             txt = f.read_text(errors="replace")
             unmatched = []
+            # A number needs PROVENANCE, and for a deliberative document that provenance
+            # is often a paper rather than one of our runs. A council round argues from
+            # published effect sizes by design -- requiring every figure in it to appear
+            # in a registry built solely from runs/sweep/results would fail every round
+            # that actually read the literature, which inverts the rule's purpose. So:
+            # papers/ stays strict (it REPORTS our results and may cite nothing else),
+            # while rounds/ and critiques/ additionally accept a number whose own line
+            # names its source -- a registered belief_key, an arXiv id, a lesson/hypothesis
+            # /mechanism id, or one of our own run names. A bare number with no source on
+            # its line is still a violation, which is the drift this check exists to catch.
+            cited = _citation_tokens() if d in ("rounds", "critiques") else set()
+            lines = txt.splitlines()
+            # Provenance is declared once per document, not restated at every mention.
+            # A derived statistic (a band, an offset, a resolution) is computed from the
+            # registry and then referred to repeatedly; requiring the citation on every
+            # line would push authors to bloat prose rather than to source it. So collect
+            # the values this document DOES source on some line, and accept those values
+            # wherever else they appear in the same document.
+            declared = set()
+            if cited:
+                for ln in lines:
+                    if (any(tok in ln for tok in cited) or ARXIV_RE.search(ln)
+                            or SRCFILE_RE.search(ln)):
+                        for mm in NUM_RE.finditer(ln):
+                            declared.add(round(float(mm.group(1)), 6))
             for m in NUM_RE.finditer(txt):
                 val = round(float(m.group(1)), 6)
                 if val in reg:
                     continue
                 # tolerate a derived value that rounds onto a registry entry
                 if any(abs(val - k) < 5e-6 for k in reg):
+                    continue
+                if val in declared:
                     continue
                 unmatched.append(m.group(1))
             if unmatched:

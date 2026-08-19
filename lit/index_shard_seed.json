@@ -1,0 +1,1000 @@
+{
+ "2505.11840": {
+  "abstract": "As the default optimizer for training large language models, AdamW has achieved remarkable success in deep learning. However, its convergence behavior is not theoretically well-understood. This paper establishes the convergence rate $\\frac{1}{K}\\sum_{k=1}^KE\\left[||\\nabla f(x^k)||_1\\right]\\leq O(\\frac{\\sqrt{d}C}{K^{1/4}})$ for AdamW measured by $\\ell_1$ norm, where $K$ represents the iteration number, $d$ denotes the model dimension, and $C$ matches the constant in the optimal convergence rate of SGD. Theoretically, we have $||\\nabla f(x)||_2\\ll ||\\nabla f(x)||_1\\leq \\sqrt{d}||\\nabla f(x)||_2$ for any high-dimensional vector $x$ and $E\\left[||\\nabla f(x)||_1\\right]\\geq\\sqrt{\\frac{2d}\u03c0}E\\left[||\\nabla f(x)||_2\\right]$ when each element of $\\nabla f(x)$ is generated from Gaussian distribution $\\mathcal N(0,1)$. Empirically, our experimental results on real-world deep learning tasks reveal $||\\nabla f(x)||_1=\\varTheta(\\sqrt{d})||\\nabla f(x)||_2$. Both support that our convergence rate can be considered to be analogous to the optimal $\\frac{1}{K}\\sum_{k=1}^KE\\left[||\\nabla f(x^k)||_2\\right]\\leq O(\\frac{C}{K^{1/4}})$ convergence rate of SGD in the ideal case. We also extend our result to NAdamW, an AdamW variant that employs a double-momentum mechanism, and demonstrate that it maintains the same convergence rate.",
+  "comment": "V2: NeurIPS Camera-Ready. V3: expand upon the conference version by incorporating the analysis of NAdamW",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2505.11840",
+  "published": "2025-05-17",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "On the $O(\\frac{\\sqrt{d}}{K^{1/4}})$ Convergence Rate of AdamW Measured by $\\ell_1$ Norm",
+  "why": [
+   "+3 optimizer",
+   "+2 convergence",
+   "+5 neurips"
+  ]
+ },
+ "2506.16659": {
+  "abstract": "Training large language models (LLMs) relies on adaptive optimizers such as Adam, which introduce extra operations and require significantly more memory to maintain first- and second-order moments than SGD. While recent works such as GaLore, Fira and APOLLO have proposed state-compressed memory-efficient variants, a fundamental question remains: What are the minimum modifications to plain SGD needed to match state-of-the-art pretraining performance? We systematically investigate this question using a bottom-up approach, and identify two simple yet highly (memory- and compute-) efficient techniques: (1) column-wise gradient normalization (normalizing the gradient along the output dimension), that boosts SGD performance without momentum; and (2) applying first-order momentum only to the output layer, where gradient variance is highest. Combining these two techniques lead to SCALE (Stochastic Column-normAlized Last-layer momEntum), a simple optimizer for memory efficient pretraining. Across multiple models (60M-1B), SCALE matches or exceeds the performance of Adam while using only 35-45% of the total memory. It also consistently outperforms memory-efficient optimizers such as GaLore, Fira and APOLLO, making it a strong candidate for large-scale pretraining under memory constraints. For LLaMA 7B, SCALE outperforms the state-of-the-art memory-efficient methods APOLLO and Muon in both perplexity and memory consumption.",
+  "comment": "Accepted at ICML 2026",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2506.16659",
+  "published": "2025-06-20",
+  "queries": [
+   "optimizer_secondorder"
+  ],
+  "score": 26,
+  "status": "screened",
+  "title": "Memory-Efficient LLM Pretraining via Minimalist Optimizer Design",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 normaliz",
+   "+3 perplexity",
+   "+2 gradient",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2507.11005": {
+  "abstract": "We propose AdaMuon, a novel optimizer that combines element-wise adaptivity with orthogonal updates for large-scale neural network training. AdaMuon incorporates two tightly coupled mechanisms: (1) an element-wise second momentum estimator applied to orthogonalized update directions, and (2) a sign-stabilized orthogonal update, where the momentum is first sign-transformed before orthogonalization. These two components jointly enable variance-adaptive scaling while maintaining stable update geometry. In addition, AdaMuon employs an RMS-aligned rescaling strategy to match the root-mean-square update magnitude to Adam, allowing direct reuse of existing learning rate schedules without extra tuning. Experiments demonstrate that AdaMuon not only maintains stability but can surpass Adam by more than 40\\% training efficiency in large-scale scenarios.",
+  "comment": "Codes are available at https://github.com/Chongjie-Si/AdaMuon",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2507.11005",
+  "published": "2025-07-15",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 15,
+  "status": "screened",
+  "title": "AdaMuon: Adaptive Muon Optimizer",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 stability"
+  ]
+ },
+ "2507.12466": {
+  "abstract": "Every data selection method inherently has a target. In practice, these targets often emerge implicitly through benchmark-driven iteration: researchers develop selection strategies, train models, measure benchmark performance, then refine accordingly. This raises a natural question: what happens when we make this optimization explicit? To explore this, we propose benchmark-targeted ranking (BETR), a simple method that selects pretraining documents based on similarity to benchmark training examples. BETR embeds benchmark examples and a sample of pretraining documents in a shared space, scores this sample by similarity to benchmarks, then trains a lightweight classifier to predict these scores for the full corpus. We compare data selection methods by training over 500 models spanning $10^{19}$ to $10^{22}$ FLOPs and fitting scaling laws to them. From this, we find that simply aligning pretraining data to evaluation benchmarks using BETR achieves a 2.1x compute multiplier over DCLM-Baseline (4.7x over unfiltered data) and improves performance on 9 out of 10 tasks across all scales. BETR also generalizes well: when targeting a diverse set of benchmarks disjoint from our evaluation suite, it still matches or outperforms baselines. Our scaling analysis further reveals a clear trend: larger models require less aggressive filtering. Overall, our findings show that directly matching pretraining data to target tasks precisely shapes model capabilities and highlight that optimal selecti",
+  "comment": "44 pages, 25 figures, 13 tables",
+  "families": [
+   "capacity"
+  ],
+  "id": "2507.12466",
+  "published": "2025-07-16",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Language Models Improve When Pretraining Data Matches Target Tasks",
+  "why": [
+   "+3 pretrain",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2508.20326": {
+  "abstract": "Stochastic gradient optimization is the dominant learning paradigm for a variety of scenarios, from classical supervised learning to modern self-supervised learning. We consider stochastic gradient algorithms for learning problems whose objectives rely on unknown nuisance parameters, and establish non-asymptotic convergence guarantees. Our results show that, while the presence of a nuisance can alter the optimum and upset the optimization trajectory, the classical stochastic gradient algorithm may still converge under appropriate conditions, such as Neyman orthogonality. Moreover, even when Neyman orthogonality is not satisfied, we show that an algorithm variant with approximately orthogonalized updates (with an approximately orthogonalized gradient oracle) may achieve similar convergence rates. Examples from orthogonal statistical learning/double machine learning and causal inference are discussed.",
+  "comment": "Published at NeurIPS 2025",
+  "families": [
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2508.20326",
+  "published": "2025-08-28",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Stochastic Gradients under Nuisances",
+  "why": [
+   "+2 convergence",
+   "+2 gradient",
+   "-3 inference",
+   "+5 neurips"
+  ]
+ },
+ "2509.01440": {
+  "abstract": "The recent development of Large Language Models (LLMs) has been accompanied by an effervescence of novel ideas and methods to better optimize the loss of deep learning models. Claims from those methods are myriad: from faster convergence to removing reliance on certain hyperparameters. However, the diverse experimental protocols used to validate these claims make direct comparisons between methods challenging. This study presents a comprehensive evaluation of recent optimization techniques across standardized LLM pretraining scenarios, systematically varying model size, batch size, and training duration. Through careful tuning of each method, we provide guidance to practitioners on which optimizer is best suited for each scenario. For researchers, our work highlights promising directions for future optimization research. Finally, by releasing our code and making all experiments fully reproducible, we hope our efforts can help the development and rigorous benchmarking of future methods.",
+  "comment": "73 pages, 44 figures, 48 tables",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2509.01440",
+  "published": "2025-09-01",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "Benchmarking Optimizers for Large Language Model Pretraining",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+2 batch size",
+   "+2 convergence",
+   "+2 loss",
+   "+2 reproduc",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2509.02981": {
+  "abstract": "The recently proposed Muon optimizer updates weight matrices via orthogonalized momentum and has demonstrated strong empirical success in large language model training. However, it remains unclear how to determine the learning rates for such orthogonalized updates. AdaGrad, by contrast, is a widely used adaptive method that scales stochastic gradients by accumulated past gradients. We propose a new algorithm, AdaGO, which combines a norm-based AdaGrad-type stepsize with an orthogonalized update direction, bringing together the benefits of both approaches. Unlike other adaptive variants of Muon, AdaGO preserves the orthogonality of the update direction, which can be interpreted as a spectral descent direction, while adapting the stepsizes to the optimization landscape by scaling the direction with accumulated past gradient norms. The implementation of AdaGO requires only minimal modification to Muon, with a single additional scalar variable, the accumulated squared gradient norms, to be computed, making it computationally and memory efficient. Optimal theoretical convergence rates are established for nonconvex functions in both stochastic and deterministic settings under standard smoothness and unbiased bounded-variance noise assumptions. Empirical results on CIFAR-10 classification and function regression demonstrate that AdaGO outperforms Muon and Adam.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2509.02981",
+  "published": "2025-09-03",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 18,
+  "status": "screened",
+  "title": "AdaGrad Meets Muon: Adaptive Stepsizes for Orthogonal Updates",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+3 learning rate",
+   "+2 convergence",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.05491": {
+  "abstract": "The choice of optimizer significantly impacts the training efficiency and computational costs of large language models (LLMs). Recently, the Muon optimizer has demonstrated promising results by orthogonalizing parameter updates, improving optimization geometry through better conditioning. Despite Muon's emergence as a candidate successor to Adam, the potential for jointly leveraging their strengths has not been systematically explored. In this work, we bridge this gap by proposing NorMuon (Neuron-wise Normalized Muon), an optimizer that synergistically combines orthogonalization with neuron-level adaptive learning rates. Our analysis reveals that while Muon effectively reduces condition numbers, the resulting updates exhibit highly non-uniform neuron norms, causing certain neurons to dominate the optimization process. NorMuon addresses this imbalance by maintaining second-order momentum statistics for each neuron and applying row-wise normalization after orthogonalization, ensuring balanced parameter utilization while preserving Muon's conditioning benefits. To enable practical deployment at scale, we develop an efficient distributed implementation under the FSDP2 framework that strategically distributes orthogonalization computations across devices. Experiments across multiple model scales demonstrate that NorMuon consistently outperforms both Adam and Muon, achieving 21.74% better training efficiency than Adam and 11.31% improvement over Muon on 1.1 B pretraining setting, w",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2510.05491",
+  "published": "2025-10-07",
+  "queries": [
+   "optimizer_secondorder"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "NorMuon: Making Muon more efficient and scalable",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+3 learning rate",
+   "+2 normaliz",
+   "-4 serving",
+   "-3 deployment"
+  ]
+ },
+ "2510.09103": {
+  "abstract": "In the training of large language models, momentum is widely used and often demonstrated to achieve significant acceleration. However, storing momentum typically presents memory challenges. In this paper, we propose AdaPM, an adaptive training strategy that leverages partial momentum to implement a memory-efficient optimizer. To this end, AdaPM utilizes a non-uniform momentum design: for most blocks, full momentum is not necessary to preserve the performance of the optimization. In the momentum design of AdaPM, to mitigate the bias and performance loss caused by partial momentum, we enhance the partial momentum by a bias correction technique. Empirically, we verify that our approach reduces memory by over $90\\%$ in momentum while maintaining both efficiency and performance for pretraining various language models ranging from 60M to 1.5B, as well as for supervised fine-tuning and RLHF. AdaPM can further reduce memory by up to $95\\%$ in optimizer states by combining the memory-efficient technique on the second-order statistic, saving over $30\\%$ GPU hours for pretraining GPT-2 1.5B.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2510.09103",
+  "published": "2025-10-10",
+  "queries": [
+   "optimizer_secondorder"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "AdaPM: a Partial Momentum Algorithm for LLM Training",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+2 loss",
+   "+3 gpt-2",
+   "-4 rlhf",
+   "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.16981": {
+  "abstract": "Gradient orthogonalization is a simple strategy that shows great utility in speeding up gradient descent. The Muon optimizer (Jordan, Jin, et al., 2024) combines gradient orthogonalization with first-order momentum and achieves significant improvement in data efficiency over Adam/AdamW (Loshchilov and Hutter, 2019) for language model training. However, when using model parallelism, gradient orthogonalization introduces additional overhead compared to coordinate-wise optimizers (such as AdamW) due to additional gather and scatter operations on gradient matrix shards from different devices. This additional communication can amount to a throughput hit of 5%-10% compared to Adam/AdamW. To remedy this, we propose Muon with Block-Periodic Orthogonalization (MuonBP), which applies orthogonalization independently to matrix shards on each device and periodically performs full orthogonalization to maintain training stability at scale. We show how to adjust the learning rate from the baseline to MuonBP and give convergence guarantees for this algorithm. Crucially, our theory dictates that we use two stepsizes: one for the blockwise orthogonalization steps, and one for the full orthogonalization steps. Our method is simple, requires minimal hyperparameter adjustments, and achieves competitive iteration complexity compared with baseline Muon while providing per-iteration throughput comparable to coordinate-wise methods such as AdamW. When training an 8B model with eight-way tensor paralle",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2510.16981",
+  "published": "2025-10-19",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 23,
+  "status": "screened",
+  "title": "MuonBP: Faster Muon via Block-Periodic Orthogonalization",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+3 learning rate",
+   "+3 throughput",
+   "+2 convergence",
+   "+2 stability",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.21800": {
+  "abstract": "Matrix-based preconditioned optimizers, such as Muon, have recently been shown to be more efficient than scalar-based optimizers for training large-scale neural networks, including large language models (LLMs). Recent benchmark studies of LLM pretraining optimizers have demonstrated that variance-reduction techniques such as MARS can substantially speed up training compared with standard optimizers that do not employ variance reduction. In this paper, we introduce MARS-M, a new optimizer that integrates MARS-style variance reduction with Muon. Under standard regularity conditions, we prove that MARS-M converges to a first-order stationary point at a rate of $\\tilde{\\mathcal{O}}(T^{-1/3})$, improving upon the $\\tilde{\\mathcal{O}}(T^{-1/4})$ rate attained by Muon. Empirical results on language modeling and computer vision tasks demonstrate that MARS-M consistently yields lower losses and improved performance across various downstream benchmarks. The implementation of MARS-M is available at https://github.com/AGI-Arena/MARS/tree/main/MARS_M.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "optimizer_numeric"
+  ],
+  "id": "2510.21800",
+  "published": "2025-10-20",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 13,
+  "status": "screened",
+  "title": "MARS-M: When Variance Reduction Meets Matrices",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 loss"
+  ]
+ },
+ "2510.27486": {
+  "abstract": "AdamW has become one of the most effective optimizers for training large-scale models. We have also observed its effectiveness in the context of federated learning (FL). However, directly applying AdamW in federated learning settings poses significant challenges: (1) due to data heterogeneity, AdamW often yields high variance in the second-moment estimate $\\boldsymbol{v}$; (2) the local overfitting of AdamW may cause client drift; and (3) Reinitializing moment estimates ($\\boldsymbol{v}$, $\\boldsymbol{m}$) at each round slows down convergence. To address these challenges, we propose the first \\underline{Fed}erated \\underline{AdamW} algorithm, called \\texttt{FedAdamW}, for training and fine-tuning various large models. \\texttt{FedAdamW} aligns local updates with the global update using both a \\textbf{local correction mechanism} and decoupled weight decay to mitigate local overfitting. \\texttt{FedAdamW} efficiently aggregates the \\texttt{mean} of the second-moment estimates to reduce their variance and reinitialize them. Theoretically, we prove that \\texttt{FedAdamW} achieves a linear speedup convergence rate of $\\mathcal{O}(\\sqrt{(L \u0394\u03c3_l^2)/(S K R \u03b5^2)}+(L \u0394)/R)$ without \\textbf{heterogeneity assumption}, where $S$ is the number of participating clients per round, $K$ is the number of local iterations, and $R$ is the total number of communication rounds. We also employ PAC-Bayesian generalization analysis to explain the effectiveness of decoupled weight decay in local training",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2510.27486",
+  "published": "2025-10-31",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 13,
+  "status": "screened",
+  "title": "FedAdamW: A Communication-Efficient Optimizer with Convergence and Generalization Guarantees for Federated Large Models",
+  "why": [
+   "+3 optimizer",
+   "+3 weight decay",
+   "+3 initializ",
+   "+2 convergence",
+   "-3 fine-tun",
+   "+3 strong-lab signal",
+   "+2 code released"
+  ]
+ },
+ "2511.01918": {
+  "abstract": "Large language models (LLMs) are increasingly trained with classical optimization techniques like AdamW to improve convergence and generalization. However, the mechanisms by which quantum-inspired methods enhance classical training remain underexplored. We introduce Superpositional Gradient Descent (SGD), a novel optimizer linking gradient updates with quantum superposition by injecting quantum circuit perturbations. We present a mathematical framework and implement hybrid quantum-classical circuits in PyTorch and Qiskit. On synthetic sequence classification and large-scale LLM fine-tuning, SGD converges faster and yields lower final loss than AdamW. Despite promising results, scalability and hardware constraints limit adoption. Overall, this work provides new insights into the intersection of quantum computing and deep learning, suggesting practical pathways for leveraging quantum principles to control and enhance model behavior.",
+  "comment": "Accepted at 2025 IEEE International Conference on Quantum Artificial Intelligence (IEEE QAI 2025). This is the accepted version of the paper. The final published version will appear in the IEEE proceedings. \\c{opyright} 2025 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2511.01918",
+  "published": "2025-11-01",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "Superpositional Gradient Descent: Harnessing Quantum Principles for Model Training",
+  "why": [
+   "+3 optimizer",
+   "+2 convergence",
+   "+2 loss",
+   "+2 gradient",
+   "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2511.06086": {
+  "abstract": "Muon optimizer has demonstrated robust results in pretraining of language models but its performance in finetuning of existing public pretrained models is not yet explored. Currently, Muon is used along with AdamW introducing a scope of improvement for adopting all parameters inside Muon. We introduce MuonAll, which incorporates all the parameters inside Muon by transforming into 2D matrices. We conduct extensive finetuning experiments across publicly available language models with model sizes upto half billion parameters. Muon and MuonAll perform at par with AdamW across major benchmarks, highlighting their effectiveness as alternative optimizers. We open-source the distributed implementations of Muon and MuonAll, available at https://github.com/Saurabh750/optimizer",
+  "comment": "",
+  "families": [
+   "optimizer_numeric"
+  ],
+  "id": "2511.06086",
+  "published": "2025-11-08",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 14,
+  "status": "screened",
+  "title": "MuonAll: Muon Variant for Efficient Finetuning of Large Language Models",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+1 open-source",
+   "+2 code released"
+  ]
+ },
+ "2511.07843": {
+  "abstract": "As deep learning methods increasingly utilize sensitive data on a widespread scale, differential privacy (DP) offers formal guarantees to protect against information leakage during model training. A significant challenge remains in implementing DP optimizers that retain strong performance while preserving privacy. Recent advances introduced ever more efficient optimizers, with AdamW being a popular choice for training deep learning models because of strong empirical performance. We study \\emph{DP-AdamW} and introduce \\emph{DP-AdamW-BC}, a differentially private variant of the AdamW optimizer with DP bias correction for the second moment estimator. We start by showing theoretical results for privacy and convergence guarantees of DP-AdamW and DP-AdamW-BC. Then, we empirically analyze the behavior of both optimizers across multiple privacy budgets ($\u03b5= 1, 3, 7$). We find that DP-AdamW outperforms existing state-of-the-art differentially private optimizers like DP-SGD, DP-Adam, and DP-AdamBC, scoring over 15\\% higher on text classification, up to 5\\% higher on image classification, and consistently 1\\% higher on graph node classification. Moreover, we empirically show that incorporating bias correction in DP-AdamW (DP-AdamW-BC) consistently decreases accuracy, in contrast to the improvement of DP-AdamBC improvement over DP-Adam.",
+  "comment": "19 pages, 5 appendices; presented at ICML 2025 DIG-BUGS Workshop",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2511.07843",
+  "published": "2025-11-11",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "DP-AdamW: Investigating Decoupled Weight Decay and Bias Correction in Private Deep Learning",
+  "why": [
+   "+3 optimizer",
+   "+3 weight decay",
+   "+2 convergence",
+   "-4 serving",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2601.14603": {
+  "abstract": "Large Language Models (LLMs) achieve competitive performance across diverse natural language processing (NLP) tasks, yet pretraining is computationally demanding, making optimizer efficiency an important practical consideration. Muon accelerates LLM pretraining via orthogonal momentum updates that serve as a matrix analogue of the element-wise sign operator. Motivated by the recent perspective that Adam is a variance-adaptive sign update algorithm, we propose two variants of Muon, Muon-NSR and Muon-VS, which apply variance-adaptive normalization to momentum before orthogonalization. Muon-NSR applies noise-to-signal ratio (NSR) modulation, while Muon-VS performs variance-based scaling without introducing additional hyperparameters. Experiments on GPT-2 and LLaMA pretraining demonstrate that our proposed methods accelerate convergence and consistently achieve lower validation loss than both competitive, well-tuned AdamW and Muon baselines. For example, on the LLaMA-1.2B model, Muon-NSR and Muon-VS reduce the iterations required to reach the target validation loss by $1.36\\times$ relative to the well-tuned Muon following the recent benchmark.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2601.14603",
+  "published": "2026-01-21",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 23,
+  "status": "screened",
+  "title": "Variance-Adaptive Muon: Accelerating LLM Pretraining with NSR-Modulated and Variance-Scaled Momentum",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 normaliz",
+   "+2 convergence",
+   "+2 loss",
+   "+3 gpt-2",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2601.19400": {
+  "abstract": "The Muon optimizer has recently attracted attention due to its orthogonalized first-order updates, and a deeper theoretical understanding of its convergence behavior is essential for guiding practical applications; however, existing convergence guarantees are either coarse or obtained under restrictive analytical settings. In this work, we establish sharper convergence guarantees for the Muon optimizer through a direct and simplified analysis that does not rely on restrictive assumptions on the update rule. Our results improve upon existing bounds by achieving faster convergence rates while covering a broader class of problem settings. These findings provide a more accurate theoretical characterization of Muon and offer insights applicable to a broader class of orthogonalized first-order methods.",
+  "comment": "",
+  "families": [
+   "attention",
+   "optimizer_numeric"
+  ],
+  "id": "2601.19400",
+  "published": "2026-01-27",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 15,
+  "status": "screened",
+  "title": "Improved Convergence Rates of Muon Optimizer for Nonconvex Optimization",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+2 attention",
+   "+2 convergence",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2601.21750": {
+  "abstract": "Training large-scale neural networks requires solving nonconvex optimization where the choice of optimizer fundamentally determines both convergence behavior and computational efficiency. While adaptive methods like Adam have long dominated practice, the recently proposed Muon optimizer achieves superior performance through orthogonalized momentum updates that enforce isotropic geometry with uniform singular values. However, this strict isotropy discards potentially valuable curvature information encoded in gradient spectra, motivating optimization methods that balance geometric structure with adaptivity. We introduce FISMO (Fisher-Structured Momentum-Orthogonalized) optimizer, which generalizes isotropic updates to incorporate anisotropic curvature information through Fisher information geometry. By reformulating the optimizer update as a trust-region problem constrained by a Kronecker-factored Fisher metric, FISMO achieves structured preconditioning that adapts to local loss landscape geometry while maintaining computational tractability. We establish convergence guarantees for FISMO in stochastic nonconvex settings, proving an $\\mathcal{O}(1/\\sqrt{T})$ rate for the expected squared gradient norm with explicit characterization of variance reduction through mini-batching. Empirical evaluation on image classification and language modeling benchmarks demonstrates that FISMO achieves superior training efficiency and final performance compared to established baselines.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2601.21750",
+  "published": "2026-01-29",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "FISMO: Fisher-Structured Momentum-Orthogonalized Optimizer",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+2 loss",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.01105": {
+  "abstract": "Many optimizers can be interpreted as steepest-descent methods under norm-induced geometries, and thus inherit corresponding implicit biases. We introduce \\nameA{} (\\fullname{}), which combines spectral control from orthogonalized update directions with $\\ell_\\infty$-style coordinate control from sign updates. \\nameA{} forms a Lion-style momentum direction, approximately orthogonalizes it via a few Newton--Schulz iterations, and then applies an entrywise sign, providing an efficient approximation to taking a maximal step over the intersection of the spectral and $\\ell_\\infty$ constraint sets (a scaled Hadamard-like set for matrix parameters). Despite the strong nonlinearity of orthogonalization and sign, we prove convergence under a mild, empirically verified diagonal-isotropy assumption. Across large-scale language and vision training, including GPT-2 and Llama pretraining, SiT image pretraining, and supervised fine-tuning, \\nameA{} matches or outperforms AdamW and Muon under comparable tuning while using only momentum-level optimizer state, and it mitigates optimizer mismatch when fine-tuning AdamW-pretrained checkpoints.",
+  "comment": "23 pages",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2602.01105",
+  "published": "2026-02-01",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 16,
+  "status": "screened",
+  "title": "OLion: Approaching the Hadamard Ideal by Intersecting Spectral and $\\ell_{\\infty}$ Implicit Biases",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+3 gpt-2",
+   "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.11139": {
+  "abstract": "Tabular foundation models, such as TabPFNv2 and TabICL, have recently dethroned gradient-boosted trees at the top of predictive benchmarks, demonstrating the value of in-context learning for tabular data. We introduce TabICLv2, a new state-of-the-art foundation model for regression and classification built on three pillars: (1) a novel synthetic data generation engine designed for high pretraining diversity; (2) various architectural innovations, including a new scalable softmax in attention improving generalization to larger datasets without prohibitive long-sequence pretraining; and (3) optimized pretraining protocols, notably replacing AdamW with the Muon optimizer. On the TabArena and TALENT benchmarks, TabICLv2 without any tuning surpasses the performance of the current state of the art, RealTabPFN-2.5 (hyperparameter-tuned, ensembled, and fine-tuned on real data). With only moderate pretraining compute, TabICLv2 generalizes effectively to million-scale datasets under 50GB GPU memory while being markedly faster than RealTabPFN-2.5. We provide extensive ablation studies to quantify these contributions and commit to open research by first releasing inference code and model weights at https://github.com/soda-inria/tabicl, with synthetic data engine and pretraining code to follow.",
+  "comment": "",
+  "families": [
+   "attention",
+   "optimizer_numeric"
+  ],
+  "id": "2602.11139",
+  "published": "2026-02-11",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 13,
+  "status": "screened",
+  "title": "TabICLv2: A better, faster, scalable, and open tabular foundation model",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 attention",
+   "+3 ablation",
+   "+2 gradient",
+   "-3 inference",
+   "-3 fine-tun"
+  ]
+ },
+ "2602.16167": {
+  "abstract": "Physics-informed neural networks and neural operators often suffer from severe optimization difficulties caused by ill-conditioned gradients, multi-scale spectral behavior, and stiffness induced by physical constraints. Recently, the Muon optimizer has shown promise by performing orthogonalized updates in the singular-vector basis of the gradient, thereby improving geometric conditioning. However, its unit-singular-value updates may lead to overly aggressive steps and lack explicit stability guarantees when applied to physics-informed learning. In this work, we propose SpecMuon, a spectral-aware optimizer that integrates Muon's orthogonalized geometry with a mode-wise relaxed scalar auxiliary variable (RSAV) mechanism. By decomposing matrix-valued gradients into singular modes and applying RSAV updates individually along dominant spectral directions, SpecMuon adaptively regulates step sizes according to the global loss energy while preserving Muon's scale-balancing properties. This formulation interprets optimization as a multi-mode gradient flow and enables principled control of stiff spectral components. We establish rigorous theoretical properties of SpecMuon, including a modified energy dissipation law, positivity and boundedness of auxiliary variables, and global convergence with a linear rate under the Polyak-Lojasiewicz condition. Numerical experiments on physics-informed neural networks, DeepONets, and fractional PINN-DeepONets demonstrate that SpecMuon achieves faste",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "optimizer_numeric"
+  ],
+  "id": "2602.16167",
+  "published": "2026-02-18",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 15,
+  "status": "screened",
+  "title": "Muon with Spectral Guidance: Efficient Optimization for Scientific Machine Learning",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+2 loss",
+   "+2 stability",
+   "+2 gradient",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.17080": {
+  "abstract": "Efficient stochastic optimization typically integrates an update direction that performs well in the deterministic regime with a mechanism adapting to stochastic perturbations. While Adam uses adaptive moment estimates to promote stability, Muon utilizes the weight layers' matrix structure via orthogonalized momentum, showing superior performance in large language model training. We propose a new optimizer and a diagonal extension, NAMO and NAMO-D, providing the first principled integration of orthogonalized momentum with norm-based Adam-type noise adaptation. NAMO scales orthogonalized momentum using a single adaptive stepsize, preserving orthogonality while improving upon Muon at negligible additional cost. NAMO-D instead right-multiplies orthogonalized momentum by a diagonal matrix with clamped entries. This design enables neuron-wise noise adaptation and aligns with the common near block-diagonal Hessian structure. Under standard assumptions, we establish optimal convergence rates for both algorithms in the deterministic setting and show that, in the stochastic setting, their convergence guarantees adapt to the noise level of stochastic gradients. Experiments on pretraining GPT-2 models demonstrate improved performance of both NAMO and NAMO-D compared to the AdamW and Muon baselines, with NAMO-D achieving further gains over NAMO via an additional clamping hyperparameter that balances the competing goals of maintaining a well-conditioned update direction and leveraging fin",
+  "comment": "39 pages, 6 figures",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2602.17080",
+  "published": "2026-02-19",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 16,
+  "status": "screened",
+  "title": "Adam Improves Muon: Adaptive Moment Estimation with Orthogonalized Momentum",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+3 gpt-2",
+   "+2 stability",
+   "+2 gradient",
+   "-4 serving"
+  ]
+ },
+ "2603.00416": {
+  "abstract": "Recommender systems (RecSys) are increasingly emphasizing scaling, leveraging larger architectures and more interaction data to improve personalization. Yet, despite the optimizer's pivotal role in training, modern RecSys pipelines almost universally default to Adam/AdamW, with limited scrutiny of whether these choices are truly optimal for recommendation. In this work, we revisit optimizer design for scalable recommendation and introduce MuonRec, the first framework that brings the recently proposed Muon optimizer to RecSys training. Muon performs orthogonalized momentum updates for 2D weight matrices via Newton-Schulz iteration, promoting diverse update directions and improving optimization efficiency. We develop an open-source training recipe for recommendation models and evaluate it across both traditional sequential recommenders and modern generative recommenders. Extensive experiments demonstrate that MuonRec reduces converged training steps by an average of 32.4\\% while simultaneously improving final ranking quality. Specifically, MuonRec yields consistent relative gains in NDCG@10, averaging 12.6\\% across all settings, with particularly pronounced improvements in generative recommendation models. These results consistently outperform strong Adam/AdamW baselines, positioning Muon as a promising new optimizer standard for RecSys training. Our code is available.",
+  "comment": "Under Review",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2603.00416",
+  "published": "2026-02-28",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "MuonRec: Shifting the Optimizer Paradigm Beyond Adam in Scalable Generative Recommendation",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+1 open-source",
+   "-4 recommendation",
+   "+3 strong-lab signal",
+   "+2 code released"
+  ]
+ },
+ "2603.19149": {
+  "abstract": "Language models achieve impressive performance on a variety of knowledge, language, and reasoning tasks due to the scale and diversity of pretraining data available. The standard training recipe is a two-stage paradigm: pretraining first on the full corpus of data followed by specialization on a subset of high quality, specialized data from the full corpus. In the multi-domain setting, this involves continued pretraining of multiple models on each specialized domain, referred to as split model training. We propose a method for pretraining multiple models independently over a general pretraining corpus, and determining the optimal compute allocation between pretraining and continued pretraining using scaling laws. Our approach accurately predicts the loss of a model of size N with D pretraining and D' specialization tokens, and extrapolates to larger model sizes and number of tokens. Applied to language model training, our approach improves performance consistently across common sense knowledge and reasoning benchmarks across different model sizes and compute budgets.",
+  "comment": "26 pages, 11 tables, 17 figures",
+  "families": [
+   "capacity"
+  ],
+  "id": "2603.19149",
+  "published": "2026-03-19",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Optimal Splitting of Language Models from Mixtures to Specialized Domains",
+  "why": [
+   "+3 pretrain",
+   "+2 loss",
+   "-2 reasoning",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2604.07663": {
+  "abstract": "The AdamW optimizer, while standard for LLM pretraining, is a critical memory bottleneck, consuming optimizer states equivalent to twice the model's size. Although light-state optimizers like SinkGD attempt to address this issue, we identify the embedding layer dilemma: these methods fail to handle the sparse, high-variance gradients inherent to embeddings, forcing a hybrid design that reverts to AdamW and partially negates the memory gains. We propose SAGE (Sign Adaptive GradiEnt), a novel optimizer that resolves this dilemma by replacing AdamW in this hybrid structure. SAGE combines a Lion-style update direction with a new, memory-efficient $O(d)$ adaptive scale. This scale acts as a \"safe damper,\" provably bounded by 1.0, which tames high-variance dimensions more effectively than existing methods. This superior stability allows SAGE to achieve better convergence. On Llama models up to 1.3B parameters, our SAGE-based hybrid achieves new state-of-the-art perplexity, outperforming all baselines, including SinkGD hybrid, while significantly reducing optimizer state memory.",
+  "comment": "Accepted to Findings of the Association for Computational Linguistics: ACL 2026. 13 pages, 4 figures, 4 tables",
+  "families": [
+   "ve_placement",
+   "signal_scale",
+   "optimizer_numeric"
+  ],
+  "id": "2604.07663",
+  "published": "2026-04-09",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 21,
+  "status": "screened",
+  "title": "SAGE: Sign-Adaptive Gradient for Memory-Efficient LLM Optimization",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+2 convergence",
+   "+3 perplexity",
+   "+2 stability",
+   "+2 gradient",
+   "+3 acl",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2604.21153": {
+  "abstract": "This paper studies 43-class malware type classification on MalNet-Image Tiny, a public benchmark derived from Android APK files. The goal is to assess whether a compact image classifier benefits from four components evaluated in a controlled ablation: a feature pyramid network (FPN) for scale variation induced by resizing binaries of different lengths, ImageNet pretraining, lightweight augmentation through Mixup and TrivialAugment, and schedule-free AdamW optimization. All experiments use a ResNet18 backbone and the provided train/validation/test split. Reproducing the benchmark-style configuration yields macro-F1 (F1_macro) of 0.6510, consistent with the reported baseline of approximately 0.65. Replacing the optimizer with schedule-free AdamW and using unweighted cross-entropy increases F1_macro to 0.6535 in 10 epochs, compared with 96 epochs for the reproduced baseline. The best configuration combines pretraining, Mixup, TrivialAugment, and FPN, reaching F1_macro=0.6927, P_macro=0.7707, AUC_macro=0.9556, and L_test=0.8536. The ablation indicates that the largest gains in F1_macro arise from pretraining and augmentation, whereas FPN mainly improves P_macro, AUC_macro, and L_test in the strongest configuration.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "systems"
+  ],
+  "id": "2604.21153",
+  "published": "2026-04-22",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 16,
+  "status": "screened",
+  "title": "Image-Based Malware Type Classification on MalNet-Image Tiny: Effects of Multi-Scale Fusion, Transfer Learning, Data Augmentation, and Schedule-Free Optimization",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+2 schedule",
+   "+3 ablation",
+   "+2 reproduc",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.01255": {
+  "abstract": "Training large language models (LLMs) is highly memory-intensive, as training must store not only weights and optimizer states but also intermediate activations for backpropagation. While existing memory-efficient methods largely focus on gradients and optimizer states, activation compression is less well established due to the lack of LLM-tailored theory and guarantees. In this work, we develop a theoretical framework showing that activation compression is safe for linear operators when activation compression is unbiased, but problematic for nonlinear ones. We further derive gradient variance bound and establish convergence guarantees for applying activation compression to all linear operators under the standard $L$-smoothness assumption, showing that it does not change the convergence rate. Guided by the theory, we propose an activation-gradient co-compression method that reuses low-rank activation factors to compress linear-layer gradients without extra computation or additional gradient error. We conduct extensive experiments on Qwen and LLaMA models using a pretraining benchmark and multiple fine-tuning benchmarks to validate our theory and demonstrate competitive performance of our method in both accuracy and compression efficiency. We provide our code in the supplementary material for reproducibility.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2605.01255",
+  "published": "2026-05-02",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Activation Compression in LLMs: Theoretical Analysis and Efficient Algorithm",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+2 convergence",
+   "+2 gradient",
+   "+2 reproduc",
+   "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.09176": {
+  "abstract": "Training large language models requires optimization algorithms that are not only statistically effective, but also computationally and memory efficient at extreme scale. Although Adam remains the dominant optimizer for large-scale language-model pretraining and fine-tuning, recent work has revisited nearly every component of the optimization stack: adaptive moment estimation, decoupled weight decay, memory footprint, curvature approximation, sign-based updates, large-batch stability, low-rank gradient structure, and matrix-wise orthogonalized updates. This survey reviews optimizer design for large language models through a systems-and-optimization lens. We organize the literature into classical first-order optimizers, adaptive optimizers, memory-efficient variants, second-order and curvature-aware methods, sign-based and discovered optimizers, low-rank and projection-based methods, and matrix-based optimizers such as Muon. We also discuss benchmarking methodology, including hyperparameter fairness, scale dependence, wall-clock efficiency, token efficiency, memory overhead, and downstream evaluation. We argue that optimizer research for LLMs is entering a new phase: moving from single-algorithm speedup claims toward rigorous, scale-aware comparisons that jointly evaluate convergence, stability, memory, and implementation complexity.",
+  "comment": "No figures, 65 pages",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "optimizer_numeric",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2605.09176",
+  "published": "2026-05-09",
+  "queries": [
+   "optimizer_benchmark",
+   "optimizer_orthogonal",
+   "optimizer_secondorder"
+  ],
+  "score": 22,
+  "status": "screened",
+  "title": "Navigating LLM Valley: From AdamW to Memory-Efficient and Matrix-Based Optimizers",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+3 weight decay",
+   "+4 wall-clock",
+   "+2 convergence",
+   "+2 stability",
+   "+2 gradient"
+  ]
+ },
+ "2605.15522": {
+  "abstract": "Much of the existing theory on first-order non-smooth optimization is built on a restrictive assumption that the gradients of the objective function are uniformly bounded. We introduce a much more realistic class of generalized Lipschitz functions, where the gradient norms are bounded by an affine function of the optimality gap. We then ask a natural question: what algorithm achieves the best global convergence rates for solving convex stochastic generalized Lipschitz optimization problems? To address this, we develop a new convergence analysis for several existing algorithms and find that AdamW with clipped updates, provably outperforms other popular stochastic optimization methods, such as SGD and AdaGrad. Moreover, our analysis establishes the critical role of AdamW's exponentially weighted gradient accumulation, as opposed to simple averaging. We further show that clipped AdamW is universal and achieves improved rates under the popular generalized smoothness assumption, analyze the convergence of clipped AdamW with diagonal and matrix preconditioners, and extend our results to the quasar-convex setting.",
+  "comment": "",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2605.15522",
+  "published": "2026-05-15",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Stochastic Non-Smooth Convex Optimization with Unbounded Gradients",
+  "why": [
+   "+2 convergence",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.26842": {
+  "abstract": "The Muon optimizer has recently offered a promising alternative to AdamW for large language model training, leveraging matrix orthogonalization to produce geometry-aware updates. However, like all first-order methods, Muon can become trapped in sharp local minima. In this work, we present MONA, an optimizer that bridges Muon's orthogonalization framework with curvature-aware acceleration. MONA adds an acceleration term directly into Muon's gradient processing pipeline. This term is calculated from the exponential moving average of gradient differences. We provide a detailed convergence analysis for MONA, showing that the acceleration term enables escape from sharp minima while preserving Muon's spectral-norm regularization. Empirically, MONA achieves better convergence and downstream task performance compared to both Muon and AdamW across three scales of Mixture-of-Experts pretraining, spanning from 1B to 68B parameters, with the largest model trained on 1 trillion tokens. Furthermore, we conduct supervised fine-tuning on the MOE-68B-A3B model and evaluate it on general capability, mathematical reasoning, and code generation benchmarks, where MONA achieves SOTA performance.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2605.26842",
+  "published": "2026-05-26",
+  "queries": [
+   "optimizer_adam_variants",
+   "optimizer_benchmark"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "MONA: Muon Optimizer with Nesterov Acceleration for Scalable Language Model Training",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+2 gradient",
+   "-4 serving",
+   "-3 fine-tun",
+   "-2 reasoning"
+  ]
+ },
+ "2605.26929": {
+  "abstract": "Adversarial training (AT) remains one of the most reliable empirical defenses against adversarial attacks. Its robustness critically depends on how the underlying min-max objective is optimized. In practice, Stochastic Gradient Descent (SGD) optimizer remains the default optimization choice for AT, whereas adaptive optimizers often improve standard training but may yield inferior robustness. Recently, the Muon optimizer, which orthogonalizes matrix-valued updates via an approximate polar decomposition, has achieved notable success in large-scale training at a memory cost comparable to SGD. This raises a security-relevant question: \\textit{can orthogonalized optimization improve AT under strong and heterogeneous threat models?} Focusing on this problem, we conduct a comprehensive theoretical and empirical study. Theoretically, we show that Muon imposes a spectral-norm stability ceiling on matrix updates, limiting uncontrolled spectral growth in the training dynamics without explicitly shrinking the learned weights. Empirically, across five architectures and three $\\ell_p$ threat models ($\\ell_\\infty$, $\\ell_1$, $\\ell_2$) and their union, Muon is competitive with SGD on CNNs and substantially outperforms AdamW on both CNNs and ViTs. These results identify optimizer geometry as a security-relevant factor in adversarial training, while clarifying the empirical regimes in which orthogonalized updates are beneficial. Overall, our findings highlight optimizer design as a security-cr",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "objective",
+   "signal_path"
+  ],
+  "id": "2605.26929",
+  "published": "2026-05-26",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 15,
+  "status": "screened",
+  "title": "When Muon Optimizer Meets Adversarial Training: A Theoretical and Empirical Study",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+2 stability",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.28184": {
+  "abstract": "Reinforcement Learning from Verifiable Rewards (RLVR) has emerged as the standard paradigm for improving reasoning capability of large language models, while Multi-Token Prediction (MTP) has been a widely adopted module in pretraining. Combining them is a natural approach, yet current RL practices detach MTP gradients because joint training degrades the performance. We revisit this failure from an optimization perspective. We show that the per-step effect of MTP on the RL objective can be decomposed into two terms: a first-order correlation and a second-order perturbation penalty. This decomposition unifies three MTP training regimes: Detach, Cross-Entropy loss, and Policy loss, and explains why each succeeds or fails. Further analysis of policy loss reveals that, although it aligns with intuition, performance still degrades: the correlation term decays while the quadratic penalty persists. Guided by the analysis, we propose Optimal Coefficient Calibration (OCC), an adaptive scheme that tracks the optimal coefficient online via a log-probability proxy at negligible cost. Across six competition-level mathematical reasoning benchmarks, OCC consistently matches or exceeds the detach baseline, delivering improved joint MTP-RL training performance.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2605.28184",
+  "published": "2026-05-27",
+  "queries": [
+   "optimizer_secondorder"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Joint Training of Multi-Token Prediction in Reinforcement Learning via Optimal Coefficient Calibration",
+  "why": [
+   "+3 pretrain",
+   "+2 loss",
+   "+2 gradient",
+   "+3 multi-token prediction",
+   "-2 reasoning"
+  ]
+ },
+ "2606.17526": {
+  "abstract": "Efficient optimization is essential for training large language models. Although intra-layer selective updates have been explored, a general mechanism that enables fine-grained control while ensuring convergence guarantees is still lacking. To bridge this gap, we propose \\textbf{MGUP}, a novel mechanism for selective updates. \\textbf{MGUP} augments standard momentum-based optimizers by applying larger step-sizes to a selected fixed proportion of parameters in each iteration, while applying smaller, non-zero step-sizes to the rest. As a nearly {plug-and-play} module, \\textbf{MGUP} seamlessly integrates with optimizers such as AdamW, Lion, and Muon. This yields powerful variants such as \\textbf{MGUP-AdamW}, \\textbf{MGUP-Lion}, and \\textbf{MGUP-Muon}. Under standard assumptions, we provide theoretical convergence guarantees for \\textbf{MGUP-AdamW} (without weight decay) in stochastic optimization. Extensive experiments across diverse tasks, including MAE pretraining, LLM pretraining, and downstream fine-tuning, demonstrate that our \\textbf{MGUP}-enhanced optimizers achieve superior or more stable performance compared to their original base optimizers. We offer a principled, versatile, and theoretically grounded strategy for efficient intra-layer selective updates, accelerating and stabilizing the training of large-scale models. The code is publicly available at https://github.com/MaeChd/MGUP.",
+  "comment": "Published in NeurIPS 2025",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2606.17526",
+  "published": "2026-06-16",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 18,
+  "status": "screened",
+  "title": "MGUP: A Momentum-Gradient Alignment Update Policy for Stochastic Optimization",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+3 weight decay",
+   "+2 convergence",
+   "+2 gradient",
+   "-3 fine-tun",
+   "-2 alignment"
+  ]
+ },
+ "2606.23676": {
+  "abstract": "AdamW is the de facto optimizer for training large language models (LLMs), yet the theory behind it still lives mostly in finite-variance regimes. This is increasingly unsatisfying, as empirical evidence indicates that stochastic gradient noise in LLM pretraining is typically heavy-tailed. Recent work shows that sign-based optimizers such as Lion and Muon achieve sharp heavy-tailed rates, and that AdaGrad can also converge under heavy-tailed noise. However, no rigorous convergence theory for AdamW has yet been established in this regime. Can AdamW converge under the same heavy-tailed assumptions, or does its second-moment accumulator create a genuine obstruction? We formulate this as an open problem, prove a positive weighted-metric benchmark, and give a corridor lower-bound mechanism showing how denominator memory can hide large gradients.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "optimizer_numeric"
+  ],
+  "id": "2606.23676",
+  "published": "2026-06-22",
+  "queries": [
+   "optimizer_adam_variants",
+   "optimizer_benchmark"
+  ],
+  "score": 15,
+  "status": "screened",
+  "title": "Open Problem: Is AdamW Effective Under Heavy-Tailed Noise?",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+2 gradient"
+  ]
+ },
+ "2607.04033": {
+  "abstract": "Optimizer selection for large-scale model training has become a system-level design decision constrained jointly by compute, memory, tuning budget, and task diversity, yet the landscape of over one hundred methods remains fragmented. We therefore present OmniOpt, a unified survey and benchmark cookbook of optimizers for the research community. OmniOpt rests on four coupled components. First, we treat every optimizer update as a structured transformation through a five-stage meta-pipeline, and show that most methods engage only one or two of these stages. Second, we use norm-constrained linear minimization oracles (LMOs) to unify different optimizers. Third, these two views ground a dual-dimension taxonomy, one dimension assigning each method to a mechanism family and the other recording the measurable training objectives it aims to improve. Fourth, and at the core of this paper, we instantiate the full taxonomy in a unified cross-domain benchmark spanning representative optimizers, model scales, and training regimes from language model pretraining to image classification, systematically analyzing each method family across multiple effect objectives and laying out their trade-offs. OmniOpt thus supplies the research community with an operational coordinate system for selecting optimizers under explicit mechanism and objective assumptions, and charts a direction for the future development of the optimizer community.",
+  "comment": "Survey & benchmark preprint V1 (91 pages)",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2607.04033",
+  "published": "2026-07-04",
+  "queries": [
+   "optimizer_benchmark"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "OmniOpt: Taxonomy, Geometry, and Benchmarking of Modern Optimizers",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "-2 survey",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.16268": {
+  "abstract": "Adaptive optimizers such as Adam and AdamW apply the same update rule regardless of whether training is in a chaotic early phase or near convergence. We introduce PsiLogic, an optimizer that augments Adam with a dynamic Active Cancellation Term gated by a dual exponential moving average (EMA) of scale-normalized gradient norms. The resulting chaos detector strengthens damping when gradient statistics are unstable and fades to zero as training stabilizes, providing an implicit warmup without a hand-tuned schedule. We evaluate PsiLogic against Adam, AdamW, and Lion using FairBench -- a reproducible benchmark protocol with per-optimizer learning-rate sweeps, identical initialization per seed, and Welch t-tests. On an NVIDIA H100 80GB reference run (4 arenas, 3 seeds, 2000 steps, bf16 AMP), PsiLogic achieves the best validation metric in three of four arenas: NLP perplexity 7.79 +/- 0.18 vs. 8.17 +/- 0.08 (AdamW, p = 0.049), ViT top-1 accuracy 0.244 +/- 0.006 vs. 0.223 +/- 0.002 (AdamW, p = 0.015), and ResNet top-1 accuracy 0.222 +/- 0.001 vs. 0.172 +/- 0.004 (Adam, p = 0.001). On diffusion, validation MSE is statistically tied with Adam/AdamW (p = 0.49). ResNet accuracy vs. AdamW is a numerical tie without significance at three seeds (p = 0.44). Peak GPU memory is comparable across optimizers; PsiLogic incurs 1.2--1.8x wall-clock overhead on transformer-heavy arenas (implementation-bound). We release an open-source PyTorch implementation, the full FairBench harness, and all raw ",
+  "comment": "9 pages, 4 figures; code at https://github.com/Troxter222/psilogic",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2607.16268",
+  "published": "2026-07-05",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 35,
+  "status": "screened",
+  "title": "PsiLogic: Chaos-Aware Active Cancellation for Adam with a Fair Cross-Domain Benchmark",
+  "why": [
+   "+3 optimizer",
+   "+2 schedule",
+   "+3 warmup",
+   "+3 initializ",
+   "+2 normaliz",
+   "+4 wall-clock",
+   "+2 bf16",
+   "+2 convergence"
+  ]
+ },
+ "2607.20548": {
+  "abstract": "Higher-order optimizers such as Muon and SOAP offer faster convergence than AdamW, but their computational cost and numerical stability challenges have limited adoption at scale. In this work, we adapt and enhance preconditioned gradient methods to overcome the practical challenges of large-scale LLM pretraining. We first identify instabilities in SOAP at large batch sizes and propose algorithmic modifications including per-step QR orthogonalization and improved preconditioning strategies that eliminate loss spikes and enable stable training in these regimes. We then present a unified empirical study of SOAP, Muon, and AdamW using update-RMS matching to ensure fair learning rate transfer across optimizers. As part of this analysis, we empirically evaluate the orthogonalization quality of Muon. Our experiments on multi-billion-parameter models trained on trillions of tokens reveal that SOAP and Muon consistently outperform AdamW at the scales we tested. Notably, at batch sizes of up to 100M tokens for next-token prediction, these optimizers maintain training stability and quality while AdamW degrades. To enable efficient training at large scale, we introduce a layer-wise distributed optimizer compatible with Megatron-LM. Our implementation balances memory and hides communication while avoiding approximations to the optimizer computations, thus retaining their convergence benefits. Additionally, we identify and build specific system-level improvements to further accelerate our ",
+  "comment": "",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2607.20548",
+  "published": "2026-07-13",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 29,
+  "status": "screened",
+  "title": "SOAP, Muon, and Beyond: Pushing LLM Pretraining Scales",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+3 learning rate",
+   "+2 batch size",
+   "+2 convergence",
+   "+2 loss",
+   "+2 stability"
+  ]
+ },
+ "2608.01997": {
+  "abstract": "Single-optimizer training is a poor fit for the distinct phases of deep network optimization: adaptive methods handle noisy early gradients well but overshoot flat minima, while SGD with momentum generalizes better in the late phase but converges slowly early on. We introduce AOS-R (Adaptive Optimizer Switching, Rule-Based), a lightweight controller that monitors six online gradient-space signals -- gradient noise scale (GNS), Hutchinson curvature trace, loss stagnation, update stability ratio, gradient stability index (GSI), and loss improvement ratio (LIR) -- and switches among AdamW, SGD-M, and Lion as the optimization landscape evolves. State-preserving momentum transfer and a 400-step learning-rate bridge prevent accuracy degradation at every transition point. On CIFAR-100/WRN-28x10, AOS-R reaches 78% top-1 in 81 epochs -- 26% fewer than AdamW (109), 43% fewer than SGD-M (143), and 16% fewer than Lion (96). Across eight model-dataset benchmarks, AOS-R achieves best accuracy on 6 of 8 combinations with a mean +0.4 pp gain and 0.80x convergence speedup over AdamW under a single shared hyperparameter configuration.",
+  "comment": "6 Page, 3 figures, 4 tables",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2608.01997",
+  "published": "2026-08-03",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "AOS: Adaptive Optimizer Switching via Training-State Signals for Faster Convergence and Better Generalization",
+  "why": [
+   "+3 optimizer",
+   "+2 convergence",
+   "+2 loss",
+   "+2 stability",
+   "+2 gradient",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2608.04607": {
+  "abstract": "Stochastic gradient descent (SGD) optimization methods are the standard instruments for the training of deep neural networks (DNNs). In many relevant artificial intelligence (AI) systems - such as popular large language models (LLMs)-not the standard SGD scheme is used as the optimization method but instead suitable accelerated variants of SGD are employed. One of the most popular methods of such accelerated SGD variants is the momentum orthogonalized by Newton-Schulz (MUON) optimizer proposed by Jordan et al. in 2024. The MUON optimizer exploits the special matrix structure of the weight parameters in the training of the DNNs and, in its original form, employs five Newton-Schultz (NS) matrix steps in each MUON iteration. In this work we propose and study a generalized variant of the MUON optimizer involving an arbitrary number of generalized NS steps with polynomials of possibly arbitrary high degree. The considered optimizer covers MUON with the original NS polynomial as well as MUON combined with the recently proposed Polar Express method as special cases. For a simple class of stochastic optimization problems (SOPs) we show for almost every mini-batch size that MUON fails to converge to the solution of the SOP as the number of gradient steps converges to infinity. We also establish an error analysis for MUON with the generalized NS steps that provides convergence rates in terms of the number of gradient steps and in terms of the size of the mini-batch. We illustrate our g",
+  "comment": "82 pages",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2608.04607",
+  "published": "2026-08-05",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "On MUON optimization: From non-convergence to an error analysis with Polar Express and the Newton-Schulz polynomial from implementations",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+2 batch size",
+   "+2 convergence",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2608.12710": {
+  "abstract": "Muon, a more recently developed optimizer, is useful for matrix-wise models in AI areas. Although many works have studied Muon and its variants, these methods are still not particularly well-suited for hierarchical structured problems. To fill this gap, we propose an effective federated compositional Muon (FedCoMuon) optimizer to solve distributed matrix-wise compositional optimization problems. Specifically, our FedCoMuon optimizer builds on compositional gradient tracking and orthogonalized momentum. Moreover, we propose a variance reduced variant of FedCoMuon (FedCoMuon-VR) based on a momentum-based variance reduced technique. In theory, we analyze the convergence properties of our algorithms under the non-i.i.d. and non-convex settings. In particular, we prove that our FedCoMuon-VR obtains a lower sample complexity of $O(\u03b5^{-3})$ for finding an $\u03b5$-stationary solution than the existing FedMuon algorithms. Extensive numerical experiments on robust federated learning and task-distributed risk-sensitive meta learning show that our proposed methods are competitive with existing compositional baselines and achieve the best reported accuracy in several settings.",
+  "comment": "45 pages",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2608.12710",
+  "published": "2026-08-13",
+  "queries": [
+   "optimizer_orthogonal"
+  ],
+  "score": 15,
+  "status": "screened",
+  "title": "Federated Compositional Muon Optimizer for Matrix-Wise Models",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ }
+}

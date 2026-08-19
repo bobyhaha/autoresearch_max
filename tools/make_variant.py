@@ -79,6 +79,39 @@ def build(cfg: dict) -> str:
         total_training_time += dt; _dts.append(dt)
 """)
 
+    # --- second-moment telemetry, emitted by EVERY variant including the control ------
+    # `second_momentum_buffer` holds the NorMuon second moment. Where that block sits
+    # relative to the polar iteration decides what the buffer MEANS: the second moment of
+    # the orthogonalized update (baseline) or of the raw momentum (precond="pre"). Those
+    # live on structurally different scales -- an orthogonalized matrix has entries of
+    # order 1/sqrt(max(A,B)) by construction -- so the same statistic printed by both arms
+    # is a real engagement test. Printed only in the treatment it would be a number with
+    # nothing to be wrong against.
+    #
+    # secmom_clamp_frac is the failure mode that rms alone hides: the buffer is zero-init
+    # with 1-beta2=0.05 and no bias correction, so `clamp_min(1e-10)` can bind. When it
+    # does, the diagonal collapses to a constant, the polar iteration's own Frobenius
+    # normalization cancels it exactly, and the arm silently degenerates to plain Muon
+    # minus NorMuon -- a "did not engage" that looks like a clean null.
+    #
+    # All of it runs after the charged clock stops, so it cannot move val_bpb or steps.
+    obs.append("""_sm = [st["second_momentum_buffer"] for st in optimizer.state.values()
+       if "second_momentum_buffer" in st]
+if _sm:
+    _v = torch.cat([b.float().flatten() for b in _sm])
+    print(f"secmom_rms:          {_v.mean().sqrt().item():.8f}")
+    print(f"secmom_max:          {_v.max().sqrt().item():.8f}")
+    print(f"secmom_clamp_frac:   {(_v <= 1e-10).float().mean().item():.8f}")
+    print(f"secmom_nbuf:         {len(_sm)}")
+    # Self-contained engagement number. An orthogonalized matrix has entries of order
+    # 1/sqrt(max(A,B)) BY CONSTRUCTION, so if the buffer is tracking the polar output its
+    # rms sits at that reference and this ratio is ~1; if it is tracking the raw momentum
+    # the ratio departs from 1 by orders of magnitude. Emitting the RATIO rather than the
+    # raw rms is what lets a single run's activation be checked by a machine rule, instead
+    # of a cross-arm comparison that lives only in prose.
+    _ref = torch.tensor([ (1.0/max(b.shape[-2], b.shape[-1])**0.5) for b in _sm ]).mean()
+    print(f"secmom_ortho_ratio:  {(_v.mean().sqrt()/_ref).item():.8f}")""")
+
     # --- evaluator pinned to the baseline batch so the metric stays comparable ---
     s = sub(s, "val_bpb = evaluate_bpb(model, tokenizer, DEVICE_BATCH_SIZE)",
                   "val_bpb = evaluate_bpb(model, tokenizer, 128)")
@@ -218,14 +251,34 @@ model.eval()""")
 
     # M4 gradient geometry: the Contrarian's discriminator -- constant Muon momentum.
     if cfg.get("mu_const") is not None:
+        # The target here read `min(step / 300)` while baseline/train.py:535 reads
+        # `min(step / 300, 1)`. sub() raised VariantEditError on EVERY mu_const build, so
+        # this axis was unlaunchable while direction.py kept ranking it "UNEXPLORED (top
+        # priority)" -- the policy was steering rounds at a knob that could not be run.
         s = sub(s, """def get_muon_momentum(step):
-    frac = min(step / 300)
+    frac = min(step / 300, 1)
     return (1 - frac) * 0.85 + frac * 0.95""",
 f"""def get_muon_momentum(step):
     return {cfg['mu_const']}""")
 
     # M5 gradient geometry: orthogonalization fidelity (Newton-Schulz iteration count).
     if cfg.get("ns") is not None:
+        # L007_ns_above_five_is_a_noop. polar_express_coeffs is a FIXED-LENGTH list and
+        # the iteration slices it `[:ns_steps]`, so any ns at or above its length runs the
+        # same iterations as the control while producing a different source hash -- a
+        # variant that passes the byte-identical guard, burns a 300s slot, and is counted
+        # by the policy as a real run against the ns axis. Refuse it at build time.
+        # This check is what makes L007's mitigation TRUE; the lesson asserted it before
+        # it existed, which an independent audit caught by simply building ns=8.
+        import re as _re
+        _m = _re.search(r"polar_express_coeffs\s*=\s*\[(.*?)\n\]", s, _re.S)
+        _n = _m.group(1).count("(") if _m else 0
+        if _n and int(cfg["ns"]) >= _n:
+            raise VariantEditError(
+                f"ns={cfg['ns']} is a NO-OP: polar_express_coeffs has {_n} entries and the "
+                f"loop slices [:ns_steps], so this runs the same {_n} iterations as the "
+                f"control while changing the source hash (L007_ns_above_five_is_a_noop). "
+                f"Only ns in 1..{_n - 1} is a real experiment.")
         s = sub(s, "momentum=0.95, ns_steps=5,", f"momentum=0.95, ns_steps={cfg['ns']},")
 
 
@@ -257,6 +310,56 @@ _zm = float(_zl_sum[0]) / _zn
 print(f"logz_sq_mean:        {_zm:.6f}")
 print(f"zloss_frac_of_total: {ZLOSS_W*_zm/max(float(_zl_sum[1])/_zn,1e-9):.6f}")""")
 
+    # M8 gradient geometry: WHERE the elementwise second moment is applied relative to
+    # the polar (Newton-Schulz) iteration. The baseline already runs NorMuon variance
+    # reduction, but AFTER orthogonalization, where it can only rescale an update whose
+    # direction is already fixed. Three independent sources say the ordering matters and
+    # that BEFORE is the better one at short horizons (b0_muon2_second_moment_before_ns,
+    # b0_vamuon_variance_modulation_before_ns, b0_adamuon_sign_before_polar_helps_alone);
+    # VA-Muon's ordering ablation specifically reports the post-orthogonalization variant
+    # sitting BELOW plain Muon early, and this benchmark is entirely early.
+    #
+    # This is a pure REORDER of blocks that already exist -- no new tensor is allocated
+    # and no operation is added, which matters because a registered claim
+    # (b1_optimizer_fusion_break_costs_loss) reports a loss regression caused purely by
+    # breaking the compiler's fused bf16->fp32->bf16 weight update rather than by any
+    # algorithmic change. Keeping the block verbatim keeps that fusion intact.
+    if cfg.get("precond") is not None:
+        if cfg["precond"] != "pre":
+            raise VariantEditError(f"precond must be 'pre' (got {cfg['precond']!r})")
+        NORMUON = """    # NorMuon variance reduction
+    beta2 = beta2_t.to(g.dtype)
+    v_mean = g.float().square().mean(dim=red_dim, keepdim=True)
+    red_dim_size = g.size(red_dim)
+    v_norm_sq = v_mean.sum(dim=(-2, -1), keepdim=True) * red_dim_size
+    v_norm = v_norm_sq.sqrt()
+    second_momentum_buffer.lerp_(v_mean.to(dtype=second_momentum_buffer.dtype), 1 - beta2)
+    step_size = second_momentum_buffer.clamp_min(1e-10).rsqrt()
+    scaled_sq_sum = (v_mean * red_dim_size) * step_size.float().square()
+    v_norm_new = scaled_sq_sum.sum(dim=(-2, -1), keepdim=True).sqrt()
+    final_scale = step_size * (v_norm / v_norm_new.clamp_min(1e-10))
+    g = g * final_scale.to(g.dtype)
+"""
+        # remove it from after the polar iteration ...
+        s = sub(s, NORMUON, "", "NorMuon block (post-orthogonalization)")
+        # ... and reinstate it verbatim on the MOMENTUM, before orthogonalization.
+        s = sub(s, """    g = stacked_grads.lerp_(momentum_buffer, momentum)
+""", """    g = stacked_grads.lerp_(momentum_buffer, momentum)
+""" + NORMUON, "momentum lerp (pre-orthogonalization insertion point)")
+        # Activation observable. It must be computed OUTSIDE muon_step_fused: that
+        # function is @torch.compile(fullgraph=True) and a print inside it would either
+        # graph-break or force a recompile, which is exactly the class of accident that
+        # produced a loss regression with no algorithmic cause in the cited claim.
+        # second_momentum_buffer now tracks the second moment of the RAW MOMENTUM rather
+        # than of the orthogonalized update, and those two live on completely different
+        # scales -- an orthogonalized matrix has entries of order 1/sqrt(max(A,B)) by
+        # construction, so this statistic moving by orders of magnitude is what proves
+        # the reorder actually took effect rather than a flag saying it should have.
+        # NOTE: the observable for this mechanism is emitted UNCONDITIONALLY by the
+        # instrumentation block below, in the control arm too. Emitting it only in the
+        # treatment would leave nothing to compare it against, so "engaged" could not be
+        # distinguished from "took some value" -- the mechanism would be unfalsifiable.
+
     # M7 signal propagation: rotary base (how fast position phases rotate).
     if cfg.get("rope") is not None:
         s = sub(s, "def _precompute_rotary_embeddings(self, seq_len, head_dim, base=10000, device=None):",
@@ -281,8 +384,21 @@ if _pr:
 
     # M10 stochastic optimisation: global gradient clipping before the optimizer step.
     if cfg.get("clip") is not None:
+        # clip_grad_norm_ RETURNS the pre-clip total norm. Without capturing it, a
+        # threshold that never binds produces a byte-different variant that is
+        # mathematically identical to the control -- a burned slot whose null result is
+        # indistinguishable from "the mechanism does nothing". Record the norms so
+        # `clip_fired_frac` can say whether the clip engaged at all.
+        s = sub(s, "t_start_training = time.time()",
+                      "t_start_training = time.time()\n_gn = []")
         s = sub(s, "    optimizer.step()",
-                      f"    torch.nn.utils.clip_grad_norm_(model.parameters(), {cfg['clip']})\n    optimizer.step()")
+                      f"    _gn.append(float(torch.nn.utils.clip_grad_norm_("
+                      f"model.parameters(), {cfg['clip']})))\n    optimizer.step()")
+        obs.append(f"""if _gn:
+    _g = sorted(_gn)
+    print(f"grad_norm_p50:       {{_g[len(_g)//2]:.6f}}")
+    print(f"grad_norm_p99:       {{_g[int(len(_g)*0.99)]:.6f}}")
+    print(f"clip_fired_frac:     {{sum(1 for v in _gn if v > {cfg['clip']})/len(_gn):.6f}}")""")
 
     # M11 temporal dynamics: constant weight decay instead of the linear decay to zero.
     if cfg.get("wd_const") is not None:

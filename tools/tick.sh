@@ -18,7 +18,8 @@ if [ -z "${OPHIS_TARGET:-}" ]; then
   echo "remote host not configured; see .env.example" >&2; exit 1
 fi
 HOST="$OPHIS_TARGET"
-SSHOPT=(-i "$OPHIS_KEY" -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=20 -p "$OPHIS_PORT")
+SSHOPT=(-i "$OPHIS_KEY" -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=20 \
+        -o ServerAliveInterval=10 -o ServerAliveCountMax=3 -p "$OPHIS_PORT")
 INTERVAL=${OPHIS_TICK_INTERVAL:-1200}
 
 tick() {
@@ -33,20 +34,21 @@ tick() {
   # queued experiments -- the host copy is authoritative for anything already there.
   if [ -f runs/sweep/queue.json ]; then
     scp -q "${SSHOPT[@]/-p/-P}" runs/sweep/variants/*.py "$HOST:~/$OPHIS_REMOTE_DIR/sweep/variants/" 2>/dev/null
-    ssh "${SSHOPT[@]}" 'cat > /tmp/ophis_queue_incoming.json' < runs/sweep/queue.json 2>/dev/null
-    ssh "${SSHOPT[@]}" 'python3 - <<EOF
-import json, pathlib
-q = pathlib.Path.home()/os.environ.get('OPHIS_REMOTE_DIR','ophis_v3')/"sweep"/"queue.json"
+    ssh "${SSHOPT[@]}" "$HOST" 'cat > /tmp/ophis_queue_incoming.json' < runs/sweep/queue.json || \
+      echo "  WARN: could not ship queue to host"
+    ssh -n "${SSHOPT[@]}" "$HOST" "OPHIS_REMOTE_DIR='$OPHIS_REMOTE_DIR' python3 - <<'PYMERGE'
+import json, os, pathlib
+q = pathlib.Path.home()/os.environ.get('OPHIS_REMOTE_DIR','ophis_v3')/'sweep'/'queue.json'
 try: cur = json.loads(q.read_text())
 except Exception: cur = []
-try: inc = json.loads(open("/tmp/ophis_queue_incoming.json").read())
+try: inc = json.loads(open('/tmp/ophis_queue_incoming.json').read())
 except Exception: inc = []
-have = {e["name"] for e in cur}
-new = [e for e in inc if e["name"] not in have]
+have = {e['name'] for e in cur}
+new = [e for e in inc if e['name'] not in have]
 if new:
     q.write_text(json.dumps(cur + new, indent=1))
-print(f"queue: {len(cur)} on host + {len(new)} merged in")
-EOF' 2>/dev/null
+print(f'queue: {len(cur)} on host + {len(new)} merged in')
+PYMERGE"
   fi
   python3 tools/council.py status
 }
