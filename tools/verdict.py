@@ -45,23 +45,30 @@ def _load():
 
 
 def _slot(r):
-    """The taskset core block itself, not a 0/1 index.
+    """The GPU INDEX, which is what actually carries the offset.
 
-    Collapsing core blocks to 0/1 was wrong and would have produced a false verdict. The
+    This keyed on the taskset core block until a crosstab settled the question. Holding
+    the GPU fixed and changing the core block moves nothing; holding the core block fixed
+    and changing the GPU moves ~30 steps and ~0.0024 bpb, because the four devices are not
+    equally fast (L020_the_offset_is_the_gpu_not_the_core_block). Core block and GPU were
+    assigned by the same slot index, so they moved together in every wave until one quad
+    wave crossed them.
+
+    Collapsing GPUs to 0/1 was wrong and would have produced a false verdict. The
     measured slot offset (+0.000463, 10/10 same sign) is specifically between cores
     96-107 and 108-119; every one of the campaign's 26 runs used one of those two. When
     four GPUs came free the dispatcher launched two waves at once and the second landed
     on cores 120-131 and 132-143, whose relative bias has never been measured. Averaging
-    a delta from one core-block PAIR with a delta from a different pair does not cancel
+    a delta from one GPU PAIR with a delta from a different pair does not cancel
     anything -- it adds an unknown offset to a known one. So the pair is part of the
     identity of a wave, and counterbalancing means the SAME pair with the roles swapped.
     """
-    return str(r.get("cores") or "?")
+    return f"gpu{r.get('gpu')}"
 
 
 def _pair(arms):
-    return tuple(sorted({a["treat_cores"] for a in arms} | {a["ctl_cores"] for a in arms},
-                        key=lambda c: int(str(c).split("-")[0])))
+    return tuple(sorted({a["treat_dev"] for a in arms} | {a["ctl_dev"] for a in arms},
+                        key=str))
 
 
 def waves(rows):
@@ -101,7 +108,7 @@ def main():
         key = direction.label(t["cfg"])
         by_cfg.setdefault(key, []).append({
             "wave": g, "delta": t["metrics"]["val_bpb"] - c["metrics"]["val_bpb"],
-            "treat_cores": _slot(t), "ctl_cores": _slot(c), "t": t, "c": c})
+            "treat_dev": _slot(t), "ctl_dev": _slot(c), "t": t, "c": c})
 
     print()
     for key, arms in sorted(by_cfg.items()):
@@ -111,7 +118,7 @@ def main():
         print(f"=== {key} ===")
         for a in arms:
             tm, cm = a["t"]["metrics"], a["c"]["metrics"]
-            print(f"  {a['wave']:8s} treat_cores={a['treat_cores']:>8s} "
+            print(f"  {a['wave']:8s} treat_dev={a['treat_dev']:>8s} "
                   f"delta {a['delta']:+.6f}  "
                   f"steps {tm['num_steps']:.0f} vs {cm['num_steps']:.0f}  "
                   f"epoch {tm.get('final_epoch')}/{cm.get('final_epoch')}")
@@ -122,8 +129,8 @@ def main():
         # slot once and the control on every slot once across two four-wide waves, so the
         # whole slot profile cancels in the mean of the within-pair deltas -- no pairwise
         # swap is needed and no offset is fitted. Detect it and report it as one verdict.
-        slots_t = {a["treat_cores"] for a in arms}
-        slots_c = {a["ctl_cores"] for a in arms}
+        slots_t = {a["treat_dev"] for a in arms}
+        slots_c = {a["ctl_dev"] for a in arms}
         if len(arms) >= 4 and len(slots_t) >= 4 and slots_t == slots_c:
             mean = st.mean(a["delta"] for a in arms)
             verdict = ("BETTER than control" if mean < -res else
@@ -136,24 +143,24 @@ def main():
                 if hid and hid in hyps:
                     act = hyps[hid]["activation"]
                     val = (a["t"].get("metrics") or {}).get(act["diagnostic"])
-                    print(f"    ACTIVATION {a['wave']} s{a['treat_cores']}: "
+                    print(f"    ACTIVATION {a['wave']} s{a['treat_dev']}: "
                           f"{act['diagnostic']}={val}")
             print()
             continue
 
-        # Group arms by the core-block PAIR they ran on; only within a pair does swapping
+        # Group arms by the GPU PAIR they ran on; only within a pair does swapping
         # the roles cancel that pair's fixed offset.
         groups = {}
         for a in arms:
-            groups.setdefault(tuple(sorted((a["treat_cores"], a["ctl_cores"]),
-                                           key=lambda c: int(str(c).split("-")[0]))), []).append(a)
+            groups.setdefault(tuple(sorted((a["treat_dev"], a["ctl_dev"]),
+                                           key=str)), []).append(a)
         usable = {}
         for pair, members in groups.items():
-            if len({m["treat_cores"] for m in members}) >= 2:
+            if len({m["treat_dev"] for m in members}) >= 2:
                 usable[pair] = members
             else:
                 print(f"  pair {pair[0]}/{pair[1]}: treatment only ever on "
-                      f"{ {m['treat_cores'] for m in members} } -- NOT counterbalanced on "
+                      f"{ {m['treat_dev'] for m in members} } -- NOT counterbalanced on "
                       f"this pair, so its fixed offset is inseparable from the effect")
         if not usable:
             # An effect can be too big for the slot offset to explain. The largest offset
@@ -162,7 +169,9 @@ def main():
             # -- refusing to say so would be false modesty, and the campaign's own ns=3 and
             # wd_const results would be withheld on a technicality. The MAGNITUDE still
             # needs the swap; only the direction is being claimed here.
-            MAX_SLOT_OFFSET = 0.0011
+            # The largest offset between any two DEVICES we use, from control means:
+            # gpu4 0.993558 vs gpu7 0.991111. Plus 2x the within-GPU residual sd.
+            MAX_SLOT_OFFSET = 0.00245 + 2 * 0.000105
             if deltas and min(abs(d) for d in deltas) > 3 * MAX_SLOT_OFFSET \
                     and len({d > 0 for d in deltas}) == 1:
                 m = st.mean(deltas)
@@ -172,7 +181,7 @@ def main():
                       f"({'WORSE' if m > 0 else 'BETTER'} than control). The magnitude still "
                       f"needs a same-pair swap.")
             else:
-                print(f"  NO COUNTERBALANCED PAIR. Queue the swapped wave ON THE SAME CORE "
+                print(f"  NO COUNTERBALANCED PAIR. Queue the swapped wave ON THE SAME GPU "
                       f"BLOCKS; a swap on a different pair adds an unmeasured offset instead "
                       f"of cancelling a measured one.")
             print()

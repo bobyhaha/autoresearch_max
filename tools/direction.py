@@ -100,7 +100,7 @@ def slot_bias(results: list[dict]) -> dict | None:
         if not is_platform(r.get("cfg") or {}):
             continue
         w = (r.get("name") or "").split("_")[0]
-        waves.setdefault(w, {})[r.get("cores")] = r["metrics"]["val_bpb"]
+        waves.setdefault(w, {})[f"gpu{r.get('gpu')}"] = r["metrics"]["val_bpb"]
     deltas = []
     for w, byslot in waves.items():
         if len(byslot) != 2:
@@ -109,14 +109,14 @@ def slot_bias(results: list[dict]) -> dict | None:
         # cores = CORE_BASE + slot*CORES_PER_JOB, so slot order is numeric order, and a
         # lexicographic sort puts "108-119" before "96-107" and silently flips the sign
         # of the offset -- which is how this function first reported the bias backwards.
-        slot0, slot1 = sorted(byslot, key=lambda c: int(str(c).split("-")[0]))
+        slot0, slot1 = sorted(byslot)
         deltas.append(byslot[slot0] - byslot[slot1])
     if len(deltas) < 3:
         return None
     return {"n": len(deltas), "offset": _st.mean(deltas),
             "resid_sd": _st.stdev(deltas),
             "same_sign": sum(1 for d in deltas if d > 0),
-            "cores": sorted({c for b in waves.values() for c in b})}
+            "devices": sorted({c for b in waves.values() for c in b})}
 
 
 def _wave_width(results, wave):
