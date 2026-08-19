@@ -187,12 +187,17 @@ def validate_lesson(l: dict) -> list[str]:
         # validator can do.
         _named = any(tok in _ss for tok in ("/", ".py", "grep", "searched", "Searched",
                                             "Grepped", "grepped", "checked", "Checked"))
-        if not _ss or len(_ss) < 120 or not _named:
+        # The length floor is 60, not 120: a genuine search can be stated briefly --
+        # "grepped host/ and tools/ for the same call shape; found none" is a real answer
+        # and a 120-character floor rejected it, which would have taught the next author to
+        # pad rather than to look. The NAMED-TARGET check is what actually excludes the
+        # non-answers: "n/a", "." and "did not search" all fail it outright.
+        if not _ss or len(_ss) < 60 or not _named:
             bad.append(
                 "an integrity/runtime lesson must carry a substantive 'sibling_search': "
                 "what you searched for OTHER instances of this defect class, WHERE you "
                 "looked (name a path, module or tool), and what you found. It must be at "
-                "least 120 characters and name a search target -- a presence check used to "
+                "least 60 characters and name a search target -- a presence check used to "
                 "accept 'n/a' and even 'did not search'. Fixing one instance and not "
                 "looking for siblings is this campaign's most repeated failure.")
     if l.get("type") == "non_activation" and l.get("action") == "block":
