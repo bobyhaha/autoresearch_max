@@ -1,4 +1,4 @@
-# Three levers that lower `val_bpb` at a fixed 300-second budget, and the instrument required to see them
+# Five levers, one uninterpretable result, and the instrument required to tell them apart
 
 - **Scope:** `val_bpb`, 300 charged training seconds, single H200, frozen `prepare.py`.
 - **Covers:** `R2V_*`, `R2S_*`, `R2S2_*`, `R3U_*`, `R3Q_*`, `R3T_*`, `R4X_*`; hypotheses
@@ -244,6 +244,28 @@ estimates added together, and we have not established that the shortfall survive
 honest statement is that the stack is *at least* strongly complementary, and that partial
 redundancy is the better-supported of the two readings but not a settled one.
 
+## 5.6 The largest result is uninterpretable
+
+Halving tokens per step from 524288 to 262144 lowered `val_bpb` by 0.007953 across four
+devices, all at epoch 2.0 — roughly twice the three-lever stack and the largest effect we
+have measured. We can state the configuration result. We cannot state the mechanism.
+
+Halving the batch doubles the step count, from about 990 to about 2000, and while the
+learning-rate and weight-decay schedules are indexed by progress, at least six other
+quantities are indexed by step and therefore all moved at once: the Muon momentum ramp
+(completing at 15.0% of the run instead of 30.3%); the eleven uncharged warmup steps,
+which give the control 5.8M free tokens against the treatment's 2.9M; Adam bias
+correction; the Adam and NorMuon EMA horizons; the per-step weight-decay dose; and
+gradient accumulation going from 2 to 1.
+
+We first found only the momentum ramp and queued two arms to decompose it. An independent
+audit enumerated the rest, and those two arms bound one leg of six. Only the uncharged
+warmup has a known direction, and it favours the control, so the measured win is if
+anything understated.
+
+We report this at length because the temptation was to publish t = −60.7 and call it a
+critical-batch-size effect. The number is real; the mechanism is not established.
+
 ## 7 Threats to validity
 
 **Single seed.** Every result is seed 42 on one host, by operator direction to conserve
@@ -343,7 +365,11 @@ directly against `python3 tools/coe.py registry`.
 
 **Control corpus spread** (§3), over 70 runs: 1.025517 - 0.990908 = 0.034609.
 
-**Improvement in best model**: 0.990345 - 0.986956 = 0.003389.
+**Improvement in best model**: 0.990345 - 0.984017 = 0.006328.
+
+**tbs 19 to 18** (§5.6), same-device pairs: 0.985558 - 0.993770 = -0.008212; 0.984733 - 0.992876 = -0.008143; 0.984252 - 0.992002 = -0.007750; 0.984017 - 0.991722 = -0.007705; mean -0.007953, sd 0.000262, sem 0.000262 / 2 = 0.000131, t -60.7.
+
+**swdiv 4 to 8**, same-device pairs: 0.990685 - 0.993850 = -0.003165; 0.989450 - 0.992714 = -0.003264; 0.988349 - 0.991985 = -0.003636; 0.988254 - 0.991629 = -0.003375; mean -0.003360, sd 0.000203.
 
 **FLOPs removed by `swdiv` 2→4**: 239.078 − 220.204 = 18.874 per token, which is 7.9% of 239.078.
 

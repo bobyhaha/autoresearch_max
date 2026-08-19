@@ -10,8 +10,8 @@
 
 \begin{document}
 
-\icmltitle{Three Levers That Lower Validation Bits-per-Byte at a Fixed\\[0.2ex]
-300-Second Budget, and the Instrument Required to See Them}
+\icmltitle{Five Levers, One Uninterpretable Result, and the Instrument\\[0.2ex]
+Required to Tell Them Apart}
 
 \icmlauthor{OPHIS Autonomous Research Campaign}%
 {Single-node H200, frozen data pipeline, seed 42}
@@ -20,11 +20,13 @@
 We report six interventions measured on a fixed-\emph{time} language-model training
 benchmark: a $\sim$50.3M-parameter GPT trained for 300 charged seconds on one H200 with
 the data pipeline frozen. Three lower validation bits-per-byte and three do not. The
-largest single effect is halving the short span of a sliding-window attention pattern;
-combined with a value-embedding density change and a second-moment reordering in the
-optimizer it produces the best model we have trained, improving $\mathrm{val\_bpb}$ from
-$0.990345$ to $0.986956$. The combination realises most, but measurably not all, of the
-sum of its parts, and we locate the overlap in a shared throughput channel.
+largest single effect is HALVING the tokens processed per optimizer step, which lowers
+$\mathrm{val\_bpb}$ by $0.007953$ and produces our best model at $0.984017$, down from
+$0.990345$. We report it as a configuration result and explicitly NOT as a statement about
+batch size: halving the batch doubles the step count, and at least six quantities in the
+trainer are indexed by step rather than by elapsed time, so six things moved at once. Of
+the remainder, halving a sliding-window attention span pays twice over two rungs, and
+stacking three separately confirmed levers realises about $89\%$ of their additive sum.
 
 Our central methodological claim is that none of these effects is visible without a
 paired, device-counterbalanced design: the 70 byte-identical control runs in this campaign
@@ -132,6 +134,8 @@ All comparisons are same-device paired within a single counterbalanced quad pair
 \toprule
 intervention & mean $\Delta$ & verdict\\
 \midrule
+\texttt{tbs} 19$\to$18 & $-0.007953$ & better\textsuperscript{\dag}\\
+\texttt{swdiv} 4$\to$8 & $-0.003360$ & better\\
 \texttt{swdiv} 2$\to$4 & $-0.002298$ & better\\
 \texttt{ve} 2$\to$1 & $-0.001487$ & better\\
 \texttt{precond} & $-0.001147$ & better\\
@@ -139,7 +143,8 @@ intervention & mean $\Delta$ & verdict\\
 \texttt{unet} & $+0.004123$ & worse\\
 \texttt{tbs} 19$\to$20 & $+0.022545$ & worse\\
 \bottomrule
-\end{tabular}
+\end{tabular}\\[0.4ex]
+{\footnotesize \textsuperscript{\dag}confounded; see \S\ref{sec:sixlegs}.}
 \end{center}
 
 \subsection{Halving the short attention span}
@@ -274,6 +279,40 @@ our records, the pre-repair version whose second-moment buffer collapsed onto it
 floor and the repaired one; only the latter supports the number above, and our analysis
 keys arms by generated-source hash precisely so the two are never pooled.
 
+\section{The largest result is uninterpretable}
+\label{sec:sixlegs}
+
+Halving tokens per step from $524288$ to $262144$ lowered $\mathrm{val\_bpb}$ by
+$0.007953$ (four devices, all at epoch $2.0$), roughly twice the three-lever stack and by
+far the largest effect we have measured. We can state the configuration result. We cannot
+state the mechanism, and the distinction is the point of this section.
+
+Halving the batch doubles the step count, from about $990$ to about $2000$. The trainer's
+learning-rate and weight-decay schedules are indexed by \emph{progress} -- elapsed time
+over budget -- but at least six other quantities are indexed by \emph{step}, so all of
+them moved simultaneously:
+
+\begin{enumerate}\itemsep0pt
+\item the Muon momentum ramp, \texttt{min(step/300,1)}, completing at $15.0\%$ of the run
+      instead of $30.3\%$;
+\item the first eleven steps, which are uncharged, giving the control $5.8$M free tokens
+      against the treatment's $2.9$M;
+\item Adam bias correction (small: complete by step $50$--$300$);
+\item Adam and NorMuon EMA horizons, fixed per step and so halved relative to the run;
+\item the per-step weight-decay dose, doubled at the same wall clock;
+\item gradient accumulation, $2\to1$.
+\end{enumerate}
+
+We first identified only the momentum ramp and queued two arms to decompose it. An
+independent audit enumerated the rest, and those two arms bound one leg of six. Only leg
+2 has a known direction, and it favours the \emph{control}: the measured win is if
+anything understated.
+
+We report this at length because the temptation was to publish $t=-60.7$ and describe a
+critical-batch-size effect. The number is real and the mechanism is not established, and
+at a fixed-time budget on this trainer, ``batch size'' and ``schedule shape'' may not be
+separable by configuration alone.
+
 \section{Threats to validity}
 
 \textbf{Single seed.} Every result is seed 42 on one host, by operator direction to
@@ -342,9 +381,10 @@ one.
 
 \section{Conclusion}
 
-Three interventions lower $\mathrm{val\_bpb}$ at a fixed 300-second budget and combine to
-about $89\%$ of their additive sum, improving the best model from $0.990345$ to
-$0.986956$. Three others do not, one by a very large margin. The measurement design making
+Five interventions lower $\mathrm{val\_bpb}$ at a fixed 300-second budget, improving the
+best model from $0.990345$ to $0.984017$; three of them combine to about $89\%$ of their
+additive sum. The largest is reported as a configuration result whose mechanism we cannot
+yet name. Three others do not, one by a very large margin. The measurement design making
 these statements possible---concurrent yoked pairs, device counterbalancing,
 pre-registered activation diagnostics, and a willingness to refuse a verdict when the
 design breaks---mattered more than any individual intervention, because the effects are
