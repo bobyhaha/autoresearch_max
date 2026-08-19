@@ -225,7 +225,13 @@ def score(cfg, rows, state, fx):
             continue
         a = h.get("activation") or {}
         if a.get("diagnostic") and a.get("rule"):
-            good, _m = claims.diagnostic_would_discriminate(a["diagnostic"], a["rule"])
+            # Pass the cfg. Both queue doors were updated to do this when the check
+            # gained the ability to restrict to THIS arm's own runs; this call site was
+            # missed, so the scoring path -- which decides what runs next -- kept using
+            # the loose behaviour the argument was added to close. Third instance today of
+            # fixing a function and not all of its callers.
+            good, _m = claims.diagnostic_would_discriminate(
+                a["diagnostic"], a["rule"], cfg)
             if not good:
                 act_pen = 1.0
                 terms["activation"] = "REFUSED by pre-check: cannot demonstrate engagement"

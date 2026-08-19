@@ -44,6 +44,24 @@ def _load():
     return out
 
 
+def _role_conflict(m):
+    """Does this member's NAME disagree with its CONFIG about which role it played?
+
+    _is_ctl trusts the name, because the name survives a platform adoption and is_platform
+    does not. An audit showed the cost: a crafted name/cfg mismatch silently flips a role
+    and sign-flips the delta with no warning at all. The name stays authoritative -- but a
+    disagreement is now visible rather than silent, which is the difference between a
+    convention and an assumption.
+
+    Only meaningful for records whose name carries a role; older ones return False.
+    """
+    mo = _ROLE_RE.search(m.get("name", "") or "")
+    if not mo:
+        return False
+    named_ctl = mo.group(1) != "treat"
+    return named_ctl != direction.is_platform(m.get("cfg") or {})
+
+
 def _is_ctl(m):
     """Was this member its wave's CONTROL? Answered from the wave, not from the platform.
 
@@ -183,6 +201,17 @@ def main():
     hyps = {h["id"]: h for h in C.hypotheses()}
     by_cfg = {}
     for g, members in waves(rows).items():
+        # Surface any member whose NAME and CFG disagree about its role. The name is
+        # authoritative -- it survives a platform adoption where is_platform does not --
+        # but a silent disagreement sign-flips a delta, so it is reported. Waves built at
+        # a retired baseline legitimately trip this: their control really is no longer the
+        # platform, which is the fact worth seeing rather than hiding.
+        _conf = [m["name"] for m in members if _role_conflict(m)]
+        if _conf:
+            print(f"  NOTE wave {g}: {len(_conf)} member(s) whose name and cfg disagree "
+                  f"about role ({', '.join(sorted(_conf)[:2])}"
+                  f"{' ...' if len(_conf) > 2 else ''}). The name is taken as authoritative; "
+                  f"this is expected for waves built before a platform adoption.")
         ctl = [m for m in members if _is_ctl(m)]
         trt = [m for m in members if not _is_ctl(m)]
         if not ctl or not trt:

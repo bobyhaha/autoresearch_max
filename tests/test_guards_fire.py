@@ -353,7 +353,12 @@ def test_activation_precheck_says_unverified_rather_than_ok():
     When no run of the arm has emitted the field, the honest answer is that nothing is
     known -- not "ok". A prior audit flagged the old wording as a false confirmation.
     """
-    cfg = {**direction.PLATFORM, "noqknorm": 1}
+    # The arm must be one that will NEVER have runs. A first version used the noqknorm
+    # arm, which was runless when the test was written and had run by the time the suite
+    # next executed -- so the test asserted a TRANSIENT state and went red the moment the
+    # campaign produced the very data it was waiting for. A test whose truth expires when
+    # an experiment lands is a broken test, not a broken guard.
+    cfg = {**direction.PLATFORM, "swdiv": 4096}       # never queued, never will be
     ok, msg = claims.diagnostic_would_discriminate(
         "qk_q_rms_final", {"op": "gt", "value": 1.0}, cfg)
     assert ok and "UNVERIFIED" in msg, (
@@ -373,3 +378,24 @@ def test_the_precommit_hook_exists_and_runs_the_suite():
     assert "exit 1" in src, "the hook does not REFUSE on a red suite"
     import os
     assert os.access(hook, os.X_OK), "the hook is not executable, so git will skip it"
+
+
+def test_role_resolution_refuses_a_name_that_contradicts_its_cfg():
+    """_is_ctl reads the role from the run NAME, which is weaker than reading the cfg.
+
+    An audit demonstrated that a crafted name/cfg mismatch silently flips a member's role
+    and SIGN-FLIPS the reported delta with no warning. The name is the right source -- it
+    survives a platform adoption where is_platform does not -- but it must not contradict
+    the configuration without saying so.
+    """
+    import verdict
+    plat = dict(direction.PLATFORM)
+    # A member NAMED as the control while carrying a treatment cfg.
+    liar = {"name": "FAKE_P1_s1_ctrl", "cfg": {**plat, "noqknorm": 1}, "metrics": {}}
+    honest = {"name": "FAKE_P1_s0_treat", "cfg": {**plat, "noqknorm": 1}, "metrics": {}}
+    truth = {"name": "FAKE_P1_s1_ctrl", "cfg": dict(plat), "metrics": {}}
+    assert verdict._is_ctl(truth), "a genuine control was not recognised"
+    assert not verdict._is_ctl(honest), "a genuine treatment was misread as a control"
+    assert verdict._role_conflict(liar), (
+        "a member named _ctrl while carrying a treatment cfg was accepted silently")
+    assert not verdict._role_conflict(truth), "an honest control was flagged as conflicting"
