@@ -31,6 +31,7 @@ import time
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 ROUNDS, CRITIQUES = REPO / "rounds", REPO / "critiques"
+PROJECT_CRITIQUES = REPO / "critiques" / "project"
 
 MIN_WORDS = 120          # per role section
 MIN_SYNTH_WORDS = 200
@@ -46,6 +47,27 @@ SPECS = {
         "dir": CRITIQUES,
         "max_age_s": 90 * 60,
         "roles": ["fable_evidence", "fable_method", "fable_process", "fable_synthesis"],
+        "needs_queue": False,
+    },
+    # PROJECT CRITIQUE, every two hours, operator-mandated and non-negotiable.
+    #
+    # The round and critique councils audit the SCIENCE -- are these numbers real, did the
+    # mechanism engage, is the design sound. Neither audits the CODE or the pipeline, and
+    # this campaign's record says that is where the failures actually live: of 50 lessons,
+    # 8 are scientific negatives and the rest are defects in the apparatus. Every serious
+    # defect found today came from an external reader, not from the internal councils --
+    # a selector attributing every experiment to four unrelated families, an improvement
+    # test frozen at zero, a validator that passed rounds proposing nothing runnable, an
+    # audit rule that laundered sign flips, a test leaking fixtures into the live corpus.
+    # None of those are visible to a council asking whether a val_bpb is trustworthy.
+    #
+    # So this is a separate cadence with its own roles, aimed at the machinery rather than
+    # the measurements, and it is enforced here rather than remembered: gate.py reads
+    # SPECS, so a stale project critique shows up in the gate exactly like a stale round.
+    "project": {
+        "dir": PROJECT_CRITIQUES,
+        "max_age_s": 120 * 60,
+        "roles": ["code_defects", "pipeline_integrity", "reproducibility", "synthesis"],
         "needs_queue": False,
     },
 }

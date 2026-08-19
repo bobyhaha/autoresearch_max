@@ -81,6 +81,25 @@ def unknown_keys(cfg: dict) -> set:
     return {k for k in (cfg or {}) if k not in KNOWN_KEYS}
 
 
+def device_means(results: list[dict]) -> dict:
+    """Mean val_bpb of the two-epoch CONTROL runs on each device. ONE implementation.
+
+    Three copies of this existed -- here, in balance.py and in selector.py -- and they
+    agreed only by luck. This project has already shipped divergent copies of a statistic
+    once: direction.py and verdict.py carried different resolution formulas, and the
+    disagreement decided verdicts. A device mean is the denominator of every
+    device-corrected effect in the campaign, so three of them is three chances for the
+    numbers in a paper to stop matching the numbers in a policy.
+    """
+    import statistics as _st
+    by = {}
+    for r in results:
+        if (r.get("ok") and is_platform(r.get("cfg") or {})
+                and (r.get("metrics") or {}).get("final_epoch") == 2.0):
+            by.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+    return {g: _st.mean(v) for g, v in by.items() if v}
+
+
 def device_resolution(results: list[dict]) -> dict | None:
     """The smallest effect a GPU-counterbalanced comparison can honestly claim.
 

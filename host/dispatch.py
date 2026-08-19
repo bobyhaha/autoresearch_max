@@ -435,6 +435,9 @@ class AdoptedProc:
         return self.returncode
 
 
+_TAINTED_AT_ADOPT: set = set()
+
+
 def adopt_running():
     """Re-attach to trainers still alive from a previous dispatcher, keyed by GPU.
 
@@ -462,7 +465,10 @@ def adopt_running():
             continue
         out[int(rec["gpu"])] = {"proc": proc, "item": item, "dir": d,
                                 "started": float(rec.get("started") or time.time()),
-                                "uuid": rec["uuid"], "cotenant": False,
+                                "uuid": rec["uuid"],
+                                # Inherit taint across restarts. Without this an adopted
+                                # job forgets it was ever co-tenanted and is written valid.
+                                "cotenant": rec["name"] in _TAINTED_AT_ADOPT,
                                 "slot": int(rec["slot"]), "cores": rec["cores"]}
         log(f"ADOPTED {c.name} on gpu{rec['gpu']} pid={rec['pid']} "
             f"(in flight from a previous dispatcher)")
@@ -479,7 +485,29 @@ def main():
     # not stranded, but it must be in `running` before the first pass computes free GPUs.
     running = adopt_running()
     release_stranded_claims()   # claims with neither a result nor a work dir
-    quarantine = {}             # gpu uuid -> epoch seconds until it may be used again
+    # Quarantine and co-tenancy live on DISK, not in process memory.
+    #
+    # Both were locals, so a dispatcher restart forgot every quarantined device and every
+    # co-tenancy already observed on a still-running job. adopt_running() then re-adopted
+    # that job with cotenant=False, and when it finished it was written `ok: true` -- a run
+    # known to be contaminated, recorded as valid evidence. The campaign restarted the
+    # dispatcher five times in one session to ship policy fixes, so it sat inside that
+    # window repeatedly; it escaped only because every co-tenancy happened to be recorded
+    # before the restart that followed it. Timing is not a control.
+    QSTATE = ROOT / "quarantine.json"
+    def _load_state():
+        try:
+            d = json.loads(QSTATE.read_text())
+            return d.get("quarantine", {}), set(d.get("tainted", []))
+        except (OSError, ValueError):
+            return {}, set()
+    def _save_state(q, t):
+        try:
+            QSTATE.write_text(json.dumps({"quarantine": q, "tainted": sorted(t)}, indent=1))
+        except OSError:
+            pass
+    quarantine, tainted = _load_state()   # uuid -> release epoch; job names seen co-tenanted
+    globals()["_TAINTED_AT_ADOPT"] = set(tainted)
     clean_since = {}            # gpu uuid -> when it was first seen free again
     launched = 0
     last_wait_log = 0.0
@@ -512,6 +540,8 @@ def main():
                         log(f"CO-TENANT ({who}) on gpu{g} during "
                             f"{job['item']['name']} -> INVALID")
                         quarantine[job["uuid"]] = time.time() + COTENANT_QUARANTINE_S
+                        tainted.add(job["name"])
+                        _save_state(quarantine, tainted)
                         log(f"QUARANTINE gpu{g} for {COTENANT_QUARANTINE_S//60} min "
                             f"(L002_burned_gpu_reused)")
                     job["cotenant"] = True
@@ -572,6 +602,7 @@ def main():
                     log(f"QUARANTINE lifted early for {_u[:20]}: no compute app for "
                         f"{QUARANTINE_CLEAR_S//60} min (evidence, not timer)")
                     del quarantine[_u]
+                    _save_state(quarantine, tainted)
                     clean_since.pop(_u, None)
                     continue
             else:

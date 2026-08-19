@@ -40,12 +40,9 @@ EXPLOIT_CEIL = 0.50       # nor crowd out exploration
 
 
 def _device_means(rows):
-    by = {}
-    for r in rows:
-        if (r.get("ok") and direction.is_platform(r.get("cfg") or {})
-                and (r.get("metrics") or {}).get("final_epoch") == 2.0):
-            by.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
-    return {g: st.mean(v) for g, v in by.items() if v}
+    # Delegates to direction.device_means: one canonical implementation, so a
+    # change to what counts as a control cannot silently apply here and not there.
+    return direction.device_means(rows)
 
 
 def classify(rows, state, res=None):

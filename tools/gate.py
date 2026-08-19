@@ -107,11 +107,18 @@ def checks() -> list[dict]:
         add("chain of evidence intact", False, False, f"audit failed: {exc}")
 
     # Council artifacts are SOFT: they move the decision cutoff, they never stop compute.
-    for kind in ("round", "critique"):
+    # The kind list is read from council.SPECS rather than hardcoded, so adding a cadence
+    # there makes it enforced here automatically. It was hardcoded to two kinds, which is
+    # how a new requirement would have been registered and then silently never checked.
+    for kind in council.SPECS:
         s = council.status(kind)
+        # The PROJECT critique audits the code and pipeline rather than the science. It
+        # does not freeze research decisions -- a stale code review is no reason to refuse
+        # an experiment whose evidence is sound -- but it is reported, so it cannot rot
+        # unnoticed the way the two-hour cadence would if it lived only in prose.
         add(f"{kind} council current", s["ok"], False,
             "; ".join(s["problems"])[:300] or f"{s.get('age_min')} min old",
-            freezes=True)
+            freezes=(kind != "project"))
     return out
 
 
