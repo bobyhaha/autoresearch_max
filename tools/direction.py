@@ -377,12 +377,21 @@ FAMILIES = {
 # nobody spends a round rediscovering that it is unreachable.
 MECHANISM_FAMILIES = {
     "objective":       {"mechs": ("mtp", "zloss"), "cost": "GPU + memory; mtp materializes [B,T,V]"},
+    "optimizer_numeric": {"mechs": ("precond",),
+                        "cost": "free: a reorder of existing blocks, no new tensor and no "
+                                "added op, so the compiled fused update stays intact"},
     "signal_path":     {"mechs": ("unet", "noqknorm"), "cost": "GPU-only, near-free"},
     # `precond` reorders an operation that already exists rather than retuning a
     # constant, so it is a MECHANISM, not a knob -- which is what makes it runnable while
     # every knob axis in this family is still unexplored (a mechanism tested in isolation
     # is always allowed; a mechanism crossed with a closed knob axis is not).
-    "optimizer_geometry": {"mechs": ("precond",),
+    # NOTE: this key is NOT in lit.ALL_FAMILIES, so agenda.py -- which iterates that
+    # tuple -- never listed it and never counted its runs. All seven precond runs were
+    # attributed here, invisible to DRY, STALE and the HARD CAP, so the anti-monoculture
+    # backstop could not fire on the direction the campaign actually spent itself on.
+    # Mechanism families must use a name the agenda knows; `precond` belongs to
+    # optimizer_numeric, which is where its claims and its lessons already sit.
+    "optimizer_geometry_RETIRED": {"mechs": (),
                         "cost": "free: a pure reorder of existing blocks, no new tensor "
                                 "and no added op, so the compiled fused update is intact"},
     "input_pipeline":  {"mechs": ("prefetch",),
@@ -477,15 +486,12 @@ def report(results: list[dict]) -> str:
                   f"  =>  GPU-COUNTERBALANCED RESOLUTION {dr['resolution']:.6f}",
                   "  Counterbalance on GPU at ANY width; there is no width penalty."]
 
-    sb = slot_bias(results)
-    if sb and sb["n"] >= 3:
-        lines += ["", "SLOT BIAS (measured, and it is NOT noise)",
-                  f"  slot0 minus slot1 = {sb['offset']:+.6f} bpb over {sb['n']} concurrent "
-                  f"control waves; same sign in {sb['same_sign']}/{sb['n']}",
-                  f"  residual sd once the offset is removed = {sb['resid_sd']:.6f}",
-                  "  => COUNTERBALANCE: run every comparison twice with the slot order",
-                  "     swapped ([treat,ctrl] then [ctrl,treat]) and average the two deltas.",
-                  "     An uncounterbalanced pair carries this offset as a fake effect."]
+    # The slot-order prescription that stood here was superseded by L020: the offset is
+    # the physical GPU, not the taskset core block, so "swap the slot order" pointed at a
+    # variable carrying no signal. Printing it beside the DEVICE MODEL block gave a reader
+    # two contradictory prescriptions and two different resolutions, both looking current.
+    # slot_bias() is kept for the historical record but is no longer reported.
+
 
     lines += ["", "DIRECTION SPACE (least-covered first -- this is where a round should look)",
               f"{'family':17s} {'kind':10s} {'runs':>5s}  gaps / cost"]
