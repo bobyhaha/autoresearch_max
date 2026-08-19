@@ -549,17 +549,6 @@ def cores_for(slot):
 def main():
     # Adopt BEFORE releasing stranded claims: an in-flight run has a work dir, so it is
     # not stranded, but it must be in `running` before the first pass computes free GPUs.
-    running = adopt_running()
-    release_stranded_claims()   # claims with neither a result nor a work dir
-    # Quarantine and co-tenancy live on DISK, not in process memory.
-    #
-    # Both were locals, so a dispatcher restart forgot every quarantined device and every
-    # co-tenancy already observed on a still-running job. adopt_running() then re-adopted
-    # that job with cotenant=False, and when it finished it was written `ok: true` -- a run
-    # known to be contaminated, recorded as valid evidence. The campaign restarted the
-    # dispatcher five times in one session to ship policy fixes, so it sat inside that
-    # window repeatedly; it escaped only because every co-tenancy happened to be recorded
-    # before the restart that followed it. Timing is not a control.
     QSTATE = ROOT / "quarantine.json"
     def _load_state():
         try:
@@ -572,8 +561,26 @@ def main():
             QSTATE.write_text(json.dumps({"quarantine": q, "tainted": sorted(t)}, indent=1))
         except OSError:
             pass
+
+    # Load the persisted taint BEFORE adopting. adopt_running() reads _TAINTED_AT_ADOPT to
+    # decide whether a job it is re-adopting was already known to be co-tenanted, and the
+    # load used to happen AFTER the call -- so the set was always empty and the taint was
+    # never inherited. The fix for "co-tenancy did not survive a restart" therefore never
+    # fired: it is the same build-a-guard-and-not-connect-it failure, committed inside the
+    # fix for that failure. Ordering is the connection here.
     quarantine, tainted = _load_state()   # uuid -> release epoch; job names seen co-tenanted
     globals()["_TAINTED_AT_ADOPT"] = set(tainted)
+    running = adopt_running()
+    release_stranded_claims()   # claims with neither a result nor a work dir
+    # Quarantine and co-tenancy live on DISK, not in process memory.
+    #
+    # Both were locals, so a dispatcher restart forgot every quarantined device and every
+    # co-tenancy already observed on a still-running job. adopt_running() then re-adopted
+    # that job with cotenant=False, and when it finished it was written `ok: true` -- a run
+    # known to be contaminated, recorded as valid evidence. The campaign restarted the
+    # dispatcher five times in one session to ship policy fixes, so it sat inside that
+    # window repeatedly; it escaped only because every co-tenancy happened to be recorded
+    # before the restart that followed it. Timing is not a control.
     clean_since = {}            # gpu uuid -> when it was first seen free again
     launched = 0
     last_wait_log = 0.0
@@ -606,7 +613,13 @@ def main():
                         log(f"CO-TENANT ({who}) on gpu{g} during "
                             f"{job['item']['name']} -> INVALID")
                         quarantine[job["uuid"]] = time.time() + COTENANT_QUARANTINE_S
-                        tainted.add(job["name"])
+                        # job has keys proc/item/dir/started/uuid/cotenant/slot/cores.
+                        # `job["name"]` was a KeyError that would have crashed the
+                        # dispatcher on the FIRST co-tenancy it detected -- before the
+                        # quarantine was persisted -- turning a contamination guard into
+                        # an outage. It never fired only because no co-tenancy occurred
+                        # after the commit that introduced it.
+                        tainted.add(job["item"]["name"])
                         _save_state(quarantine, tainted)
                         log(f"QUARANTINE gpu{g} for {COTENANT_QUARANTINE_S//60} min "
                             f"(L002_burned_gpu_reused)")

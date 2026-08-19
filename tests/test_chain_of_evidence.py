@@ -153,9 +153,21 @@ saved = (qdir / "queue.json").read_text()
 setup()
 probs = coe.e4_method_code()
 ok(any("BYTE-IDENTICAL" in p for p in probs), "identical-ablation defect caught")
+# A variant is content-addressed, so an absent file is no longer a break on its own: E4
+# regenerates from cfg and compares hashes, which also proves the generator still produces
+# what ran. What must still be caught is a reference that does NOT match what the cfg
+# generates -- an experiment that would run code other than the one it declares.
 (qdir / "queue.json").write_text(json.dumps([{"name": "X", "cfg": ctl_cfg,
                                               "variant": "nonexistent.py"}]))
-ok(any("missing variant" in p for p in coe.e4_method_code()), "missing variant caught")
+ok(any("now generates" in p for p in coe.e4_method_code()),
+   "a variant reference that disagrees with its cfg is caught")
+# And a reference that AGREES must pass even with the bytes absent, which is what lets a
+# fresh clone audit the queue without shipping generated sources.
+(qdir / "variants" / vid).unlink(missing_ok=True)
+(qdir / "queue.json").write_text(json.dumps([{"name": "X", "cfg": ctl_cfg, "variant": vid}]))
+ok(not [p for p in coe.e4_method_code() if "X" in p],
+   "an absent but correctly-hashed variant is accepted")
+(qdir / "variants" / vid).write_text(ctl_src)
 (qdir / "queue.json").write_text(saved)
 
 print("\nE5 NUMERIC -- a document may not cite a number the registry does not contain")

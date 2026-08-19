@@ -24,14 +24,23 @@ __pycache__/
 #
 # 552KB of JSON is a small price for a paper a stranger can check. The records are append-
 # only and were never edited, so committing them is publishing evidence, not state.
-runs/
+# git cannot re-include a file inside an EXCLUDED DIRECTORY, so `runs/` followed by
+# `!runs/sweep/results/` silently did nothing: the negations never applied and the result
+# records were tracked only because they had been force-added once. Future records would
+# have stopped being committed with no error, quietly undoing the provenance fix. Each
+# level must be unignored in turn.
+runs/*
+!runs/sweep/
+runs/sweep/*
 !runs/sweep/results/
-!runs/sweep/results/*.json
+!runs/sweep/decisions/
+# The queue defines which experiments exist and the tests read it; without it a clone
+# cannot run the suite. Small, and it is the campaign's plan rather than host state.
+!runs/sweep/queue.json
 # Decision records are evidence too: they are what lets a reader ask whether the campaign
 # would choose the same experiment again from the same state, which is the question two
 # external reviews said this project could not answer.
 !runs/sweep/decisions/
-!runs/sweep/decisions/*.json
 tmp/
 
 # --- literature corpus ------------------------------------------------------
@@ -40,7 +49,10 @@ tmp/
 # is the knowledge extracted from them -- claims, mechanisms, hypotheses, lessons --
 # because that is the part a future run needs and cannot regenerate.
 lit/sources/
-lit/index.json
+# lit/index.json carries each source's sha256 and fetch status. E1 needs it to tell an
+# absent-but-indexed source from one that was never recorded, so without it a clone
+# cannot distinguish 'not fetched here' from 'no provenance at all'. It is small.
+!lit/index.json
 lit/ACTIVE_DIRECTION.json
 
 # --- profiling captures -----------------------------------------------------
@@ -50,6 +62,9 @@ lit/ACTIVE_DIRECTION.json
 # --- remote host config (address, login, port) ---
 .ophis_host
 
-# sharded screen scratch, merged into lit/index.json
+# sharded screen scratch, merged into # lit/index.json carries each source's sha256 and fetch status. E1 needs it to tell an
+# absent-but-indexed source from one that was never recorded, so without it a clone
+# cannot distinguish 'not fetched here' from 'no provenance at all'. It is small.
+!lit/index.json
 lit/index_shard*.json
 lit/*_progress.json
