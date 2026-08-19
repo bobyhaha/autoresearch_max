@@ -58,6 +58,8 @@ WAIT_LOG_EVERY_S = 30 * 60   # how often to report that we are waiting for capac
 # 300-second budgets bought nothing. A device that has just destroyed one of our runs is
 # excluded for this long; the cost of being wrong is a GPU we skip while others are free.
 COTENANT_QUARANTINE_S = 45 * 60
+# ...but lift it as soon as the device has been demonstrably clean this long.
+QUARANTINE_CLEAR_S = 8 * 60
 CORES_PER_JOB = 12        # disjoint taskset block per trainer
 CORE_BASE = 96            # start high: low cores are where foreign tenants cluster
 GATE_MAX_AGE = 20 * 60
@@ -383,6 +385,7 @@ def main():
     running = adopt_running()
     release_stranded_claims()   # claims with neither a result nor a work dir
     quarantine = {}             # gpu uuid -> epoch seconds until it may be used again
+    clean_since = {}            # gpu uuid -> when it was first seen free again
     launched = 0
     last_wait_log = 0.0
     while time.time() < DEADLINE:
@@ -453,8 +456,34 @@ def main():
         free_slots = [s for s in range(MAX_GPUS)
                       if s not in {j["slot"] for j in running.values()}]
         now = time.time()
-        for _u in [u for u, until in quarantine.items() if until <= now]:
-            del quarantine[_u]
+        # Release a quarantined device EARLY once it has been verifiably clean for a
+        # while, instead of serving out a fixed timer. The 45 minutes was a guess; the
+        # thing it protects against -- a foreign tenant cycling on and off -- is directly
+        # observable, so waiting it out while nvidia-smi shows the device empty is
+        # substituting a clock for evidence. The ceiling stays as a backstop for the case
+        # where we cannot see the tenant at all.
+        try:
+            _busy_uuids = {ln.split(",")[1].strip()
+                           for ln in subprocess.run(
+                               ["nvidia-smi", "--query-compute-apps=pid,gpu_uuid",
+                                "--format=csv,noheader"], capture_output=True, text=True,
+                               check=False).stdout.splitlines() if "," in ln}
+        except OSError:
+            _busy_uuids = None
+        for _u in list(quarantine):
+            if _busy_uuids is not None and _u not in _busy_uuids:
+                clean_since.setdefault(_u, now)
+                if now - clean_since[_u] >= QUARANTINE_CLEAR_S:
+                    log(f"QUARANTINE lifted early for {_u[:20]}: no compute app for "
+                        f"{QUARANTINE_CLEAR_S//60} min (evidence, not timer)")
+                    del quarantine[_u]
+                    clean_since.pop(_u, None)
+                    continue
+            else:
+                clean_since.pop(_u, None)      # tenant came back; restart the clock
+            if quarantine.get(_u, 0) <= now:
+                del quarantine[_u]
+                clean_since.pop(_u, None)
         free_gpus = [(g, uuid) for g, (used, uuid) in sorted(gpu_state().items())
                      if g not in running and used <= MINFREE_MB
                      and uuid not in quarantine]

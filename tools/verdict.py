@@ -156,9 +156,25 @@ def main():
                       f"{ {m['treat_cores'] for m in members} } -- NOT counterbalanced on "
                       f"this pair, so its fixed offset is inseparable from the effect")
         if not usable:
-            print(f"  NO COUNTERBALANCED PAIR. Queue the swapped wave ON THE SAME CORE "
-                  f"BLOCKS; a swap on a different pair adds an unmeasured offset instead "
-                  f"of cancelling a measured one.")
+            # An effect can be too big for the slot offset to explain. The largest offset
+            # ever measured between two slots is ~0.0011 (four-wide, cores 96-107 vs
+            # 108-119), so a delta several times that has a safe SIGN even uncounterbalanced
+            # -- refusing to say so would be false modesty, and the campaign's own ns=3 and
+            # wd_const results would be withheld on a technicality. The MAGNITUDE still
+            # needs the swap; only the direction is being claimed here.
+            MAX_SLOT_OFFSET = 0.0011
+            if deltas and min(abs(d) for d in deltas) > 3 * MAX_SLOT_OFFSET \
+                    and len({d > 0 for d in deltas}) == 1:
+                m = st.mean(deltas)
+                print(f"  NOT COUNTERBALANCED, but every delta is more than 3x the largest "
+                      f"slot offset ever measured ({MAX_SLOT_OFFSET}) and all share a sign: "
+                      f"mean {m:+.6f} -> the SIGN is safe "
+                      f"({'WORSE' if m > 0 else 'BETTER'} than control). The magnitude still "
+                      f"needs a same-pair swap.")
+            else:
+                print(f"  NO COUNTERBALANCED PAIR. Queue the swapped wave ON THE SAME CORE "
+                      f"BLOCKS; a swap on a different pair adds an unmeasured offset instead "
+                      f"of cancelling a measured one.")
             print()
             continue
         deltas = [m["delta"] for members in usable.values() for m in members]

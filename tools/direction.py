@@ -119,6 +119,11 @@ def slot_bias(results: list[dict]) -> dict | None:
             "cores": sorted({c for b in waves.values() for c in b})}
 
 
+def _wave_width(results, wave):
+    """How many of OUR runs shared that wave. Width is part of the operating point."""
+    return sum(1 for r in results if (r.get("name") or "").split("_")[0] == wave)
+
+
 def noise_band(results: list[dict]) -> tuple[float | None, str]:
     """(band, how_it_was_measured). None means: no instrument, so nothing may be closed."""
     import statistics as _st
@@ -127,6 +132,24 @@ def noise_band(results: list[dict]) -> tuple[float | None, str]:
            and is_platform(r.get("cfg") or {})]
     if len(ctl) < 2:
         return None, f"unmeasured ({len(ctl)} control runs; need 2+)"
+    # Waves of different WIDTH are different operating points: four concurrent trainers
+    # spread 0.002342 across slots where two spread 0.00047, because the per-slot penalty
+    # grows with our own concurrency (L017_slot_offset_scales_with_our_own_concurrency).
+    # Pooling them inflates the band with a between-width term and makes the instrument
+    # look coarser than it is at either width. Report the band for the width that carries
+    # the most control waves, and say which.
+    _by_wave = {}
+    for r in ctl:
+        _by_wave.setdefault((r.get("name") or "").split("_")[0], []).append(r)
+    _widths = {}
+    for w, members in _by_wave.items():
+        _widths.setdefault(len(members), []).extend(members)
+    if len(_widths) > 1:
+        _dom = max(_widths, key=lambda k: len(_widths[k]))
+        ctl = _widths[_dom]
+        _wnote = f"; {_dom}-wide waves only, other widths excluded (L017)"
+    else:
+        _wnote = ""
     # Prefer genuinely CONCURRENT controls: overlapping execution intervals mean the same
     # host contention acted on both, which is the resolution a yoked comparison achieves.
     def _iv(r):
@@ -300,18 +323,21 @@ def explore_debt(results: list[dict], state: dict) -> float:
 # against, so it is data rather than prose in a document.
 FAMILIES = {
     "capacity":        {"axes": ("depth", "dim", "mlp"),
-                        "cost": "GPU-only, near-free (GPU idle ~90% of the run)"},
+                        "cost": "GPU work is NOT free: mfu ~42.6%, so the GPU is substantially busy and added FLOPs cost step count (L019). Zero-FLOP capacity beats FLOP-buying capacity."},
     "token_exposure":  {"axes": ("tbs", "dbs", "batch_ramp"),
                         "cost": "CPU-PROPORTIONAL: fewer tokens/step => less packing => more steps"},
-    "attention":       {"axes": ("win", "swdiv"), "cost": "GPU-only, near-free"},
-    "ve_placement":    {"axes": ("ve",), "cost": "GPU-only, near-free"},
+    "attention":       {"axes": ("win", "swdiv"),
+                        "cost": "GPU-side; NOT free at mfu ~42.6% (L019). Removing FLOPs returns little -- L011 measured 40% fewer Newton-Schulz iterations buying 0.2% of step."},
+    "ve_placement":    {"axes": ("ve",),
+                        "cost": "the one ZERO-FLOP capacity lever: value embeddings are 16.78M of 50.33M params (33%) at vocab 8192 and are excluded from flops_per_token (L015, L019)."},
     "signal_scale":    {"axes": ("rope", "softcap", "x0init"), "cost": "free"},
     "schedule":        {"axes": ("warmup", "wd_const", "mu_const", "ema", "ema_start"),
                         "cost": "free (ema costs one fp32 shadow + eval swap)"},
     "optimizer_numeric": {"axes": ("clip", "ns"), "cost": "small GPU cost"},
     "systems":         {"axes": ("compile_mode",),
                         "cost": "pure throughput; the most wave-confounded thing to measure"},
-    "attention_detail": {"axes": ("qk_suppress",), "cost": "GPU-only, near-free"},
+    "attention_detail": {"axes": ("qk_suppress",),
+                        "cost": "GPU-side; NOT free at mfu ~42.6% (L019)."},
 }
 
 # Mechanism families. `prepare.py` is frozen, so data selection/curriculum is OUT OF
@@ -328,7 +354,7 @@ MECHANISM_FAMILIES = {
                         "cost": "free: a pure reorder of existing blocks, no new tensor "
                                 "and no added op, so the compiled fused update is intact"},
     "input_pipeline":  {"mechs": ("prefetch",),
-                        "cost": "attacks the actual bottleneck; overlap is bounded by the ~10% GPU share"},
+                        "cost": "the ~10%-GPU-share premise is RETIRED (L019): mfu is ~42.6%, so the loader is overlapped with a busy GPU and the slack available to reclaim is much smaller than loader_frac suggests"},
     "data_curriculum": {"mechs": (),
                         "cost": "OUT OF SCOPE: lives in the frozen prepare.py"},
 }
