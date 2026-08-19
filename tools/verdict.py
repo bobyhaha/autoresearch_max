@@ -164,7 +164,28 @@ def main():
         slots_t = {a["treat_dev"] for a in arms}
         slots_c = {a["ctl_dev"] for a in arms}
         if len(arms) >= 4 and len(slots_t) >= 4 and slots_t == slots_c:
-            mean = st.mean(a["delta"] for a in arms)
+            # Re-pair SAME-GPU across the two waves before averaging. Pairing within a
+            # wave leaves the whole device profile inside each delta -- gpu4 is the slow
+            # device and gpu7 the fast one, a 0.0025 spread as large as any effect -- so
+            # the deltas scatter ~6x more than the instrument's real noise and a mean of
+            # them fails its own t-test even when the effect is strong. Same-GPU pairing
+            # removes the device term inside each difference instead of relying on it to
+            # cancel in the mean. Both give the same mean; only this one has a usable sd.
+            byg_t = {a["treat_dev"]: a["t"] for a in arms}
+            byg_c = {a["ctl_dev"]: a["c"] for a in arms}
+            shared = sorted(set(byg_t) & set(byg_c))
+            if len(shared) >= 2:
+                paired = [byg_t[g]["metrics"]["val_bpb"] - byg_c[g]["metrics"]["val_bpb"]
+                          for g in shared]
+                mean = st.mean(paired)
+                sd = st.stdev(paired) if len(paired) > 1 else 0.0
+                sem = sd / (len(paired) ** 0.5) if sd else 0.0
+                print(f"  SAME-GPU PAIRED over {len(shared)} devices {shared}: "
+                      f"deltas {[round(x, 6) for x in paired]}")
+                print(f"    mean {mean:+.6f}  sd {sd:.6f}  sem {sem:.6f}"
+                      + (f"  t={mean/sem:.1f}" if sem else ""))
+            else:
+                mean = st.mean(a["delta"] for a in arms)
             verdict = ("BETTER than control" if mean < -res else
                        "WORSE than control" if mean > res else
                        "INSIDE the resolution -- no effect demonstrated")
