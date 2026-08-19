@@ -154,7 +154,7 @@ def runnable(cutoff):
     return out, frozen, policy
 
 
-def wave_sizes():
+def wave_sizes(cutoff=None):
     """How many entries each wave_group has IN THE QUEUE, regardless of their state.
 
     next_batch() must size a wave from this, not from the entries that happen to be
@@ -168,11 +168,24 @@ def wave_sizes():
         queue = load_queue()
     except NameError:           # pure-logic import in tests/test_wave_launch.py
         return {}
+    # Count only members that COULD run. An entry frozen by the gate's decision cutoff is
+    # not permanently missing -- it comes back the moment a council artifact is refreshed --
+    # so counting it made every wave with a treatment look "split" the instant the round
+    # went stale, and the split guard then refused the wave's CONTROLS too. Two correct
+    # rules deadlocked: the freeze exists so prose cannot authorise new science, and the
+    # split guard exists so a pairing cannot silently dissolve, but together they idled
+    # four GPUs. The campaign's own rule is that already-queued work keeps launching and
+    # GPUs do not idle for prose, so the cutoff-frozen members are excluded from the
+    # denominator rather than counted as casualties.
     sizes = collections.Counter()
     for item in queue:
         g = item.get("wave_group")
-        if g:
-            sizes[g] += 1
+        if not g:
+            continue
+        if (cutoff is not None and float(item.get("created_at") or 0) > cutoff
+                and not _is_control(item.get("cfg") or {})):
+            continue
+        sizes[g] += 1
     return sizes
 
 
@@ -197,7 +210,7 @@ def next_batch(cutoff, n_free):
     # A wave is launchable only if EVERY member it was queued with is still available.
     # A group whose runnable members are fewer than its queued size has already been
     # split -- launching the remnant would hand back a pair that never shared a wave.
-    sizes = wave_sizes()
+    sizes = wave_sizes(cutoff)
     intact, broken = {}, []
     for key, members in groups.items():
         want = sizes.get(key, len(members))

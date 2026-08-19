@@ -144,7 +144,13 @@ _np_all = sum(p.numel() for g in optimizer.param_groups for p in g['params'])
 _np_muon = sum(p.numel() for g in _mg for p in g['params'])
 print(f"muon_param_frac:     {_np_muon/max(_np_all,1):.6f}")
 print(f"muon_group_count:    {len(_mg)}")
-_wide = [p for g in _mg for p in g['params'] if p.dim() >= 2 and p.shape[-2] < p.shape[-1]]
+# numel floor: Muon's groups are sorted by shape, and torch.Size([4,32]) -- the ve_gate --
+# sorts before ([512,2048]) -- mlp.c_proj. Without the floor _wide[0] is the GATE, so
+# muon_lr_factor_cproj and cproj_rms_final would describe a 128-element tensor while
+# claiming to describe the 1M-element down-projection. Same dead-observable class as L016,
+# reintroduced in telemetry added to fix L016.
+_wide = [p for g in _mg for p in g['params']
+         if p.dim() >= 2 and p.shape[-2] < p.shape[-1] and p.numel() >= 65536]
 if _wide:
     print(f"muon_lr_factor_cproj:{max(1.0, _wide[0].shape[-2]/_wide[0].shape[-1])**0.5:.6f}")
     print(f"cproj_rms_final:     {_wide[0].detach().float().pow(2).mean().sqrt().item():.8f}")
