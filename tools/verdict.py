@@ -44,6 +44,33 @@ def _load():
     return out
 
 
+def _is_ctl(m):
+    """Was this member its wave's CONTROL? Answered from the wave, not from the platform.
+
+    Resolving the role through direction.is_platform means a PLATFORM ADOPTION retroactively
+    orphans every completed wave whose control was built at the old baseline. Adopting
+    tbs=18 collapsed this report from many groups to ONE and dropped R5MU2, R5MC2 and
+    R5NOQK2 -- three counterbalanced pairs each, all already reported.
+
+    A first repair replaced the role check at the ctl/trt split and appeared to do nothing.
+    It did nothing because there are THREE role sites, and the pairing loop's `ac == bc`
+    test re-derived the role from is_platform a few lines later and dropped every wave
+    again. An independent method audit traced it and named all three; this is the single
+    helper they now share.
+
+    A wave is a self-contained comparison and carries its own baseline. queue_quad names
+    members <wave>_s<slot>_<role>, so the role is in the name and survives any later
+    platform change. is_platform remains the fallback for records predating the convention.
+    """
+    mo = _ROLE_RE.search(m.get("name", "") or "")
+    if mo:
+        return mo.group(1) != "treat"
+    return direction.is_platform(m.get("cfg") or {})
+
+
+_ROLE_RE = __import__("re").compile(r"_s\d+_(treat|ctrl|control)$")
+
+
 def _variant_of(name, cfg=None):
     """Which generated source a run actually executed.
 
@@ -156,25 +183,8 @@ def main():
     hyps = {h["id"]: h for h in C.hypotheses()}
     by_cfg = {}
     for g, members in waves(rows).items():
-        # KNOWN LIMITATION, WRITTEN DOWN RATHER THAN HALF-FIXED. Identifying the
-        # control by is_platform means a PLATFORM ADOPTION retroactively orphans every
-        # completed wave whose control was built at the old baseline: both members read as
-        # treatments and the wave drops out. Adopting tbs=18 collapsed this output from
-        # many groups to ONE and took R5MU2, R5MC2 and R5NOQK2 with it -- all already
-        # reported, three counterbalanced pairs each. Their figures were computed by hand
-        # and are preserved in L061, L063 and the commit log; the evidence is intact, the
-        # TOOL's ability to re-derive it is not.
-        #
-        # Two attempts to fix it by reading the role out of the run name did not restore
-        # those waves -- something further upstream drops them as well -- and one of those
-        # attempts I reverted on a misreading, having blamed my own change for a collapse
-        # that adoption had caused. Rather than keep patching a live analysis tool while
-        # chasing a symptom I had already misdiagnosed once, the limitation is recorded
-        # here with its exact scope. The fix needs the grouping path understood end to end
-        # and a test that fails before it passes, which is a clean piece of work and not a
-        # late edit.
-        ctl = [m for m in members if direction.is_platform(m["cfg"] or {})]
-        trt = [m for m in members if not direction.is_platform(m["cfg"] or {})]
+        ctl = [m for m in members if _is_ctl(m)]
+        trt = [m for m in members if not _is_ctl(m)]
         if not ctl or not trt:
             continue
         # A wave may be 2-wide (one pair) or 4-wide (two pairs). Pair members by ADJACENT
@@ -198,7 +208,7 @@ def main():
                   f"re-run its wave-mate to recover the cell.")
         for i in range(0, len(members_sorted) - 1, 2):
             a, b = members_sorted[i], members_sorted[i + 1]
-            ac, bc = direction.is_platform(a["cfg"] or {}), direction.is_platform(b["cfg"] or {})
+            ac, bc = _is_ctl(a), _is_ctl(b)
             if ac == bc:
                 continue                      # not a treatment/control pair
             c, t = (a, b) if ac else (b, a)

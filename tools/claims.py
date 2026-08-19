@@ -338,7 +338,10 @@ def diagnostic_would_discriminate(diag: str, rule: dict, cfg: dict | None = None
     # "lt 1.0" by floating-point accident and has nothing to do with the mechanism. The
     # question is whether THIS treatment can satisfy the rule, not whether anything can.
     _same = None
-    if cfg:
+    # `is not None`, not truthiness: an empty dict is falsy, so cfg={} silently fell back
+    # to the loose path that looks at every non-control run -- the exact hole this argument
+    # was added to close. A method audit demonstrated it.
+    if cfg is not None:
         _delta = {k: v for k, v in cfg.items() if direction.PLATFORM.get(k) != v}
         _same = [r for r in _load()
                  if r.get("ok") and diag in (r.get("metrics") or {})
