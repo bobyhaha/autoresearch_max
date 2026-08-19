@@ -1,0 +1,240 @@
+{
+ "at": "2026-08-19T19-22-03Z",
+ "state_hash": "785a64d93c78584e",
+ "n_results": 149,
+ "candidate_set": [
+  "R5MC2_P4",
+  "RECAL18_W1",
+  "RECAL18_W2",
+  "RECAL18_W3",
+  "RECAL18_W4",
+  "R5NOQK2_P1",
+  "R5NOQK2_P2",
+  "R5NOQK2_P3",
+  "R5NOQK2_P4",
+  "R6XF_P4",
+  "R5T172_P1",
+  "R5T172_P2",
+  "R5T172_P3",
+  "R5T172_P4",
+  "R5DBS2_P1",
+  "R5DBS2_P2",
+  "R5DBS2_P3",
+  "R5DBS2_P4",
+  "R5MLP2_P1",
+  "R5MLP2_P2",
+  "R5MLP2_P3",
+  "R5MLP2_P4",
+  "R5S162_P1",
+  "R5S162_P2",
+  "R5S162_P3",
+  "R5S162_P4"
+ ],
+ "scores": {
+  "R5MC2_P4": 12.828,
+  "RECAL18_W1": 12.734,
+  "RECAL18_W2": 12.734,
+  "RECAL18_W3": 12.734,
+  "RECAL18_W4": 12.734,
+  "R5NOQK2_P1": 10.096,
+  "R5NOQK2_P2": 10.096,
+  "R5NOQK2_P3": 10.096,
+  "R5NOQK2_P4": 10.096,
+  "R6XF_P4": 9.696,
+  "R5T172_P1": 9.203,
+  "R5T172_P2": 9.203,
+  "R5T172_P3": 9.203,
+  "R5T172_P4": 9.203,
+  "R5DBS2_P1": 9.203,
+  "R5DBS2_P2": 9.203,
+  "R5DBS2_P3": 9.203,
+  "R5DBS2_P4": 9.203,
+  "R5MLP2_P1": 6.096,
+  "R5MLP2_P2": 6.096,
+  "R5MLP2_P3": 6.096,
+  "R5MLP2_P4": 6.096,
+  "R5S162_P1": 3.671,
+  "R5S162_P2": 3.671,
+  "R5S162_P3": 3.671,
+  "R5S162_P4": 3.671
+ },
+ "terms": {
+  "R5MC2_P4": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 3 runs",
+   "resolves": "decomposes L045_step_indexed_momentum_confounds_every_step_count_lever",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "RECAL18_W1": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 15 runs",
+   "resolves": "decomposes L033_component_share_is_not_intervention_share",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "RECAL18_W2": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 15 runs",
+   "resolves": "decomposes L033_component_share_is_not_intervention_share",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "RECAL18_W3": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 15 runs",
+   "resolves": "decomposes L033_component_share_is_not_intervention_share",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "RECAL18_W4": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 15 runs",
+   "resolves": "decomposes L033_component_share_is_not_intervention_share",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5NOQK2_P1": {
+   "gain": "untouched family; median confirmed -0.004396 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "resolves": "decomposes L014_precond_clamped_out_did_not_engage",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5NOQK2_P2": {
+   "gain": "untouched family; median confirmed -0.004396 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "resolves": "decomposes L014_precond_clamped_out_did_not_engage",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5NOQK2_P3": {
+   "gain": "untouched family; median confirmed -0.004396 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "resolves": "decomposes L014_precond_clamped_out_did_not_engage",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5NOQK2_P4": {
+   "gain": "untouched family; median confirmed -0.004396 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "resolves": "decomposes L014_precond_clamped_out_did_not_engage",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R6XF_P4": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 26 runs 0.002365",
+   "novelty": "least-explored axis has 9 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5T172_P1": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5T172_P2": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5T172_P3": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5T172_P4": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5DBS2_P1": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5DBS2_P2": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5DBS2_P3": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5DBS2_P4": {
+   "gain": "best observed in family -0.008227",
+   "info": "robust spread (MAD) over 10 runs 0.000793",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5MLP2_P1": {
+   "gain": "untouched family; median confirmed -0.004396 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5MLP2_P2": {
+   "gain": "untouched family; median confirmed -0.004396 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5MLP2_P3": {
+   "gain": "untouched family; median confirmed -0.004396 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5MLP2_P4": {
+   "gain": "untouched family; median confirmed -0.004396 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5S162_P1": {
+   "gain": "best observed in family -0.003454",
+   "info": "robust spread (MAD) over 12 runs 0.000314",
+   "novelty": "least-explored axis has 17 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5S162_P2": {
+   "gain": "best observed in family -0.003454",
+   "info": "robust spread (MAD) over 12 runs 0.000314",
+   "novelty": "least-explored axis has 17 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5S162_P3": {
+   "gain": "best observed in family -0.003454",
+   "info": "robust spread (MAD) over 12 runs 0.000314",
+   "novelty": "least-explored axis has 17 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R5S162_P4": {
+   "gain": "best observed in family -0.003454",
+   "info": "robust spread (MAD) over 12 runs 0.000314",
+   "novelty": "least-explored axis has 17 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  }
+ },
+ "selected": [
+  "R5MC2_P4"
+ ],
+ "selection_reason": "highest selector score among pending waves",
+ "operator_override": null,
+ "weights": {
+  "gain": 1.0,
+  "info": 0.6,
+  "novelty": 0.5,
+  "resolve": 4.0,
+  "activation_penalty": 8.0
+ }
+}

@@ -3608,6 +3608,52 @@
   "hypothesis_id": "hyp_mu_ceil_coscaled_at_tbs18_r5"
  },
  {
+  "name": "R5MU2_P3_s0_ctrl",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 19,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "82bc169727c0.py",
+  "label": "control",
+  "rationale": "Re-queued from width 4 to width 2. The dispatcher has logged 'waiting for 4 free GPUs' since 07:35Z -- over nine hours -- and every launch since has been 2-wide, so 56 of 66 pending runs sat in waves that could not start. This wave gates tbs=18 adoption per L047, and a gate whose experiment cannot run is a veto.",
+  "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
+  "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
+  "wave_group": "R5MU2_P3",
+  "created_at": 1787132544.0,
+  "source_round": "quad-counterbalanced",
+  "vram_est": 50
+ },
+ {
+  "name": "R5MU2_P3_s1_treat",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2,
+   "mu_warmup": 600
+  },
+  "variant": "53b4793e480a.py",
+  "label": "knob:mu_warmup+tbs",
+  "rationale": "Re-queued from width 4 to width 2. The dispatcher has logged 'waiting for 4 free GPUs' since 07:35Z -- over nine hours -- and every launch since has been 2-wide, so 56 of 66 pending runs sat in waves that could not start. This wave gates tbs=18 adoption per L047, and a gate whose experiment cannot run is a veto.",
+  "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
+  "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
+  "wave_group": "R5MU2_P3",
+  "created_at": 1787132544.0,
+  "source_round": "quad-counterbalanced",
+  "vram_est": 50,
+  "hypothesis_id": "hyp_tbs18_momentum_fraction_held_r5"
+ },
+ {
   "name": "R5MC2_P4_s0_treat",
   "cfg": {
    "dbs": 128,
@@ -3654,29 +3700,7 @@
   "vram_est": 50
  },
  {
-  "name": "R5MU2_P3_s0_ctrl",
-  "cfg": {
-   "dbs": 128,
-   "tbs": 19,
-   "depth": 8,
-   "dim": 512,
-   "mlp": 4,
-   "ve": 2,
-   "win": "SSSL",
-   "swdiv": 2
-  },
-  "variant": "82bc169727c0.py",
-  "label": "control",
-  "rationale": "Re-queued from width 4 to width 2. The dispatcher has logged 'waiting for 4 free GPUs' since 07:35Z -- over nine hours -- and every launch since has been 2-wide, so 56 of 66 pending runs sat in waves that could not start. This wave gates tbs=18 adoption per L047, and a gate whose experiment cannot run is a veto.",
-  "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
-  "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
-  "wave_group": "R5MU2_P3",
-  "created_at": 1787132544.0,
-  "source_round": "quad-counterbalanced",
-  "vram_est": 50
- },
- {
-  "name": "R5MU2_P3_s1_treat",
+  "name": "RECAL18_W1_s0_recal",
   "cfg": {
    "dbs": 128,
    "tbs": 18,
@@ -3685,19 +3709,171 @@
    "mlp": 4,
    "ve": 2,
    "win": "SSSL",
-   "swdiv": 2,
-   "mu_warmup": 600
+   "swdiv": 2
   },
-  "variant": "53b4793e480a.py",
-  "label": "knob:mu_warmup+tbs",
-  "rationale": "Re-queued from width 4 to width 2. The dispatcher has logged 'waiting for 4 free GPUs' since 07:35Z -- over nine hours -- and every launch since has been 2-wide, so 56 of 66 pending runs sat in waves that could not start. This wave gates tbs=18 adoption per L047, and a gate whose experiment cannot run is a veto.",
-  "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
-  "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
-  "wave_group": "R5MU2_P3",
-  "created_at": 1787132544.0,
-  "source_round": "quad-counterbalanced",
-  "vram_est": 50,
-  "hypothesis_id": "hyp_tbs18_momentum_fraction_held_r5"
+  "variant": "50ceed0a255d",
+  "label": "knob:tbs",
+  "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
+  "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
+  "expected": "Per-device means and a within-wave band at tbs=18, restoring the instrument at the new operating point before anything is measured against it.",
+  "wave_group": "RECAL18_W1",
+  "created_at": 1787167303.8759391,
+  "source_round": "recalibration",
+  "vram_est": 50
+ },
+ {
+  "name": "RECAL18_W1_s1_recal",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "50ceed0a255d",
+  "label": "knob:tbs",
+  "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
+  "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
+  "expected": "Per-device means and a within-wave band at tbs=18, restoring the instrument at the new operating point before anything is measured against it.",
+  "wave_group": "RECAL18_W1",
+  "created_at": 1787167303.8759391,
+  "source_round": "recalibration",
+  "vram_est": 50
+ },
+ {
+  "name": "RECAL18_W2_s0_recal",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "50ceed0a255d",
+  "label": "knob:tbs",
+  "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
+  "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
+  "expected": "Per-device means and a within-wave band at tbs=18, restoring the instrument at the new operating point before anything is measured against it.",
+  "wave_group": "RECAL18_W2",
+  "created_at": 1787167303.8759391,
+  "source_round": "recalibration",
+  "vram_est": 50
+ },
+ {
+  "name": "RECAL18_W2_s1_recal",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "50ceed0a255d",
+  "label": "knob:tbs",
+  "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
+  "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
+  "expected": "Per-device means and a within-wave band at tbs=18, restoring the instrument at the new operating point before anything is measured against it.",
+  "wave_group": "RECAL18_W2",
+  "created_at": 1787167303.8759391,
+  "source_round": "recalibration",
+  "vram_est": 50
+ },
+ {
+  "name": "RECAL18_W3_s0_recal",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "50ceed0a255d",
+  "label": "knob:tbs",
+  "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
+  "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
+  "expected": "Per-device means and a within-wave band at tbs=18, restoring the instrument at the new operating point before anything is measured against it.",
+  "wave_group": "RECAL18_W3",
+  "created_at": 1787167303.8759391,
+  "source_round": "recalibration",
+  "vram_est": 50
+ },
+ {
+  "name": "RECAL18_W3_s1_recal",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "50ceed0a255d",
+  "label": "knob:tbs",
+  "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
+  "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
+  "expected": "Per-device means and a within-wave band at tbs=18, restoring the instrument at the new operating point before anything is measured against it.",
+  "wave_group": "RECAL18_W3",
+  "created_at": 1787167303.8759391,
+  "source_round": "recalibration",
+  "vram_est": 50
+ },
+ {
+  "name": "RECAL18_W4_s0_recal",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "50ceed0a255d",
+  "label": "knob:tbs",
+  "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
+  "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
+  "expected": "Per-device means and a within-wave band at tbs=18, restoring the instrument at the new operating point before anything is measured against it.",
+  "wave_group": "RECAL18_W4",
+  "created_at": 1787167303.8759391,
+  "source_round": "recalibration",
+  "vram_est": 50
+ },
+ {
+  "name": "RECAL18_W4_s1_recal",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "50ceed0a255d",
+  "label": "knob:tbs",
+  "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
+  "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
+  "expected": "Per-device means and a within-wave band at tbs=18, restoring the instrument at the new operating point before anything is measured against it.",
+  "wave_group": "RECAL18_W4",
+  "created_at": 1787167303.8759391,
+  "source_round": "recalibration",
+  "vram_est": 50
  },
  {
   "name": "R5NOQK2_P1_s0_treat",
