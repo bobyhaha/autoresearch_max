@@ -1,20 +1,20 @@
 [project]
-name = "simplify-autoresearch-v2"
+name = "autoresearch-max"
 version = "0.3.0"
 description = "A provenance-first, queue-driven autonomous research pipeline"
-readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
-
-[project.scripts]
-autoresearch = "autoresearch.cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["autoresearch"]
+# This tree is a campaign workspace, not an importable library: the tools are scripts
+# under tools/ and host/. The manifest previously declared a package "autoresearch" and a
+# console entry point "autoresearch.cli:main", neither of which exists here, so the
+# metadata described a project that could not be built or installed.
+packages = ["tools"]
 
 [dependency-groups]
 dev = [

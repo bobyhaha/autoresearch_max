@@ -49,7 +49,7 @@ GPU_MIN_PER_QUAD = 8 * 8
 # Weights. Stated, not fitted. Chosen so that a confirmed-family exploit and an untouched
 # family come out comparable at equal cost -- if one systematically dominates, that is a
 # bug in the weights and the ranking should be read sceptically until they are revised.
-W_GAIN, W_INFO, W_NOVEL, W_COST, W_RESOLVE = 1.0, 0.6, 0.5, 0.25, 4.0
+W_GAIN, W_INFO, W_NOVEL, W_RESOLVE, W_ACTPEN = 1.0, 0.6, 0.5, 4.0, 8.0
 
 
 def _changed(cfg):
@@ -179,17 +179,35 @@ def score(cfg, rows, state, fx):
     if resolves:
         terms["resolves"] = f"decomposes {resolves[0]}"
 
-    # COST in GPU-hours, and a penalty for arms whose activation cannot be checked -- an
-    # unverifiable diagnostic means the run cannot distinguish a null from a no-op, which
-    # this campaign has paid for four times.
+    # COST is the same 1.1 GPU-hours for every quad, so multiplying it by a weight can
+    # never reorder anything: it subtracts a constant from every score. The comment here
+    # previously also promised "a penalty for arms whose activation cannot be checked",
+    # which was never written -- a comment describing code that does not exist, the same
+    # shape as a check that cannot fire. Both are now honest: cost is reported because a
+    # reader should see it, and NOT scored; the activation penalty is implemented.
     cost_h = GPU_MIN_PER_QUAD / 60.0
-    terms["cost"] = f"{cost_h:.1f} GPU-hours"
+    terms["cost"] = f"{cost_h:.1f} GPU-hours (equal for all quads; reported, not scored)"
+
+    # ACTIVATION PENALTY, now real. An arm whose hypothesis declares a diagnostic the
+    # control also satisfies cannot tell a null from a no-op, so its evidence is worth
+    # much less per GPU-hour whatever else it promises.
+    act_pen = 0.0
+    for h in claims.hypotheses():
+        if {k: v for k, v in (h.get("intervention") or {}).get("cfg", {}).items()
+                if direction.PLATFORM.get(k) != v} != _changed(cfg):
+            continue
+        a = h.get("activation") or {}
+        if a.get("diagnostic") and a.get("rule"):
+            good, _m = claims.diagnostic_would_discriminate(a["diagnostic"], a["rule"])
+            if not good:
+                act_pen = 1.0
+                terms["activation"] = "REFUSED by pre-check: cannot demonstrate engagement"
 
     s = (W_GAIN * gain / 0.001
          + W_INFO * info / 0.001
          + W_NOVEL * novel
          + W_RESOLVE * resolve
-         - W_COST * cost_h)
+         - W_ACTPEN * act_pen)
     return s, terms
 
 

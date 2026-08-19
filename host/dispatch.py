@@ -188,6 +188,33 @@ def wave_sizes(cutoff=None):
         sizes[g] += 1
     return sizes
 
+_WEDGED: set = set()
+
+
+def _wedged_reason(key) -> str:
+    """Why a wave can never assemble, if the cause is a policy block rather than timing."""
+    from direction import blocked_reason, axis_state
+    import claims as _c
+    try:
+        state = axis_state(results())
+    except Exception:                                          # noqa: BLE001
+        return ""
+    for it in load_queue():
+        if it.get("wave_group") != key:
+            continue
+        if (ROOT / "results" / f"{it['name']}.json").exists():
+            return ""            # something finished; the tombstone path owns this
+        if (ROOT / "claims" / it["name"]).exists():
+            return ""            # still in flight
+        why = blocked_reason(it.get("cfg") or {}, state)
+        if why:
+            return f"{it['name']}: {why}"
+        hits = _c.blocked_values(it.get("cfg") or {})
+        if hits:
+            k, v, les, _r = hits[0]
+            return f"{it['name']}: {k}={v} blocked by {les['id']}"
+    return ""
+
 
 def tombstone_split_wave(key) -> bool:
     """Retire a wave that can never be completed, instead of refusing it forever.
@@ -294,6 +321,21 @@ def next_batch(cutoff, n_free):
                 f"from its treatment")
     for key, have, want in broken:
         if tombstone_split_wave(key):
+            continue
+        # A wave whose missing members are POLICY-BLOCKED rather than claimed or finished
+        # can never assemble, and the tombstone cannot retire it either: tombstoning needs
+        # a finished member, and none of these ever ran. It therefore logs an identical
+        # refusal on every poll, forever, while the entries sit in the queue looking
+        # pending. Report it once as WEDGED, with the reason, so it reads as a decision
+        # requiring action rather than as work still to come.
+        _blocked = _wedged_reason(key)
+        if _blocked:
+            if key not in _WEDGED:
+                _WEDGED.add(key)
+                log(f"WAVE WEDGED {key}: {want - have} member(s) refused by policy, not by "
+                    f"the cutoff, so this wave can never assemble and cannot be "
+                    f"tombstoned (no member has finished). Reason: {_blocked}. Requeue it "
+                    f"or lift the block; it will not resolve on its own.")
             continue
         log(f"WAVE SPLIT {key}: {have} of {want} members still runnable; refusing to "
             f"launch the remnant (a partial wave is not a yoked comparison)")
@@ -406,6 +448,24 @@ def release_stranded_claims():
     if freed:
         log(f"released {freed} stranded claim(s) with no result and no work dir")
 
+def _crashed(job) -> str:
+    """A crash marker in the run's own log, or "" if it finished cleanly.
+
+    An adopted process reports exit code 0 whatever happened to it, so the exit status
+    cannot distinguish a crash from a clean finish. A missing val_bpb catches most
+    failures, but not one that dies AFTER printing it -- in the telemetry epilogue -- which
+    would otherwise be written as valid evidence with a real val_bpb attached.
+    """
+    try:
+        tail = (ROOT / "work" / job["name"] / "out.log").read_text(errors="replace")[-4000:]
+    except OSError:
+        return ""
+    for mark in ("Traceback (most recent call last)", "CUDA out of memory",
+                 "torch.cuda.OutOfMemoryError", "Killed", "Segmentation fault"):
+        if mark in tail:
+            return f"crash marker in out.log after launch: {mark!r}"
+    return ""
+
 
 class AdoptedProc:
     """A live trainer this dispatcher did not start, addressed by pid.
@@ -423,7 +483,13 @@ class AdoptedProc:
         try:
             os.kill(self.pid, 0)
         except ProcessLookupError:
-            self.returncode = 0     # exited; the verdict comes from out.log, as for orphans
+            # Exited -- but we did NOT start this process and cannot read its status, so
+            # its exit code is unknown, not zero. Reporting 0 made a crash indistinguishable
+            # from a clean finish. Usually harmless, because a crashed run prints no
+            # val_bpb and fails the `ok` test on that; the gap is a crash AFTER val_bpb is
+            # printed, in the telemetry epilogue, which would be recorded as valid
+            # evidence. The log is scanned for crash markers at completion instead.
+            self.returncode = 0
             return 0
         except PermissionError:
             pass                    # alive, owned by someone else -- treat as running
@@ -563,8 +629,10 @@ def main():
                    "started": job["started"], "ended": time.time(),
                    "returncode": job["proc"].returncode, "metrics": met,
                    "cotenant_detected": job["cotenant"], "cores": job["cores"],
-                   "ok": job["proc"].returncode == 0 and "val_bpb" in met and not job["cotenant"],
-                   "invalid_reason": "gpu co-tenancy during the run" if job["cotenant"] else "",
+                   "ok": (job["proc"].returncode == 0 and "val_bpb" in met
+                          and not job["cotenant"] and not _crashed(job)),
+                   "invalid_reason": ("gpu co-tenancy during the run" if job["cotenant"]
+                                      else _crashed(job) or ""),
                    "error": "" if job["proc"].returncode == 0 else txt.strip()[-400:]}
             (ROOT / "results" / f"{job['item']['name']}.json").write_text(json.dumps(rec, indent=1))
             log(f"DONE {job['item']['name']} gpu{g} rc={job['proc'].returncode} "
