@@ -219,3 +219,27 @@ def test_dispatcher_never_indexes_a_job_by_name():
     assert not offenders, (
         f"host/dispatch.py indexes job[\"name\"] at line(s) {offenders}; a job dict has no "
         f"'name' key, so this raises KeyError and takes the dispatcher down with it")
+
+
+def test_an_unknown_device_is_never_pooled_as_a_real_one():
+    """gpu:-1 means "nobody recorded it", not "device number -1".
+
+    Crash recovery stamped -1, and device_means() pooled it as a device -- so a recovered
+    run's effect was corrected against a fictional device assembled from unrelated runs.
+    Today's two recovered runs came out right only because that fake slot happened to hold
+    one treatment and its own wave-mate control. The device correction is the denominator
+    of every device-corrected number here, and the device spread is ~0.0025 bpb, larger
+    than most effects being chased.
+    """
+    rows = [
+        {"ok": True, "cfg": dict(direction.PLATFORM), "gpu": 6,
+         "metrics": {"val_bpb": 0.9915, "final_epoch": 2.0}},
+        {"ok": True, "cfg": dict(direction.PLATFORM), "gpu": -1,
+         "metrics": {"val_bpb": 0.5000, "final_epoch": 2.0}},
+        {"ok": True, "cfg": dict(direction.PLATFORM), "gpu": None,
+         "metrics": {"val_bpb": 0.5000, "final_epoch": 2.0}},
+    ]
+    dm = direction.device_means(rows)
+    assert -1 not in dm and None not in dm, (
+        f"an unrecorded device was pooled as a real one: {sorted(dm)}")
+    assert 6 in dm and abs(dm[6] - 0.9915) < 1e-9, "the real device mean was lost"

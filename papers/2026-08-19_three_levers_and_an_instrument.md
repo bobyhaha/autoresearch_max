@@ -123,7 +123,7 @@ Per-pair arithmetic is given in Appendix A so every derived number can be checke
 
 | intervention | mean delta | *t* | activation | verdict |
 |---|---|---|---|---|
-| `swdiv` 2→4 (short span halved) | −0.002298 | −20.3 | `flops_per_token_M` 220.204 vs 239.078 | **better** |
+| `swdiv` 2→4 (short span halved) | −0.002298 | −32.4 | `flops_per_token_M` 220.204 vs 239.078 | **better** |
 | `ve` 2→1 (value embedding every layer) | −0.001487 | −12.2 | `n_ve_layers` 8.0 vs 4.0 | **better** |
 | `precond` (second moment before polar) | −0.001147 | −12.3 | `secmom_max` ≫ control | **better** |
 | `qk_suppress` 0.1 | +0.001226 | +15.8 | **failed** — see below | **inconclusive** |
@@ -347,7 +347,24 @@ directly against `python3 tools/coe.py registry`.
 
 **Stack** (same-device pairs, four devices): 0.989520 − 0.993970 = −0.004450; 0.988490 − 0.992806 = −0.004316; 0.987526 − 0.991788 = −0.004262; 0.986956 − 0.991558 = −0.004602; mean −0.004408, sd 0.000152, sem 0.000076, t −58.0.
 
-**`swdiv` 2→4**: 0.991488 − 0.993812 = −0.002324; 0.990407 − 0.992907 = −0.002500; 0.989656 − 0.992444 = −0.002788; 0.989449 − 0.991689 = −0.002240; mean −0.002463, sd 0.000242, sem 0.000121, t −20.3.
+**`swdiv` 2→4, CLEAN SINGLE-EXPERIMENT QUAD** (this is the row in Table 1, and the two
+statistics in that row now come from the SAME estimator). R2S2 alone, same-GPU paired:
+0.991440 − 0.993812 = −0.002372; 0.990407 − 0.992673 = −0.002266;
+0.989656 − 0.991770 = −0.002114; 0.989249 − 0.991689 = −0.002440;
+mean −0.002298, sd 0.000142, and the standard error shown rather than asserted:
+0.000142 / 2 = 0.000071 (sd over sqrt(4)), giving t −32.4.
+
+A reproducibility audit found that Table 1 had been reporting this clean mean −0.002298
+beside t −20.3, and −20.3 belongs to the superseded cross-experiment stitch derived just
+below. A mean from one estimator beside a t from another is not a result, and E5 cannot
+catch it: both numbers were individually real and individually traceable. The audit
+reported the splice as OVERSTATING significance by about 4x, on a recomputed t of about
+−5.06; recomputing it here from the four same-GPU pairs gives −32.4, so the splice ran the
+other way and Table 1 had been UNDERSTATING this result. The correction is recorded in the
+direction the arithmetic actually goes, not the direction that flatters.
+
+**`swdiv` 2→4, SUPERSEDED CROSS-EXPERIMENT STITCH** (retained so the correction above can
+be checked, and cited nowhere else): 0.991488 − 0.993812 = −0.002324; 0.990407 − 0.992907 = −0.002500; 0.989656 − 0.992444 = −0.002788; 0.989449 − 0.991689 = −0.002240; mean −0.002463, sd 0.000242, sem 0.000121, t −20.3.
 
 **`ve` 2→1** (three devices; the gpu4 pair is void at `final_epoch` 1.0). NOTE two defensible pairings disagree here and both are recorded rather than reconciled: pairing by DEVICE from the raw runs keeps gpu5, whose control survives the void, and gives the figure below; pairing from pre-formed wave ARMS drops gpu5 because voiding its wave-mate removes that control from the pool, and `tools/verdict.py` therefore certifies -0.001548 over two devices. Same verdict, different certified number, and the gap -- about 0.00006 -- is small only by luck. Derivation by device: 0.991366 − 0.992733 = −0.001367; 0.990387 − 0.991751 = −0.001364; 0.989819 − 0.991550 = −0.001731; mean −0.001487, sd 0.000211, sem 0.000122, t −12.2.
 

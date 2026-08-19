@@ -96,7 +96,17 @@ def device_means(results: list[dict]) -> dict:
     for r in results:
         if (r.get("ok") and is_platform(r.get("cfg") or {})
                 and (r.get("metrics") or {}).get("final_epoch") == 2.0):
-            by.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+            g = r.get("gpu")
+            # An UNKNOWN device is not a device. Crash recovery used to stamp gpu:-1, and
+            # pooling that as if it were real builds a mean out of runs that share nothing
+            # but the fact that nobody recorded where they ran -- then corrects genuine
+            # effects against it. The correction is the denominator of every device-
+            # corrected number in this campaign, so a fictional device silently biases all
+            # of them by roughly the device spread, 0.0025 bpb, which is larger than most
+            # effects being chased.
+            if g is None or g == -1:
+                continue
+            by.setdefault(g, []).append(r["metrics"]["val_bpb"])
     return {g: _st.mean(v) for g, v in by.items() if v}
 
 

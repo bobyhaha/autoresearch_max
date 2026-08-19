@@ -408,8 +408,23 @@ def recover_orphans():
             continue
         met = parse(txt)
         cfg = next((e["cfg"] for e in load_queue() if e["name"] == d.name), None)
+        # The GPU is RECORDED, not unknown: launch.json sits in this very directory and
+        # holds gpu, uuid and started. Writing gpu:-1 here was not a graceful degradation,
+        # it was discarding data that was already on disk -- and -1 does not read as
+        # "unknown" downstream, it reads as a DEVICE. device_means() pooled it as one, so a
+        # recovered run's effect was corrected against a fictional device built from
+        # whatever else happened to land there. The two runs recovered from today's
+        # dispatcher crash came out right only because the fake slot held exactly one
+        # treatment and its own wave-mate control; a recovery landing anywhere else would
+        # have imported an unrelated GPU's ~0.0025 bpb bias straight into the effect.
+        _lj = {}
+        try:
+            _lj = json.loads((d / "launch.json").read_text())
+        except (OSError, ValueError):
+            pass
         r.write_text(json.dumps(
-            {"name": d.name, "cfg": cfg or {}, "gpu": -1, "started": 0,
+            {"name": d.name, "cfg": cfg or {}, "gpu": _lj.get("gpu", -1),
+             "started": _lj.get("started", 0),
              "hypothesis_id": next((e.get("hypothesis_id") for e in load_queue()
                                     if e["name"] == d.name), None),
              "ended": (d / "out.log").stat().st_mtime, "returncode": 0, "metrics": met,

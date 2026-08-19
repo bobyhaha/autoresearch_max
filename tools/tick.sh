@@ -139,6 +139,26 @@ if removed:
 print(msg)
 PYMERGE"
   fi
+  # SUPERVISION. Nothing restarted the dispatcher, and today that cost an outage: it died
+  # at 15:40Z on a KeyError four minutes after launching a wave, the treatment ran to
+  # completion on the GPU with nobody left to harvest it, and the box sat idle until a
+  # human noticed. There is no cron, no systemd unit, and the one restart script in the
+  # tree (restart_sweep.sh) pkill -9's live trainers, so it is not usable as a supervisor.
+  #
+  # This restarts ONLY when no dispatcher is running. It never kills anything: a dispatcher
+  # holding the lock is left alone, and any trainer already on a GPU keeps running -- the
+  # new dispatcher adopts in-flight work and harvests it, which is exactly how both halves
+  # of today's crashed wave were recovered.
+  _alive=$(ssh -n "${SSHOPT[@]}" "$HOST" 'pgrep -f "dispatch.py [0-9]" | grep -cv "bash -c" || true' 2>/dev/null | tr -d "[:space:]")
+  if [ "${_alive:-0}" = "0" ]; then
+    echo "  DISPATCHER DOWN -- restarting (no trainer is touched; in-flight work is adopted)"
+    # Deadline is refreshed each tick rather than fixed at first launch, so the campaign is
+    # bounded by the tick loop stopping rather than running unattended forever.
+    _deadline=$(python3 -c 'import time; print(time.time() + 6*3600)')
+    ssh -n "${SSHOPT[@]}" "$HOST" "cd ~/$OPHIS_REMOTE_DIR/sweep && rm -f dispatcher.lock && nohup ~/$OPHIS_REMOTE_DIR/gpu6/.venv/bin/python -u dispatch.py $_deadline >> dispatch.out 2>&1 < /dev/null & sleep 3" \
+      && echo "  dispatcher restarted" \
+      || echo "  WARN: dispatcher restart FAILED -- GPUs will not be claimed"
+  fi
   python3 tools/council.py status
 }
 
