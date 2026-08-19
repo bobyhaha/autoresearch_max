@@ -3711,7 +3711,7 @@
    "win": "SSSL",
    "swdiv": 2
   },
-  "variant": "50ceed0a255d",
+  "variant": "50ceed0a255d.py",
   "label": "knob:tbs",
   "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
   "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
@@ -3733,7 +3733,7 @@
    "win": "SSSL",
    "swdiv": 2
   },
-  "variant": "50ceed0a255d",
+  "variant": "50ceed0a255d.py",
   "label": "knob:tbs",
   "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
   "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
@@ -3755,7 +3755,7 @@
    "win": "SSSL",
    "swdiv": 2
   },
-  "variant": "50ceed0a255d",
+  "variant": "50ceed0a255d.py",
   "label": "knob:tbs",
   "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
   "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
@@ -3777,7 +3777,7 @@
    "win": "SSSL",
    "swdiv": 2
   },
-  "variant": "50ceed0a255d",
+  "variant": "50ceed0a255d.py",
   "label": "knob:tbs",
   "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
   "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
@@ -3799,7 +3799,7 @@
    "win": "SSSL",
    "swdiv": 2
   },
-  "variant": "50ceed0a255d",
+  "variant": "50ceed0a255d.py",
   "label": "knob:tbs",
   "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
   "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
@@ -3821,7 +3821,7 @@
    "win": "SSSL",
    "swdiv": 2
   },
-  "variant": "50ceed0a255d",
+  "variant": "50ceed0a255d.py",
   "label": "knob:tbs",
   "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
   "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
@@ -3843,7 +3843,7 @@
    "win": "SSSL",
    "swdiv": 2
   },
-  "variant": "50ceed0a255d",
+  "variant": "50ceed0a255d.py",
   "label": "knob:tbs",
   "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
   "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",
@@ -3865,7 +3865,7 @@
    "win": "SSSL",
    "swdiv": 2
   },
-  "variant": "50ceed0a255d",
+  "variant": "50ceed0a255d.py",
   "label": "knob:tbs",
   "rationale": "RECALIBRATION BLOCK for the tbs=18 operating point. Adopting tbs=18 into PLATFORM drops the control corpus from 90 runs to 4, which is not enough for per-device means or a measured noise band, so every verdict would be blind between the adoption and the recalibration. These runs are treatments under the CURRENT platform and become the control corpus the instant PLATFORM changes, which is why they are queued BEFORE the adoption rather than after it.",
   "falsifier": "If the within-GPU sd at tbs=18 is not comparable in scale to the 0.000189 residual sd measured at tbs=19, the resolution model does not transfer and every verdict at the new platform needs a wider band before it is trusted.",

@@ -63,6 +63,12 @@ QUARANTINE_CLEAR_S = 8 * 60
 # How many times each device has burned a run of ours this process. The early-release
 # window doubles per burn, so a cycling tenant cannot keep winning the same device.
 burn_count: dict = {}
+# Repeated identical launch failures. A missing variant file will not appear on
+# its own, so a wave that fails the same way repeatedly is reported once and set
+# aside rather than retried every poll.
+launch_fails: dict = {}
+blocked_launch: set = set()
+LAUNCH_FAIL_MAX = 3
 CORES_PER_JOB = 12        # disjoint taskset block per trainer
 CORE_BASE = 96            # start high: low cores are where foreign tenants cluster
 GATE_MAX_AGE = 20 * 60
@@ -761,6 +767,7 @@ def main():
             if time.time() - last_wait_log > WAIT_LOG_EVERY_S:
                 log(f"WAITING: {msg}; {len(running)}/{MAX_GPUS} of ours running")
                 last_wait_log = time.time()
+        batch = [b for b in batch if b["name"] not in blocked_launch]
         batch = claim_all(batch)
 
         for item in batch:
@@ -803,7 +810,27 @@ def main():
                 release(item)                 # an earlier version stranded it forever
                 free_slots.insert(0, slot)
                 free_gpus.insert(0, (g, uuid))
-                log(f"LAUNCH FAILED {item['name']}: {exc} (claim released)")
+                # A LAUNCH THAT CANNOT SUCCEED MUST STOP TRYING. A missing variant file
+                # does not appear by itself, so retrying it is futile -- and the retry loop
+                # runs every poll, which flooded dispatch.log with 30+ identical lines in
+                # three minutes and kept re-claiming and releasing two GPUs while a
+                # perfectly launchable queue waited behind it. The wave is quarantined from
+                # LAUNCHING after a few identical failures and reported once as needing
+                # action, the same way WAVE WEDGED reports a wave that can never assemble.
+                # The entry stays in the queue: it becomes launchable again the moment the
+                # missing file is shipped, which is the actual fix an operator would apply.
+                _lk = f"{item['name']}:{type(exc).__name__}"
+                launch_fails[_lk] = launch_fails.get(_lk, 0) + 1
+                _n = launch_fails[_lk]
+                if _n <= LAUNCH_FAIL_MAX:
+                    log(f"LAUNCH FAILED {item['name']}: {exc} (claim released)")
+                if _n == LAUNCH_FAIL_MAX:
+                    log(f"LAUNCH BLOCKED {item['name']}: failed {_n} times with the same "
+                        f"error, which will not fix itself. Not retried until the cause is "
+                        f"removed -- most often a queue entry whose 'variant' names a file "
+                        f"that was never built or never shipped. The entry stays queued.")
+                if _n >= LAUNCH_FAIL_MAX:
+                    blocked_launch.add(item["name"])
                 continue
             running[g] = {"proc": p, "item": item, "dir": d, "started": time.time(),
                           "uuid": uuid, "cotenant": False, "slot": slot, "cores": cores}
