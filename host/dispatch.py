@@ -266,6 +266,8 @@ def recover_orphans():
         cfg = next((e["cfg"] for e in load_queue() if e["name"] == d.name), None)
         r.write_text(json.dumps(
             {"name": d.name, "cfg": cfg or {}, "gpu": -1, "started": 0,
+             "hypothesis_id": next((e.get("hypothesis_id") for e in load_queue()
+                                    if e["name"] == d.name), None),
              "ended": (d / "out.log").stat().st_mtime, "returncode": 0, "metrics": met,
              # cfg unresolvable => the run cannot be attributed to any axis, so it is not
              # evidence. v3 wrote ok:true here and silently under-counted three runs.
@@ -418,7 +420,13 @@ def main():
                 continue
             txt = (job["dir"] / "out.log").read_text(errors="replace")
             met = parse(txt)
+            # Carry the hypothesis id onto the RESULT. coe.py E3 is opt-in on this field
+            # (`hid = r.get("hypothesis_id"); if not hid: continue`), so without it the
+            # declared activation rule is never evaluated and a treatment that silently
+            # failed to engage is indistinguishable from a clean null -- which is the
+            # exact failure the activation predicate exists to prevent.
             rec = {"name": job["item"]["name"], "cfg": job["item"]["cfg"], "gpu": g,
+                   "hypothesis_id": job["item"].get("hypothesis_id"),
                    "started": job["started"], "ended": time.time(),
                    "returncode": job["proc"].returncode, "metrics": met,
                    "cotenant_detected": job["cotenant"], "cores": job["cores"],

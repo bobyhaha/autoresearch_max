@@ -99,6 +99,36 @@ def main():
                       "created_at": stamp, "source_round": path.name,
                       "vram_est": e.get("vram_est", 60)})
 
+    # L006_slot_bias_fakes_effects, enforced rather than remembered. Slot 0 loses to slot
+    # 1 by ~0.00047 bpb in every control wave measured, which is the size of the effects
+    # being hunted -- so a treatment that appears in only ONE wave carries that offset as
+    # a fake result whose sign depends only on where it landed. The dispatcher assigns
+    # slots in queue order within a wave, so a counterbalanced treatment must appear both
+    # before and after a control across its two waves.
+    slots = {}
+    for e in queue:
+        if direction.is_platform(e["cfg"]):
+            continue
+        grp = [x for x in queue if x.get("wave_group") == e.get("wave_group")]
+        slots.setdefault(json.dumps(e["cfg"], sort_keys=True), []).append(
+            grp.index(e) if e in grp else -1)
+    for cfgkey, positions in slots.items():
+        if len(set(positions)) < 2:
+            nm = next(e["name"] for e in queue
+                      if json.dumps(e["cfg"], sort_keys=True) == cfgkey)
+            skipped.append((nm, f"NOT COUNTERBALANCED: this cfg occupies slot "
+                                f"{positions[0]} in every wave it appears in "
+                                f"({len(positions)} wave(s)). L006 measured a fixed "
+                                f"+0.00047 bpb slot offset, comparable to the effects "
+                                f"being tested, so an uncounterbalanced arm reports that "
+                                f"offset as its result. Queue it twice with the slot "
+                                f"order swapped: [treatment, control] and "
+                                f"[control, treatment]."))
+    if any("NOT COUNTERBALANCED" in w for _, w in skipped):
+        queue = [e for e in queue
+                 if direction.is_platform(e["cfg"])
+                 or len(set(slots.get(json.dumps(e["cfg"], sort_keys=True), []))) >= 2]
+
     existing = []
     qf = SWEEP / "queue.json"
     if qf.exists():
