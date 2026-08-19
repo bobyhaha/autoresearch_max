@@ -456,8 +456,16 @@ def _crashed(job) -> str:
     failures, but not one that dies AFTER printing it -- in the telemetry epilogue -- which
     would otherwise be written as valid evidence with a real val_bpb attached.
     """
+    # `job` holds proc/item/dir/started/uuid/cotenant/slot/cores -- the run's name lives at
+    # job["item"]["name"]. `job["name"]` was a KeyError, and because it sits in the health
+    # check that runs on EVERY poll it killed the dispatcher outright at 15:40Z, minutes
+    # after launching R6MTP_P1, so the treatment finished on the GPU and was never
+    # harvested. This is the SECOND site of the same mistake: the first, in the co-tenancy
+    # taint write, was found by an audit and fixed hours earlier, and fixing one instance of
+    # a typo class without grepping for the rest left this one to fire.
     try:
-        tail = (ROOT / "work" / job["name"] / "out.log").read_text(errors="replace")[-4000:]
+        tail = (ROOT / "work" / job["item"]["name"] / "out.log").read_text(
+            errors="replace")[-4000:]
     except OSError:
         return ""
     for mark in ("Traceback (most recent call last)", "CUDA out of memory",

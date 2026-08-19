@@ -199,3 +199,23 @@ def test_multi_axis_arms_do_not_contribute_to_single_factor_estimates():
         assert abs(lad["swdiv"][4] - (-0.002194)) < 5e-5, (
             f"swdiv=4 reads {lad['swdiv'][4]:+.6f}; the single-factor arms measure -0.002194. "
             f"A multi-axis arm is leaking into the ladder again.")
+
+
+def test_dispatcher_never_indexes_a_job_by_name():
+    """`job["name"]` is a KeyError that kills the dispatcher, and it has appeared twice.
+
+    A job dict holds proc/item/dir/started/uuid/cotenant/slot/cores; the run's name is at
+    job["item"]["name"]. The first instance sat in the co-tenancy taint write and was found
+    by audit before it ever fired. The second sat in _crashed(), on the health-check path
+    that runs every poll, and it killed the dispatcher minutes after a launch -- the run
+    completed on the GPU and was never harvested.
+
+    Grepping the source is a weak check, but this defect is invisible until the exact branch
+    executes, and both instances shipped through review that read the code as correct.
+    """
+    src = (REPO / "host" / "dispatch.py").read_text()
+    offenders = [i + 1 for i, ln in enumerate(src.splitlines())
+                 if 'job["name"]' in ln and not ln.strip().startswith("#")]
+    assert not offenders, (
+        f"host/dispatch.py indexes job[\"name\"] at line(s) {offenders}; a job dict has no "
+        f"'name' key, so this raises KeyError and takes the dispatcher down with it")
