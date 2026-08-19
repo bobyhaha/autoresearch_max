@@ -279,7 +279,7 @@ _OPS = {"ge": lambda a, b: a >= b, "gt": lambda a, b: a > b,
         "eq": lambda a, b: a == b, "ne": lambda a, b: a != b}
 
 
-def diagnostic_would_discriminate(diag: str, rule: dict) -> tuple[bool, str]:
+def diagnostic_would_discriminate(diag: str, rule: dict, cfg: dict | None = None) -> tuple[bool, str]:
     """Would this activation diagnostic actually separate treatment from control?
 
     Checked BEFORE a hypothesis is registered, not after its runs come back. Three
@@ -321,8 +321,46 @@ def diagnostic_would_discriminate(diag: str, rule: dict) -> tuple[bool, str]:
     # deterministic. A first version of this check refused both -- the same false positive
     # already made once in coe.py's E3 and fixed there. Treatment-side constancy (the
     # secmom_ortho_ratio failure) cannot be seen before the runs exist and stays E3's job.
-    return True, (f"ok: {len(vals) - len(passing)} of {len(vals)} controls FAIL the rule, "
-                  f"so the diagnostic separates the arms")
+    # AND SOMETHING MUST BE ABLE TO SATISFY IT. Checking only that CONTROLS FAIL is half a
+    # check: a rule no treatment can meet also passes it, and the campaign has now shipped
+    # that defect twice. L050 recorded the first -- secmom_ortho_ratio lt 0.1, where the
+    # reorder moves the statistic UP to 15.08 -- and named this fix as not yet built. The
+    # second arrived four hours later: qk_q_rms_final lt 1.0, where removing QK-norm moves
+    # the statistic UP to 1.187 while every control sits at exactly 1.0. Both rules were
+    # two-sided departures encoded one-sided, and both sailed through this door.
+    #
+    # So look at the runs that are NOT controls and have emitted the field. If some exist
+    # and none satisfies the rule, refuse. If none exists yet the answer is honestly
+    # "unverified" rather than "ok" -- a permissive result must not read as a positive.
+    # Restricted to runs of THIS arm when a cfg is given. A first version looked at every
+    # non-control run and so passed the backwards rule anyway: qk_q_rms_final is emitted by
+    # EVERY run, and a handful of unrelated treatments read 0.999999, which satisfies
+    # "lt 1.0" by floating-point accident and has nothing to do with the mechanism. The
+    # question is whether THIS treatment can satisfy the rule, not whether anything can.
+    _same = None
+    if cfg:
+        _delta = {k: v for k, v in cfg.items() if direction.PLATFORM.get(k) != v}
+        _same = [r for r in _load()
+                 if r.get("ok") and diag in (r.get("metrics") or {})
+                 and {k: v for k, v in (r.get("cfg") or {}).items()
+                      if direction.PLATFORM.get(k) != v} == _delta]
+    treat = [(r["metrics"] or {}).get(diag)
+             for r in (_same if _same is not None else [])]
+    treat = [v for v in treat if isinstance(v, (int, float))]
+    if treat:
+        sat = [v for v in treat if ok_f(v)]
+        if not sat:
+            return False, (
+                f"REFUSED: {len(vals)} control(s) fail {rule} on '{diag}', but so do ALL "
+                f"{len(treat)} non-control run(s) that emitted it (e.g. {treat[0]}). A rule "
+                f"nothing can satisfy is not a test -- checking only that controls fail is "
+                f"half a check, and this exact defect shipped twice (L050). If the treatment "
+                f"moves the statistic the OTHER way, invert the rule.")
+        return True, (f"ok: {len(vals) - len(passing)} of {len(vals)} controls FAIL the rule "
+                      f"and {len(sat)} of {len(treat)} non-control run(s) SATISFY it")
+    return True, (f"ok so far: {len(vals) - len(passing)} of {len(vals)} controls FAIL the "
+                  f"rule, but no run of THIS arm has emitted '{diag}' yet, so it is "
+                  f"UNVERIFIED that the treatment can satisfy it")
 
 
 def blocked_values(cfg: dict) -> list[tuple]:

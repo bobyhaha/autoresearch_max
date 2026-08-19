@@ -93,7 +93,7 @@ def main() -> int:
         _h = next((h for h in claims.hypotheses() if h["id"] == a.hyp), None)
         _act = (_h or {}).get("activation") or {}
         if _act.get("diagnostic") and _act.get("rule"):
-            _ok, _msg = claims.diagnostic_would_discriminate(_act["diagnostic"], _act["rule"])
+            _ok, _msg = claims.diagnostic_would_discriminate(_act["diagnostic"], _act["rule"], T)
             if not _ok:
                 print(f"refusing: hypothesis {a.hyp!r} declares an activation diagnostic "
                       f"that cannot demonstrate engagement.\n  {_msg}")

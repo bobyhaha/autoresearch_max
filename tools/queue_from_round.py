@@ -66,7 +66,7 @@ def main():
             _act = (_h or {}).get("activation") or {}
             if _act.get("diagnostic") and _act.get("rule"):
                 _ok, _msg = claims.diagnostic_would_discriminate(
-                    _act["diagnostic"], _act["rule"])
+                    _act["diagnostic"], _act["rule"], cfg)
                 if not _ok:
                     skipped.append((e["name"], f"activation diagnostic cannot fire: {_msg}"))
                     continue

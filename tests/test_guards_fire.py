@@ -328,3 +328,33 @@ def test_build_refuses_a_cfg_key_the_policy_never_heard_of():
     assert "KNOB_AXES" in str(e.value) or "not in direction" in str(e.value)
     # And a knob the policy DOES know must still build.
     assert make_variant.build({**direction.PLATFORM, "zloss": 0.1})
+
+
+def test_activation_precheck_refuses_a_rule_no_treatment_can_satisfy():
+    """Checking only that CONTROLS FAIL is half a check, and it shipped twice.
+
+    L050 recorded the first: secmom_ortho_ratio lt 0.1, where the reorder moves the
+    statistic UP to 15.08 while controls sit near 0.49 -- so controls "fail" the rule and
+    so does every treatment. The second arrived four hours later with qk_q_rms_final lt
+    1.0. Both were two-sided departures encoded one-sided, and the door passed both.
+    """
+    cfg = {**direction.PLATFORM, "ve": 1, "swdiv": 4, "precond": "pre"}
+    bad, msg = claims.diagnostic_would_discriminate(
+        "secmom_ortho_ratio", {"op": "lt", "value": 0.1}, cfg)
+    assert not bad, f"a rule no run of this arm can satisfy was accepted: {msg}"
+    good, msg = claims.diagnostic_would_discriminate(
+        "secmom_max", {"op": "gt", "value": 1.0}, cfg)
+    assert good, f"the corrected, satisfiable rule was refused: {msg}"
+
+
+def test_activation_precheck_says_unverified_rather_than_ok():
+    """A permissive answer must not read as a positive.
+
+    When no run of the arm has emitted the field, the honest answer is that nothing is
+    known -- not "ok". A prior audit flagged the old wording as a false confirmation.
+    """
+    cfg = {**direction.PLATFORM, "noqknorm": 1}
+    ok, msg = claims.diagnostic_would_discriminate(
+        "qk_q_rms_final", {"op": "gt", "value": 1.0}, cfg)
+    assert ok and "UNVERIFIED" in msg, (
+        f"a not-yet-checkable rule did not announce itself as unverified: {msg}")
