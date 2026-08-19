@@ -140,6 +140,26 @@ def main() -> int:
         # hour does not load onto the effect.
         layout = {f"{a.name}_P1": ["t", "c"], f"{a.name}_P2": ["c", "t"],
                   f"{a.name}_P3": ["c", "t"], f"{a.name}_P4": ["t", "c"]}
+    # A WIDTH RE-SHAPE IS NOT A NEW DECISION. The decision cutoff freezes entries created
+    # after the last council artifact, which is right for a newly proposed experiment and
+    # wrong for one that was already proposed, reviewed and queued, and is merely being
+    # re-cut from a 4-wide wave into 2-wide pairs because the box does not give four GPUs
+    # (L052). Today that distinction cost real time: R5MU2 and R5MC2 -- mechanical
+    # re-shapes of the already-approved R5MU and R5MC -- were frozen as new decisions, and
+    # they are the very runs L047 gates tbs=18 adoption on. An audit measured roughly 400
+    # free-GPU-minutes idled behind council staleness today, 68% of all gate evaluations.
+    #
+    # So an entry whose EXACT cfg and hypothesis have been queued before inherits the
+    # earliest created_at already on record. The experiment keeps the review timestamp it
+    # actually earned. A genuinely new cfg or a different hypothesis finds no match and is
+    # frozen exactly as before, which is the case the cutoff exists for.
+    _prior = {}
+    for e in q:
+        k = (json.dumps(e.get("cfg"), sort_keys=True), e.get("hypothesis_id"))
+        ts = e.get("created_at")
+        if ts and (k not in _prior or ts < _prior[k]):
+            _prior[k] = ts
+
     new = []
     for grp, roles in layout.items():
         for i, role in enumerate(roles):
@@ -150,7 +170,10 @@ def main() -> int:
                  "variant": vt if role == "t" else vc,
                  "label": direction.label(T if role == "t" else P),
                  "rationale": a.rationale, "falsifier": a.falsifier, "expected": a.expected,
-                 "wave_group": grp, "created_at": stamp,
+                 "wave_group": grp,
+                 "created_at": _prior.get(
+                     (json.dumps(T if role == "t" else P, sort_keys=True),
+                      a.hyp if (role == "t" and a.hyp != "none") else None), stamp),
                  "source_round": "quad-counterbalanced", "vram_est": 50}
             if role == "t" and a.hyp != "none":
                 e["hypothesis_id"] = a.hyp

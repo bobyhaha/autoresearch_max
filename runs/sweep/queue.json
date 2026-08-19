@@ -3304,7 +3304,7 @@
   "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
   "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
   "wave_group": "R5MU2_P1",
-  "created_at": 1787159010.256934,
+  "created_at": 1787132544.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_tbs18_momentum_fraction_held_r5"
@@ -3327,7 +3327,7 @@
   "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
   "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
   "wave_group": "R5MU2_P1",
-  "created_at": 1787159010.256934,
+  "created_at": 1787132544.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3349,7 +3349,7 @@
   "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
   "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
   "wave_group": "R5MU2_P2",
-  "created_at": 1787159010.256934,
+  "created_at": 1787132544.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3372,7 +3372,7 @@
   "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
   "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
   "wave_group": "R5MU2_P2",
-  "created_at": 1787159010.256934,
+  "created_at": 1787132544.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_tbs18_momentum_fraction_held_r5"
@@ -3395,7 +3395,7 @@
   "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
   "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
   "wave_group": "R5MU2_P3",
-  "created_at": 1787159010.256934,
+  "created_at": 1787132544.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3418,7 +3418,7 @@
   "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
   "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
   "wave_group": "R5MU2_P3",
-  "created_at": 1787159010.256934,
+  "created_at": 1787132544.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_tbs18_momentum_fraction_held_r5"
@@ -3442,7 +3442,7 @@
   "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
   "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
   "wave_group": "R5MU2_P4",
-  "created_at": 1787159010.256934,
+  "created_at": 1787132544.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_tbs18_momentum_fraction_held_r5"
@@ -3465,7 +3465,7 @@
   "falsifier": "Holding the Muon momentum ramp at the same FRACTION of the run at tbs=18 does not move val_bpb outside the measured band, with the ramp confirmed engaged.",
   "expected": "Decomposes one leg of the six-way tbs confound (L045/L046).",
   "wave_group": "R5MU2_P4",
-  "created_at": 1787159010.256934,
+  "created_at": 1787132544.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3488,7 +3488,7 @@
   "falsifier": "Raising the momentum ceiling to the co-scaled value at tbs=18 does not move val_bpb outside the measured band, with the ceiling confirmed engaged.",
   "expected": "Decomposes a second leg of the tbs confound.",
   "wave_group": "R5MC2_P1",
-  "created_at": 1787159010.305305,
+  "created_at": 1787135141.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_mu_ceil_coscaled_at_tbs18_r5"
@@ -3511,7 +3511,7 @@
   "falsifier": "Raising the momentum ceiling to the co-scaled value at tbs=18 does not move val_bpb outside the measured band, with the ceiling confirmed engaged.",
   "expected": "Decomposes a second leg of the tbs confound.",
   "wave_group": "R5MC2_P1",
-  "created_at": 1787159010.305305,
+  "created_at": 1787135141.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3533,7 +3533,7 @@
   "falsifier": "Raising the momentum ceiling to the co-scaled value at tbs=18 does not move val_bpb outside the measured band, with the ceiling confirmed engaged.",
   "expected": "Decomposes a second leg of the tbs confound.",
   "wave_group": "R5MC2_P2",
-  "created_at": 1787159010.305305,
+  "created_at": 1787135141.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3556,7 +3556,7 @@
   "falsifier": "Raising the momentum ceiling to the co-scaled value at tbs=18 does not move val_bpb outside the measured band, with the ceiling confirmed engaged.",
   "expected": "Decomposes a second leg of the tbs confound.",
   "wave_group": "R5MC2_P2",
-  "created_at": 1787159010.305305,
+  "created_at": 1787135141.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_mu_ceil_coscaled_at_tbs18_r5"
@@ -3579,7 +3579,7 @@
   "falsifier": "Raising the momentum ceiling to the co-scaled value at tbs=18 does not move val_bpb outside the measured band, with the ceiling confirmed engaged.",
   "expected": "Decomposes a second leg of the tbs confound.",
   "wave_group": "R5MC2_P3",
-  "created_at": 1787159010.305305,
+  "created_at": 1787135141.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3602,7 +3602,7 @@
   "falsifier": "Raising the momentum ceiling to the co-scaled value at tbs=18 does not move val_bpb outside the measured band, with the ceiling confirmed engaged.",
   "expected": "Decomposes a second leg of the tbs confound.",
   "wave_group": "R5MC2_P3",
-  "created_at": 1787159010.305305,
+  "created_at": 1787135141.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_mu_ceil_coscaled_at_tbs18_r5"
@@ -3626,7 +3626,7 @@
   "falsifier": "Raising the momentum ceiling to the co-scaled value at tbs=18 does not move val_bpb outside the measured band, with the ceiling confirmed engaged.",
   "expected": "Decomposes a second leg of the tbs confound.",
   "wave_group": "R5MC2_P4",
-  "created_at": 1787159010.305305,
+  "created_at": 1787135141.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_mu_ceil_coscaled_at_tbs18_r5"
@@ -3649,7 +3649,7 @@
   "falsifier": "Raising the momentum ceiling to the co-scaled value at tbs=18 does not move val_bpb outside the measured band, with the ceiling confirmed engaged.",
   "expected": "Decomposes a second leg of the tbs confound.",
   "wave_group": "R5MC2_P4",
-  "created_at": 1787159010.305305,
+  "created_at": 1787135141.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3672,7 +3672,7 @@
   "falsifier": "QK-norm removal does not move val_bpb outside the band with qk rms confirmed changed.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5NOQK2_P1",
-  "created_at": 1787160268.980128,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_noqknorm_r5"
@@ -3695,7 +3695,7 @@
   "falsifier": "QK-norm removal does not move val_bpb outside the band with qk rms confirmed changed.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5NOQK2_P1",
-  "created_at": 1787160268.980128,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3717,7 +3717,7 @@
   "falsifier": "QK-norm removal does not move val_bpb outside the band with qk rms confirmed changed.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5NOQK2_P2",
-  "created_at": 1787160268.980128,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3740,7 +3740,7 @@
   "falsifier": "QK-norm removal does not move val_bpb outside the band with qk rms confirmed changed.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5NOQK2_P2",
-  "created_at": 1787160268.980128,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_noqknorm_r5"
@@ -3763,7 +3763,7 @@
   "falsifier": "QK-norm removal does not move val_bpb outside the band with qk rms confirmed changed.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5NOQK2_P3",
-  "created_at": 1787160268.980128,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3786,7 +3786,7 @@
   "falsifier": "QK-norm removal does not move val_bpb outside the band with qk rms confirmed changed.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5NOQK2_P3",
-  "created_at": 1787160268.980128,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_noqknorm_r5"
@@ -3810,7 +3810,7 @@
   "falsifier": "QK-norm removal does not move val_bpb outside the band with qk rms confirmed changed.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5NOQK2_P4",
-  "created_at": 1787160268.980128,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_noqknorm_r5"
@@ -3833,7 +3833,7 @@
   "falsifier": "QK-norm removal does not move val_bpb outside the band with qk rms confirmed changed.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5NOQK2_P4",
-  "created_at": 1787160268.980128,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3855,7 +3855,7 @@
   "falsifier": "tbs=17 does not improve on tbs=18 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5T172_P1",
-  "created_at": 1787160269.02797,
+  "created_at": 1787132917.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_tbs17_sweep_r5_v2"
@@ -3878,7 +3878,7 @@
   "falsifier": "tbs=17 does not improve on tbs=18 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5T172_P1",
-  "created_at": 1787160269.02797,
+  "created_at": 1787132917.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3900,7 +3900,7 @@
   "falsifier": "tbs=17 does not improve on tbs=18 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5T172_P2",
-  "created_at": 1787160269.02797,
+  "created_at": 1787132917.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3922,7 +3922,7 @@
   "falsifier": "tbs=17 does not improve on tbs=18 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5T172_P2",
-  "created_at": 1787160269.02797,
+  "created_at": 1787132917.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_tbs17_sweep_r5_v2"
@@ -3945,7 +3945,7 @@
   "falsifier": "tbs=17 does not improve on tbs=18 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5T172_P3",
-  "created_at": 1787160269.02797,
+  "created_at": 1787132917.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -3967,7 +3967,7 @@
   "falsifier": "tbs=17 does not improve on tbs=18 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5T172_P3",
-  "created_at": 1787160269.02797,
+  "created_at": 1787132917.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_tbs17_sweep_r5_v2"
@@ -3990,7 +3990,7 @@
   "falsifier": "tbs=17 does not improve on tbs=18 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5T172_P4",
-  "created_at": 1787160269.02797,
+  "created_at": 1787132917.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_tbs17_sweep_r5_v2"
@@ -4013,7 +4013,7 @@
   "falsifier": "tbs=17 does not improve on tbs=18 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5T172_P4",
-  "created_at": 1787160269.02797,
+  "created_at": 1787132917.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4035,7 +4035,7 @@
   "falsifier": "Halving the micro-batch alone does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5DBS2_P1",
-  "created_at": 1787160269.098921,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_dbs64_alone_r5"
@@ -4058,7 +4058,7 @@
   "falsifier": "Halving the micro-batch alone does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5DBS2_P1",
-  "created_at": 1787160269.098921,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4080,7 +4080,7 @@
   "falsifier": "Halving the micro-batch alone does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5DBS2_P2",
-  "created_at": 1787160269.098921,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4102,7 +4102,7 @@
   "falsifier": "Halving the micro-batch alone does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5DBS2_P2",
-  "created_at": 1787160269.098921,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_dbs64_alone_r5"
@@ -4125,7 +4125,7 @@
   "falsifier": "Halving the micro-batch alone does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5DBS2_P3",
-  "created_at": 1787160269.098921,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4147,7 +4147,7 @@
   "falsifier": "Halving the micro-batch alone does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5DBS2_P3",
-  "created_at": 1787160269.098921,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_dbs64_alone_r5"
@@ -4170,7 +4170,7 @@
   "falsifier": "Halving the micro-batch alone does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5DBS2_P4",
-  "created_at": 1787160269.098921,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_dbs64_alone_r5"
@@ -4193,7 +4193,7 @@
   "falsifier": "Halving the micro-batch alone does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5DBS2_P4",
-  "created_at": 1787160269.098921,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4353,7 +4353,7 @@
   "falsifier": "Halving the MLP ratio does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5MLP2_P1",
-  "created_at": 1787160269.148273,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_mlp2_capacity_r5"
@@ -4376,7 +4376,7 @@
   "falsifier": "Halving the MLP ratio does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5MLP2_P1",
-  "created_at": 1787160269.148273,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4398,7 +4398,7 @@
   "falsifier": "Halving the MLP ratio does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5MLP2_P2",
-  "created_at": 1787160269.148273,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4420,7 +4420,7 @@
   "falsifier": "Halving the MLP ratio does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5MLP2_P2",
-  "created_at": 1787160269.148273,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_mlp2_capacity_r5"
@@ -4443,7 +4443,7 @@
   "falsifier": "Halving the MLP ratio does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5MLP2_P3",
-  "created_at": 1787160269.148273,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4465,7 +4465,7 @@
   "falsifier": "Halving the MLP ratio does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5MLP2_P3",
-  "created_at": 1787160269.148273,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_mlp2_capacity_r5"
@@ -4488,7 +4488,7 @@
   "falsifier": "Halving the MLP ratio does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5MLP2_P4",
-  "created_at": 1787160269.148273,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_mlp2_capacity_r5"
@@ -4511,7 +4511,7 @@
   "falsifier": "Halving the MLP ratio does not move val_bpb outside the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5MLP2_P4",
-  "created_at": 1787160269.148273,
+  "created_at": 1787141402.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4533,7 +4533,7 @@
   "falsifier": "swdiv=16 does not improve on swdiv=8 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5S162_P1",
-  "created_at": 1787160269.197503,
+  "created_at": 1787131640.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_swdiv16_sweep_r5"
@@ -4556,7 +4556,7 @@
   "falsifier": "swdiv=16 does not improve on swdiv=8 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5S162_P1",
-  "created_at": 1787160269.197503,
+  "created_at": 1787131640.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4578,7 +4578,7 @@
   "falsifier": "swdiv=16 does not improve on swdiv=8 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5S162_P2",
-  "created_at": 1787160269.197503,
+  "created_at": 1787131640.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4600,7 +4600,7 @@
   "falsifier": "swdiv=16 does not improve on swdiv=8 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5S162_P2",
-  "created_at": 1787160269.197503,
+  "created_at": 1787131640.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_swdiv16_sweep_r5"
@@ -4623,7 +4623,7 @@
   "falsifier": "swdiv=16 does not improve on swdiv=8 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5S162_P3",
-  "created_at": 1787160269.197503,
+  "created_at": 1787131640.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  },
@@ -4645,7 +4645,7 @@
   "falsifier": "swdiv=16 does not improve on swdiv=8 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5S162_P3",
-  "created_at": 1787160269.197503,
+  "created_at": 1787131640.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_swdiv16_sweep_r5"
@@ -4668,7 +4668,7 @@
   "falsifier": "swdiv=16 does not improve on swdiv=8 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5S162_P4",
-  "created_at": 1787160269.197503,
+  "created_at": 1787131640.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
   "hypothesis_id": "hyp_swdiv16_sweep_r5"
@@ -4691,7 +4691,7 @@
   "falsifier": "swdiv=16 does not improve on swdiv=8 by more than the band.",
   "expected": "Runs at the capacity this host actually provides rather than the capacity the design preferred.",
   "wave_group": "R5S162_P4",
-  "created_at": 1787160269.197503,
+  "created_at": 1787131640.0,
   "source_round": "quad-counterbalanced",
   "vram_est": 50
  }
