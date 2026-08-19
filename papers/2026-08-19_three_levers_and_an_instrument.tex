@@ -135,6 +135,7 @@ All comparisons are same-device paired within a single counterbalanced quad pair
 intervention & mean $\Delta$ & verdict\\
 \midrule
 \texttt{tbs} 19$\to$18 & $-0.007953$ & better\textsuperscript{\dag}\\
+\texttt{mu\_warmup} at \texttt{tbs} 18 & $-0.007498$ & better\textsuperscript{\S}\\
 \texttt{swdiv} 4$\to$8 & $-0.003360$ & better\\
 \texttt{swdiv} 2$\to$4 & $-0.002298$ & better\\
 \texttt{ve} 2$\to$1 & $-0.001487$ & better\\
@@ -142,10 +143,12 @@ intervention & mean $\Delta$ & verdict\\
 \texttt{qk\_suppress} 0.1 & $+0.001226$ & \emph{inconclusive}\\
 \texttt{unet} & $+0.004123$ & worse\\
 \texttt{tbs} 19$\to$20 & $+0.022545$ & worse\\
-\texttt{mtp} 0.1 & $+0.079484$ & worse\textsuperscript{\ddag}\\
+\texttt{mu\_ceil} at \texttt{tbs} 18 & $-0.005221$ & better\textsuperscript{\S}\\
+\texttt{mtp} 0.1 & $+0.079367$ & worse\textsuperscript{\ddag}\\
+\texttt{zloss} 0.1 & $+0.146695$ & worse\textsuperscript{\ddag}\\
 \bottomrule
 \end{tabular}\\[0.4ex]
-{\footnotesize \textsuperscript{\dag}confounded; see \S\ref{sec:sixlegs}.\quad\textsuperscript{\ddag}three replicates; see \S\ref{sec:mtp}.}
+{\footnotesize \textsuperscript{\dag}confounded; see \S\ref{sec:sixlegs}.\quad\textsuperscript{\ddag}see \S\ref{sec:mtp}.\quad\textsuperscript{\S}measured against a \texttt{tbs}=19 control, so it is the PAIR; see \S\ref{sec:momentum}.}
 \end{center}
 
 \subsection{Halving the short attention span}
@@ -237,6 +240,21 @@ vocabulary head ran at $834$\,ms per step against the control's $300$\,ms, deliv
 optimizer steps against $1011$, and reserving $107.5$\,GB against $45.1$\,GB. At a fixed
 $300$-second budget the treatment never reached the second epoch its control completed.
 
+A second mechanism failed the same way and larger. A z-loss at $\lambda=0.1$ measures
+$+0.146695$ across two counterbalanced pairs, with its regulariser demonstrably working:
+$\log^2 Z$ falls to $0.163$ in steady state against a threshold of $1.0$, while the
+companion statistic confirms the penalty has not swallowed the objective. It ran $303$ steps
+against its control's $1012$.
+
+The tempting generalisation --- that both failed because each adds a pass over the
+vocabulary dimension --- is only half right, and we record the correction because we made
+the claim before checking it. Fitting the step law on controls alone at a single
+tokens-per-step gives $-0.06822$ per e-fold, under which step count explains $86\%$ of the
+multi-token result and $56\%$ of the z-loss one. Roughly half of z-loss's damage is
+therefore \emph{not} throughput, most plausibly the coefficient itself, which is a thousand
+times the conventional value. Both figures extrapolate below the $621$--$1020$ step range
+the law was fitted on, and should be read as directional.
+
 The result generalises less far than its size suggests. It says nothing about MTP at larger
 vocabularies, longer budgets, or with a factorised head; it says that at this operating
 point a mechanism which doubles per-step cost cannot be rescued by being right. The
@@ -261,6 +279,28 @@ norm by construction. It could never have shown engagement, so the run cannot di
 ``the mechanism works badly'' from ``the edit never bound and something else moved''. The
 hypothesis's own pre-registered falsifier named this case and we apply it against
 ourselves. The axis is untested, not refuted.
+
+\subsection{Removing an explanation rather than adding one}
+\label{sec:momentum}
+
+Halving tokens per step moves at least six step-indexed quantities together, and the
+largest confirmed lever in this work is therefore also the least understood. Two of those
+legs have now been tested directly. Holding the Muon momentum ramp at the same
+\emph{fraction} of the run yields $-0.007498$ over three counterbalanced pairs; raising the
+momentum \emph{ceiling} to its co-scaled value yields $-0.005221$ over three. Both are
+measured against a \texttt{tbs}=19 control, so each number is the effect of the pair, not of
+the momentum change alone.
+
+Read against \texttt{tbs}=18's own $-0.007953$, the ramp fraction is neutral and the ceiling
+is actively harmful by roughly $0.0027$, about seven times the resolution. Neither is the
+source of the lever's benefit. That comparison is cross-wave, which we have argued
+elsewhere is unreliable here, and we lean on it only for a direction and a rough magnitude:
+the honest claim is that neither momentum leg \emph{explains} \texttt{tbs}=18, not that the
+ceiling is harmful by a specific amount.
+
+This is the first result in this campaign that removes a candidate explanation rather than
+adding a lever, and it is worth more than its effect size suggests. A confound with six legs
+and one knob is not resolved by measuring the knob again; it is resolved by eliminating legs.
 
 \section{Combining the levers}
 \label{sec:stack}
