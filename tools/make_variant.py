@@ -156,15 +156,27 @@ if _wide:
     print(f"cproj_rms_final:     {_wide[0].detach().float().pow(2).mean().sqrt().item():.8f}")
 _mm = model._orig_mod if hasattr(model, '_orig_mod') else model
 _V = _mm.config.vocab_size
-_hm = [st for p, st in optimizer.state.items() if 'exp_avg' in st and p.dim() >= 2
-       and p.shape[0] == _V]
+# Select by GROUP POSITION, not by shape. lm_head, wte and every value-embedding table
+# all have shape[0] == vocab_size and all live in AdamW groups, so a shape filter mixes
+# them -- and because ve:1 ADDS four tables, a shape-filtered statistic changes its own
+# composition with the treatment, which makes cross-arm comparison meaningless. AdamW
+# groups are built lm_head, wte, value_embeds, resid, x0 (baseline/train.py:258-262).
+_ag_ordered = [g for g in optimizer.param_groups if g.get('kind') == 'adamw']
+_head_ps = _ag_ordered[0]['params'] if len(_ag_ordered) > 0 else []
+_ve_ps = _ag_ordered[2]['params'] if len(_ag_ordered) > 2 else []
+_hm = [optimizer.state[p] for p in _head_ps if p in optimizer.state
+       and 'exp_avg' in optimizer.state[p]]
 if _hm:
     _ea = torch.cat([s['exp_avg'].float().flatten() for s in _hm])
     print(f"head_moment_fill:    {_ea.abs().mean().item():.8f}")
-_ve = [p for g in optimizer.param_groups if g.get('kind') == 'adamw' for p in g['params']
-       if p.dim() >= 2 and p.shape[0] == _V]
-if _ve:
-    print(f"ve_emb_rms_final:    {_ve[0].detach().float().pow(2).mean().sqrt().item():.8f}")
+if _ve_ps:
+    # RMS over ALL value-embedding tables, so the number means the same thing whether
+    # there are four of them or eight. Taking _ve[0] under a shape filter printed the
+    # LM HEAD, because lm_head is AdamW group 0 -- the one diagnostic meant to show the
+    # new VE capacity being used was measuring a different tensor entirely.
+    _vv = torch.cat([p.detach().float().flatten() for p in _ve_ps])
+    print(f"ve_emb_rms_final:    {_vv.pow(2).mean().sqrt().item():.8f}")
+    print(f"ve_table_count:      {len(_ve_ps)}")
 print(f"adamw_group_count:   {len(_ag)}")""")
 
     # --- evaluator pinned to the baseline batch so the metric stays comparable ---

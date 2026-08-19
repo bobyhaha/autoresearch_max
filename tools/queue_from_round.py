@@ -127,6 +127,14 @@ def main():
                       # GPUs or not at all. This is how a yoked pair is obtained: two
                       # runs launched half an hour apart measure host drift, not effect.
                       "wave_group": e.get("wave_group"),
+                      # Carry the hypothesis forward. The door check above validates
+                      # e["hypothesis_id"] on the ROUND entry, but the persisted queue
+                      # entry was built without the field -- so 16 validated round-2 runs
+                      # were queued attached to nothing, and coe.py E3, E4 and verdict.py
+                      # all skip on `if not hid`. The check passed and the linkage was
+                      # dropped one line later.
+                      **({"hypothesis_id": e["hypothesis_id"]}
+                         if e.get("hypothesis_id") and e["hypothesis_id"] != "none" else {}),
                       "created_at": stamp, "source_round": path.name,
                       "vram_est": e.get("vram_est", 60)})
 
