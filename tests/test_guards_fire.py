@@ -292,3 +292,23 @@ def test_explore_debt_does_not_count_controls_against_exploration():
     assert abs(real - padded) < 1e-9, (
         f"40 extra controls moved explore_debt from {real:+.4f} to {padded:+.4f}; the "
         f"instrument is being counted as a research decision")
+
+
+def test_integrity_lesson_must_report_a_sibling_search():
+    """Fixing one instance of a defect class and not looking for the rest is the
+    campaign's most repeated failure -- three separate times in a single day."""
+    base = {"id": "x", "type": "integrity", "observation": "o", "diagnosis": "d",
+            "action": "refine", "applies_when": "w", "severity": 0.5,
+            "families": ["systems"], "evidence": ["e"], "mitigation": "m"}
+    bad = claims.validate_lesson(base)
+    assert any("sibling_search" in b for b in bad), (
+        "an integrity lesson with no sibling search was accepted")
+    ok = claims.validate_lesson({**base, "sibling_search": "grepped host/ and tools/ for "
+                                 "the same call shape; found none"})
+    assert not any("sibling_search" in b for b in ok), (
+        "a lesson that DID report its sibling search was refused")
+
+    # A valid_negative is a scientific result, not a defect class, and must not be burdened.
+    sci = claims.validate_lesson({**base, "type": "valid_negative"})
+    assert not any("sibling_search" in b for b in sci), (
+        "the sibling-search requirement leaked onto scientific lessons")

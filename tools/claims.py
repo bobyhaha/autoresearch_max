@@ -165,6 +165,23 @@ def validate_lesson(l: dict) -> list[str]:
         if not isinstance(rule, dict) or rule.get("op") not in _OPS or "value" not in rule:
             bad.append(f"blocks_values['{key}'] must be {{'op': one of {sorted(_OPS)}, "
                        f"'value': ...}}; got {rule!r}")
+    # SIBLING SEARCH. The campaign's most repeated failure is not any single defect, it is
+    # fixing ONE INSTANCE of a defect class and never looking for the rest. In a single day:
+    # job["name"] was fixed in the co-tenancy taint write and the identical typo in
+    # _crashed() then killed the dispatcher; the multi-key attribution bug was fixed in
+    # selector.py while the same bug sat in balance.py; a burn counter was made persistent
+    # ten lines from a comment explaining that quarantine state must persist for exactly
+    # that reason. Each fix was correct and each left siblings alive.
+    #
+    # An integrity or runtime lesson must therefore say what search was run for the other
+    # instances. The field is cheap when the answer is "grepped X, found none" and it is
+    # the whole point when the answer is "found two more". It cannot be satisfied by
+    # editing a number -- only by having actually looked.
+    if l.get("type") in ("integrity", "runtime") and not l.get("sibling_search"):
+        bad.append("an integrity/runtime lesson must carry 'sibling_search': what you "
+                   "searched to find OTHER instances of this defect class, and what you "
+                   "found. Fixing one instance and not looking for siblings is this "
+                   "campaign's most repeated failure -- three times in one day.")
     if l.get("type") == "non_activation" and l.get("action") == "block":
         bad.append("a non-activation may not 'block' a direction: the intervention never "
                    "engaged, so the run is inconclusive about the mechanism, not against it")
