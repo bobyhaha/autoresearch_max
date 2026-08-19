@@ -358,3 +358,18 @@ def test_activation_precheck_says_unverified_rather_than_ok():
         "qk_q_rms_final", {"op": "gt", "value": 1.0}, cfg)
     assert ok and "UNVERIFIED" in msg, (
         f"a not-yet-checkable rule did not announce itself as unverified: {msg}")
+
+
+def test_the_precommit_hook_exists_and_runs_the_suite():
+    """The suite was advisory, and two commits landed on red in a single session.
+
+    Both times the failing test was correct and pointed at a real defect in the change
+    being committed. Discipline did not hold, so the check does not rely on it.
+    """
+    hook = REPO / ".githooks" / "pre-commit"
+    assert hook.exists(), "the pre-commit hook is gone; the suite is advisory again"
+    src = hook.read_text()
+    assert "pytest" in src or "-m pytest" in src, "the hook does not run the suite"
+    assert "exit 1" in src, "the hook does not REFUSE on a red suite"
+    import os
+    assert os.access(hook, os.X_OK), "the hook is not executable, so git will skip it"

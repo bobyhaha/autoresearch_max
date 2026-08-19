@@ -220,22 +220,10 @@ def e3_activation() -> list[str]:
         if hid in {e for l in C.lessons() if l.get("type") == "non_activation"
                    for e in (l.get("evidence") or [])}:
             continue          # documented non-activation; see the lesson, not the audit
-        # A HYPOTHESIS WHOSE INTERVENTION HAS BEEN ADOPTED IS NOT TESTABLE ANY MORE. When
-        # tbs=18 became the platform, the hypotheses that PROPOSED it kept an activation
-        # rule written against the old baseline -- tokens_per_step lt 524288, which every
-        # control now satisfies at 262144. E3 correctly called those diagnostics vacuous,
-        # but the fault is not in the hypothesis: its treatment IS the control now, so
-        # there is no contrast left to demand and no rule that could restore one. Auditing
-        # it forever would be a permanently failing check, which is the state that teaches
-        # a campaign to ignore its own audit.
-        #
-        # The run records stay exactly as they are; what stops is asking a retired question.
-        if (h.get("intervention") or {}).get("cfg") == dict(_d.PLATFORM):
-            continue
         # POST-HOC RULE CHANGE. Superseding re-judges COMPLETED runs under the new rule,
         # which is right when a broken test is fixed and is a laundering channel when the
         # result is already known: an E3 failure can be cleared by registering a friendlier
-        # successor. It was used exactly that way today -- R6XF_P1_s0_treat failed
+        # successor. It was used exactly that way -- R6XF_P1_s0_treat failed
         # secmom_ortho_ratio lt 0.1 on the campaign's best val_bpb, and a successor with a
         # different diagnostic cleared it within the hour. That may well be correct (the
         # original rule was backwards on physics grounds), but it must never be SILENT.

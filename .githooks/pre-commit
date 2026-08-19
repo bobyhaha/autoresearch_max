@@ -1,0 +1,28 @@
+#!/bin/sh
+# The test suite was advisory. Twice in one session a commit landed on a red suite --
+# once claiming "28/28 tests pass" in the message while one test failed, once after
+# reading the exit code and committing anyway. Both times the failing test was CORRECT
+# and was pointing at a real defect in the change being committed.
+#
+# Operator discipline demonstrably did not hold, so this does not ask for discipline.
+# Chain-of-evidence is checked too: a commit that breaks the audit should not be silent.
+#
+# Bypass with --no-verify when you genuinely intend it; the point is that it becomes a
+# decision you make rather than one you drift into.
+set -e
+cd "$(git rev-parse --show-toplevel)"
+PY=.venv/bin/pytest
+[ -x "$PY" ] || PY="python3 -m pytest"
+echo "pre-commit: running the test suite..."
+if ! $PY tests -q >/tmp/ophis_precommit.log 2>&1; then
+  echo "REFUSED: the test suite is red. Last lines:"
+  tail -12 /tmp/ophis_precommit.log
+  echo "Fix the test or pass --no-verify if you truly mean to commit on red."
+  exit 1
+fi
+echo "pre-commit: chain of evidence..."
+if ! python3 tools/coe.py >/tmp/ophis_coe.log 2>&1; then
+  echo "NOTE: chain of evidence reports breaks (not blocking):"
+  grep -E "FAIL" /tmp/ophis_coe.log | head -5
+fi
+echo "pre-commit: ok"
