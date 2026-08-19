@@ -131,6 +131,36 @@ if _sm:
     _ref = torch.tensor([ (1.0/max(b.shape[-2], b.shape[-1])**0.5) for b in _sm ]).mean()
     print(f"secmom_ortho_ratio:  {(_v.mean().sqrt()/_ref).item():.8f}")""")
 
+    # --- parameter-group telemetry, emitted by EVERY variant -------------------------
+    # Fourteen of eighteen active hypotheses declared an activation diagnostic that no
+    # variant printed, which makes them unrunnable by construction: coe.py E3 marks such a
+    # run INCONCLUSIVE and the slot is wasted. These are the ones computable from the
+    # optimizer's own param groups and state after the charged clock stops -- no forward
+    # pass, no host sync inside the loop, nothing inside the compiled step. Emitted
+    # unconditionally so the control has a value to be compared against (L016).
+    obs.append("""_mg = [g for g in optimizer.param_groups if g.get('kind') == 'muon']
+_ag = [g for g in optimizer.param_groups if g.get('kind') == 'adamw']
+_np_all = sum(p.numel() for g in optimizer.param_groups for p in g['params'])
+_np_muon = sum(p.numel() for g in _mg for p in g['params'])
+print(f"muon_param_frac:     {_np_muon/max(_np_all,1):.6f}")
+print(f"muon_group_count:    {len(_mg)}")
+_wide = [p for g in _mg for p in g['params'] if p.dim() >= 2 and p.shape[-2] < p.shape[-1]]
+if _wide:
+    print(f"muon_lr_factor_cproj:{max(1.0, _wide[0].shape[-2]/_wide[0].shape[-1])**0.5:.6f}")
+    print(f"cproj_rms_final:     {_wide[0].detach().float().pow(2).mean().sqrt().item():.8f}")
+_mm = model._orig_mod if hasattr(model, '_orig_mod') else model
+_V = _mm.config.vocab_size
+_hm = [st for p, st in optimizer.state.items() if 'exp_avg' in st and p.dim() >= 2
+       and p.shape[0] == _V]
+if _hm:
+    _ea = torch.cat([s['exp_avg'].float().flatten() for s in _hm])
+    print(f"head_moment_fill:    {_ea.abs().mean().item():.8f}")
+_ve = [p for g in optimizer.param_groups if g.get('kind') == 'adamw' for p in g['params']
+       if p.dim() >= 2 and p.shape[0] == _V]
+if _ve:
+    print(f"ve_emb_rms_final:    {_ve[0].detach().float().pow(2).mean().sqrt().item():.8f}")
+print(f"adamw_group_count:   {len(_ag)}")""")
+
     # --- evaluator pinned to the baseline batch so the metric stays comparable ---
     s = sub(s, "val_bpb = evaluate_bpb(model, tokenizer, DEVICE_BATCH_SIZE)",
                   "val_bpb = evaluate_bpb(model, tokenizer, 128)")

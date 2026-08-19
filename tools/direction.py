@@ -79,6 +79,38 @@ def unknown_keys(cfg: dict) -> set:
     return {k for k in (cfg or {}) if k not in KNOWN_KEYS}
 
 
+def device_resolution(results: list[dict]) -> dict | None:
+    """The smallest effect a GPU-counterbalanced comparison can honestly claim.
+
+    Computed under the CORRECTED model: the offset belongs to the physical GPU, not the
+    taskset core block (L020_the_offset_is_the_gpu_not_the_core_block). Within a single
+    device the residual spread of byte-identical controls is the real random error; the
+    across-device spread is a fixed profile that counterbalancing removes by construction.
+
+    This number DRIFTS as foreign load on the host changes, which is why it is recomputed
+    rather than pinned: the campaign has at various points quoted 0.000174, 0.000183 and
+    0.000187 from the same formula at different n and under the wrong model.
+    """
+    import statistics as _st
+    by = {}
+    for r in results:
+        if not (r.get("ok") and (r.get("metrics") or {}).get("val_bpb")):
+            continue
+        if not is_platform(r.get("cfg") or {}):
+            continue
+        if (r["metrics"].get("final_epoch") or 0) != 2.0:
+            continue        # 1-epoch runs are a different operating point (L005_v2)
+        by.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+    sds = {g: _st.stdev(v) for g, v in by.items() if len(v) > 2}
+    if not sds:
+        return None
+    pooled = _st.mean(sds.values())
+    return {"per_gpu_sd": sds, "pooled_sd": pooled,
+            "resolution": 2 * pooled / (2 ** 0.5),
+            "n_devices": len(sds),
+            "device_means": {g: _st.mean(v) for g, v in by.items()}}
+
+
 def slot_bias(results: list[dict]) -> dict | None:
     """The fixed offset between dispatcher slots, measured from concurrent controls.
 
@@ -433,6 +465,17 @@ def report(results: list[dict]) -> str:
         if len(ep) > 1:
             lines.append("  WARNING: runs in this set finished at DIFFERENT epoch counts; "
                          "they are not one operating point and must not be pooled.")
+
+    dr = device_resolution(results)
+    if dr:
+        lines += ["", "DEVICE MODEL (the offset is the GPU, not the core block -- L020)",
+                  "  per-GPU control means: " + ", ".join(
+                      f"gpu{g} {m:.6f}" for g, m in sorted(dr["device_means"].items())),
+                  "  within-GPU sd: " + ", ".join(
+                      f"gpu{g} {v:.6f}" for g, v in sorted(dr["per_gpu_sd"].items())),
+                  f"  pooled within-GPU sd {dr['pooled_sd']:.6f}"
+                  f"  =>  GPU-COUNTERBALANCED RESOLUTION {dr['resolution']:.6f}",
+                  "  Counterbalance on GPU at ANY width; there is no width penalty."]
 
     sb = slot_bias(results)
     if sb and sb["n"] >= 3:
