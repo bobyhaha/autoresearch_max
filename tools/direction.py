@@ -27,7 +27,7 @@ from __future__ import annotations
 # --- the reference platform: the strict upstream recipe, resolved -----------------
 # train.py's dataclass defaults (n_layer=12, n_embd=768) are dead code; the resolved
 # upstream configuration on this benchmark is depth 8 / dim 512 / mlp 4.
-PLATFORM = {"dbs": 128, "tbs": 19, "depth": 8, "dim": 512,
+PLATFORM = {"dbs": 128, "tbs": 18, "depth": 8, "dim": 512,
             "mlp": 4, "ve": 2, "win": "SSSL", "swdiv": 2}
 
 # One axis per tunable parameter. A config counts against every axis it moves, so
@@ -643,7 +643,7 @@ if __name__ == "__main__":
     print(report(res))
 
 
-def step_law(results: list[dict], tokens_per_step: float = 524288.0):
+def step_law(results: list[dict], tokens_per_step: float | None = None):
     """Fit val_bpb against log(steps) on CONTROLS ONLY, at ONE tokens-per-step.
 
     The campaign quoted a step law of -0.05974 bpb per e-fold for hours, in prose, with no
@@ -666,6 +666,14 @@ def step_law(results: list[dict], tokens_per_step: float = 524288.0):
     """
     import math as _m
     import statistics as _st
+    # The operating point comes from PLATFORM, not from a literal. This defaulted to
+    # 524288 -- the tokens per step of the platform that was current when the function was
+    # written -- and the moment tbs was adopted from 19 to 18 the law returned None,
+    # because it went looking for controls at an operating point the campaign had just
+    # left. A constant that encodes "the platform as it was on the day I wrote this" is a
+    # bug with a delayed fuse, and this campaign has now shipped several.
+    if tokens_per_step is None:
+        tokens_per_step = float(2 ** PLATFORM["tbs"])
     xs, ys = [], []
     for r in results:
         m = r.get("metrics") or {}
