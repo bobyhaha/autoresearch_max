@@ -54,6 +54,16 @@ def main():
         # A key no policy rule covers counts toward no axis and no family, so it would be
         # invisible to budgeting and rotation. is_platform() already refuses to call it a
         # control; refusing it at the door as well keeps the accounting total.
+        # Value-level blocks first: a lesson may forbid a RANGE of a key without
+        # forbidding the key, which is the common case (ns>=5 is a no-op, ns 1..4 is a
+        # real experiment). A key-level block would also refuse the legitimate arms.
+        vhits = claims.blocked_values(cfg)
+        if vhits:
+            k, v, les, rule = vhits[0]
+            skipped.append((e["name"], f"blocked by lesson {les['id']} (severity "
+                                       f"{les['severity']}): {k}={v} satisfies the "
+                                       f"forbidden rule {rule}. {les['mitigation'][:160]}"))
+            continue
         hit = sorted(set(cfg) & set(blocked_by_lesson))
         if hit:
             les = blocked_by_lesson[hit[0]]

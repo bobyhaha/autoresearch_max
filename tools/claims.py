@@ -156,9 +156,15 @@ def validate_lesson(l: dict) -> list[str]:
     for fam in l.get("families") or []:
         if fam not in lit.ALL_FAMILIES:
             bad.append(f"unknown family '{fam}'")
-    if l.get("action") == "block" and not (l.get("blocks_keys") or l.get("applies_when")):
-        bad.append("a 'block' lesson needs blocks_keys (config keys it forbids) or at "
-                   "minimum an applies_when condition, or nothing can ever enforce it")
+    if l.get("action") == "block" and not (l.get("blocks_keys") or l.get("blocks_values")
+                                           or l.get("applies_when")):
+        bad.append("a 'block' lesson needs blocks_keys (config keys it forbids), "
+                   "blocks_values (a per-key rule such as {'ns': {'op':'ge','value':5}}), "
+                   "or at minimum an applies_when condition, or nothing can ever enforce it")
+    for key, rule in (l.get("blocks_values") or {}).items():
+        if not isinstance(rule, dict) or rule.get("op") not in _OPS or "value" not in rule:
+            bad.append(f"blocks_values['{key}'] must be {{'op': one of {sorted(_OPS)}, "
+                       f"'value': ...}}; got {rule!r}")
     if l.get("type") == "non_activation" and l.get("action") == "block":
         bad.append("a non-activation may not 'block' a direction: the intervention never "
                    "engaged, so the run is inconclusive about the mechanism, not against it")
@@ -230,6 +236,37 @@ def blocking_keys() -> dict:
             continue
         for k in l.get("blocks_keys") or []:
             out.setdefault(k, l)
+    return out
+
+
+_OPS = {"ge": lambda a, b: a >= b, "gt": lambda a, b: a > b,
+        "le": lambda a, b: a <= b, "lt": lambda a, b: a < b,
+        "eq": lambda a, b: a == b, "ne": lambda a, b: a != b}
+
+
+def blocked_values(cfg: dict) -> list[tuple]:
+    """[(key, value, lesson, rule)] for cfg entries an active lesson forbids by VALUE.
+
+    `blocks_keys` is a whole-key hammer and several real lessons do not want one. L007
+    forbids ns at or above the coefficient-table length, not the ns axis -- blocking the
+    key would also forbid ns 1..4, which are genuine experiments, and one of them is the
+    positive control this round depends on. Without a value-level rule the enforcement
+    hook stays empty, which is how the campaign ended up with a `block` lesson that
+    blocked nothing while the validator accepted it.
+    """
+    out = []
+    for l in active_lessons():
+        if l.get("action") != "block":
+            continue
+        for key, rule in (l.get("blocks_values") or {}).items():
+            if key not in (cfg or {}):
+                continue
+            fn = _OPS.get(rule.get("op"))
+            try:
+                if fn and fn(cfg[key], rule["value"]):
+                    out.append((key, cfg[key], l, rule))
+            except TypeError:
+                continue
     return out
 
 
