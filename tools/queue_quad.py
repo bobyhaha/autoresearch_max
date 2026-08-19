@@ -84,6 +84,22 @@ def main() -> int:
               f"{les['severity']}).\n  {les['mitigation'][:300]}\n"
               f"  applies when: {les['applies_when']}")
         return 1
+    # The diagnostic must be able to FAIL before the wave is spent. claims.py grew this
+    # check after four hypotheses shipped with a diagnostic the control also satisfied --
+    # and then nothing called it, so it was itself a check that could not fire, the exact
+    # shape it exists to catch. An audit found it unwired. It runs here now, at the door,
+    # where refusing costs nothing and passing costs a quad.
+    if a.hyp != "none":
+        _h = next((h for h in claims.hypotheses() if h["id"] == a.hyp), None)
+        _act = (_h or {}).get("activation") or {}
+        if _act.get("diagnostic") and _act.get("rule"):
+            _ok, _msg = claims.diagnostic_would_discriminate(_act["diagnostic"], _act["rule"])
+            if not _ok:
+                print(f"refusing: hypothesis {a.hyp!r} declares an activation diagnostic "
+                      f"that cannot demonstrate engagement.\n  {_msg}")
+                return 1
+            print(f"  activation pre-check: {_msg}")
+
     unknown = direction.unknown_keys(T)
     if unknown:
         print(f"refusing: cfg key(s) {sorted(unknown)} are not recognised by the policy, "

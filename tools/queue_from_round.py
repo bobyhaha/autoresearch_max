@@ -57,6 +57,20 @@ def main():
         # Value-level blocks first: a lesson may forbid a RANGE of a key without
         # forbidding the key, which is the common case (ns>=5 is a no-op, ns 1..4 is a
         # real experiment). A key-level block would also refuse the legitimate arms.
+        # Same pre-check as queue_quad: a hypothesis whose diagnostic the control also
+        # satisfies produces a run that cannot tell a null from a no-op, and this door is
+        # the last place that costs nothing to catch.
+        _hid = e.get("hypothesis_id")
+        if _hid and _hid != "none":
+            _h = next((h for h in claims.hypotheses() if h["id"] == _hid), None)
+            _act = (_h or {}).get("activation") or {}
+            if _act.get("diagnostic") and _act.get("rule"):
+                _ok, _msg = claims.diagnostic_would_discriminate(
+                    _act["diagnostic"], _act["rule"])
+                if not _ok:
+                    skipped.append((e["name"], f"activation diagnostic cannot fire: {_msg}"))
+                    continue
+
         vhits = claims.blocked_values(cfg)
         if vhits:
             k, v, les, rule = vhits[0]
