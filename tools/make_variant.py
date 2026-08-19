@@ -200,6 +200,15 @@ if _sm:
         s = sub(s, "                loss = loss + MTP_W * aux",
 """                _mtp_hist.append(aux.detach())
                 loss = loss + MTP_W * aux""")
+        # mtp_proj is zero-initialised and its output is added to x before the SHARED
+        # lm_head. So mtp_aux_loss_drop falls as lm_head improves even if mtp_proj never
+        # leaves zero -- in which case the arm is shifted label smoothing, not multi-token
+        # prediction, while the activation metric reports success. mtp_proj_rms is what
+        # distinguishes them: it starts at exactly 0 by construction, so any non-zero
+        # value proves the optimizer actually used the new path. Same defect class as
+        # L014_precond_clamped_out_did_not_engage.
+        obs.append("""_mp = (model._orig_mod if hasattr(model,'_orig_mod') else model).mtp_proj.weight
+print(f"mtp_proj_rms:        {_mp.detach().float().pow(2).mean().sqrt().item():.8f}")""")
         obs.append("""if _mtp_hist:
     _h = [float(v) for v in _mtp_hist]
     _first = sum(_h[:100])/max(len(_h[:100]),1); _last = sum(_h[-100:])/max(len(_h[-100:]), 1)
@@ -361,9 +370,25 @@ print(f"zloss_frac_of_total: {ZLOSS_W*_zm/max(float(_zl_sum[1])/_zn,1e-9):.6f}")
 """
         # remove it from after the polar iteration ...
         s = sub(s, NORMUON, "", "NorMuon block (post-orthogonalization)")
-        # ... and reinstate it verbatim on the MOMENTUM, before orthogonalization.
+        # ... and reinstate it on the MOMENTUM, RMS-NORMALIZED FIRST.
+        #
+        # The naive reorder did not engage (L014_precond_clamped_out_did_not_engage).
+        # Applied to the orthogonalized update, this block sees entries of order
+        # 1/sqrt(max(A,B)); applied to the raw momentum it sees entries orders of
+        # magnitude smaller, so the per-row mean square fell under the buffer's
+        # clamp_min(1e-10) floor. 99.8% of entries clamped in all three runs, rsqrt
+        # returned a constant, and the polar iteration's own Frobenius division cancelled
+        # it exactly -- the arm silently ran as plain Muon minus NorMuon.
+        #
+        # Rescaling the momentum to unit RMS per matrix puts the second moment back in
+        # the range the floor and the zero-init were chosen for, WITHOUT changing the
+        # update direction: the polar iteration opens by dividing X by its own Frobenius
+        # norm, so a per-matrix scalar here is discarded downstream and cannot smuggle in
+        # an effective learning-rate change.
         s = sub(s, """    g = stacked_grads.lerp_(momentum_buffer, momentum)
 """, """    g = stacked_grads.lerp_(momentum_buffer, momentum)
+    # unit-RMS per matrix so the second moment below lives at O(1), not under the floor
+    g = g / g.float().square().mean(dim=(-2, -1), keepdim=True).sqrt().clamp_min(1e-12).to(g.dtype)
 """ + NORMUON, "momentum lerp (pre-orthogonalization insertion point)")
         # Activation observable. It must be computed OUTSIDE muon_step_fused: that
         # function is @torch.compile(fullgraph=True) and a print inside it would either
@@ -390,16 +415,34 @@ print(f"zloss_frac_of_total: {ZLOSS_W*_zm/max(float(_zl_sum[1])/_zn,1e-9):.6f}")
 
     # M9 parameterisation: drop the RMS norm on q/k before attention.
     if cfg.get("noqknorm") is not None:
+        # Three defects fixed here, all found by an independent hypothesis audit before
+        # this branch had ever run, and all of the L014 class:
+        #  1. The probe appended to a PYTHON LIST inside GPT.forward, which torch.compile
+        #     must graph-break around -- so the arm measured its own instrumentation.
+        #  2. `len(self._qk_probe) < 64` filled the buffer in the first few steps, so the
+        #     statistic described INITIALISATION, not the end-of-run logit-scale drift
+        #     the mechanism is actually about.
+        #  3. The print lived inside this branch, so only the treatment emitted it. A
+        #     diagnostic with no control value cannot be wrong, and therefore cannot
+        #     falsify anything.
+        # The replacement writes into a preallocated buffer that both arms carry, updated
+        # every step with no host sync, and read once after the charged clock stops.
         s = sub(s, "        q, k = norm(q), norm(k)",
-"""        if not hasattr(self, '_qk_probe'): self._qk_probe = []
-        if len(self._qk_probe) < 64:
-            self._qk_probe.append((q.detach().float().pow(2).mean().sqrt(),
-                                   k.detach().float().pow(2).mean().sqrt()))""")
-        obs.append("""_m = model._orig_mod if hasattr(model,'_orig_mod') else model
-_pr = [p for b in _m.transformer.h for p in getattr(b.attn, '_qk_probe', [])]
-if _pr:
-    print(f"q_rms_mean:          {sum(float(a) for a,_ in _pr)/len(_pr):.6f}")
-    print(f"k_rms_mean:          {sum(float(b) for _,b in _pr)/len(_pr):.6f}")""")
+                   "        _qk_stat[0] = q.detach().float().pow(2).mean()\n"
+                   "        _qk_stat[1] = k.detach().float().pow(2).mean()")
+    # Emitted by EVERY variant, control included, so the treatment has something to be
+    # wrong against. In the control q and k are norm()-ed and the RMS is pinned near 1;
+    # in the noqknorm arm it drifts, and the size of that drift IS the mediator.
+    s = sub(s, "HEAD_DIM = 128", "HEAD_DIM = 128\n_qk_stat = torch.zeros(2, device='cuda')")
+    if cfg.get("noqknorm") is None:
+        s = sub(s, "        q, k = norm(q), norm(k)",
+                   "        q, k = norm(q), norm(k)\n"
+                   "        _qk_stat[0] = q.detach().float().pow(2).mean()\n"
+                   "        _qk_stat[1] = k.detach().float().pow(2).mean()")
+    obs.append("""print(f"qk_q_rms_final:      {_qk_stat[0].sqrt().item():.6f}")
+print(f"qk_k_rms_final:      {_qk_stat[1].sqrt().item():.6f}")""")
+    if cfg.get("noqknorm") is not None:
+        pass
 
     # M10 stochastic optimisation: global gradient clipping before the optimizer step.
     if cfg.get("clip") is not None:

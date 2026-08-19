@@ -1,0 +1,2263 @@
+{
+ "2502.01578": {
+  "abstract": "Recent advancements in Large Language Models (LLMs) have set themselves apart with their exceptional performance in complex language modelling tasks. However, these models are also known for their significant computational and storage requirements, primarily due to the quadratic computation complexity of softmax attention. To mitigate this issue, linear attention has been designed to reduce the quadratic space-time complexity that is inherent in standard transformers. In this work, we embarked on a comprehensive exploration of three key components that substantially impact the performance of the Gated Linear Attention module: feature maps, normalization, and the gating mechanism. We developed a feature mapping function to address some crucial issues that previous suggestions overlooked. Then we offered further rationale for the integration of normalization layers to stabilize the training process. Moreover, we explored the saturation phenomenon of the gating mechanism and augmented it with a refining module. We conducted extensive experiments and showed our architecture outperforms previous Gated Linear Attention mechanisms in extensive tasks including training from scratch and post-linearization with continual pre-training.",
+  "comment": "Accepted by NAACL 2025 (main)",
+  "families": [
+   "attention",
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2502.01578",
+  "published": "2025-02-03",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 14,
+  "status": "screened",
+  "title": "ReGLA: Refining Gated Linear Attention",
+  "why": [
+   "+3 pre-train",
+   "+4 from scratch",
+   "+2 normaliz",
+   "+2 attention",
+   "-3 lora",
+   "+3 acl",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2502.02431": {
+  "abstract": "Recent advancements in deep learning optimization have introduced new algorithms, such as Schedule-Free optimizers, AdEMAMix, MARS and Lion which modify traditional momentum mechanisms. In a separate line of work, theoretical acceleration of stochastic gradient descent (SGD) in noise-dominated regime has been achieved by decoupling the momentum coefficient from the current gradient's weight. In this paper, we establish explicit connections between these two lines of work. We substantiate our theoretical findings with preliminary experiments on a 150m language modeling task. We find that AdEMAMix, which most closely resembles accelerated versions of stochastic gradient descent, exhibits superior performance. Building on these insights, we introduce a modification to AdEMAMix, termed Simplified-AdEMAMix, which maintains the same performance as AdEMAMix across both large and small batch-size settings while eliminating the need for two different momentum terms. The code for Simplified-AdEMAMix is available on the repository: https://github.com/DepenM/Simplified-AdEMAMix/.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2502.02431",
+  "published": "2025-02-04",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Connections between Schedule-Free Optimizers, AdEMAMix, and Accelerated SGD Variants",
+  "why": [
+   "+3 optimizer",
+   "+2 schedule",
+   "+2 gradient"
+  ]
+ },
+ "2502.02531": {
+  "abstract": "We theoretically characterize gradient descent dynamics in deep linear networks trained at large width from random initialization and on large quantities of random data. Our theory captures the ``wider is better\" effect of mean-field/maximum-update parameterized networks as well as hyperparameter transfer effects, which can be contrasted with the neural-tangent parameterization where optimal learning rates shift with model width. We provide asymptotic descriptions of both non-residual and residual neural networks, the latter of which enables an infinite depth limit when branches are scaled as $1/\\sqrt{\\text{depth}}$. We also compare training with one-pass stochastic gradient descent to the dynamics when training data are repeated at each iteration. Lastly, we show that this model recovers the accelerated power law training dynamics for power law structured data in the rich regime observed in recent works.",
+  "comment": "ICML Camera Ready",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2502.02531",
+  "published": "2025-02-04",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 19,
+  "status": "screened",
+  "title": "Deep Linear Network Training Dynamics from Random Initialization: Data, Width, Depth, and Hyperparameter Transfer",
+  "why": [
+   "+3 learning rate",
+   "+3 initializ",
+   "+3 hyperparameter transfer",
+   "+2 gradient",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2502.10927": {
+  "abstract": "Self-attention is essential to Transformer architectures, yet how information is embedded in the self-attention matrices and how different objective functions impact this process remains unclear. We present a mathematical framework to analyze self-attention matrices by deriving the structures governing their weight updates. Using this framework, we demonstrate that bidirectional training induces symmetry in the weight matrices, while autoregressive training results in directionality and column dominance. Our theoretical findings are validated across multiple Transformer models - including ModernBERT, GPT, LLaMA3, and Mistral - and input modalities like text, vision, and audio. Finally, we apply these insights by showing that symmetric initialization improves the performance of encoder-only models on language tasks. This mathematical analysis offers a novel theoretical perspective on how information is embedded through self-attention, thereby improving the interpretability of Transformer models.",
+  "comment": "",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule",
+   "objective",
+   "signal_path"
+  ],
+  "id": "2502.10927",
+  "published": "2025-02-15",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "The underlying structures of self-attention: symmetry, directionality, and emergent dynamics in Transformer training",
+  "why": [
+   "+3 initializ",
+   "+2 attention",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2502.15015": {
+  "abstract": "The goal of the AlgoPerf: Training Algorithms competition is to evaluate practical speed-ups in neural network training achieved solely by improving the underlying training algorithms. In the external tuning ruleset, submissions must provide workload-agnostic hyperparameter search spaces, while in the self-tuning ruleset they must be completely hyperparameter-free. In both rulesets, submissions are compared on time-to-result across multiple deep learning workloads, training on fixed hardware. This paper presents the inaugural AlgoPerf competition's results, which drew 18 diverse submissions from 10 teams. Our investigation reveals several key findings: (1) The winning submission in the external tuning ruleset, using Distributed Shampoo, demonstrates the effectiveness of non-diagonal preconditioning over popular methods like Adam, even when compared on wall-clock runtime. (2) The winning submission in the self-tuning ruleset, based on the Schedule Free AdamW algorithm, demonstrates a new level of effectiveness for completely hyperparameter-free training algorithms. (3) The top-scoring submissions were surprisingly robust to workload changes. We also discuss the engineering challenges encountered in ensuring a fair comparison between different training algorithms. These results highlight both the significant progress so far, and the considerable room for further improvements.",
+  "comment": "ICLR 2025; 23 pages, 5 figures, 8 tables",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2502.15015",
+  "published": "2025-02-20",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 14,
+  "status": "screened",
+  "title": "Accelerating Neural Network Training: An Analysis of the AlgoPerf Competition",
+  "why": [
+   "+2 schedule",
+   "+4 wall-clock",
+   "+5 iclr",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2502.15130": {
+  "abstract": "Transformer-based architectures have become the backbone of both uni-modal and multi-modal foundation models, largely due to their scalability via attention mechanisms, resulting in a rich ecosystem of publicly available pre-trained models such as LLaVA, CLIP, and DeiT, etc. In parallel, emerging sub-quadratic architectures like Mamba offer promising efficiency gains by enabling global context modeling with linear complexity. However, training these architectures from scratch remains resource-intensive (e.g., in terms of data and time). Motivated by this challenge, we explore a cross-architecture knowledge transfer paradigm, termed TransMamba, that facilitates the reuse of Transformer pre-trained knowledge. We propose a two-stage framework to accelerate the training of Mamba-based models, ensuring their effectiveness across both uni-modal and multi-modal tasks. The first stage leverages pre-trained Transformer models to initialize critical components of the Mamba architecture. To bridge architectural and dimensional gaps, we develop a selective weight subcloning strategy and a layered initialization scheme that prioritizes the early $n$ layers. Building on this initialization, the second stage introduces an adaptive multi-directional knowledge distillation method. This mechanism employs layer-wise adaptive scaling factors to align Mamba representations with their Transformer counterparts, while accommodating the scanning order variations inherent to multi-modal Mamba architec",
+  "comment": "",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2502.15130",
+  "published": "2025-02-21",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "TransMamba: Fast Universal Architecture Adaption from Transformers to Mamba",
+  "why": [
+   "+3 pre-train",
+   "+4 from scratch",
+   "+3 initializ",
+   "+2 attention",
+   "-2 reasoning",
+   "-3 multimodal",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2503.14376": {
+  "abstract": "Linear RNNs with gating recently demonstrated competitive performance compared to Transformers in language modeling. Although their linear compute scaling in sequence length offers theoretical runtime advantages over Transformers, realizing these benefits in practice requires optimized custom kernels, as Transformers rely on the highly efficient Flash Attention kernels (Dao, 2024). Leveraging the chunkwise-parallel formulation of linear RNNs, Flash Linear Attention (FLA) (Yang & Zhang, 2024) shows that linear RNN kernels are faster than Flash Attention, by parallelizing over chunks of the input sequence. However, since the chunk size of FLA is limited, many intermediate states must be materialized in GPU memory. This leads to low arithmetic intensity and causes high memory consumption and IO cost, especially for long-context pre-training. In this work, we present Tiled Flash Linear Attention (TFLA), a novel kernel algorithm for linear RNNs, that enables arbitrary large chunk sizes and high arithmetic intensity by introducing an additional level of sequence parallelization within each chunk. First, we apply TFLA to the xLSTM with matrix memory, the mLSTM (Beck et al., 2024). Second, we propose an mLSTM variant with sigmoid input gate and reduced computation for even faster kernel runtimes at equal language modeling performance. In our speed benchmarks, we show that our new mLSTM kernels based on TFLA outperform highly optimized Flash Attention, Linear Attention and Mamba kerne",
+  "comment": "Accepted at NeurIPS 2025. Code available at: https://github.com/NX-AI/mlstm_kernels",
+  "families": [
+   "attention",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2503.14376",
+  "published": "2025-03-18",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 14,
+  "status": "screened",
+  "title": "Tiled Flash Linear Attention: More Efficient Linear RNN and xLSTM Kernels",
+  "why": [
+   "+3 pre-train",
+   "+2 attention",
+   "+2 kernel",
+   "-1 long-context",
+   "+5 neurips",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2504.09107": {
+  "abstract": "The successes of intelligent systems have quite relied on the artificial learning of information, which lead to the broad applications of neural learning solutions. As a common sense, the training of neural networks can be largely improved by specifically defined initialization, neuron layers as well as the activation functions. Though there are sequential layer based initialization available, the generalized solution to initial stages is still desired. In this work, an improved approach to initialization of neural learning is presented, which adopts the shrinkage approach to initialize the transformation of each layer of networks. It can be universally adapted for the structures of any networks with random layers, while stable performance can be attained. Furthermore, the smooth learning of networks is adopted in this work, due to the diverse influence on neural learning. Experimental results on several artificial data sets demonstrate that, the proposed method is able to present robust results with the shrinkage initialization, and competent for smooth learning of neural networks.",
+  "comment": "6 pages, 4 figures",
+  "families": [
+   "signal_scale"
+  ],
+  "id": "2504.09107",
+  "published": "2025-04-12",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Shrinkage Initialization for Smooth Learning of Neural Networks",
+  "why": [
+   "+3 initializ",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2504.20070": {
+  "abstract": "Deep Knowledge Tracing (DKT) models student learning behavior by using Recurrent Neural Networks (RNNs) to predict future performance based on historical interaction data. However, the original implementation relied on standard RNNs in the Lua-based Torch framework, which limited extensibility and reproducibility. In this work, we revisit the DKT model from two perspectives: architectural improvements and optimization efficiency. First, we enhance the model using gated recurrent units, specifically Long Short-Term Memory (LSTM) networks and Gated Recurrent Units (GRU), which better capture long-term dependencies and help mitigate vanishing gradient issues. Second, we re-implement DKT using the PyTorch framework, enabling a modular and accessible infrastructure compatible with modern deep learning workflows. We also benchmark several optimization algorithms SGD, RMSProp, Adagrad, Adam, and AdamW to evaluate their impact on convergence speed and predictive accuracy in educational modeling tasks. Experiments on the Synthetic-5 and Khan Academy datasets show that GRUs and LSTMs achieve higher accuracy and improved training stability compared to basic RNNs, while adaptive optimizers such as Adam and AdamW consistently outperform SGD in both early-stage learning and final model performance. Our open-source PyTorch implementation provides a reproducible and extensible foundation for future research in neural knowledge tracing and personalized learning systems.",
+  "comment": "11 pages, 2 figures",
+  "families": [
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2504.20070",
+  "published": "2025-04-24",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 15,
+  "status": "screened",
+  "title": "Improving Deep Knowledge Tracing via Gated Architectures and Adaptive Optimization",
+  "why": [
+   "+3 optimizer",
+   "+2 convergence",
+   "+2 stability",
+   "+2 gradient",
+   "+2 reproduc",
+   "+1 open-source",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2505.11840": {
+  "abstract": "As the default optimizer for training large language models, AdamW has achieved remarkable success in deep learning. However, its convergence behavior is not theoretically well-understood. This paper establishes the convergence rate $\\frac{1}{K}\\sum_{k=1}^KE\\left[||\\nabla f(x^k)||_1\\right]\\leq O(\\frac{\\sqrt{d}C}{K^{1/4}})$ for AdamW measured by $\\ell_1$ norm, where $K$ represents the iteration number, $d$ denotes the model dimension, and $C$ matches the constant in the optimal convergence rate of SGD. Theoretically, we have $||\\nabla f(x)||_2\\ll ||\\nabla f(x)||_1\\leq \\sqrt{d}||\\nabla f(x)||_2$ for any high-dimensional vector $x$ and $E\\left[||\\nabla f(x)||_1\\right]\\geq\\sqrt{\\frac{2d}\u03c0}E\\left[||\\nabla f(x)||_2\\right]$ when each element of $\\nabla f(x)$ is generated from Gaussian distribution $\\mathcal N(0,1)$. Empirically, our experimental results on real-world deep learning tasks reveal $||\\nabla f(x)||_1=\\varTheta(\\sqrt{d})||\\nabla f(x)||_2$. Both support that our convergence rate can be considered to be analogous to the optimal $\\frac{1}{K}\\sum_{k=1}^KE\\left[||\\nabla f(x^k)||_2\\right]\\leq O(\\frac{C}{K^{1/4}})$ convergence rate of SGD in the ideal case. We also extend our result to NAdamW, an AdamW variant that employs a double-momentum mechanism, and demonstrate that it maintains the same convergence rate.",
+  "comment": "V2: NeurIPS Camera-Ready. V3: expand upon the conference version by incorporating the analysis of NAdamW",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2505.11840",
+  "published": "2025-05-17",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "On the $O(\\frac{\\sqrt{d}}{K^{1/4}})$ Convergence Rate of AdamW Measured by $\\ell_1$ Norm",
+  "why": [
+   "+3 optimizer",
+   "+2 convergence",
+   "+5 neurips"
+  ]
+ },
+ "2505.12909": {
+  "abstract": "Initialization plays a critical role in Deep Neural Network training, directly influencing convergence, stability, and generalization. Common approaches such as Glorot and He initializations rely on randomness, which can produce uneven weight distributions across layer connections. In this paper, we introduce the Sinusoidal initialization, a novel deterministic method that employs sinusoidal functions to construct structured weight matrices expressly to improve the spread and balance of weights throughout the network while simultaneously fostering a more uniform, well-conditioned distribution of neuron activation states from the very first forward pass. Because Sinusoidal initialization begins with weights and activations that are already evenly and efficiently utilized, it delivers consistently faster convergence, greater training stability, and higher final accuracy across a wide range of models, including convolutional neural networks, vision transformers, and large language models. On average, our experiments show an increase of 4.9% in final validation accuracy and 20.9% in convergence speed. By replacing randomness with structure, this initialization provides a stronger and more reliable foundation for Deep Learning systems.",
+  "comment": "",
+  "families": [
+   "signal_scale"
+  ],
+  "id": "2505.12909",
+  "published": "2025-05-19",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "Sinusoidal Initialization, Time for a New Start",
+  "why": [
+   "+3 initializ",
+   "+2 convergence",
+   "+2 stability",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2505.13898": {
+  "abstract": "Modern LLMs are increasingly deep, and depth correlates with performance, albeit with diminishing returns. However, do these models use their depth efficiently? Do they compose more features to create higher-order computations that are impossible in shallow models, or do they merely spread the same kinds of computation out over more layers? To address these questions, we analyze the residual stream of the Llama 3.1, Qwen 3, and OLMo 2 family of models. We find: First, comparing the output of the sublayers to the residual stream reveals that layers in the second half contribute much less than those in the first half, with a clear phase transition between the two halves. Second, skipping layers in the second half has a much smaller effect on future computations and output predictions. Third, for multihop tasks, we are unable to find evidence that models are using increased depth to compose subresults in examples involving many hops. Fourth, we seek to directly address whether deeper models are using their additional layers to perform new kinds of computation. To do this, we train linear maps from the residual stream of a shallow model to a deeper one. We find that layers with the same relative depth map best to each other, suggesting that the larger model simply spreads the same computations out over its many layers. All this evidence suggests that deeper models are not using their depth to learn new kinds of computation, but only using the greater depth to perform more fine-gr",
+  "comment": "Accepted to NeurIPS 2025",
+  "families": [
+   "capacity",
+   "ve_placement",
+   "signal_path"
+  ],
+  "id": "2505.13898",
+  "published": "2025-05-20",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Do Language Models Use Their Depth Efficiently?",
+  "why": [
+   "+5 neurips",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2506.05249": {
+  "abstract": "Transformer models have emerged as fundamental tools across various scientific and engineering disciplines, owing to their outstanding performance in diverse applications. Despite this empirical success, the theoretical foundations of Transformers remain relatively underdeveloped, particularly in understanding their training dynamics. Existing research predominantly examines isolated components--such as self-attention mechanisms and feedforward networks--without thoroughly investigating the interdependencies between these components, especially when residual connections are present. In this paper, we aim to bridge this gap by analyzing the convergence behavior of a structurally complete yet single-layer Transformer, comprising self-attention, a feedforward network, and residual connections. We demonstrate that, under appropriate initialization, gradient descent exhibits a linear convergence rate, where the convergence speed is determined by the minimum and maximum singular values of the output matrix from the attention layer. Moreover, our analysis reveals that residual connections serve to ameliorate the ill-conditioning of this output matrix, an issue stemming from the low-rank structure imposed by the softmax operation, thereby promoting enhanced optimization stability. We also extend our theoretical findings to a multi-layer Transformer architecture, confirming the linear convergence rate of gradient descent under suitable initialization. Empirical results corroborate our",
+  "comment": "",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2506.05249",
+  "published": "2025-06-05",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "On the Convergence of Gradient Descent on Learning Transformers with Residual Connections",
+  "why": [
+   "+3 initializ",
+   "+2 attention",
+   "+2 convergence",
+   "+2 stability",
+   "+2 gradient"
+  ]
+ },
+ "2507.09846": {
+  "abstract": "As both model and dataset sizes continue to scale rapidly, conventional pretraining strategies with fixed compute budgets-such as cosine learning rate schedules-are increasingly inadequate for large-scale training. Recent alternatives, including warmup-stable-decay (WSD) schedules and weight averaging, offer greater flexibility. However, WSD relies on explicit decay phases to track progress, while weight averaging addresses this limitation at the cost of additional memory. In search of a more principled and scalable alternative, we revisit the Schedule-Free (SF) method [Defazio et al., 2024], which has shown strong empirical performance across diverse settings. We show that SF-AdamW effectively navigates the \"river\" structure of the loss landscape without decay phases or auxiliary averaging, making it particularly suitable for continuously scaling training workloads. To understand this behavior, we conduct a theoretical and empirical analysis of SF dynamics, revealing that it implicitly performs weight averaging without memory overhead. Guided by this analysis, we propose a refined variant of SF that improves robustness to momentum and performs better under large batch sizes, addressing key limitations of the original method. Together, these results establish SF as a practical, scalable, and theoretically grounded approach for language model training.",
+  "comment": "Published at NeurIPS 2025",
+  "families": [
+   "token_exposure",
+   "schedule"
+  ],
+  "id": "2507.09846",
+  "published": "2025-07-14",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 26,
+  "status": "screened",
+  "title": "Through the River: Understanding the Benefit of Schedule-Free Methods for Language Model Training",
+  "why": [
+   "+3 pretrain",
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 warmup",
+   "+2 batch size",
+   "+2 loss",
+   "+3 mup",
+   "+5 neurips"
+  ]
+ },
+ "2507.13338": {
+  "abstract": "Neural networks are often highly sensitive to input and weight perturbations. This sensitivity has been linked to pathologies such as vulnerability to adversarial examples, divergent training, and overfitting. To combat these problems, past research has looked at building neural networks entirely from Lipschitz components. However, these techniques have not matured to the point where researchers have trained a modern architecture such as a transformer with a Lipschitz certificate enforced beyond initialization. To explore this gap, we begin by developing and benchmarking novel, computationally-efficient tools for maintaining norm-constrained weight matrices. Applying these tools, we are able to train transformer models with Lipschitz bounds enforced throughout training. We find that optimizer dynamics matter: switching from AdamW to Muon improves standard methods -- weight decay and spectral normalization -- allowing models to reach equal performance with a lower Lipschitz bound. Inspired by Muon's update having a fixed spectral norm, we co-design a weight constraint method that improves the Lipschitz vs. performance tradeoff on MLPs and 2M parameter transformers. Our 2-Lipschitz transformer on Shakespeare text reaches validation accuracy 60%. Scaling to 145M parameters, our 10-Lipschitz transformer reaches 21% accuracy on internet text. However, to match the NanoGPT baseline validation accuracy of 39.4%, our Lipschitz upper bound increases to 10^264. Nonetheless, our Lipschi",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2507.13338",
+  "published": "2025-07-17",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 26,
+  "status": "screened",
+  "title": "Training Transformers with Enforced Lipschitz Constants",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+3 weight decay",
+   "+3 initializ",
+   "+2 normaliz",
+   "+5 nanogpt",
+   "+2 stability",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2508.06743": {
+  "abstract": "First-order methods underpin most large-scale learning algorithms, yet their classical convergence guarantees hinge on carefully scheduled step-sizes that depend on the total horizon $T$, which is rarely known in advance. The Schedule-Free (SF) method promises optimal performance with hyperparameters that are independent of $T$ by interpolating between Polyak--Ruppert averaging and momentum, but nonconvex analysis of SF has been limited or reliant on strong global assumptions. We introduce a robust Lyapunov framework that, under only $L$-smoothness and lower-boundedness, reduces SF analysis to a single-step descent inequality. This yields horizon-agnostic bounds in the nonconvex setting: $O(1/\\log T)$ for constant step + PR averaging, $O(\\log T/T)$ for a linearly growing step-size, and a continuum of $O(T^{-(1-\u03b1)})$ rates for polynomial averaging. We complement these proofs with Performance Estimation Problem (PEP) experiments that numerically validate our rates and suggest that our $O(1/\\log T)$ bound on the original nonconvex SF algorithm may tighten to $O(1/T)$. Our work extends SF's horizon-free guarantees to smooth nonconvex optimization and charts future directions for optimal nonconvex rates.",
+  "comment": "",
+  "families": [
+   "schedule"
+  ],
+  "id": "2508.06743",
+  "published": "2025-08-08",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Analysis of Schedule-Free Nonconvex Optimization",
+  "why": [
+   "+2 schedule",
+   "+2 convergence",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2509.10167": {
+  "abstract": "We study the gradient-based training of large-depth residual networks (ResNets) from standard random initializations. We show that infinite-depth ResNets behave as if they were infinitely wide, regardless of their actual width. More precisely, we obtain that with a fixed embedding dimension $D$, the training dynamics converges to a unique Neural Mean ODE training dynamics as the depth $L$ diverges, regardless of the scaling of the hidden width $M$. For a residual scale $\u0398_D\\big(\\frac\u03b1{LM}\\big)$ with $\u03b1=\u0398_D(1)$, we obtain the error bound $O_D\\big(\\frac{1}{L}+ \\frac{1}{\\sqrt{LM}}\\big)$ between the model's output and its limit after a fixed number gradient of steps. In this regime, the limit exhibits maximal local feature updates, i.e. the Mean ODE is genuinely non-linearly parameterized. In contrast, we show that $\u03b1\\to \\infty$ yields a lazy ODE regime where the Mean ODE is linearly parameterized, and we derive a convergence rate in this case as well. We then focus on the particular case of ResNets with two-layer perceptron blocks, for which we study how these scalings depend on the embedding dimension $D$. We identify the residual scale $O\\big(\\frac{\\sqrt{D}}{LM}\\big)$ as necessary and sufficient for maximal local feature updates. In this regime, we prove a high-probability error bound $O\\big(\\frac{1}{L}+ \\frac{\\sqrt{D}}{\\sqrt{LM}}\\big)$ between the ResNet and its limit after a fixed number of gradient steps. Our convergence results rely on a novel mathematical perspective on R",
+  "comment": "",
+  "families": [
+   "capacity",
+   "ve_placement",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2509.10167",
+  "published": "2025-09-12",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "The Hidden Width of Deep ResNets: Tight Error Bounds and Phase Diagram",
+  "why": [
+   "+3 initializ",
+   "+2 convergence",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2509.21936": {
+  "abstract": "Large language models rely on attention mechanisms with a softmax activation. Yet the dominance of softmax over alternatives (e.g., component-wise or linear) remains poorly understood, and many theoretical works have focused on the easier-to-analyze linearized attention. In this work, we address this gap through a principled study of the single-location regression task, where the output depends on a linear transformation of a single input token at a random location. Building on ideas from statistical physics, we develop an analysis of attention-based predictors in the high-dimensional limit, where generalization performance is captured by a small set of order parameters. At the population level, we show that softmax achieves the Bayes risk, whereas linear attention fundamentally falls short. We then examine other activation functions to identify which properties are necessary for optimal performance. Finally, we analyze the finite-sample regime: we provide an asymptotic characterization of the test error and show that, while softmax is no longer Bayes-optimal, it consistently outperforms linear attention. We discuss the connection with optimization by gradient-based algorithms.",
+  "comment": "Accepted at the ICLR 2026",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2509.21936",
+  "published": "2025-09-26",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Statistical Advantage of Softmax Attention: Insights from Single-Location Regression",
+  "why": [
+   "+2 attention",
+   "+2 gradient",
+   "+5 iclr",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2509.24218": {
+  "abstract": "Large language models (LLMs) have demonstrated impressive generalization and emergent capabilities, yet their pre-training remains computationally expensive and sensitive to optimization dynamics. While Adam-based optimizers offer fast convergence by adapting learning rates coordinate-wise, recent studies reveal that their updates often suffer from poor spectral conditioning and low-rank structures, hindering efficiency. Muon addresses this issue via global spectral normalization but lacks the per-coordinate adaptivity of Adam. In this work, we propose Column-Normalized Adam (Conda), a novel optimizer that bridges the strengths of both approaches. Conda projects updates into an orthogonal subspace and applies column-wise second moment normalization based on the projected gradients, thereby achieving both improved spectral conditioning and maintaining coordinate-wise adaptivity. This design alleviates the spectral pathologies of Adam while preserving its fast convergence behavior. Extensive experiments on the LLaMA and GPT-2 series show that Conda consistently outperforms AdamW, Muon, and other baselines in pre-training. Remarkably, on the LLaMA series, Conda achieves 2-2.5 the convergence speed of AdamW, measured in both training steps and training time. Further ablations demonstrate its robustness under diverse training setups. These results collectively highlight Conda as an effective and broadly applicable optimizer for large-scale LLM training. The code is released on htt",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2509.24218",
+  "published": "2025-09-29",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 22,
+  "status": "screened",
+  "title": "Conda: Column-Normalized Adam for Training Large Language Models Faster",
+  "why": [
+   "+3 pre-train",
+   "+3 optimizer",
+   "+5 muon",
+   "+3 learning rate",
+   "+2 normaliz",
+   "+2 convergence",
+   "+3 ablation",
+   "+3 gpt-2"
+  ]
+ },
+ "2509.24406": {
+  "abstract": "We present a comprehensive theoretical and empirical study of the Muon optimizer for training transformers only with a small to medium decoder (30M - 200M parameters), with an emphasis on its mathematical foundations, convergence properties and synergistic interactions with modern architectural optimizations. Building on recent work showing Muon's scalability, we provide rigorous theoretical analysis including: (i)showing the convergence rate under standard assumptions, (ii) spectral regularization properties that prevent gradient explosion, (iii) connection to natural gradient descent on the Stiefel manifold, and (iv) equivalence to steepest gradient descent under the spectral norm. Crucially, we demonstrate that Muon expands the Pareto frontier in the compute-time trade-off by maintaining superior data efficiency at large batch sizes, a key finding of~\\cite{essentialai2025muon} that we validate across our model scales. Empirically, Muon reaches the target loss with 48-52\\% of the training calculated by AdamW while maintaining or improving the final perplexity, consistent with larger-scale results. When combined with Multi-Head Latent Attention (MLA) and Mixture-of-Experts (MoE), we observe multiplicative efficiency gains: MLA+MoE+Muon achieves 68\\% memory reduction and 3.2$\\times$ inference speedup, while improving perplexity by 8-12\\%. We provide detailed procedures on 15 architectural and optimizer components, stability analyzes across 100+ training runs, and practical im",
+  "comment": "",
+  "families": [
+   "token_exposure",
+   "attention",
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2509.24406",
+  "published": "2025-09-29",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 23,
+  "status": "screened",
+  "title": "Muon: Training and Trade-offs with Latent Attention and MoE",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+2 batch size",
+   "+2 attention",
+   "+2 convergence",
+   "+2 loss",
+   "+3 perplexity",
+   "+2 stability"
+  ]
+ },
+ "2509.25223": {
+  "abstract": "Linear attention offers a linear-time alternative to self-attention but often struggles to capture long-range patterns. We revisit linear attention through a prediction-correction lens and show that prevalent variants can be written as a combination of a historical prediction and a single-token correction, which creates an expressivity bottleneck. To address this bottleneck, we introduce Residual Linear Attention (RLA), a framework that equips linear attention with an explicit residual-fitting mechanism. RLA maintains an auxiliary recurrent state that learns to accumulate residual errors over time and correct the base prediction. We further instantiate a delta-rule version, Residual Delta Net (RDN), incorporating adaptive gating and residual clipping for enhanced correction control and stability. Our implementation leverages highly optimized linear attention kernels and preserves linear time and memory. Across language modeling and recall-intensive evaluations, RLA and RDN consistently outperform their respective baselines and other modern linear-attention methods, narrowing the gap to standard Transformers while retaining linear scaling.",
+  "comment": "15 pages, 4 figures",
+  "families": [
+   "attention",
+   "optimizer_numeric",
+   "signal_path",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2509.25223",
+  "published": "2025-09-24",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "Enhancing Linear Attention with Residual Learning",
+  "why": [
+   "+2 attention",
+   "+2 kernel",
+   "+2 stability",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.00345": {
+  "abstract": "Transformers have achieved remarkable success across a wide range of applications, a feat often attributed to their scalability. Yet training them without skip (residual) connections remains notoriously difficult. While skips stabilize optimization, they also disrupt the hierarchical structure of representations, raising the long-standing question of whether transformers can be trained efficiently without them. In this work, we address this problem by analyzing the Jacobian of a skipless transformer block, showing why skips improve conditioning and revealing that their stabilization benefits can be recovered through a principled initialization strategy. Building on this insight, we introduce the first method that enables stable and efficient training of skipless transformers without altering the standard architecture. We validate our approach on Vision Transformers (ViTs) in both supervised and self-supervised settings, demonstrating that skipless ViTs trained with our initialization overcome the usual optimization barriers, learn richer hierarchical representations, and outperform strong baselines, that incorporate skip connections, on dense prediction benchmarks. These results show that skip connections are not a fundamental requirement for training ViTs and open new avenues for hierarchical representation learning in vision models.",
+  "comment": "",
+  "families": [
+   "ve_placement",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2510.00345",
+  "published": "2025-09-30",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Cutting the Skip: Training Residual-Free Transformers",
+  "why": [
+   "+3 initializ",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.04327": {
+  "abstract": "Choosing an appropriate learning rate remains a key challenge in scaling depth of modern deep networks. The classical maximal update parameterization ($\u03bc$P) enforces a fixed per-layer update magnitude, which is well suited to homogeneous multilayer perceptrons (MLPs) but becomes ill-posed in heterogeneous architectures where residual accumulation and convolutions introduce imbalance across layers. We introduce Arithmetic-Mean $\u03bc$P (AM-$\u03bc$P), which constrains not each individual layer but the network-wide average one-step pre-activation second moment to a constant scale. Combined with a residual-aware He fan-in initialization - scaling residual-branch weights by the number of blocks ($\\mathrm{Var}[W]=c/(K\\cdot \\mathrm{fan\\text{-}in})$) - AM-$\u03bc$P yields width-robust depth laws that transfer consistently across depths. We prove that, for one- and two-dimensional convolutional networks, the maximal-update learning rate satisfies $\u03b7^\\star(L)\\propto L^{-3/2}$; with zero padding, boundary effects are constant-level as $N\\gg k$. For standard residual networks with general conv+MLP blocks, we establish $\u03b7^\\star(L)=\u0398(L^{-3/2})$, with $L$ the minimal depth. Empirical results across a range of depths confirm the $-3/2$ scaling law and enable zero-shot learning-rate transfer, providing a unified and practical LR principle for convolutional and deep residual networks without additional tuning overhead.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2510.04327",
+  "published": "2025-10-05",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Arithmetic-Mean $\u03bc$P for Modern Architectures: A Unified Learning-Rate Scale for CNNs and ResNets",
+  "why": [
+   "+3 learning rate",
+   "+3 initializ"
+  ]
+ },
+ "2510.06954": {
+  "abstract": "Although transformer-based models have shown exceptional empirical performance, the fundamental principles governing their training dynamics are inadequately characterized beyond configuration-specific studies. Inspired by empirical evidence showing improved reasoning capabilities under small initialization scales in language models, we employ the gradient flow analytical framework established in [Zhou et al. NeurIPS 2022] to systematically investigate linearized Transformer training dynamics. Our theoretical analysis dissects the dynamics of attention modules into two distinct stages. In the first stage, asymmetric weight perturbations from random initialization sustain non-degenerate gradient dynamics in parameter matrices, facilitating systematic escape from small initialization regimes. Subsequently, these matrices undergo condensation, progressively aligning toward the target orientation. In the second stage, the previously static key-query matrices actively participate in training, driving the normalized matrices toward asymptotic rank collapse. This two-stage framework generalizes classical directional convergence results.",
+  "comment": "",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2510.06954",
+  "published": "2025-10-08",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "From Condensation to Rank Collapse: A Two-Stage Analysis of Transformer Training Dynamics",
+  "why": [
+   "+3 initializ",
+   "+2 normaliz",
+   "+2 attention",
+   "+2 convergence",
+   "+2 gradient",
+   "-2 reasoning"
+  ]
+ },
+ "2510.09423": {
+  "abstract": "Weight initialization governs signal propagation and gradient flow at the start of training. This paper offers a theory-grounded and empirically validated study across two regimes: compact ReLU multilayer perceptrons and GPT-2-style transformers. First, a logarithmic sweep of the initial standard deviation maps vanishing and exploding regimes and identifies a broad stability band with standard deviations between 1e-2 and 1e-1. Second, a controlled comparison shows that Kaiming (fan-in) initialization converges faster and more stably than Xavier under ReLU, consistent with variance-preserving theory. Third, in a from-scratch 12-layer GPT-2-style model, this paper tracks layerwise Q/K/V weight variance through pretraining and observe depth-dependent equilibration into narrow bands: shallow layers expand rapidly while deeper layers change more gradually. Together, these results connect classic initialization principles with modern transformer behavior and yield simple, practical recipes for robust training.",
+  "comment": "8 pages, 6 figures",
+  "families": [
+   "capacity",
+   "signal_scale"
+  ],
+  "id": "2510.09423",
+  "published": "2025-10-10",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Weight Initialization and Variance Dynamics in Deep Neural Networks and Large Language Models",
+  "why": [
+   "+3 pretrain",
+   "+3 initializ",
+   "+3 gpt-2",
+   "+2 stability",
+   "+2 gradient",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.09487": {
+  "abstract": "We study online adversarial imitation learning (AIL), where an agent learns from offline expert demonstrations and interacts with the environment online without access to rewards. Despite strong empirical results, the benefits of online interaction and the impact of stochasticity remain poorly understood. We address these gaps by introducing a model-based AIL algorithm (MB-AIL) and establish its horizon-free, second-order sample-complexity guarantees under general function approximations for both expert data and reward-free interactions. These second-order bounds provide an instance-dependent result that can scale with the variance of returns under the relevant policies and therefore tighten as the system approaches determinism. Together with second-order, information-theoretic lower bounds on a newly constructed hard-instance family, we show that MB-AIL attains minimax-optimal sample complexity for online interaction (up to logarithmic factors) with limited expert demonstrations and matches the lower bound for expert demonstrations in terms of the dependence on horizon $H$, precision $\u03b5$ and the policy variance $\u03c3^2$. Experiments further validate our theoretical findings and demonstrate that a practical implementation of MB-AIL matches or surpasses the sample efficiency of existing methods.",
+  "comment": "39 pages, 4 figures, 6 tables, accepted by ICLR 2026",
+  "families": [
+   "token_exposure",
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2510.09487",
+  "published": "2025-10-10",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Near-Optimal Second-Order Guarantees for Model-Based Adversarial Imitation Learning",
+  "why": [
+   "+3 sample efficiency",
+   "-4 agent",
+   "+5 iclr",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.11354": {
+  "abstract": "Adam is a popular and widely used adaptive gradient method in deep learning, which has also received tremendous focus in theoretical research. However, most existing theoretical work primarily analyzes its full-batch version, which differs fundamentally from the stochastic variant used in practice. Unlike SGD, stochastic Adam does not converge to its full-batch counterpart even with infinitesimal learning rates. We present the first theoretical characterization of how batch size affects Adam's generalization, analyzing two-layer over-parameterized CNNs on image data. Our results reveal that while both Adam and AdamW with proper weight decay $\u03bb$ converge to poor test error solutions, their mini-batch variants can achieve near-zero test error. We further prove Adam has a strictly smaller effective weight decay bound than AdamW, theoretically explaining why Adam requires more sensitive $\u03bb$ tuning. Extensive experiments validate our findings, demonstrating the critical role of batch size and weight decay in Adam's generalization performance.",
+  "comment": "71 pages, 12 figures, NeurIPS 2025",
+  "families": [
+   "token_exposure",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2510.11354",
+  "published": "2025-10-13",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 18,
+  "status": "screened",
+  "title": "Understanding the Generalization of Stochastic Gradient Adam in Learning Neural Networks",
+  "why": [
+   "+3 learning rate",
+   "+3 weight decay",
+   "+2 batch size",
+   "+2 gradient",
+   "+5 neurips",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.16981": {
+  "abstract": "Gradient orthogonalization is a simple strategy that shows great utility in speeding up gradient descent. The Muon optimizer (Jordan, Jin, et al., 2024) combines gradient orthogonalization with first-order momentum and achieves significant improvement in data efficiency over Adam/AdamW (Loshchilov and Hutter, 2019) for language model training. However, when using model parallelism, gradient orthogonalization introduces additional overhead compared to coordinate-wise optimizers (such as AdamW) due to additional gather and scatter operations on gradient matrix shards from different devices. This additional communication can amount to a throughput hit of 5%-10% compared to Adam/AdamW. To remedy this, we propose Muon with Block-Periodic Orthogonalization (MuonBP), which applies orthogonalization independently to matrix shards on each device and periodically performs full orthogonalization to maintain training stability at scale. We show how to adjust the learning rate from the baseline to MuonBP and give convergence guarantees for this algorithm. Crucially, our theory dictates that we use two stepsizes: one for the blockwise orthogonalization steps, and one for the full orthogonalization steps. Our method is simple, requires minimal hyperparameter adjustments, and achieves competitive iteration complexity compared with baseline Muon while providing per-iteration throughput comparable to coordinate-wise methods such as AdamW. When training an 8B model with eight-way tensor paralle",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2510.16981",
+  "published": "2025-10-19",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 23,
+  "status": "screened",
+  "title": "MuonBP: Faster Muon via Block-Periodic Orthogonalization",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+3 learning rate",
+   "+3 throughput",
+   "+2 convergence",
+   "+2 stability",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.27486": {
+  "abstract": "AdamW has become one of the most effective optimizers for training large-scale models. We have also observed its effectiveness in the context of federated learning (FL). However, directly applying AdamW in federated learning settings poses significant challenges: (1) due to data heterogeneity, AdamW often yields high variance in the second-moment estimate $\\boldsymbol{v}$; (2) the local overfitting of AdamW may cause client drift; and (3) Reinitializing moment estimates ($\\boldsymbol{v}$, $\\boldsymbol{m}$) at each round slows down convergence. To address these challenges, we propose the first \\underline{Fed}erated \\underline{AdamW} algorithm, called \\texttt{FedAdamW}, for training and fine-tuning various large models. \\texttt{FedAdamW} aligns local updates with the global update using both a \\textbf{local correction mechanism} and decoupled weight decay to mitigate local overfitting. \\texttt{FedAdamW} efficiently aggregates the \\texttt{mean} of the second-moment estimates to reduce their variance and reinitialize them. Theoretically, we prove that \\texttt{FedAdamW} achieves a linear speedup convergence rate of $\\mathcal{O}(\\sqrt{(L \u0394\u03c3_l^2)/(S K R \u03b5^2)}+(L \u0394)/R)$ without \\textbf{heterogeneity assumption}, where $S$ is the number of participating clients per round, $K$ is the number of local iterations, and $R$ is the total number of communication rounds. We also employ PAC-Bayesian generalization analysis to explain the effectiveness of decoupled weight decay in local training",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2510.27486",
+  "published": "2025-10-31",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 13,
+  "status": "screened",
+  "title": "FedAdamW: A Communication-Efficient Optimizer with Convergence and Generalization Guarantees for Federated Large Models",
+  "why": [
+   "+3 optimizer",
+   "+3 weight decay",
+   "+3 initializ",
+   "+2 convergence",
+   "-3 fine-tun",
+   "+3 strong-lab signal",
+   "+2 code released"
+  ]
+ },
+ "2511.00907": {
+  "abstract": "Attention-based Transformers have demonstrated strong adaptability across a wide range of tasks and have become the backbone of modern Large Language Models (LLMs). However, their underlying mechanisms remain open for further exploration. The energy-based perspective has long provided a valuable principle for understanding neural computation. In this paper, we revisit the principle of energy as a lens to understand attention-based Transformer models. We present a unified energy-based framework which is composed of three key components: the local energy $E_i$, the global energy $F$, and the employed optimization algorithms. We show that different attention forms including unnormalized linear attention, gated linear attention and standard softmax attention can be induced by choosing their corresponding recipes within this framework. Building on this framework, we propose energy-based modifications of attention structures. Inspired by classical gradient descent (GD) algorithms, we extend the original attention formulation based on standard GD to the momentum-based GD, Nesterov Accelerated Gradient (NAG), and Newton's method, each inducing a corresponding new attention structure. Our experiments provide preliminary support for the potential of the energy-based framework for designing attention mechanisms.",
+  "comment": "",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2511.00907",
+  "published": "2025-11-02",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Transformers as Intrinsic Optimizers: Forward Inference through the Energy Principle",
+  "why": [
+   "+3 optimizer",
+   "+2 normaliz",
+   "+2 attention",
+   "+2 gradient",
+   "-3 inference",
+   "-3 lora",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2511.01918": {
+  "abstract": "Large language models (LLMs) are increasingly trained with classical optimization techniques like AdamW to improve convergence and generalization. However, the mechanisms by which quantum-inspired methods enhance classical training remain underexplored. We introduce Superpositional Gradient Descent (SGD), a novel optimizer linking gradient updates with quantum superposition by injecting quantum circuit perturbations. We present a mathematical framework and implement hybrid quantum-classical circuits in PyTorch and Qiskit. On synthetic sequence classification and large-scale LLM fine-tuning, SGD converges faster and yields lower final loss than AdamW. Despite promising results, scalability and hardware constraints limit adoption. Overall, this work provides new insights into the intersection of quantum computing and deep learning, suggesting practical pathways for leveraging quantum principles to control and enhance model behavior.",
+  "comment": "Accepted at 2025 IEEE International Conference on Quantum Artificial Intelligence (IEEE QAI 2025). This is the accepted version of the paper. The final published version will appear in the IEEE proceedings. \\c{opyright} 2025 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2511.01918",
+  "published": "2025-11-01",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "Superpositional Gradient Descent: Harnessing Quantum Principles for Model Training",
+  "why": [
+   "+3 optimizer",
+   "+2 convergence",
+   "+2 loss",
+   "+2 gradient",
+   "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2511.02244": {
+  "abstract": "Initialization of neural network parameters, such as weights and biases, has a crucial impact on learning performance; if chosen well, we can even avoid the need for additional training with backpropagation. For example, algorithms based on the ridgelet transform or the SWIM (sampling where it matters) concept have been proposed for initialization. On the other hand, some works show hierarchical features in trained neural networks; neural networks tend to learn coarse information in the early-stage hidden layers. In this work, we investigate the effects of utilizing information on the hierarchical features in the initialization of neural networks. Hence, we propose a framework that adjusts the scale factors in the SWIM algorithm to capture low-frequency components in the early-stage hidden layers and to represent high-frequency components in the late-stage hidden layers. Numerical experiments on a one-dimensional regression task and the MNIST classification task demonstrate that the proposed method outperforms the conventional initialization algorithms. This work clarifies the importance of intrinsic hierarchical features in learning neural networks, and the finding yields an effective parameter initialization strategy that enhances their training performance.",
+  "comment": "8 pages, 8 figures",
+  "families": [
+   "signal_scale"
+  ],
+  "id": "2511.02244",
+  "published": "2025-11-04",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Neural network initialization with nonlinear characteristics and information on hierarchical features",
+  "why": [
+   "+3 initializ",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2511.05560": {
+  "abstract": "We study architectural and optimization techniques for sample-efficient language modeling under the constraints of the BabyLM 2025 shared task. Our model, BLaLM, replaces self-attention with a linear-time mLSTM token mixer and explores lightweight enhancements, including short convolutions, sliding window attention with dynamic modulation, and Hedgehog feature maps. To support training in low-resource settings, we curate a high-quality corpus emphasizing readability and pedagogical structure. Experiments across both STRICT and STRICT-SMALL tracks show that (1) linear attention combined with sliding window attention consistently improves zero-shot performance, and (2) the Muon optimizer stabilizes convergence and reduces perplexity over AdamW. These results highlight effective strategies for efficient language modeling without relying on scale.",
+  "comment": "",
+  "families": [
+   "attention",
+   "optimizer_numeric"
+  ],
+  "id": "2511.05560",
+  "published": "2025-11-04",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 22,
+  "status": "screened",
+  "title": "Sample-Efficient Language Modeling with Linear Attention and Lightweight Enhancements",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+2 attention",
+   "+4 sliding window",
+   "+2 convergence",
+   "+3 perplexity",
+   "+3 sample-efficient"
+  ]
+ },
+ "2511.07767": {
+  "abstract": "Schedule-Free SGD, proposed in [Defazio et al., 2024], achieves optimal convergence rates without requiring the training horizon in advance, by replacing learning rate schedules with a principled form of iterate averaging. However, the method still requires tuning a base learning rate whose optimal value depends on unknown problem constants. In this work, we continue down this road by deriving Polyak-type step sizes for Schedule-Free SGD and Adam that compute the learning rate at each iteration from the sampled loss, gradient, and current iterates alone. We first propose an oracle variant that uses per-sample optimal function values and prove an $O(1/\\sqrt{t})$ anytime last-iterate rate for convex Lipschitz objectives. We then remove the oracle requirement with a safeguarded variant that replaces the unknown optimal values with any available lower bound, achieving the same rate up to a neighborhood that vanishes under interpolation. Both step sizes reduce to existing Polyak rules for standard SGD when momentum is set to zero, unifying standard and schedule-free Polyak methods. Numerical experiments on language modeling, including pretraining and distillation, show that the proposed methods match or surpass tuned Schedule-Free baselines while offering greater robustness to hyperparameter choices.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "objective"
+  ],
+  "id": "2511.07767",
+  "published": "2025-11-11",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "Taking the Road Less Scheduled with Adaptive Polyak Steps",
+  "why": [
+   "+3 pretrain",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 convergence",
+   "+2 loss",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2511.07843": {
+  "abstract": "As deep learning methods increasingly utilize sensitive data on a widespread scale, differential privacy (DP) offers formal guarantees to protect against information leakage during model training. A significant challenge remains in implementing DP optimizers that retain strong performance while preserving privacy. Recent advances introduced ever more efficient optimizers, with AdamW being a popular choice for training deep learning models because of strong empirical performance. We study \\emph{DP-AdamW} and introduce \\emph{DP-AdamW-BC}, a differentially private variant of the AdamW optimizer with DP bias correction for the second moment estimator. We start by showing theoretical results for privacy and convergence guarantees of DP-AdamW and DP-AdamW-BC. Then, we empirically analyze the behavior of both optimizers across multiple privacy budgets ($\u03b5= 1, 3, 7$). We find that DP-AdamW outperforms existing state-of-the-art differentially private optimizers like DP-SGD, DP-Adam, and DP-AdamBC, scoring over 15\\% higher on text classification, up to 5\\% higher on image classification, and consistently 1\\% higher on graph node classification. Moreover, we empirically show that incorporating bias correction in DP-AdamW (DP-AdamW-BC) consistently decreases accuracy, in contrast to the improvement of DP-AdamBC improvement over DP-Adam.",
+  "comment": "19 pages, 5 appendices; presented at ICML 2025 DIG-BUGS Workshop",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2511.07843",
+  "published": "2025-11-11",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "DP-AdamW: Investigating Decoupled Weight Decay and Bias Correction in Private Deep Learning",
+  "why": [
+   "+3 optimizer",
+   "+3 weight decay",
+   "+2 convergence",
+   "-4 serving",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2511.14721": {
+  "abstract": "Adaptive optimizers with decoupled weight decay, such as AdamW, are the de facto standard for pre-training large transformer-based generative models. Yet the quadratic nature of the $\\ell_2$ penalty embedded in weight decay drives all parameters toward the origin at the same rate, making the update vulnerable to rare but extreme gradient directions and often over-penalizing well-conditioned coordinates. We propose AdamHuberDecay, a drop-in replacement for AdamW that substitutes the $\\ell_2$ penalty with a decoupled smooth Huber regularizer. The resulting update decays parameters quadratically while their magnitude remains below a threshold $\u03b4$, and linearly ($\\ell_1$-like) once they exceed $\u03b4$, yielding (i) bounded regularization gradients, (ii) invariance to per-coordinate second-moment rescaling, and (iii) stronger sparsity pressure on overgrown weights. We derive the closed-form decoupled Huber decay step and show how to integrate it with any Adam-family optimizer at $O(1)$ extra cost. Extensive experiments on GPT-2 and GPT-3 pre-training demonstrate that AdamHuberDecay (a) converges 10-15% faster in wall-clock time, (b) reduces validation perplexity by up to 4 points, (c) delivers performance improvements of 2.5-4.7% across downstream tasks, and (d) yields visibly sparser weight histograms that translate into 20-30% memory savings after magnitude pruning, without tuning the decay coefficient beyond the default grid used for AdamW. Ablations confirm robustness to outlier g",
+  "comment": "39th Conference on Neural Information Processing Systems (NeurIPS 2025) Workshop: GPU-Accelerated and Scalable Optimization (ScaleOpt)",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2511.14721",
+  "published": "2025-11-18",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 32,
+  "status": "screened",
+  "title": "AdamHD: Decoupled Huber Decay Regularization for Language Model Pre-Training",
+  "why": [
+   "+3 pre-train",
+   "+3 optimizer",
+   "+3 weight decay",
+   "+4 wall-clock",
+   "+3 perplexity",
+   "+3 ablation",
+   "+3 gpt-2",
+   "+2 gradient"
+  ]
+ },
+ "2512.06737": {
+  "abstract": "The paper presents the formulation, implementation, and evaluation of the ArcGD optimiser. The evaluation is conducted initially on a non-convex benchmark function and subsequently on a real-world ML dataset. The initial comparative study using the Adam optimiser is conducted on a stochastic variant of the highly non-convex and notoriously challenging Rosenbrock function, renowned for its narrow, curved valley, across dimensions ranging from 2D to 1000D and an extreme case of 50,000D. Two configurations were evaluated to eliminate learning-rate bias: (i) both using ArcGD's effective learning rate and (ii) both using Adam's default learning rate. ArcGD consistently outperformed Adam under the first setting and, although slower under the second, achieved superior final solutions in most cases. In the second evaluation, ArcGD is evaluated against state-of-the-art optimizers (Adam, AdamW, Lion, SGD) on the CIFAR-10 image classification dataset across 8 diverse MLP architectures ranging from 1 to 5 hidden layers. ArcGD achieved the highest average test accuracy (50.7%) at 20,000 iterations, outperforming AdamW (46.6%), Adam (46.8%), SGD (49.6%), and Lion (43.4%), winning or tying on 6 of 8 architectures. Notably, while Adam and AdamW showed strong early convergence at 5,000 iterations, but regressed with extended training, whereas ArcGD continued improving, demonstrating generalization and resistance to overfitting without requiring early stopping tuning. Strong performance on geo",
+  "comment": "90 pages, 6 appendices, proof-of-concept",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2512.06737",
+  "published": "2025-12-07",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "Arc Gradient Descent: A Geometrically Motivated Gradient Descent-based Optimiser with Phase-Aware, User-Controlled Step Dynamics (proof-of-concept)",
+  "why": [
+   "+3 optimizer",
+   "+3 learning rate",
+   "+2 convergence",
+   "+2 gradient",
+   "-3 lora",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2512.12602": {
+  "abstract": "In this paper, we introduce Exact Flow Linear Attention~(EFLA), an exact-flow formulation of delta-rule linear attention. We show that the delta-rule update can be interpreted as an explicit Euler discretization of an underlying continuous-time system. EFLA replaces this first-order update with the exact closed-form flow. By exploiting the rank-1 structure of the dynamics matrix, both the matrix exponential and the input integral collapse to a simple update that preserves delta-rule linear attention's algebraic structure, parameter count, linear-time complexity, and chunkwise parallelism. This attention mechanism removes the Euler discretization error of the delta-rule dynamics without introducing additional parameters. Experiments on robustness tests, language modeling benchmarks, and the MAD synthetic benchmark show that EFLA improves stability under corrupted and high-energy inputs, reduces perplexity, and achieves stronger downstream performance compared to SSM and Euler-style baselines. These results establish exact-flow integration as a principled and scalable update mechanism for delta-rule linear attention.",
+  "comment": "16 pages, 5 figures",
+  "families": [
+   "attention"
+  ],
+  "id": "2512.12602",
+  "published": "2025-12-14",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Exact Flow Linear Attention: Exact Solution from Continuous-Time Dynamics",
+  "why": [
+   "+2 attention",
+   "+3 perplexity",
+   "+2 stability"
+  ]
+ },
+ "2512.13751": {
+  "abstract": "Expanding pre-trained language models offers a practical way to increase capacity without training larger models from scratch. Depth Up-Scaling (DUS) does so by duplicating Transformer blocks and inserting them into a pre-trained backbone. This process also duplicates FFN-heavy blocks, increasing parameter and compute cost while adding capacity through a block-level dense residual branch. Yet prior work suggests that added capacity need not remain tied to dense FFN branches, while attention heads often play heterogeneous roles, motivating more efficient head-level residual corrections. We propose Memory-Infused Depth Up-Scaling (MIDUS), which replaces the duplicated FFN branches with memory layers and turns added depth into lightweight retrieval-based residual capacity. We introduce a Head-wise Memory Layer (HML), which combines multi-head product-key memory with Head-wise Implicit Value Expansion (HIVE). HML assigns each head a distinct key space, while HIVE realizes head-specific values from a shared latent bank through compact projections. Alongside empirical improvements in performance and efficiency, our head-importance and fixed-retrieval structural analyses characterize HML with HIVE as a structurally distinct, head-conditioned alternative to FFN-based residual expansion.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "attention",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2512.13751",
+  "published": "2025-12-15",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "MIDUS: Memory-Infused Depth Up-Scaling",
+  "why": [
+   "+3 pre-train",
+   "+4 from scratch",
+   "+2 attention"
+  ]
+ },
+ "2512.17131": {
+  "abstract": "We propose Generalized Primal Averaging (GPA), an extension of Nesterov's method that unifies and generalizes recent averaging-based optimizers like single-worker DiLoCo and Schedule-Free, within a non-distributed setting. While DiLoCo relies on a memory-intensive two-loop structure to periodically aggregate pseudo-gradients using Nesterov momentum, GPA eliminates this complexity by decoupling Nesterov's interpolation constants to enable smooth iterate averaging at every step. Structurally, GPA resembles Schedule-Free but replaces uniform averaging with exponential moving averaging. Empirically, GPA consistently outperforms single-worker DiLoCo and AdamW with reduced memory overhead. GPA achieves speedups of 8.71%, 10.13%, and 9.58% over the AdamW baseline in terms of steps to reach target validation loss for Llama-160M, 1B, and 8B models, respectively. Similarly, on the ImageNet ViT workload, GPA achieves speedups of 7% and 25.5% in the small and large batch settings respectively. Furthermore, we prove that for any base optimizer with $O(\\sqrt{T})$ regret, where $T$ is the number of iterations, GPA matches or exceeds the original convergence guarantees depending on the interpolation constants.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2512.17131",
+  "published": "2025-12-18",
+  "queries": [
+   "lr_horizon_free",
+   "optimizer_adam_variants"
+  ],
+  "score": 14,
+  "status": "screened",
+  "title": "Smoothing DiLoCo with Primal Averaging for Faster Training of LLMs",
+  "why": [
+   "+3 optimizer",
+   "+2 schedule",
+   "+2 convergence",
+   "+2 loss",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2512.17351": {
+  "abstract": "Understanding architectural differences in language models is challenging, especially at academic-scale pretraining (e.g., 1.3B parameters, 100B tokens), where results are often dominated by noise and randomness. To overcome this, we introduce controlled synthetic pretraining tasks that isolate and evaluate core model capabilities. Within this framework, we discover CANON LAYERS: lightweight architectural components -- named after the musical term \"canon\" -- that promote horizontal information flow across neighboring tokens. Canon layers compute weighted sums of nearby token representations and integrate seamlessly into Transformers, linear attention, state-space models, or any sequence architecture. We present 12 key results. This includes how Canon layers enhance reasoning depth (e.g., by $2\\times$), reasoning breadth, knowledge manipulation, etc. They lift weak architectures like NoPE to match RoPE, and linear attention to rival SOTA linear models like Mamba2/GDN -- validated both through synthetic tasks and real-world academic-scale pretraining. This synthetic playground offers an economical, principled path to isolate core model capabilities often obscured at academic scales. Equipped with infinite high-quality data, it may even PREDICT how future architectures will behave as training pipelines improve -- e.g., through better data curation or RL-based post-training -- unlocking deeper reasoning and hierarchical inference.",
+  "comment": "V1.1 appeared in NeurIPS 2025 main conference; V2 adds GDN experiments, tightens others for a stronger, fairer comparison, and reorganizes sections; V3 adds Result 2.1 and Section 5.2 on how Canon layers improve hierarchical feature learning, from our Jan 2026 talk",
+  "families": [
+   "capacity",
+   "attention",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2512.17351",
+  "published": "2025-12-19",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Physics of Language Models: Part 4.1, Architecture Design and the Magic of Canon Layers",
+  "why": [
+   "+3 pretrain",
+   "+2 attention",
+   "-3 inference",
+   "-2 reasoning",
+   "+5 neurips",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2601.19895": {
+  "abstract": "Large language model (LLM) scaling is hitting a wall. Widening models yields diminishing returns, and extending context length does not improve fundamental expressivity. In contrast, depth scaling offers theoretically superior expressivity, yet current Transformer architectures struggle to train reliably at extreme depths. We revisit the Post-LayerNorm (Post-LN) formulation, whose instability at scale caused its replacement by Pre-LN in modern LLMs. We show that the central failure mode of Post-LN arises from the ResNet-style residual pathway, which introduces gradient vanishing in deep networks. We present Keel, a Post-LN Transformer that replaces this residual path with a Highway-style connection. This modification preserves the gradient flow through the residual branch, preventing signal vanishing from the top layers to the bottom. Unlike prior methods, Keel enables stable training at extreme depths without requiring specialized initialization or complex optimization tricks. Keel trains robustly at depths exceeding 1000 layers and consistently improves perplexity and depth-scaling characteristics over Pre-LN. These findings indicate that Post-LN, when paired with a Highway-style connection, provides a simple and effective foundation for building deeply scalable LLMs, opening the possibility for future infinite-depth architectures.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2601.19895",
+  "published": "2026-01-27",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 13,
+  "status": "screened",
+  "title": "Post-LayerNorm Is Back: Stable, ExpressivE, and Deep",
+  "why": [
+   "+3 initializ",
+   "+3 perplexity",
+   "+2 stability",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.01105": {
+  "abstract": "Many optimizers can be interpreted as steepest-descent methods under norm-induced geometries, and thus inherit corresponding implicit biases. We introduce \\nameA{} (\\fullname{}), which combines spectral control from orthogonalized update directions with $\\ell_\\infty$-style coordinate control from sign updates. \\nameA{} forms a Lion-style momentum direction, approximately orthogonalizes it via a few Newton--Schulz iterations, and then applies an entrywise sign, providing an efficient approximation to taking a maximal step over the intersection of the spectral and $\\ell_\\infty$ constraint sets (a scaled Hadamard-like set for matrix parameters). Despite the strong nonlinearity of orthogonalization and sign, we prove convergence under a mild, empirically verified diagonal-isotropy assumption. Across large-scale language and vision training, including GPT-2 and Llama pretraining, SiT image pretraining, and supervised fine-tuning, \\nameA{} matches or outperforms AdamW and Muon under comparable tuning while using only momentum-level optimizer state, and it mitigates optimizer mismatch when fine-tuning AdamW-pretrained checkpoints.",
+  "comment": "23 pages",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2602.01105",
+  "published": "2026-02-01",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 16,
+  "status": "screened",
+  "title": "OLion: Approaching the Hadamard Ideal by Intersecting Spectral and $\\ell_{\\infty}$ Implicit Biases",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+3 gpt-2",
+   "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.01744": {
+  "abstract": "While linear attention reduces the quadratic complexity of standard Transformers to linear time, it often lags behind in expressivity due to the removal of softmax normalization. This omission eliminates \\emph{global competition}, a critical mechanism that enables models to sharply focus on relevant information amidst long-context noise. In this work, we propose \\textbf{Softmax Linear Attention (SLA)}, a framework designed to restore this competitive selection without sacrificing efficiency. By lifting the softmax operation from the token level to the head level, SLA leverages attention heads as coarse semantic slots, applying a competitive gating mechanism to dynamically select the most relevant subspaces. This reintroduces the ``winner-take-all'' dynamics essential for precise retrieval and robust long-context understanding. Distinct from prior methods that focus on refining local kernel functions, SLA adopts a broader perspective by exploiting the higher-level multi-head aggregation structure. Extensive experiments demonstrate that SLA consistently enhances state-of-the-art linear baselines (RetNet, GLA, GDN) across language modeling and long-context benchmarks, particularly in challenging retrieval scenarios where it significantly boosts robustness against noise, validating its capability to restore precise focus while maintaining linear complexity.",
+  "comment": "11 pages,4 figures",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2602.01744",
+  "published": "2026-02-02",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Softmax Linear Attention: Reclaiming Global Competition",
+  "why": [
+   "+2 normaliz",
+   "+2 attention",
+   "+2 kernel",
+   "-1 long-context",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.03702": {
+  "abstract": "Large language models are increasingly trained in continual or open-ended settings, where the total training horizon is not known in advance. Despite this, most existing pretraining recipes are not anytime: they rely on horizon-dependent learning rate schedules and extensive tuning under a fixed compute budget. In this work, we provide a theoretical analysis demonstrating the existence of anytime learning schedules for overparameterized linear regression, and we highlight the central role of weight averaging - also known as model merging - in achieving the minimax convergence rates of stochastic gradient descent. We show that these anytime schedules polynomially decay with time, with the decay rate determined by the source and capacity conditions of the problem. Empirically, we evaluate 150M and 300M parameter language models trained at 1-32x Chinchilla scale, comparing constant learning rates with weight averaging and $1/\\sqrt{t}$ schedules with weight averaging against a well-tuned cosine schedule. Across the full training range, the anytime schedules achieve comparable final loss to cosine decay. Taken together, our results suggest that weight averaging combined with simple, horizon-free step sizes offers a practical and effective anytime alternative to cosine learning rate schedules for large language model pretraining.",
+  "comment": "",
+  "families": [
+   "schedule"
+  ],
+  "id": "2602.03702",
+  "published": "2026-02-03",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "Anytime Pretraining: Horizon-Free Learning-Rate Schedules with Weight Averaging",
+  "why": [
+   "+3 pretrain",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 convergence",
+   "+2 loss",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.05970": {
+  "abstract": "Neural scaling laws relate loss to model size in large language models (LLMs), yet depth and width may contribute to performance differently, requiring more detailed studies. Here, we quantify how depth affects loss via analysis of LLMs and toy residual networks. We find loss scales inversely proportional to depth in LLMs, probably due to functionally similar layers reducing error through ensemble averaging rather than compositional learning or discretizing smooth dynamics. This regime is inefficient yet robust and may arise from the architectural bias of residual networks and target functions incompatible with smooth dynamics. The findings suggest that improving LLM efficiency may require architectural innovations to encourage compositional use of depth.",
+  "comment": "Camera-ready version, ICML 2026",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2602.05970",
+  "published": "2026-02-05",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Inverse Depth Scaling From Most Layers Being Similar",
+  "why": [
+   "+2 loss",
+   "+5 icml"
+  ]
+ },
+ "2602.07494": {
+  "abstract": "Deeper modern architectures are costly to train, making hyperparameter transfer preferable to expensive repeated tuning. Maximal Update Parametrization ($\u03bc$P) helps explain why many hyperparameters transfer across width. Yet depth scaling is less understood for modern architectures, whose computation graphs contain multiple parallel paths and residual aggregation. To unify various non-recurrent multi-path neural networks such as CNNs, ResNets, and Transformers, we introduce a graph-based notion of effective depth. Under stabilizing initializations and a maximal-update criterion, we show that the optimal learning rate decays with effective depth following a universal -3/2 power law. Here, the maximal-update criterion maximizes the typical one-step representation change at initialization without causing instability, and effective depth is the minimal path length from input to output, counting layers and residual additions. Experiments across diverse architectures confirm the predicted slope and enable reliable zero-shot transfer of learning rates across depths and widths, turning depth scaling into a predictable hyperparameter-transfer problem.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2602.07494",
+  "published": "2026-02-07",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "Hyperparameter Transfer Laws for Non-Recurrent Multi-Path Neural Networks",
+  "why": [
+   "+3 learning rate",
+   "+3 initializ",
+   "+3 hyperparameter transfer",
+   "+2 stability"
+  ]
+ },
+ "2602.11406": {
+  "abstract": "We consider an online learning problem in environments with multiple change points. In contrast to the single change point problem that is widely studied using classical \"high confidence\" detection schemes, the multiple change point environment presents new learning-theoretic and algorithmic challenges. Specifically, we show that classical methods may exhibit catastrophic failure (high regret) due to a phenomenon we refer to as endogenous confounding. To overcome this, we propose a new class of learning algorithms dubbed Anytime Tracking CUSUM (ATC). These are horizon-free online algorithms that implement a selective detection principle, balancing the need to ignore \"small\" (hard-to-detect) shifts, while reacting \"quickly\" to significant ones. We prove that the performance of a properly tuned ATC algorithm is nearly minimax-optimal; its regret is guaranteed to closely match a novel information-theoretic lower bound on the achievable performance of any learning algorithm in the multiple change point problem. Experiments on synthetic as well as real-world data validate the aforementioned theoretical findings.",
+  "comment": "A version of this work has been accepted for publication in the Proceedings of the 43rd International Conference on Machine Learning (ICML 2026), Seoul, South Korea",
+  "families": [
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2602.11406",
+  "published": "2026-02-11",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "The Cost of Learning Under Multiple Change Points",
+  "why": [
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.16642": {
+  "abstract": "Neural Collapse (NC) refers to the emergence of highly symmetric geometric structures in the representations of deep neural networks during the terminal phase of training. Despite its prevalence, the theoretical understanding of NC remains limited. Existing analyses largely ignore the role of the optimizer, thereby suggesting that NC is universal across optimization methods. In this work, we challenge this assumption and demonstrate that the choice of optimizer plays a critical role in the emergence of NC. The phenomenon is typically quantified through NC metrics, which, however, are difficult to track and analyze theoretically. To overcome this limitation, we introduce a novel diagnostic metric, NC0, whose convergence to zero is a necessary condition for NC. Using NC0, we provide theoretical evidence that NC cannot emerge under decoupled weight decay in adaptive optimizers, as implemented in AdamW. Concretely, we prove that SGD, SignGD with coupled weight decay (a special case of Adam), and SignGD with decoupled weight decay (a special case of AdamW) exhibit qualitatively different NC0 dynamics. Also, we show the accelerating effect of momentum on NC (beyond convergence of train loss) when trained with SGD, being the first result concerning momentum in the context of NC. Finally, we conduct extensive empirical experiments consisting of 3,900 training runs across various datasets, architectures, optimizers, and hyperparameters, confirming our theoretical results. This work pr",
+  "comment": "Published as a conference paper at ICLR 2026",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2602.16642",
+  "published": "2026-02-18",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 18,
+  "status": "screened",
+  "title": "Optimizer choice matters for the emergence of Neural Collapse",
+  "why": [
+   "+3 optimizer",
+   "+3 weight decay",
+   "+2 convergence",
+   "+2 loss",
+   "+5 iclr",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.22988": {
+  "abstract": "Training divergence in transformers wastes compute, yet practitioners discover instability only after expensive runs begin. They therefore need an expected probability of failure for a transformer before training starts. Our study of Residual Koopman Spectral Profiling (RKSP) provides such an estimate. From a single forward pass at initialization, RKSP extracts Koopman spectral features by applying whitened dynamic mode decomposition to layer-wise residual snapshots. Our central diagnostic, the near-unit spectral mass, quantifies the fraction of modes concentrated near the unit circle, which captures instability risk. For predicting divergence across extensive configurations, this estimator achieves an AUROC of 0.995, outperforming the best gradient baseline. We further make this diagnostic actionable through Koopman Spectral Shaping (KSS), which reshapes spectra during training. We empirically validate that our method works in practice: RKSP predicts divergence at initialization, and when RKSP flags high risk, turning on KSS successfully prevents divergence. In the challenging high learning rate regime without normalization layers, KSS reduces the divergence rate from 66.7% to 12.5% and enables learning rates that are 50% to 150% higher. These findings generalize to WikiText-103 language modeling, vision transformers on CIFAR-10, and pretrained language models, including GPT-2 and LLaMA-2 up to 7B, as well as emerging architectures such as MoE, Mamba-style SSMs, and KAN.",
+  "comment": "23 pages, 7 figures",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2602.22988",
+  "published": "2026-02-26",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 21,
+  "status": "screened",
+  "title": "Residual Koopman Spectral Profiling for Predicting and Preventing Transformer Training Instability",
+  "why": [
+   "+3 pretrain",
+   "+3 learning rate",
+   "+3 initializ",
+   "+2 normaliz",
+   "+3 gpt-2",
+   "+2 stability",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.23696": {
+  "abstract": "We analyze cumulative parameter trajectories of transformer training under AdamW and identify a dominant low-dimensional drift direction (\"backbone\") that captures 60--80% of long-horizon displacement from initialization. This direction is highly stable over rolling training windows yet reorients gradually across phases, particularly following objective reweighting. Per-batch gradients exhibit near-noise-floor alignment with the backbone, whereas optimizer-integrated updates align strongly with it, indicating that the structure emerges from accumulated optimizer dynamics rather than instantaneous gradient geometry. Replacing AdamW with SGD-family optimizers eliminates this structure, and reducing $\u03b2_2$ smoothly degrades backbone dominance and reheating recoverability. Reheating experiments show that transverse probe modes can be transiently re-excited without substantially altering accumulated backbone drift. These results provide a trajectory-level characterization of optimizer-induced geometric structure in transformer training and shift attention from instantaneous gradient properties to cumulative update dynamics.",
+  "comment": "23 pages, 4 figures",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2602.23696",
+  "published": "2026-02-27",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Optimizer-Induced Low-Dimensional Drift and Transverse Dynamics in Transformer Training",
+  "why": [
+   "+3 optimizer",
+   "+3 initializ",
+   "+2 attention",
+   "+2 gradient",
+   "-2 alignment"
+  ]
+ },
+ "2603.00541": {
+  "abstract": "Generative foundation models are increasingly scaled in both width and depth, posing significant challenges for stable feature learning and reliable hyperparameter (HP) transfer across model sizes. While maximal update parameterization ($\u03bc$P) has provided a principled solution to both problems for width scaling, existing extensions to the joint width-depth scaling regime remain fragmented, architecture- and optimizer-specific, and often rely on technically involved theories. In this work, we develop a simple and unified spectral framework for $\u03bc$P under joint width-depth scaling. For deep residual networks whose residual blocks contain $k$ transformations, the framework specifies how the norms of weights and their per-step updates should scale with width and depth. It reveals a fundamental transition from $k=1$ to $k\\geq 2$, unifying previously disparate $\u03bc$P formulations and identifying the $k\\geq 2$ case as more appropriate for practical architectures with multi-transformation branches such as Transformers. Building on this framework, we derive a general recipe for implementing $\u03bc$P across a broad class of optimizers by mapping spectral constraints to concrete HP parameterizations, recovering existing results and extending them to additional optimizers. Finally, experiments on GPT-2 style language models show that the $\u03bc$P formulation derived from the $k\\geq 2$ case achieves stable feature learning and robust HP transfer under width-depth scaling, whereas standard parameter",
+  "comment": "76 pages, 13 figures, 40 tables",
+  "families": [
+   "capacity",
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2603.00541",
+  "published": "2026-02-28",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Spectral Condition for $\u03bc$P under Width-Depth Scaling",
+  "why": [
+   "+3 optimizer",
+   "+3 gpt-2"
+  ]
+ },
+ "2603.02649": {
+  "abstract": "Adam and AdamW are a class of default optimizers for training deep learning models in machine learning. These adaptive algorithms converge faster but generalize worse compared to SGD. In fact, their proved generalization error $O(\\frac{1}{\\sqrt{N}})$ also is larger than $O(\\frac{1}{N})$ of SGD, where $N$ denotes training sample size. Recently, although some variants of Adam have been proposed to improve its generalization, their improved generalizations are still unexplored in theory. To fill this gap, in the paper, we restudy generalization of Adam and AdamW via algorithmic stability, and first prove that Adam and AdamW without square-root (i.e., Adam(W)-srf) have a generalization error $O(\\frac{\\hat\u03c1^{-2T}}{N})$, where $T$ denotes iteration number and $\\hat\u03c1>0$ denotes the smallest element of second-order momentum plus a small positive number. To improve generalization, we propose a class of efficient clever Adam (i.e., HomeAdam(W)) algorithms via sometimes returning momentum-based SGD. Moreover, we prove that our HomeAdam(W) have a smaller generalization error $O(\\frac{1}{N})$ than $O(\\frac{\\hat\u03c1^{-2T}}{N})$ of Adam(W)-srf, since $\\hat\u03c1$ is generally very small. In particular, it is also smaller than the existing $O(\\frac{1}{\\sqrt{N}})$ of Adam(W). Meanwhile, we prove our HomeAdam(W) have a faster convergence rate of $O(\\frac{1}{T^{1/4}})$ than $O(\\frac{\\breve\u03c1^{-1}}{T^{1/4}})$ of the Adam(W)-srf, where $\\breve\u03c1\\leq\\hat\u03c1$ also is very small. Extensive numerical experiments",
+  "comment": "39 pages",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2603.02649",
+  "published": "2026-03-03",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "HomeAdam: Adam and AdamW Algorithms Sometimes Go Home to Obtain Better Provable Generalization",
+  "why": [
+   "+3 optimizer",
+   "+2 convergence",
+   "+2 stability"
+  ]
+ },
+ "2603.27965": {
+  "abstract": "Mixture-of-Experts (MoE) models substantially improve performance by increasing the capacity of dense architectures. However, directly training MoE models requires considerable computational resources and introduces extra overhead in parameter storage and deployment. Therefore, it is critical to develop an approach that leverages the multi-expert capability of MoE to enhance performance while incurring minimal additional cost. To this end, we propose a novel pre-training approach, termed ExFusion, which improves the efficiency of Transformer training through multi-expert fusion. Specifically, during the initialization phase, ExFusion upcycles the feed-forward network (FFN) of the Transformer into a multi-expert configuration, where each expert is assigned a weight for later parameter fusion. During training, these weights allow multiple experts to be fused into a single unified expert equivalent to the original FFN, which is subsequently used for forward computation. As a result, ExFusion introduces multi-expert characteristics into the training process while incurring only marginal computational cost compared to standard dense training. After training, the learned weights are used to integrate multi-experts into a single unified expert, thereby eliminating additional overhead in storage and deployment. Extensive experiments on a variety of computer vision and natural language processing tasks demonstrate the effectiveness of the proposed method.",
+  "comment": "Accepted by IEEE TMM2026",
+  "families": [
+   "signal_scale",
+   "signal_path",
+   "systems"
+  ],
+  "id": "2603.27965",
+  "published": "2026-03-30",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "ExFusion: Efficient Transformer Training via Multi-Experts Fusion",
+  "why": [
+   "+3 pre-train",
+   "+3 initializ",
+   "-3 deployment",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2603.28254": {
+  "abstract": "Orthogonalized-update optimizers such as Muon improve training of matrix-valued parameters, but existing extensions typically either rescale updates after orthogonalization or use heavier whitening-based preconditioners before it. We introduce {\\method}, a lightweight family of pre-orthogonalization equilibration schemes for Muon with three forms: two-sided row/column normalization (RC), row normalization (R), and column normalization (C). By rebalancing the momentum matrix before finite-step Newton--Schulz orthogonalization, {\\method} improves the geometry seen by orthogonalization. We show that finite-step orthogonalization is governed by the input spectrum, especially stable rank and condition number, and that row/column normalization acts as a zeroth-order surrogate for whitening. For hidden matrix weights, R is the default variant. Theoretically, {\\method} (R) retains the standard $\\widetilde{\\mathcal O}(T^{-1/4})$ Muon-type nonconvex stationarity guarantee with decoupled weight decay and a horizon-free diminishing learning-rate schedule, and extends it to finite-step NS5 up to an explicit inexactness constant. In LLaMA2 pretraining on C4, {\\method} (R) consistently outperforms Muon on 130M, 350M, and 1B models, with faster convergence and lower validation perplexity. The code is available at the \\href{https://github.com/MaeChd/muon-eq}{MuonEq codebase}.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2603.28254",
+  "published": "2026-03-30",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 28,
+  "status": "screened",
+  "title": "MuonEq: Balancing Before Orthogonalization with Lightweight Equilibration",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 schedule",
+   "+3 weight decay",
+   "+2 normaliz",
+   "+2 convergence",
+   "+3 perplexity"
+  ]
+ },
+ "2604.01978": {
+  "abstract": "We study a random model of deep multi-head self-attention in which the weights are resampled independently across layers and heads, as at initialization of training. Viewing depth as a time variable, the residual stream defines a discrete-time interacting particle system on the unit sphere. We prove that, under suitable joint scalings of the depth, the residual step size, and the number of heads, this dynamics admits a nontrivial homogenized limit. Depending on the scaling, the limit is either deterministic or stochastic with common noise; in the mean-field regime, the latter leads to a stochastic nonlinear Fokker--Planck equation for the conditional law of a representative token. In the Gaussian setting, the limiting drift vanishes, making the homogenized dynamics explicit enough to study representation collapse. This yields quantitative trade-offs between dimension, context length, and temperature, and identifies regimes in which clustering can be mitigated.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "attention",
+   "ve_placement",
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2604.01978",
+  "published": "2026-04-02",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Homogenized Transformers",
+  "why": [
+   "+3 initializ",
+   "+2 attention",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2604.07663": {
+  "abstract": "The AdamW optimizer, while standard for LLM pretraining, is a critical memory bottleneck, consuming optimizer states equivalent to twice the model's size. Although light-state optimizers like SinkGD attempt to address this issue, we identify the embedding layer dilemma: these methods fail to handle the sparse, high-variance gradients inherent to embeddings, forcing a hybrid design that reverts to AdamW and partially negates the memory gains. We propose SAGE (Sign Adaptive GradiEnt), a novel optimizer that resolves this dilemma by replacing AdamW in this hybrid structure. SAGE combines a Lion-style update direction with a new, memory-efficient $O(d)$ adaptive scale. This scale acts as a \"safe damper,\" provably bounded by 1.0, which tames high-variance dimensions more effectively than existing methods. This superior stability allows SAGE to achieve better convergence. On Llama models up to 1.3B parameters, our SAGE-based hybrid achieves new state-of-the-art perplexity, outperforming all baselines, including SinkGD hybrid, while significantly reducing optimizer state memory.",
+  "comment": "Accepted to Findings of the Association for Computational Linguistics: ACL 2026. 13 pages, 4 figures, 4 tables",
+  "families": [
+   "ve_placement",
+   "signal_scale",
+   "optimizer_numeric"
+  ],
+  "id": "2604.07663",
+  "published": "2026-04-09",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 21,
+  "status": "screened",
+  "title": "SAGE: Sign-Adaptive Gradient for Memory-Efficient LLM Optimization",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+2 convergence",
+   "+3 perplexity",
+   "+2 stability",
+   "+2 gradient",
+   "+3 acl",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2604.11890": {
+  "abstract": "We study signal propagation at initialization in transformers through the averaged partial Jacobian norm (APJN), a measure of gradient amplification across layers. We extend APJN analysis to transformers with bidirectional attention and permutation-symmetric input token configurations by deriving recurrence relations for activation statistics and APJNs across layers. Our theory predicts how attention modifies the asymptotic behavior of the APJN at large depth and matches APJNs measured in deep vision transformers. The criticality picture known from residual networks carries over to transformers: the pre-LayerNorm architecture exhibits power-law APJN growth, whereas transformers with LayerNorm replaced by elementwise $\\tanh$-like nonlinearities have stretched-exponential APJN growth, indicating that the latter are subcritical. Applied to Dynamic Tanh (DyT) and Dynamic erf (Derf) transformers, the theory explains why these architectures can be more sensitive to initialization and optimization choices and require careful tuning for stable training.",
+  "comment": "Minor text edits; 10 pages of main text; 34 pages total; 5 figures in the main text, 25 figures total; preprint",
+  "families": [
+   "capacity",
+   "attention",
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2604.11890",
+  "published": "2026-04-13",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "Subcritical Signal Propagation at Initialization in Normalization-Free Transformers",
+  "why": [
+   "+3 initializ",
+   "+2 normaliz",
+   "+2 attention",
+   "+2 gradient"
+  ]
+ },
+ "2604.21153": {
+  "abstract": "This paper studies 43-class malware type classification on MalNet-Image Tiny, a public benchmark derived from Android APK files. The goal is to assess whether a compact image classifier benefits from four components evaluated in a controlled ablation: a feature pyramid network (FPN) for scale variation induced by resizing binaries of different lengths, ImageNet pretraining, lightweight augmentation through Mixup and TrivialAugment, and schedule-free AdamW optimization. All experiments use a ResNet18 backbone and the provided train/validation/test split. Reproducing the benchmark-style configuration yields macro-F1 (F1_macro) of 0.6510, consistent with the reported baseline of approximately 0.65. Replacing the optimizer with schedule-free AdamW and using unweighted cross-entropy increases F1_macro to 0.6535 in 10 epochs, compared with 96 epochs for the reproduced baseline. The best configuration combines pretraining, Mixup, TrivialAugment, and FPN, reaching F1_macro=0.6927, P_macro=0.7707, AUC_macro=0.9556, and L_test=0.8536. The ablation indicates that the largest gains in F1_macro arise from pretraining and augmentation, whereas FPN mainly improves P_macro, AUC_macro, and L_test in the strongest configuration.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "systems"
+  ],
+  "id": "2604.21153",
+  "published": "2026-04-22",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 16,
+  "status": "screened",
+  "title": "Image-Based Malware Type Classification on MalNet-Image Tiny: Effects of Multi-Scale Fusion, Transfer Learning, Data Augmentation, and Schedule-Free Optimization",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+2 schedule",
+   "+3 ablation",
+   "+2 reproduc",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.08238": {
+  "abstract": "Cardiac magnetic resonance (CMR) segmentation underpins quantitative assessment of ventricular structure and function, yet reliable delineation remains difficult due to low tissue contrast, fuzzy boundaries, and inter scan variability. We present CardiacNAS, an evolutionary neural architecture search (NAS) framework that couples a UNet like supernet with a cardiac aware search space spanning depth width, kernel size, filter size, attention, fusion, activation, dropout, and residual scaling. The search is explicitly resource aware, jointly optimizing dice similarity coefficient (DSC) and 95th percentile Hausdorff distance (HD95) versus model size and floating point operations (FLOPs) under fixed compute budgets. Candidate architectures are instantiated from the supernet, trained with proxy budgets, and evolved through crossover, mutation, and elitist selection. We evaluate on the ACDC dataset and compare against six state of the art methods, using qualitative comparisons, learning curve analyses, and design factor correlation studies. The resulting model attains 93.22% average DSC and 4.73 mm HD95 with 3.58M parameters and 14.56 GFLOPs, demonstrating a favorable accuracy efficiency trade off. Analyses indicate that searched attention and fusion choices, together with residual scaling, contribute to improved boundary fidelity and stability. CardiacNAS offers a principled, resource aware approach to deployable CMR segmentation with transparent reporting of architectural complexi",
+  "comment": "",
+  "families": [
+   "capacity",
+   "attention",
+   "schedule",
+   "signal_path",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2605.08238",
+  "published": "2026-05-07",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "Resource-Aware Evolutionary Neural Architecture Search for Cardiac MRI Segmentation",
+  "why": [
+   "+2 attention",
+   "+2 kernel",
+   "+2 stability",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.08297": {
+  "abstract": "The scaling behavior, in which test performance often improves as model size and data increase, is a central empirical phenomenon in modern deep learning, yet its theoretical basis remains incomplete. In this paper, we study depth expansion in normalized residual networks: starting from a trained model in an old hypothesis class, we insert a new residual block at an intermediate layer and ask when such an expansion can yield a provable improvement in test risk. We develop a unified framework that decomposes this question into representational gain, optimization gain, and generalization transfer. First, under a first-order descent condition near zero initialization, we prove that the expanded hypothesis class contains an auxiliary jumpboard model with strictly smaller population risk than the original model. Second, under norm control tailored to post-normalized residual architectures, we establish a norm-based Rademacher complexity bound for the expanded model class. These ingredients lead to two complementary test-risk guarantees: one route passes through population risk and is tighter when a positive population margin is available, while the other works directly at the train/test level, avoids Hoeffding transfer, and is more robust in degenerate regimes. Together, these results provide a theorem-driven mechanism under which residual depth expansion can improve test performance in normalized residual networks. More broadly, they suggest that scaling is inherently joint: dept",
+  "comment": "",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2605.08297",
+  "published": "2026-05-08",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "A Qualitative Test-Risk Mechanism for Scaling Behavior in Normalized Residual Networks",
+  "why": [
+   "+3 initializ",
+   "+2 normaliz",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.08980": {
+  "abstract": "Muon and its variants have shown strong empirical performance in a variety of deep learning tasks. Existing convergence analyses of Muon rely on smoothness assumptions, though arguably the most successful function class for developing deep learning methods (such as AdaGrad, Shampoo, Schedule-Free and more) has been the class of convex and Lipschitz functions. In this paper we question whether the classical convex Lipschitz model is a useful one for understanding Muon. Our answer is no. We show that Muon does not converge on the class of convex and Lipschitz functions, regardless of the choice of learning rate schedule. We also show that error feedback restores convergence of Muon and all the non-Euclidean subgradient methods with momentum. However, this theoretical fix using error feedback degrades the performance of Muon in two representative settings for image classification (CIFAR-10) and language modeling (nanoGPT on FineWeb-Edu 10B). Our conclusion is that convex Lipschitz theory, despite having a prominent role in the design of practical methods for deep learning, is not the most suited one for Muon. This suggests that Muon's success must come from structure absent from this model, most plausibly related to smoothness.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2605.08980",
+  "published": "2026-05-09",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 22,
+  "status": "screened",
+  "title": "Muon Does Not Converge on Convex Lipschitz Functions",
+  "why": [
+   "+5 muon",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 convergence",
+   "+5 nanogpt",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.09991": {
+  "abstract": "Mode connectivity has been widely studied, yet the role of the optimizer remains underexplored. We revisit it through optimizer-induced implicit regularization, asking how connectivity behaves when restricted to solutions constrained by a given optimizer. For two-layer ReLU networks, we show that solutions from a single optimizer -- AdamW, Muon, or others in the Lion-$\\mathcal{K}$ family -- form a connected set at sufficiently large width, a result not implied by prior work. We then characterize how optimizer-induced regions interact: at large width two different regions can be disjoint or overlap depending on regularization, while in our small-width example AdamW and Muon converge to disconnected zero-loss components separated by a provable loss barrier. Empirically, in GPT-2 pretraining, we observe same-optimizer paths preserve each model's spectrum while cross-optimizer paths traverse a smooth transition. Our results reveal optimizer-dependent structure beyond classical mode connectivity literature.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "schedule",
+   "optimizer_numeric",
+   "input_pipeline"
+  ],
+  "id": "2605.09991",
+  "published": "2026-05-11",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 16,
+  "status": "screened",
+  "title": "Optimizer-Induced Mode Connectivity: From AdamW to Muon",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 loss",
+   "+3 gpt-2"
+  ]
+ },
+ "2605.15522": {
+  "abstract": "Much of the existing theory on first-order non-smooth optimization is built on a restrictive assumption that the gradients of the objective function are uniformly bounded. We introduce a much more realistic class of generalized Lipschitz functions, where the gradient norms are bounded by an affine function of the optimality gap. We then ask a natural question: what algorithm achieves the best global convergence rates for solving convex stochastic generalized Lipschitz optimization problems? To address this, we develop a new convergence analysis for several existing algorithms and find that AdamW with clipped updates, provably outperforms other popular stochastic optimization methods, such as SGD and AdaGrad. Moreover, our analysis establishes the critical role of AdamW's exponentially weighted gradient accumulation, as opposed to simple averaging. We further show that clipped AdamW is universal and achieves improved rates under the popular generalized smoothness assumption, analyze the convergence of clipped AdamW with diagonal and matrix preconditioners, and extend our results to the quasar-convex setting.",
+  "comment": "",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2605.15522",
+  "published": "2026-05-15",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Stochastic Non-Smooth Convex Optimization with Unbounded Gradients",
+  "why": [
+   "+2 convergence",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.19095": {
+  "abstract": "Schedule-Free Learning has shown promise as a practical anytime training method for machine learning, showing success across dozens of standard benchmark problems. However, strong performance for LLM training has only been demonstrated at small scales. We identify a number of fixes necessary to scale up Schedule-Free Learning to larger batch sizes and model sizes, and present a learning-rate-free and schedule-free method (ScheduleFree+) for training large language models which greatly outperforms Warmup-Stable-Decay (WSD) schedules. We also demonstrate that Schedule-Free Learning is most effective for long duration training, and at 1000 tokens per parameter, it outperforms SOTA schedules by 31%. Schedule-Free Learning provides a theoretical foundation for the use of model averaging and checkpoint merging during pretraining.",
+  "comment": "",
+  "families": [
+   "token_exposure",
+   "schedule"
+  ],
+  "id": "2605.19095",
+  "published": "2026-05-18",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 16,
+  "status": "screened",
+  "title": "ScheduleFree+: Scaling Learning-Rate-Free & Schedule-Free Learning to Large Language Models",
+  "why": [
+   "+3 pretrain",
+   "+2 schedule",
+   "+3 warmup",
+   "+2 batch size",
+   "+3 mup",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.22432": {
+  "abstract": "Modern deep learning commonly relies on AdamW with prescribed learning rate schedules, but recent works challenge both components: Schedule-Free optimization removes explicit schedules via iterate averaging, and Muon improves the update geometry by orthogonalizing momentum for matrix parameters. Despite Muon's strong empirical performance, its underlying mechanism remains partially understood. We study Muon through the river-valley loss landscape, where useful training progress occurs along a flat, low-curvature bulk subspace (the river), while high-curvature dominant directions form steep valley walls that induce oscillations. We empirically show that while Muon's orthogonalization accelerates river progress by increasing the bulk component, it also amplifies dominant-direction noise, causing oscillatory trajectories. Building on this, we propose Anytime MUon with Stable gradient Evaluation (AMUSE), which integrates Muon's rapid bulk progress with the stabilizing effect of Schedule-Free averaging. AMUSE uses a time-varying interpolation coefficient that initially evaluates gradients near the fast Muon sequence for rapid adaptation, then gradually shifts toward the stable averaged sequence to suppress valley-wall oscillations. As a result, AMUSE requires no learning rate schedules and supports anytime training. Across vision tasks and large language model pretraining, AMUSE consistently improves the performance-iteration Pareto frontier over (Schedule-Free) AdamW and Muon.",
+  "comment": "44 pages, 27 figures",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2605.22432",
+  "published": "2026-05-21",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 17,
+  "status": "screened",
+  "title": "AMUSE: Anytime Muon with Stable Gradient Evaluation",
+  "why": [
+   "+3 pretrain",
+   "+5 muon",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 loss",
+   "+2 gradient"
+  ]
+ },
+ "2605.23061": {
+  "abstract": "Standard neural network training relies on learning-rate schedules tied to a fixed horizon, leading to strong path dependence and costly re-tuning as data availability changes. Schedule-Free (SF) methods address this by removing explicit schedules, yet SF-AdamW, the current state-of-the-art anytime optimizer, consistently underperforms well-tuned AdamW baselines. We propose SF-NorMuon, a schedule-free spectral optimizer that closes this gap: with a single hyperparameter configuration, SF-NorMuon matches or exceeds tuned AdamW on 125M and 772M parameter language models across $1$--$8\\times$ Chinchilla horizons. On the theoretical side, we prove a stationarity guarantee for schedule-free spectral dynamics and identify weight decay at the fast iterate as essential for long-horizon stability. SF-NorMuon enables practitioners to obtain high-quality checkpoints at any point during training without committing to a horizon in advance. By closing the performance gap with tuned baselines, SF-NorMuon makes horizon-free optimization more practical, taking a step towards truly open-ended, continual learning.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2605.23061",
+  "published": "2026-05-21",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 18,
+  "status": "screened",
+  "title": "Anytime Training with Schedule-Free Spectral Optimization",
+  "why": [
+   "+3 optimizer",
+   "+5 muon",
+   "+2 schedule",
+   "+3 weight decay",
+   "+2 stability",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2605.25880": {
+  "abstract": "Large-scale transformer training and deployment are increasingly constrained by the transfer of activations, gradients, and optimizer states across accelerators. Low-bit quantization offers a natural remedy, but transformer activations are often heavy-tailed and outlier-dominated, making simple quantization highly lossy. We show that this difficulty is not only a property of the quantizer, but also of the architecture. Specifically, residual connections can drive transformer activations away from Gaussianity during training. Using controlled comparisons between residual and residual-free transformers, we demonstrate that this effect leads to substantially higher quantization error and accuracy degradation at low precision in residual models. We explain the phenomenon through an excess kurtosis analysis, showing that residual mixing can amplify non-Gaussianity, whereas dense mixing in residual-free contracts non-Gaussianity. We then show that residual-free transformers can be made trainable using orthogonal initialization, spectral or second-order optimization, and depth-aware scaling of attention temperature. In language tasks, while there is a small drop in full precision performance, these models retain near-Gaussian activations and exhibit significantly improved robustness to low-bit quantization. Our results identify an accuracy--compressibility trade-off in transformer design and motivate architecture-level approaches to quantization-friendly foundation models.",
+  "comment": "Under review",
+  "families": [
+   "capacity",
+   "attention",
+   "signal_scale",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2605.25880",
+  "published": "2026-05-25",
+  "queries": [
+   "init_scaling",
+   "residual_scaling"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "The Quantization Benefits of Residual-Free Transformers",
+  "why": [
+   "+3 optimizer",
+   "+3 initializ",
+   "+2 attention",
+   "+2 loss",
+   "+2 gradient",
+   "-3 deployment",
+   "-2 quantiz"
+  ]
+ },
+ "2605.26842": {
+  "abstract": "The Muon optimizer has recently offered a promising alternative to AdamW for large language model training, leveraging matrix orthogonalization to produce geometry-aware updates. However, like all first-order methods, Muon can become trapped in sharp local minima. In this work, we present MONA, an optimizer that bridges Muon's orthogonalization framework with curvature-aware acceleration. MONA adds an acceleration term directly into Muon's gradient processing pipeline. This term is calculated from the exponential moving average of gradient differences. We provide a detailed convergence analysis for MONA, showing that the acceleration term enables escape from sharp minima while preserving Muon's spectral-norm regularization. Empirically, MONA achieves better convergence and downstream task performance compared to both Muon and AdamW across three scales of Mixture-of-Experts pretraining, spanning from 1B to 68B parameters, with the largest model trained on 1 trillion tokens. Furthermore, we conduct supervised fine-tuning on the MOE-68B-A3B model and evaluate it on general capability, mathematical reasoning, and code generation benchmarks, where MONA achieves SOTA performance.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2605.26842",
+  "published": "2026-05-26",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "MONA: Muon Optimizer with Nesterov Acceleration for Scalable Language Model Training",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+2 gradient",
+   "-4 serving",
+   "-3 fine-tun",
+   "-2 reasoning"
+  ]
+ },
+ "2605.31371": {
+  "abstract": "Sign-based and LMO-inspired optimizers have recently attracted substantial attention in deep learning due to their strong performance and low memory footprint. However, their fixed-magnitude updates can hurt terminal convergence: they decouple update mechanisms from gradient magnitudes and fail to account for parameter heterogeneity, often leading to oscillation rather than convergence. We propose SoftSignum, a smooth relaxation of sign-based optimization that replaces the hard sign map with a temperature-controlled soft-sign transformation, enabling a parameter-wise transition from sign-like updates to magnitude-sensitive SGD-like steps. We complement it with an adaptive quantile-based temperature schedule and extend the same principle to matrix-valued optimizers, obtaining SoftMuon. We also develop a generalized geometry-relaxation framework based on strongly convex regularizers and Fenchel conjugates, proving convergence in stochastic non-convex setting. Experiments on diverse deep learning tasks, including LLM pretraining, show that SoftSignum and SoftMuon consistently improve over their hard sign-based counterparts and standard AdamW.",
+  "comment": "9 pages, 3 tables, 4 Figures",
+  "families": [
+   "attention",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2605.31371",
+  "published": "2026-05-29",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 19,
+  "status": "screened",
+  "title": "Softsign: Smooth Sign in Your Optimizer For Better Parameter Heterogeneity Handling",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 schedule",
+   "+2 attention",
+   "+2 convergence",
+   "+2 gradient"
+  ]
+ },
+ "2606.10650": {
+  "abstract": "The scalability of Large Language Models (LLMs) to long contexts is fundamentally constrained by the quadratic complexity of standard attention, motivating the adoption of linear attention mechanisms with sub-quadratic cost. To improve representation capacity under long contexts, recent approaches organize memory in a multi-state manner. However, existing multi-state linear attention methods rely on fixed state merging policies that cannot adapt to dynamically varying token importance, irreversibly obscuring critical tokens and causing severe error accumulation over long sequences. To address this limitation, we propose DLA, a dynamic memory modeling framework for multi-state linear attention. DLA introduces (i) Information-Aware Dynamic State Merging, which adaptively determines state boundaries based on token-level information variation, preserving high-resolution representations around semantic transitions while aggressively summarizing stable regions, and (ii) Capacity-Bounded Memory Modeling, which maintains a fixed-size, chronologically ordered state cache by selectively merging adjacent low-information states to control memory growth with minimal information loss. We pre-train DLA on two different linear attention models and evaluate on 16 datasets across three categories. Experimental results demonstrate the superiority of DLA over state-of-the-art.",
+  "comment": "Accepted by ICML 2026",
+  "families": [
+   "attention",
+   "schedule"
+  ],
+  "id": "2606.10650",
+  "published": "2026-06-09",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "Dynamic Linear Attention",
+  "why": [
+   "+3 pre-train",
+   "+2 attention",
+   "+2 loss",
+   "-4 serving",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2606.16112": {
+  "abstract": "Residual architectures are ubiquitous in deep learning, but they suffer from a subtle structural limitation: the norm of the residual stream can grow rapidly with depth. As a result, updates from later layers become small relative to the accumulated residual state. This reduces their impact on the representation and limits the benefits of scaling models in depth. To address this, we introduce NAG, a norm-agnostic residual architecture that separates magnitude from directional information in the residual stream, preserving meaningful layer contributions throughout depth and preventing later updates from being systematically suppressed by residual-norm growth. Importantly, NAG introduces only a negligible number of additional parameters and relies on simple operations that are easily kernel-fusible, preserving training efficiency in practice. We show that this architecture outperforms baseline Transformers, with gains that increase substantially as depth grows, enabling effective training of much deeper models. The norm-agnostic formulation also leads to an interpretable Mixture-of-Depths (MoD) mechanism that adaptively skips both attention and MLP layers. Beyond serving as a post-training accuracy-compute tradeoff, this mechanism can be used as a pretraining-time scaling strategy: under iso-FLOP training, compute saved by reducing per-token forward-pass cost can be reinvested into training on more tokens while keeping the total parameter count and KV-cache budget fixed. In our",
+  "comment": "",
+  "families": [
+   "capacity",
+   "attention",
+   "ve_placement",
+   "schedule",
+   "signal_path",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2606.16112",
+  "published": "2026-06-15",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Scaling Adaptive Depth with Norm-Agnostic Residual Networks",
+  "why": [
+   "+3 pretrain",
+   "+2 attention",
+   "+2 kernel",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2606.16429": {
+  "abstract": "Hybrid linear attention models offer an appealing path to faster long-context inference: they reduce the quadratic cost and KV-cache burden of full softmax attention while retaining much of the quality of Transformer models. A practical way to obtain such models is to convert a pretrained Transformer instead of pretraining a new architecture from scratch, but this conversion is still brittle. Simply copying the teacher attention projections into a Gated DeltaNet (GDN) student does not specify the new recurrent decay, write, and output-gating dynamics. As a result, the converted model often starts in a poor dynamical regime and must spend many distillation tokens repairing initialization rather than learning the remaining teacher behavior. We propose Taylor-Calibrate, a lightweight initialization method for hybrid GDN students. The method uses Taylor-guided teacher attention statistics to set the value projection, memory timescale, write gates, and output gate, then applies a short per-layer alignment step to match each converted layer to the teacher output. Across four teacher settings and three retained-layer policies, Taylor-Calibrate gives substantially stronger zero-shot students, with up to an 88x improvement in a representative ablation, and reaches matched recovery targets with 4.9x--9.2x fewer training tokens than naive conversion.",
+  "comment": "24 pages, 9 figures",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2606.16429",
+  "published": "2026-06-15",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Taylor-Calibrate: Principled Initialization for Hybrid Linear Attention Distillation",
+  "why": [
+   "+3 pretrain",
+   "+4 from scratch",
+   "+3 initializ",
+   "+2 attention",
+   "+3 ablation",
+   "-3 inference",
+   "-2 alignment",
+   "-1 long-context"
+  ]
+ },
+ "2606.17526": {
+  "abstract": "Efficient optimization is essential for training large language models. Although intra-layer selective updates have been explored, a general mechanism that enables fine-grained control while ensuring convergence guarantees is still lacking. To bridge this gap, we propose \\textbf{MGUP}, a novel mechanism for selective updates. \\textbf{MGUP} augments standard momentum-based optimizers by applying larger step-sizes to a selected fixed proportion of parameters in each iteration, while applying smaller, non-zero step-sizes to the rest. As a nearly {plug-and-play} module, \\textbf{MGUP} seamlessly integrates with optimizers such as AdamW, Lion, and Muon. This yields powerful variants such as \\textbf{MGUP-AdamW}, \\textbf{MGUP-Lion}, and \\textbf{MGUP-Muon}. Under standard assumptions, we provide theoretical convergence guarantees for \\textbf{MGUP-AdamW} (without weight decay) in stochastic optimization. Extensive experiments across diverse tasks, including MAE pretraining, LLM pretraining, and downstream fine-tuning, demonstrate that our \\textbf{MGUP}-enhanced optimizers achieve superior or more stable performance compared to their original base optimizers. We offer a principled, versatile, and theoretically grounded strategy for efficient intra-layer selective updates, accelerating and stabilizing the training of large-scale models. The code is publicly available at https://github.com/MaeChd/MGUP.",
+  "comment": "Published in NeurIPS 2025",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2606.17526",
+  "published": "2026-06-16",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 18,
+  "status": "screened",
+  "title": "MGUP: A Momentum-Gradient Alignment Update Policy for Stochastic Optimization",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+3 weight decay",
+   "+2 convergence",
+   "+2 gradient",
+   "-3 fine-tun",
+   "-2 alignment"
+  ]
+ },
+ "2606.18524": {
+  "abstract": "Looped (weight-tied) Transformers apply a shared residual block $N$ times ($h \\leftarrow h + \\varepsilon\\,f(h)$, same $f$ at each step), increasing effective depth without adding parameters. Prior depth-scaling analyses prescribe $\\varepsilon = 1/\\!\\sqrt{L}$ for depth-$L$ residual networks. We show that this is insufficient for looped architectures: weight sharing makes residual updates correlated across iterations, requiring the stronger scaling $\\varepsilon = 1/N$. For multi-layer blocks ($L$ unique layers looped $N$ times), we derive a factored parameterization $\\varepsilon = \u03bb/(N\\!\\sqrt{L})$ that separates the two sources of growth: $1/N$ controls the within-layer loop correlation, and $1/\\!\\sqrt{L}$ controls the across-layer variance. A key consequence is that the optimal learning rate depends only on the number of unique layers $L$, not on the loop count $N$, enabling direct hyperparameter transfer from small to large $N$ without retuning. Experiments on looped Transformers confirm that $1/N$ scaling improves trainability and yields better loss than $1/\\!\\sqrt{N}$ scaling across loop counts.",
+  "comment": "19 pages, 9 figures",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2606.18524",
+  "published": "2026-06-16",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "On the Residual Scaling of Looped Transformers: Stability and Transferability",
+  "why": [
+   "+3 learning rate",
+   "+2 loss",
+   "+3 hyperparameter transfer",
+   "+2 stability"
+  ]
+ },
+ "2606.23235": {
+  "abstract": "We study Transformer-type residual layers under cross-entropy training through a continuous-depth mean field control viewpoint. Depth is treated as time, layer parameters as controls, and the residual Transformer recursion as an explicit Euler scheme for a controlled hidden-state flow. For fixed controls, we prove an $O(\\varepsilon)$ pathwise approximation of finite-depth trajectories by the continuous flow and combine this with high-probability sampling bounds for the empirical cross-entropy risk. We formulate the limiting population problem as a first-order transport control problem for the law of hidden states and derive a Pontryagin condition whose terminal adjoint contains the softmax residual. We also give finite-class and metric-entropy uniform estimates, compare optimal values, and discuss existence, stability, continuous-to-discrete recovery, initialization, and range estimates for continuous minimizers.",
+  "comment": "44 pages",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2606.23235",
+  "published": "2026-06-22",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "A First-Order Mean Field Control Analysis of Transformer Layers under Cross-Entropy Training",
+  "why": [
+   "+3 initializ",
+   "+2 stability",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2606.23676": {
+  "abstract": "AdamW is the de facto optimizer for training large language models (LLMs), yet the theory behind it still lives mostly in finite-variance regimes. This is increasingly unsatisfying, as empirical evidence indicates that stochastic gradient noise in LLM pretraining is typically heavy-tailed. Recent work shows that sign-based optimizers such as Lion and Muon achieve sharp heavy-tailed rates, and that AdaGrad can also converge under heavy-tailed noise. However, no rigorous convergence theory for AdamW has yet been established in this regime. Can AdamW converge under the same heavy-tailed assumptions, or does its second-moment accumulator create a genuine obstruction? We formulate this as an open problem, prove a positive weighted-metric benchmark, and give a corridor lower-bound mechanism showing how denominator memory can hide large gradients.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "optimizer_numeric"
+  ],
+  "id": "2606.23676",
+  "published": "2026-06-22",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 15,
+  "status": "screened",
+  "title": "Open Problem: Is AdamW Effective Under Heavy-Tailed Noise?",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+2 convergence",
+   "+2 gradient"
+  ]
+ },
+ "2606.25086": {
+  "abstract": "Many modern Language Model (LM) pipelines return an averaged model, such as an exponential moving average of the training iterates, rather than the final iterate itself. This raises a fundamental question: given that we will return an iterate average, how should we change training to improve the performance of this average? We study this question by formulating optimizer design for the iterate-average estimator as an optimal-control problem. In a continuous-time stochastic quadratic model, we solve for the control strategy that minimizes the error of the returned average subject to a penalty on the size of the intervention. A practical approximation to this controller yields PACE, a lightweight wrapper around AdamW that pulls the live weights toward their exponential moving average with a clipped, per-coordinate control strength. We prove that a stylized version of PACE converges at the standard stochastic convex optimization rate, up to a factor depending on the averaging rule, while in the quadratic setting it can strictly improve the limiting squared error of the iterate-average estimator and can do so by an arbitrarily large factor on some instances. Empirically, our results suggest that PACE improves over AdamW and EMA-evaluated AdamW in supervised fine-tuning of 1-2B parameter LMs and in GPT-2 pretraining on FineWeb for a wide range of learning rates, decay schedules, and other hyperparameters.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2606.25086",
+  "published": "2026-06-23",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 14,
+  "status": "screened",
+  "title": "Training for the Model You Return: Improving Optimization for Iterate-Averaged Language Models",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+3 learning rate",
+   "+2 schedule",
+   "+3 gpt-2",
+   "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2606.27748": {
+  "abstract": "Transformer models rely on attention mechanism to capture long-range dependencies but suffer from quadratic complexity, limiting their scalability to long sequences. Kernel-based linear attention reduces this complexity but typically relies on fixed or weakly learnable kernels, restricting expressiveness and performance. In this work, we propose Flexformer, a flexible linear Transformer that learns attention kernels in a fully data-driven manner. Flexformer builds on random Fourier feature-based linear attention and treats spectral frequencies as trainable parameters, enabling the model to learn a broad family of attention kernels. We develop both stationary and nonstationary variants, with the latter offering strictly greater expressiveness. Extensive experiments on language modeling and sequence classification demonstrate that Flexformer consistently outperforms baselines. Moreover, Flexformer can be effectively distilled from pretrained Transformers to recover softmax attention and exhibits strong kernel transferability across domains, achieving both high efficiency and competitive performance on long-sequence tasks.",
+  "comment": "",
+  "families": [
+   "attention",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2606.27748",
+  "published": "2026-06-26",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "Flexformer: Flexible Linear Transformer with Learnable Attention Kernel",
+  "why": [
+   "+3 pretrain",
+   "+2 attention",
+   "+2 kernel",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2606.31859": {
+  "abstract": "Residual connections add every sublayer's proposed update with a fixed coefficient of one; the network never evaluates whether an update is reliable before committing it. Drawing on the human-factors principle of independent verification, we introduce Review Residuals, which scale each update by a learned, input-dependent gate conditioned on both the current state and the proposed update: h_l = h_{l-1} + r_l * u_l with r_l = sigmoid(W[RMSNorm(h_{l-1}), RMSNorm(u_l)]). Conditioning the gate on the update is the property that distinguishes it from prior gated and scaled residuals. We report two findings. First, a depth-stability result: a convex (Highway-style) form of the gate reintroduces vanishing gradients and fails to train beyond ~20 layers, whereas the additive, identity-preserving form trains stably at all depths we tested. Second, an emergence-with-scale result: trained from scratch across five sizes (60M-1B parameters, multi-seed), Review Residuals show no advantage at small scale but at 590M significantly outperform both a parameter-matched Highway gate and a parameter-matched standard residual (p<0.05), with a larger advantage at 1B. The benefit grows with model size rather than shrinking.",
+  "comment": "9 pages, 2 figures. Also on Zenodo: https://doi.org/10.5281/zenodo.21053343 ; Code: https://github.com/SixSigmaEngineer/review-residuals",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2606.31859",
+  "published": "2026-06-30",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "Review Residuals: Update-Conditioned Residual Gating for Transformers",
+  "why": [
+   "+4 from scratch",
+   "+3 rmsnorm",
+   "+2 stability",
+   "+2 gradient",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.02303": {
+  "abstract": "Linear-attention and state-space language models compress the prefix into a fixed-size recurrent state, yielding O(1) memory at the cost of a lossy exact memory: when many key--value associations compete, earlier facts are overwritten and needle recall degrades. Inspired by Complementary Learning Systems, we give linear attention a hippocampal complement. HOLA (Hippocampal Linear Attention) keeps the usual delta-rule state as a compressive memory and adds a bounded exact KV cache, forming a semiparametric test-time memory: the state models linearly compressible structure, while the cache stores associations that should not be forced through that state. The cache writes without a learned eviction module, keeping tokens with large beta * ||e||, the prediction residual actually committed to the state; a decoupled RMSNorm-gamma cache read then turns these exact KV pairs into sharp retrieval rather than soft averaging. At 340M parameters trained on 15B SlimPajama tokens, HOLA lowers Wikitext perplexity from 27.32 to 22.92 (-16.1%), below a full-attention Transformer++ (26.88), and improves LAMBADA perplexity from 30.95 to 30.26. It also achieves the best linear in-context retrieval and remains much more robust than GDN or a matched HOLA+recency cache on RULER needle-in-a-haystack recall out to 32k tokens (16x its training length).",
+  "comment": "12 pages",
+  "families": [
+   "attention",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2607.02303",
+  "published": "2026-07-02",
+  "queries": [
+   "attention_linear"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "A Hippocampus for Linear Attention: An Exact Memory for What the Recurrent State Forgets",
+  "why": [
+   "+3 rmsnorm",
+   "+2 attention",
+   "+2 loss",
+   "+3 perplexity",
+   "-2 kv cache",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.07884": {
+  "abstract": "In this short note we consider the gradient descent dynamics of deep scalar linear networks, $f(x) = \\prod_{l=1}^L w_l x$, which enjoy exact time-course solutions for any integer depth. We show that even in this minimal model, the optimal depth-wise learning rate scaling depends on data, whereas data-agnostic scaling rules fail to transfer across depths. Under the data-dependent optimal scaling, the learning dynamics is independent of data and weakly dependent on depth, resulting in a constant linear convergence rate across all depths including infinity. We further show similar data-dependent effects in deep scalar linear networks with residual connections.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2607.07884",
+  "published": "2026-07-08",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Optimal Learning Rate Scaling Depends on Data in Deep Scalar Linear Networks",
+  "why": [
+   "+3 learning rate",
+   "+2 convergence",
+   "+2 gradient"
+  ]
+ },
+ "2607.09167": {
+  "abstract": "Schedule-Free methods have attracted growing interest for alleviating the burden of designing and tuning a learning rate scheduler, while matching and sometimes even outperforming optimizers with tuned schedulers. Despite their strong empirical results, their convergence theory in nonconvex optimization, where modern machine learning objectives typically arise, has remained largely unexplored. In this paper, we provide worst-case analyses of Schedule-Free gradient descent and Schedule-Free stochastic gradient descent, in their standard form and without auxiliary modifications or restrictive conditions, for smooth but possibly nonconvex objectives. Based on a Lyapunov analysis derived from the continuous-time limiting ordinary differential equation associated with these methods, we show that Schedule-Free gradient descent and Schedule-Free stochastic gradient descent achieve the optimal worst-case convergence rates attainable among first-order methods. We further formulate Schedule-Free gradient descent as a nonautonomous dynamical system and prove strict-saddle avoidance under an arbitrarily small one-time perturbation. These theoretical results provide a better understanding of the strong performance that Schedule-Free methods demonstrate.",
+  "comment": "44+7 pages, 2 figures",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2607.09167",
+  "published": "2026-07-10",
+  "queries": [
+   "lr_horizon_free"
+  ],
+  "score": 15,
+  "status": "screened",
+  "title": "Understanding Schedule-Free Methods in Nonconvex Optimization: Rate Guarantees and Escaping Saddles",
+  "why": [
+   "+3 optimizer",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 convergence",
+   "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.09204": {
+  "abstract": "Pretrained language models often exhibit structured weight spectra, suggesting that training may repeatedly produce similar layerwise and component-wise organization. We ask whether these recurring spectral patterns can be reused as an initialization signal for GPT-2-style language-model pretraining. First, we analyze eleven pretrained GPT-2-style checkpoints that vary in size, language, tokenizer, and training corpus, measuring Frobenius norm and effective-rank entropy across layers and Transformer subcomponents. The checkpoints show shared depth trends, especially increasing scale and stronger spectral concentration in residual-writing matrices. We then construct initialization schemes that imitate the component-wise magnitudes and spectral profiles of pretrained models, and compare them with several weight initialization methods. These initializers visibly change the model's structural spectral patterns, but the evaluation results do not show a corresponding performance advantage. Pretrained-weight reuse remains competitive, while coarse spectral matching alone is not a reliable optimization strategy. Our results suggest that pretrained spectra are useful diagnostics of trained model structure, but that effective reuse likely requires preserving richer information than component-wise scale and singular-value shape.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2607.09204",
+  "published": "2026-07-10",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Complexity-Guided Component-wise Initialization for Language Model Pretraining",
+  "why": [
+   "+3 pretrain",
+   "+3 initializ",
+   "+3 gpt-2",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.13491": {
+  "abstract": "Looped Transformers scale sequential computation by applying a compact stack of physical blocks for multiple rounds, increasing unrolled depth without increasing stored parameters. This reuse changes the residual-scaling problem: in an untied Transformer, each residual branch receives and applies its own parameter update, whereas in a looped Transformer one shared update aggregates gradients from repeated visits and is read back by those same visits in the next linearized forward pass. We formalize this tied-depth effect through a first-order perturbation bound controlled by a visit-alignment coefficient $\u03ba_R$. The bound recovers the DeepNorm exponent when visits decorrelate, but in the conservative aligned regime it requires the exponent to increase from $1/4$ to $1/2$ as loop count grows at fixed physical depth. The resulting method, \\textbf{DeepLoop}, keeps the Post-LN DeepNorm architecture and sets $\u03b1=(2N)^{1/2}$ and $\u03b2=(8N)^{-1/2}$ for unrolled depth $N$. On GPT-style looped language models at GPT-2 small and GPT-2 medium scale, DeepLoop is neutral when no physical block is revisited and improves validation loss and downstream accuracy once recurrent depth is activated. These results show that stable recurrent depth requires residual scaling rules that account for parameter visits, not only nominal layer count.",
+  "comment": "25 pages",
+  "families": [
+   "capacity",
+   "signal_path"
+  ],
+  "id": "2607.13491",
+  "published": "2026-07-15",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "DeepLoop: Depth Scaling for Looped Transformers",
+  "why": [
+   "+2 loss",
+   "+3 gpt-2",
+   "+2 gradient",
+   "-2 alignment",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.14018": {
+  "abstract": "We investigate how each component of the Transformer feedforward block architecture design determines how much rank survives across depth at initialization. We reinterpret skip connections and normalization, long understood as controlling magnitude, as mechanisms for preserving gradient rank across depth, since the very matrix multiplications and nonlinear activations that make the network expressive also reduce the rank. We show that skip connections trade off rank collapse against ensemble-like behavior, controlled by the relative scales of the branch and the skip: skip connections route the gradient around the residual branch, where rank is lost, rather than along the long gradient paths that encourage the layers to compose. The placement of the normalization layer controls this same tradeoff by setting the branch-to-skip ratio across depth, unifying much of the normalization placement and depth scaling literature, in particular why rank collapses for Post-Norm but plateaus for Pre-Norm. Other aspects of the architecture, like the two-matrix structure that expands and contracts the width, use additional parameters to preserve the representation or branch Jacobian rank. The second matrix decorrelates a coherent mean spike that would grow across blocks with a single matrix and uncentered activation, preventing the residual representation from collapsing. The width expansion between the two matrices keeps the branch Jacobian full rank: applying the rank-reducing activation in",
+  "comment": "40 pages. Code: https://github.com/everettk/transforming-rank-paper",
+  "families": [
+   "capacity",
+   "ve_placement",
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2607.14018",
+  "published": "2026-07-15",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Transforming Rank: How Architecture Navigates the Spectral Pathologies of Depth",
+  "why": [
+   "+3 initializ",
+   "+2 normaliz",
+   "+2 gradient",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.14530": {
+  "abstract": "Hyper-Connections (HC) expand the residual stream of Transformers into $N$ parallel streams, providing a form of memory scaling beyond model width and depth. Manifold-Constrained HC (mHC) stabilizes this formulation at scale. The large gains from $N{=}1$ to $N{=}4$ suggest residual-stream expansion as a promising scaling axis. However, existing HC-family methods typically stop at $N{=}4$. Our experiments reveal why: scaling mHC beyond this point yields diminishing performance gains and rapidly increasing training cost. We attribute this limitation to two bottlenecks: insufficient write-back information for an expanding number of streams and residual-mixing generation whose cost scales cubically with $N$. To address both bottlenecks, we propose xHC (Expanded Hyper-Connections), the first HC-family method to achieve meaningful expansion beyond $N{=}4$. xHC combines temporal feature augmentation for richer write-back with a sparse residual-stream architecture that updates only $k=4$ of the $N=16$ streams while retaining dense access to the full residual state. Across 18B and 28B MoE models, xHC delivers strong and consistent downstream improvements. On an 18B MoE model, xHC improves the average downstream score by 4.0 points over mHC, while adding only modest training FLOPs over the vanilla baseline. Scaling-law experiments show that the vanilla and mHC require $1.50\\times$ and $1.19\\times$ the compute of xHC, respectively, to reach the same loss. Practical large-$N$ training al",
+  "comment": "Technical report. Project page: https://github.com/aHapBean/xHC",
+  "families": [
+   "capacity",
+   "ve_placement",
+   "signal_path"
+  ],
+  "id": "2607.14530",
+  "published": "2026-07-16",
+  "queries": [
+   "residual_scaling"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "xHC: Expanded Hyper-Connections",
+  "why": [
+   "+3 pre-train",
+   "+2 loss",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2607.14875": {
+  "abstract": "Building on the multi-determinant Transformer backflow neural quantum state (NQS) ansatz and the associated multi-stage training workflow for the doped two-dimensional Hubbard model, we investigate how the optimization dynamics of the NQS depend on several key optimization and architectural hyperparameters. The workflow consists of neural-network backflow (NNB) initialization, supervised Transformer pre-training, and main energy optimization using the Moment-Adaptive ReConfiguration Heuristic (MARCH) within variational Monte Carlo. Using the doped $4\\times4$ periodic Hubbard model at $U=8$ as a baseline, we examine how the update-norm threshold, Transformer width, number of determinant channels, and Monte Carlo batch size affect convergence. We find that a moderate update constraint improves the efficiency of MARCH optimization, larger Transformer width and more determinant channels improve the expressive capacity of the ansatz, and larger Monte Carlo batches reduce sampling noise in the update direction. We further test the same workflow at half filling, weaker interaction strength, open boundary conditions, and on a larger $8\\times8$ doped lattice. These results identify practical optimization trends for Transformer backflow NQSs and highlight the balance between ansatz expressivity, MARCH update stability, and Monte Carlo sampling quality.",
+  "comment": "11 pages, 4 figures, 1 table",
+  "families": [
+   "capacity",
+   "token_exposure",
+   "signal_scale"
+  ],
+  "id": "2607.14875",
+  "published": "2026-07-16",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Optimization dynamics of Transformer backflow neural quantum states for the two-dimensional Hubbard model",
+  "why": [
+   "+3 pre-train",
+   "+2 batch size",
+   "+3 initializ",
+   "+2 convergence",
+   "+2 stability"
+  ]
+ },
+ "2607.16268": {
+  "abstract": "Adaptive optimizers such as Adam and AdamW apply the same update rule regardless of whether training is in a chaotic early phase or near convergence. We introduce PsiLogic, an optimizer that augments Adam with a dynamic Active Cancellation Term gated by a dual exponential moving average (EMA) of scale-normalized gradient norms. The resulting chaos detector strengthens damping when gradient statistics are unstable and fades to zero as training stabilizes, providing an implicit warmup without a hand-tuned schedule. We evaluate PsiLogic against Adam, AdamW, and Lion using FairBench -- a reproducible benchmark protocol with per-optimizer learning-rate sweeps, identical initialization per seed, and Welch t-tests. On an NVIDIA H100 80GB reference run (4 arenas, 3 seeds, 2000 steps, bf16 AMP), PsiLogic achieves the best validation metric in three of four arenas: NLP perplexity 7.79 +/- 0.18 vs. 8.17 +/- 0.08 (AdamW, p = 0.049), ViT top-1 accuracy 0.244 +/- 0.006 vs. 0.223 +/- 0.002 (AdamW, p = 0.015), and ResNet top-1 accuracy 0.222 +/- 0.001 vs. 0.172 +/- 0.004 (Adam, p = 0.001). On diffusion, validation MSE is statistically tied with Adam/AdamW (p = 0.49). ResNet accuracy vs. AdamW is a numerical tie without significance at three seeds (p = 0.44). Peak GPU memory is comparable across optimizers; PsiLogic incurs 1.2--1.8x wall-clock overhead on transformer-heavy arenas (implementation-bound). We release an open-source PyTorch implementation, the full FairBench harness, and all raw ",
+  "comment": "9 pages, 4 figures; code at https://github.com/Troxter222/psilogic",
+  "families": [
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2607.16268",
+  "published": "2026-07-05",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 35,
+  "status": "screened",
+  "title": "PsiLogic: Chaos-Aware Active Cancellation for Adam with a Fair Cross-Domain Benchmark",
+  "why": [
+   "+3 optimizer",
+   "+2 schedule",
+   "+3 warmup",
+   "+3 initializ",
+   "+2 normaliz",
+   "+4 wall-clock",
+   "+2 bf16",
+   "+2 convergence"
+  ]
+ },
+ "2607.20548": {
+  "abstract": "Higher-order optimizers such as Muon and SOAP offer faster convergence than AdamW, but their computational cost and numerical stability challenges have limited adoption at scale. In this work, we adapt and enhance preconditioned gradient methods to overcome the practical challenges of large-scale LLM pretraining. We first identify instabilities in SOAP at large batch sizes and propose algorithmic modifications including per-step QR orthogonalization and improved preconditioning strategies that eliminate loss spikes and enable stable training in these regimes. We then present a unified empirical study of SOAP, Muon, and AdamW using update-RMS matching to ensure fair learning rate transfer across optimizers. As part of this analysis, we empirically evaluate the orthogonalization quality of Muon. Our experiments on multi-billion-parameter models trained on trillions of tokens reveal that SOAP and Muon consistently outperform AdamW at the scales we tested. Notably, at batch sizes of up to 100M tokens for next-token prediction, these optimizers maintain training stability and quality while AdamW degrades. To enable efficient training at large scale, we introduce a layer-wise distributed optimizer compatible with Megatron-LM. Our implementation balances memory and hides communication while avoiding approximations to the optimizer computations, thus retaining their convergence benefits. Additionally, we identify and build specific system-level improvements to further accelerate our ",
+  "comment": "",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2607.20548",
+  "published": "2026-07-13",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 29,
+  "status": "screened",
+  "title": "SOAP, Muon, and Beyond: Pushing LLM Pretraining Scales",
+  "why": [
+   "+3 pretrain",
+   "+3 optimizer",
+   "+5 muon",
+   "+3 learning rate",
+   "+2 batch size",
+   "+2 convergence",
+   "+2 loss",
+   "+2 stability"
+  ]
+ },
+ "2608.01997": {
+  "abstract": "Single-optimizer training is a poor fit for the distinct phases of deep network optimization: adaptive methods handle noisy early gradients well but overshoot flat minima, while SGD with momentum generalizes better in the late phase but converges slowly early on. We introduce AOS-R (Adaptive Optimizer Switching, Rule-Based), a lightweight controller that monitors six online gradient-space signals -- gradient noise scale (GNS), Hutchinson curvature trace, loss stagnation, update stability ratio, gradient stability index (GSI), and loss improvement ratio (LIR) -- and switches among AdamW, SGD-M, and Lion as the optimization landscape evolves. State-preserving momentum transfer and a 400-step learning-rate bridge prevent accuracy degradation at every transition point. On CIFAR-100/WRN-28x10, AOS-R reaches 78% top-1 in 81 epochs -- 26% fewer than AdamW (109), 43% fewer than SGD-M (143), and 16% fewer than Lion (96). Across eight model-dataset benchmarks, AOS-R achieves best accuracy on 6 of 8 combinations with a mean +0.4 pp gain and 0.80x convergence speedup over AdamW under a single shared hyperparameter configuration.",
+  "comment": "6 Page, 3 figures, 4 tables",
+  "families": [
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2608.01997",
+  "published": "2026-08-03",
+  "queries": [
+   "optimizer_adam_variants"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "AOS: Adaptive Optimizer Switching via Training-State Signals for Faster Convergence and Better Generalization",
+  "why": [
+   "+3 optimizer",
+   "+2 convergence",
+   "+2 loss",
+   "+2 stability",
+   "+2 gradient",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2608.09417": {
+  "abstract": "Deep decoder-only Transformers often replace the original Post-Norm architecture with Pre-Norm variants because Post-Norm training is highly sensitive to warmup and learning rate under conventional initialization schemes. Although prior work has identified rank collapse and gradient vanishing as related symptoms, it remains poorly understood how causal attention creates high-similarity representations and why training dynamics fail to repair them. We give a two-stage analysis of Post-Norm rank collapse using token similarity as a scalar state variable. First, at initialization, causal attention acts approximately as a prefix-averaging operator that increases token similarity across depth, while the SwiGLU branch contributes only a smaller damping effect. Second, once training enters a high-similarity regime, growth of pre-normalization residual norms makes the RMSNorm backward factor contractive; under mild conditions, gradients to earlier layers decay geometrically. As a complementary result, we characterize the properties of a collapsed network: its best predictor is frequency distribution with relatively high loss floor, and gradients in collapsed layers vanish at frequency distribution. Experiments on 48-layer decoder-only Transformers trained on C4 dataset match the predicted initialization-time similarity growth and collapse-time gradient contraction, and show that collapsed runs stay near the predicted frequency loss. Together, these results distinguish the forward sim",
+  "comment": "",
+  "families": [
+   "capacity",
+   "attention",
+   "signal_scale",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2608.09417",
+  "published": "2026-08-10",
+  "queries": [
+   "init_scaling"
+  ],
+  "score": 26,
+  "status": "screened",
+  "title": "Why Post-Norm Transformers Collapse: Attention Amplification and Gradient Repair Failure",
+  "why": [
+   "+3 learning rate",
+   "+3 warmup",
+   "+3 initializ",
+   "+2 normaliz",
+   "+3 rmsnorm",
+   "+2 attention",
+   "+2 loss",
+   "+3 mup"
+  ]
+ }
+}
