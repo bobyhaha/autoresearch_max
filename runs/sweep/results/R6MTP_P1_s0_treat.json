@@ -11,8 +11,8 @@
   "swdiv": 2,
   "mtp": 0.1
  },
- "gpu": -1,
- "started": 0,
+ "gpu": 6,
+ "started": 1787153523.4736407,
  "hypothesis_id": "hyp_mtp_supervision_density_r1",
  "ended": 1787154051.7708325,
  "returncode": 0,

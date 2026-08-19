@@ -501,7 +501,17 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
                 TUP = _re.compile(r"\(([^()=]+)\)\s*=\s*\(([^()]+)\)")
                 PAIR = _re.compile(r"(\d+\.\d{3,})\s*(-|\u2212)\s*(\d+\.\d{3,})")
 
-                def _tuples(ln, grounded):
+                def _tuples(ln, grounded, _cited=cited):
+                    # ARITHMETIC IS NOT ATTRIBUTION. Checking that a - b = c proves the
+                    # subtraction, never that a and b belong to the same comparison: an
+                    # audit built a fictitious mechanism that had never run and grounded
+                    # its "result" by differencing two real but unrelated registry values.
+                    # So a tuple derivation must ALSO name its source on the line. A run
+                    # that never happened has no run name, hypothesis id or lesson id to
+                    # cite, which is exactly the case this closes.
+                    if _cited and not (any(tok in ln for tok in _cited)
+                                       or ARXIV_RE.search(ln) or SRCFILE_RE.search(ln)):
+                        return []
                     got = []
                     for lhs, rhs in TUP.findall(ln):
                         ops = PAIR.findall(lhs)

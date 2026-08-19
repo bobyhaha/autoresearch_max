@@ -243,3 +243,31 @@ def test_an_unknown_device_is_never_pooled_as_a_real_one():
     assert -1 not in dm and None not in dm, (
         f"an unrecorded device was pooled as a real one: {sorted(dm)}")
     assert 6 in dm and abs(dm[6] - 0.9915) < 1e-9, "the real device mean was lost"
+
+
+def test_emission_guard_fails_closed_when_the_variant_cannot_be_built():
+    """A guard that answers "yes" when it cannot look is worse than no guard.
+
+    emits_diagnostic returned True on any build exception, so an unbuildable cfg passed the
+    emission check at BOTH queue doors and the log showed a passed check.
+    """
+    import make_variant
+    ok, msg = make_variant.emits_diagnostic({"dbs": "not-an-int", "nonsense": object()}, "x")
+    assert not ok, f"an unbuildable cfg was reported as emitting the diagnostic: {msg}"
+
+
+def test_systematic_regime_shift_requires_magnitude_not_just_consistency():
+    """Direction consistency is not causal evidence; a coin landing the same way twice isn't.
+
+    The rule reported "the epoch gap is caused BY the treatment" for any mismatch seen in
+    every arm. An audit built a fixture with a sub-band delta and a ~1% step wobble
+    straddling the boundary in both waves and got that claim asserted with confidence.
+    """
+    src = (REPO / "tools" / "verdict.py").read_text()
+    assert "_big_throughput" in src and "_resolvable" in src, (
+        "the systematic-regime-shift branch no longer requires a large throughput change "
+        "AND a resolvable effect; consistency alone would again be treated as cause")
+    i = src.index("systematic = (")
+    window = src[i:i + 700]
+    assert "_big_throughput" in window and "_resolvable" in window, (
+        "the magnitude guards exist but are not part of the systematic predicate")

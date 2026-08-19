@@ -201,9 +201,29 @@ def main():
         # So: a mismatch seen in EVERY arm, in the same direction, with at least two arms to
         # tell systematic from sporadic, is REPORTED with the regime difference stated in
         # full. Anything less consistent is still excluded exactly as before.
+        # MAGNITUDE GUARD. Consistency of DIRECTION is not evidence of CAUSE. An audit
+        # built a fixture where a delta smaller than the noise band, plus a ~1% step-count
+        # wobble that happened to straddle the epoch boundary in both waves, was reported
+        # with full confidence as "the epoch gap is caused BY the treatment" -- a false
+        # causal claim manufactured out of a coin landing the same way twice.
+        #
+        # A treatment that genuinely cannot reach the boundary has moved throughput a LOT:
+        # MTP ran 371 steps against 1011, a 63% departure. A run that merely wobbled across
+        # the line has moved it by a percent or two. So require BOTH a large throughput
+        # change and an effect the instrument can actually resolve; anything less is
+        # excluded as before, which is the fail-safe direction.
+        _ratios = []
+        for a in arms:
+            _ts, _cs = a["t"]["metrics"].get("num_steps"), a["c"]["metrics"].get("num_steps")
+            if _ts and _cs:
+                _ratios.append(abs(1.0 - (_ts / _cs)))
+        _big_throughput = bool(_ratios) and min(_ratios) >= 0.10
+        _mean_delta = sum(a["delta"] for a in arms) / len(arms) if arms else 0.0
+        _resolvable = abs(_mean_delta) > max(res, band or 0.0)
         systematic = (len(arms) >= 2 and len(voided) == len(arms) and
                       len({(a["t"]["metrics"].get("final_epoch") <
-                            a["c"]["metrics"].get("final_epoch")) for a in arms}) == 1)
+                            a["c"]["metrics"].get("final_epoch")) for a in arms}) == 1
+                      and _big_throughput and _resolvable)
         if voided and systematic:
             lo = arms[0]["t"]["metrics"].get("final_epoch")
             hi = arms[0]["c"]["metrics"].get("final_epoch")

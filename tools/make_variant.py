@@ -661,8 +661,15 @@ def emits_diagnostic(cfg, field):
     """
     try:
         src = build(dict(cfg))
-    except Exception as e:                       # a cfg that will not build fails elsewhere
-        return True, f"could not build to check {field!r}: {e}"
+    except Exception as e:
+        # FAIL CLOSED. This returned True ("assume fine") on any build error, so a cfg that
+        # could not be built at all sailed through the emission check at BOTH queue doors --
+        # a guard that answers "yes" when it cannot look is worse than no guard, because it
+        # reads as a passed check in the log. A variant that does not build certainly does
+        # not emit the diagnostic.
+        return False, (f"could not build the variant to check whether it emits {field!r}: "
+                       f"{e}. Refusing rather than assuming: an unbuildable cfg cannot be "
+                       f"shown to emit anything.")
     if f"{field}:" in src:
         return True, f"generated variant emits {field!r}"
     import re as _re
