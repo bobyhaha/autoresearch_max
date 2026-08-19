@@ -60,6 +60,9 @@ WAIT_LOG_EVERY_S = 30 * 60   # how often to report that we are waiting for capac
 COTENANT_QUARANTINE_S = 45 * 60
 # ...but lift it as soon as the device has been demonstrably clean this long.
 QUARANTINE_CLEAR_S = 8 * 60
+# How many times each device has burned a run of ours this process. The early-release
+# window doubles per burn, so a cycling tenant cannot keep winning the same device.
+burn_count: dict = {}
 CORES_PER_JOB = 12        # disjoint taskset block per trainer
 CORE_BASE = 96            # start high: low cores are where foreign tenants cluster
 GATE_MAX_AGE = 20 * 60
@@ -636,6 +639,7 @@ def main():
                         log(f"CO-TENANT ({who}) on gpu{g} during "
                             f"{job['item']['name']} -> INVALID")
                         quarantine[job["uuid"]] = time.time() + COTENANT_QUARANTINE_S
+                        burn_count[job["uuid"]] = burn_count.get(job["uuid"], 0) + 1
                         # job has keys proc/item/dir/started/uuid/cotenant/slot/cores.
                         # `job["name"]` was a KeyError that would have crashed the
                         # dispatcher on the FIRST co-tenancy it detected -- before the
@@ -702,9 +706,24 @@ def main():
         for _u in list(quarantine):
             if _busy_uuids is not None and _u not in _busy_uuids:
                 clean_since.setdefault(_u, now)
-                if now - clean_since[_u] >= QUARANTINE_CLEAR_S:
+                # BACK OFF ON REPEAT OFFENDERS. A device that has burned us before is not
+                # proved clean by the same quiet window that failed last time. gpu6 and
+                # gpu7 were released at 16:47:40Z on "no compute app for 8 min" and the
+                # tenant was back 35 seconds after we launched, destroying R6XF_P3 -- the
+                # second wave lost to this in ten minutes, on top of R6XF_P2. Eight minutes
+                # of quiet is evidence a tenant has PAUSED, not that it has left; an
+                # intermittent job looks identical to a departed one on that timescale.
+                #
+                # So the clean window each device must show doubles with each burn it has
+                # caused, capped so a device is never retired permanently. Cheap when a
+                # tenant really has gone (one wait), and it stops handing the same device
+                # back to the same cycling job every eight minutes.
+                _burns = burn_count.get(_u, 0)
+                _need = min(QUARANTINE_CLEAR_S * (2 ** _burns), COTENANT_QUARANTINE_S)
+                if now - clean_since[_u] >= _need:
                     log(f"QUARANTINE lifted early for {_u[:20]}: no compute app for "
-                        f"{QUARANTINE_CLEAR_S//60} min (evidence, not timer)")
+                        f"{_need//60} min quiet required after {_burns} prior "
+                        f"burn(s) (evidence, not timer)")
                     del quarantine[_u]
                     _save_state(quarantine, tainted)
                     clean_since.pop(_u, None)
