@@ -1,0 +1,14 @@
+{
+ "name": "W03a_3_control",
+ "cfg": {},
+ "gpu": -1,
+ "started": 1787067137.0,
+ "ended": 1787067250.0,
+ "returncode": -9,
+ "metrics": {},
+ "cotenant_detected": true,
+ "ok": false,
+ "invalid_reason": "killed before completion: launched by a dispatcher that was shutting down, then double-booked onto a GPU already running one of ours (see L004_restart_double_books_gpus). No val_bpb was ever produced and none may be inferred.",
+ "error": "SIGKILL issued by the operator to stop four self-co-tenanted trainers",
+ "tombstone": true
+}

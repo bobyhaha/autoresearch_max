@@ -1,0 +1,24 @@
+{
+ "name": "zloss01_B_s2_treat",
+ "cfg": {
+  "dbs": 128,
+  "tbs": 19,
+  "depth": 8,
+  "dim": 512,
+  "mlp": 4,
+  "ve": 2,
+  "win": "SSSL",
+  "swdiv": 2,
+  "zloss": 0.1
+ },
+ "gpu": null,
+ "hypothesis_id": null,
+ "started": null,
+ "ended": 1787120789.4695508,
+ "returncode": null,
+ "cotenant_detected": false,
+ "cores": null,
+ "ok": false,
+ "invalid_reason": "stranded by a permanently split wave: 2 of 4 members of wave_group zloss01_B already finished (zloss01_B_s0_ctrl, zloss01_B_s3_ctrl) while this one was never claimed. It cannot now be run as part of that wave, and running it later would be a cross-wave comparison labelled as a yoked one. Retired unrun; no val_bpb exists for it and none may be inferred.",
+ "error": ""
+}

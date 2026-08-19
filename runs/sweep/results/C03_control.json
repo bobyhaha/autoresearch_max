@@ -1,0 +1,47 @@
+{
+ "name": "C03_control",
+ "cfg": {
+  "dbs": 128,
+  "tbs": 19,
+  "depth": 8,
+  "dim": 512,
+  "mlp": 4,
+  "ve": 2,
+  "win": "SSSL",
+  "swdiv": 2
+ },
+ "gpu": 1,
+ "started": 1787056918.7129905,
+ "ended": 1787057427.6802037,
+ "returncode": 0,
+ "metrics": {
+  "val_bpb": 1.013602,
+  "training_seconds": 300.4,
+  "total_seconds": 502.7,
+  "peak_vram_mb": 45060.2,
+  "mfu_percent": 30.32,
+  "num_steps": 729.0,
+  "depth": 8.0,
+  "seed": 42.0,
+  "n_embd": 512.0,
+  "mlp_ratio": 4.0,
+  "n_ve_layers": 4.0,
+  "tokens_per_step": 524288.0,
+  "grad_accum": 2.0,
+  "loader_frac": 0.929954,
+  "fwdbwd_frac": 0.057017,
+  "step_ms_p10": 346.17,
+  "step_ms_med": 413.61,
+  "vram_reserved_mb": 48858.0,
+  "final_epoch": 1.0,
+  "flops_per_token_M": 239.078
+ },
+ "cotenant_detected": false,
+ "cores": "108-119",
+ "ok": true,
+ "invalid_reason": "",
+ "error": "",
+ "metrics_backfilled": [
+  "flops_per_token_M"
+ ]
+}

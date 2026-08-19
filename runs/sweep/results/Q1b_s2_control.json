@@ -1,0 +1,52 @@
+{
+ "name": "Q1b_s2_control",
+ "cfg": {
+  "dbs": 128,
+  "tbs": 19,
+  "depth": 8,
+  "dim": 512,
+  "mlp": 4,
+  "ve": 2,
+  "win": "SSSL",
+  "swdiv": 2
+ },
+ "gpu": 6,
+ "started": 1787111863.2863104,
+ "ended": 1787112350.4782841,
+ "returncode": 0,
+ "metrics": {
+  "val_bpb": 1.020391,
+  "training_seconds": 300.2,
+  "total_seconds": 483.7,
+  "peak_vram_mb": 45060.2,
+  "mfu_percent": 31.27,
+  "num_steps": 751.0,
+  "depth": 8.0,
+  "seed": 42.0,
+  "n_embd": 512.0,
+  "mlp_ratio": 4.0,
+  "n_ve_layers": 4.0,
+  "tokens_per_step": 524288.0,
+  "grad_accum": 2.0,
+  "loader_frac": 0.500169,
+  "fwdbwd_frac": 0.045315,
+  "step_ms_p10": 401.1,
+  "step_ms_med": 408.06,
+  "vram_reserved_mb": 48858.0,
+  "final_epoch": 1.0,
+  "secmom_rms": 0.03175937,
+  "secmom_max": 0.2669988,
+  "secmom_clamp_frac": 0.0,
+  "secmom_nbuf": 4.0,
+  "secmom_ortho_ratio": 0.47908843,
+  "flops_per_token_M": 239.078
+ },
+ "cotenant_detected": true,
+ "cores": "120-131",
+ "ok": false,
+ "invalid_reason": "gpu co-tenancy during the run",
+ "error": "",
+ "metrics_backfilled": [
+  "flops_per_token_M"
+ ]
+}

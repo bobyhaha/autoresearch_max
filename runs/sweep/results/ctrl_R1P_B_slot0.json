@@ -1,0 +1,52 @@
+{
+ "name": "ctrl_R1P_B_slot0",
+ "cfg": {
+  "dbs": 128,
+  "tbs": 19,
+  "depth": 8,
+  "dim": 512,
+  "mlp": 4,
+  "ve": 2,
+  "win": "SSSL",
+  "swdiv": 2
+ },
+ "gpu": 4,
+ "started": 1787110047.1654391,
+ "ended": 1787110531.336825,
+ "returncode": 0,
+ "metrics": {
+  "val_bpb": 0.993341,
+  "training_seconds": 300.1,
+  "total_seconds": 481.8,
+  "peak_vram_mb": 45060.2,
+  "mfu_percent": 41.08,
+  "num_steps": 983.0,
+  "depth": 8.0,
+  "seed": 42.0,
+  "n_embd": 512.0,
+  "mlp_ratio": 4.0,
+  "n_ve_layers": 4.0,
+  "tokens_per_step": 524288.0,
+  "grad_accum": 2.0,
+  "loader_frac": 0.660036,
+  "fwdbwd_frac": 0.061117,
+  "step_ms_p10": 306.22,
+  "step_ms_med": 308.51,
+  "vram_reserved_mb": 48858.0,
+  "final_epoch": 2.0,
+  "secmom_rms": 0.03221177,
+  "secmom_max": 0.25255337,
+  "secmom_clamp_frac": 0.0,
+  "secmom_nbuf": 4.0,
+  "secmom_ortho_ratio": 0.48591274,
+  "flops_per_token_M": 239.078
+ },
+ "cotenant_detected": false,
+ "cores": "120-131",
+ "ok": true,
+ "invalid_reason": "",
+ "error": "",
+ "metrics_backfilled": [
+  "flops_per_token_M"
+ ]
+}

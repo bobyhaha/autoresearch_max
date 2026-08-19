@@ -1,0 +1,24 @@
+{
+ "name": "R2S_B_s0_ctrl",
+ "cfg": {
+  "dbs": 128,
+  "tbs": 19,
+  "depth": 8,
+  "dim": 512,
+  "mlp": 4,
+  "ve": 2,
+  "win": "SSSL",
+  "swdiv": 2
+ },
+ "gpu": 1,
+ "hypothesis_id": null,
+ "started": 1787124565.1049693,
+ "ended": 1787124713.157002,
+ "returncode": 1,
+ "metrics": {},
+ "cotenant_detected": true,
+ "cores": "96-107",
+ "ok": false,
+ "invalid_reason": "gpu co-tenancy during the run",
+ "error": "rocess 4061459 has 124.32 GiB memory in use. Of the allocated memory 14.54 GiB is allocated by PyTorch, and 52.99 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)"
+}

@@ -91,7 +91,14 @@ def parse(text: str) -> dict:
 
 def queue_entries(text: str) -> list[dict]:
     """Configs the synthesis wants run, as JSON inside a ```queue fence."""
-    m = QUEUE_RE.search(text)
+    # The LAST fenced queue block, not the first. A round quotes reviewer prose that can
+    # itself contain a ```queue fence -- a proposal being discussed, or an earlier block
+    # reproduced for criticism -- and `search` returns the first match in the document,
+    # so a synthesis block appended at the end could be silently ignored in favour of
+    # something a reviewer was arguing against.
+    m = None
+    for m in QUEUE_RE.finditer(text):
+        pass
     if not m:
         return []
     try:

@@ -20,6 +20,13 @@ TMP = REPO / "lit" / "_test"
 _FIX = REPO / "lit" / "sources" / "arxiv_2599.99999_fulltext.txt"
 _FIX.parent.mkdir(parents=True, exist_ok=True)
 _FIX.unlink(missing_ok=True)
+# The round fixtures leak the same way and are MORE dangerous than the source snapshot:
+# `_test_good.md` is a VALID round, and rounds are selected by sort order, so a leftover
+# sorting after the real latest round would be read by queue_from_round.py and its
+# proposals queued onto GPUs. Underscore sorts before digits in this directory's naming,
+# which is luck rather than protection.
+for _r in ("_test_bad.md", "_test_good.md"):
+    (REPO / "rounds" / _r).unlink(missing_ok=True)
 
 # The round fixture below declares hypothesis_id "none". council.validate() now runs the
 # real queue preflight -- a round must propose at least ONE experiment that would survive

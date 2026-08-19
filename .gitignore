@@ -10,10 +10,23 @@ __pycache__/
 .env
 
 # --- per-operator runtime state ---------------------------------------------
-# runs/ is this operator's campaign: results, queue, generated variants, health and
-# gate snapshots, logs. It is machine- and host-specific and is never the shared
-# artifact. The transferable science lives in lit/ and is committed.
+# runs/ is this operator's campaign: queue, generated variants, health and gate
+# snapshots, logs, work directories. That IS machine- and host-specific and is not the
+# shared artifact.
+#
+# RESULT RECORDS ARE THE EXCEPTION, and the exception matters. papers/ makes claims whose
+# every number tools/coe.py audits against a registry built ONLY from
+# runs/sweep/results/*.json. With those ignored, a fresh clone cannot rebuild the registry
+# and cannot run the audit at all: E1 reports 706 problems, E5 finds all 117 paper numbers
+# uncheckable, and the chain of evidence -- the thing this project is chiefly about -- is
+# intact on one laptop and broken for every reader. A provenance system whose provenance
+# does not ship is a provenance system in name only.
+#
+# 552KB of JSON is a small price for a paper a stranger can check. The records are append-
+# only and were never edited, so committing them is publishing evidence, not state.
 runs/
+!runs/sweep/results/
+!runs/sweep/results/*.json
 tmp/
 
 # --- literature corpus ------------------------------------------------------

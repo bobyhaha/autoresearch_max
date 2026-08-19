@@ -1,0 +1,47 @@
+{
+ "name": "W04c_1_control",
+ "cfg": {
+  "dbs": 128,
+  "tbs": 19,
+  "depth": 8,
+  "dim": 512,
+  "mlp": 4,
+  "ve": 2,
+  "win": "SSSL",
+  "swdiv": 2
+ },
+ "gpu": 6,
+ "started": 1787068475.1189072,
+ "ended": 1787068960.2553272,
+ "returncode": 0,
+ "metrics": {
+  "val_bpb": 0.99164,
+  "training_seconds": 300.2,
+  "total_seconds": 480.9,
+  "peak_vram_mb": 45060.2,
+  "mfu_percent": 42.24,
+  "num_steps": 1011.0,
+  "depth": 8.0,
+  "seed": 42.0,
+  "n_embd": 512.0,
+  "mlp_ratio": 4.0,
+  "n_ve_layers": 4.0,
+  "tokens_per_step": 524288.0,
+  "grad_accum": 2.0,
+  "loader_frac": 0.662169,
+  "fwdbwd_frac": 0.060057,
+  "step_ms_p10": 298.5,
+  "step_ms_med": 299.97,
+  "vram_reserved_mb": 48858.0,
+  "final_epoch": 2.0,
+  "flops_per_token_M": 239.078
+ },
+ "cotenant_detected": false,
+ "cores": "96-107",
+ "ok": true,
+ "invalid_reason": "",
+ "error": "",
+ "metrics_backfilled": [
+  "flops_per_token_M"
+ ]
+}
