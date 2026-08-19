@@ -678,6 +678,10 @@ def main():
             # failed to engage is indistinguishable from a clean null -- which is the
             # exact failure the activation predicate exists to prevent.
             rec = {"name": job["item"]["name"], "cfg": job["item"]["cfg"], "gpu": g,
+                   # Carried into the RESULT so analysis never depends on the queue still
+                   # holding the entry. A cut queue entry used to erase a completed run
+                   # from every verdict.
+                   "wave_group": job["item"].get("wave_group"),
                    "hypothesis_id": job["item"].get("hypothesis_id"),
                    "started": job["started"], "ended": time.time(),
                    "returncode": job["proc"].returncode, "metrics": met,

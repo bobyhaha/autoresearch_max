@@ -44,14 +44,30 @@ def _load():
     return out
 
 
-def _variant_of(name):
-    """Which generated source a run actually executed, read from the queue."""
+def _variant_of(name, cfg=None):
+    """Which generated source a run actually executed.
+
+    Read from the queue when the entry is still there, and otherwise REBUILT from the run's
+    own cfg. A run whose queue entry was cut after it completed used to resolve to "?" and
+    then group separately from its own wave-mates -- so recovering the run from its name
+    was not enough to put it back beside them, and MTP appeared as two verdict blocks, one
+    of them a single arm with no verdict. The cfg is in the result record, and the variant
+    is a pure function of the cfg, so nothing about the identification depends on the queue.
+    """
     try:
         for e in json.loads((REPO / "runs" / "sweep" / "queue.json").read_text()):
             if e["name"] == name:
                 return (e.get("variant") or "?")[:12]
     except (OSError, ValueError):
         pass
+    if cfg:
+        try:
+            import hashlib
+            import make_variant
+            return hashlib.sha256(
+                make_variant.build(dict(cfg)).encode()).hexdigest()[:12]
+        except Exception:
+            pass
     return "?"
 
 
@@ -83,15 +99,39 @@ def _pair(arms):
 
 
 def waves(rows):
-    out = {}
-    for r in rows:
-        g = None
+    # THE RESULT IS THE RECORD, NOT THE QUEUE. This resolved a run's wave ONLY through
+    # queue.json, so cutting a queue entry after that run had already completed silently
+    # deleted it from every verdict. It happened: R6MTP_P3 ran, its result was written, the
+    # queue entry was then cut as redundant, and verdict.py quietly went back to reporting
+    # two MTP pairs while the campaign said three. A reproducibility audit found the
+    # discrepancy from outside; nothing in the tool announced it.
+    #
+    # The wave is now taken from the result if it carries one, then from the queue, and
+    # finally from the run NAME -- queue_quad builds names as <wave>_s<slot>_<role>, so the
+    # wave is recoverable from the name alone and a cut entry can no longer erase evidence.
+    import re as _re
+    qmap = {}
+    try:
         for e in json.loads((REPO / "runs" / "sweep" / "queue.json").read_text()):
-            if e["name"] == r["name"]:
-                g = e.get("wave_group")
-                break
+            if e.get("wave_group"):
+                qmap[e["name"]] = e["wave_group"]
+    except (OSError, ValueError):
+        pass
+    out, orphans = {}, []
+    for r in rows:
+        g = r.get("wave_group") or qmap.get(r["name"])
+        if not g:
+            m = _re.match(r"^(.*)_s\d+_(?:treat|ctrl|control)$", r["name"])
+            if m:
+                g = m.group(1)
+                orphans.append(r["name"])
         if g:
             out.setdefault(g, []).append(r)
+    if orphans:
+        print(f"  NOTE {len(orphans)} result(s) had no queue entry and were recovered from "
+              f"their names: {', '.join(sorted(orphans)[:4])}"
+              f"{' ...' if len(orphans) > 4 else ''}. A completed run whose queue entry was "
+              f"cut is still evidence.")
     return out
 
 
@@ -150,7 +190,8 @@ def main():
             # (secmom_clamp_frac 0.998) and pooling them with the repaired ones reported
             # "no effect demonstrated" for a mechanism whose fixed version had not yet been
             # given a verdict. A repaired implementation is a different experiment.
-            key = f"{direction.label(t['cfg'])}  [variant {t.get('variant') or _variant_of(t['name'])}]"
+            key = (f"{direction.label(t['cfg'])}  "
+                   f"[variant {t.get('variant') or _variant_of(t['name'], t.get('cfg'))}]")
             by_cfg.setdefault(key, []).append({
                 "wave": g, "delta": t["metrics"]["val_bpb"] - c["metrics"]["val_bpb"],
                 "treat_dev": _slot(t), "ctl_dev": _slot(c), "t": t, "c": c})
