@@ -114,11 +114,19 @@ def _counterbalanced_wins(results: list[dict]) -> set:
     for r in ok:
         if direction.is_platform(r.get("cfg") or {}):
             ctl.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+    # Return the winning CONFIGS, not their families. Returning families made every
+    # later run from a family that had ever won count as an improvement, so `dry` and
+    # `since_improve` froze at zero and STALE/DRY stopped firing for that family
+    # permanently. A synthetic family worsening monotonically from 0.99 to 1.60 still
+    # reported since_improve = 0. That was a blanket exemption standing in for a per-run
+    # test: the original defect (L025) was that a device-confounded raw comparison missed
+    # a real counterbalanced win, and the fix should have credited THE RUNS IN THAT WIN,
+    # not everything sharing their family forever after.
     wins = set()
     for key, bygpu in by_cfg.items():
         deltas = [_st.mean(v) - _st.mean(ctl[g]) for g, v in bygpu.items() if g in ctl]
         if len(deltas) >= 2 and _st.mean(deltas) < -res:
-            wins |= families_of(json.loads(key))
+            wins.add(key)
     return wins
 
 
@@ -140,12 +148,13 @@ def family_runs(results: list[dict]) -> dict:
     # to rotate away from the only direction that has produced a win. Raw val_bpb remains
     # the verdict; what changes is that the comparison is made device-to-device rather
     # than between whichever two runs happened to land on the luckiest hardware.
-    verdict_families = _counterbalanced_wins(results)
+    verdict_cfgs = _counterbalanced_wins(results)
     running_best = float("inf")
     for r in ok:
         v = r["metrics"]["val_bpb"]
         improved = True if band is None else v < running_best - band
-        if not improved and (families_of(r.get("cfg") or {}) & verdict_families):
+        # Credit only runs that are THEMSELVES part of a counterbalanced win.
+        if not improved and json.dumps(r.get("cfg") or {}, sort_keys=True) in verdict_cfgs:
             improved = True
         for f in families_of(r.get("cfg") or {}):
             if f not in st:

@@ -123,7 +123,7 @@ Per-pair arithmetic is given in Appendix A so every derived number can be checke
 
 | intervention | mean delta | *t* | activation | verdict |
 |---|---|---|---|---|
-| `swdiv` 2→4 (short span halved) | −0.002463 | −20.3 | `flops_per_token_M` 220.204 vs 239.078 | **better** |
+| `swdiv` 2→4 (short span halved) | −0.002298 | −20.3 | `flops_per_token_M` 220.204 vs 239.078 | **better** |
 | `ve` 2→1 (value embedding every layer) | −0.001487 | −12.2 | `n_ve_layers` 8.0 vs 4.0 | **better** |
 | `precond` (second moment before polar) | −0.001147 | −12.3 | `secmom_max` ≫ control | **better** |
 | `qk_suppress` 0.1 | +0.001226 | +15.8 | **failed** — see below | **inconclusive** |
@@ -222,8 +222,8 @@ active in the same records (`n_ve_layers` 8.0, `flops_per_token_M` 220.207, `sec
 17.30634117 against a control near 0.25). The best model produced is `R4X_A_s3_treat` at
 **0.986956**.
 
-The naive sum of the three separately measured effects is −0.005097 (Appendix A). The
-combination realises about 86% of it, leaving a shortfall of 0.000689.
+The naive sum of the three separately measured effects is −0.004932 (Appendix A). The
+combination realises about 89% of it, leaving a shortfall of 0.000524.
 
 **Where the overlap is.** `ve` and `swdiv` both act partly through step count, in
 opposite directions: `ve` costs throughput by adding parameters, `swdiv` buys it by
@@ -238,7 +238,7 @@ operating-point artefact and said nothing about redundancy. It did not void — 
 step count shows exactly why. After the fact these two explanations are
 indistinguishable, which is the entire reason the order was pre-committed.
 
-**What we do not claim.** Whether the 0.000689 shortfall is distinguishable from zero
+**What we do not claim.** Whether the 0.000524 shortfall is distinguishable from zero
 depends on propagating the error of the additive sum, which is itself three noisy
 estimates added together, and we have not established that the shortfall survives it. The
 honest statement is that the stack is *at least* strongly complementary, and that partial
@@ -337,7 +337,7 @@ directly against `python3 tools/coe.py registry`.
 
 **`qk_suppress`** (measured but INCONCLUSIVE, §5.5): 0.995063 − 0.993829 = +0.001234; 0.993834 − 0.992786 = +0.001048; 0.993304 − 0.991880 = +0.001424; 0.992686 − 0.991489 = +0.001197; mean +0.001226, sd 0.000155, sem 0.000077, t +15.8.
 
-**Additivity** (§6): the three component means −0.002463 and −0.001487 and −0.001147 sum to −0.005097; the measured stack mean −0.004408 is 86% of that sum, a shortfall of 0.000689, itself about 2.4 times the 0.000282 resolution before error propagation.
+**Additivity** (§6), summed in two checkable steps: 0.002298 + 0.001487 = 0.003785, then 0.003785 + 0.001147 = 0.004932; the measured stack mean 0.004408 is 89% of that sum, a shortfall of 0.004932 - 0.004408 = 0.000524. NOTE the swdiv component here is the CLEAN single-experiment quad, not the superseded cross-experiment stitch 0.002463 which overstated it by about 7 percent and which an earlier version of this table used.
 
 **Resolution**: pooled within-device control sd 0.000199 gives 2 × 0.000199 ÷ √2 = 0.000282.
 

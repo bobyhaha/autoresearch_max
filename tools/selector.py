@@ -52,6 +52,27 @@ GPU_MIN_PER_QUAD = 8 * 8
 W_GAIN, W_INFO, W_NOVEL, W_COST, W_RESOLVE = 1.0, 0.6, 0.5, 0.25, 4.0
 
 
+def _changed(cfg):
+    """Keys this cfg actually MOVES off the platform.
+
+    Attribution must be by what a config CHANGES, not by what keys it contains. Every cfg
+    carries the full platform -- depth, dim, mlp, tbs, dbs, ve, win, swdiv -- so testing
+    `set(cfg) & family_axes` matched capacity, token_exposure, attention and ve_placement
+    for literally every experiment, including an mtp-only candidate that touches none of
+    them. That produced 196 family-run assignments over 125 valid runs, and every term
+    built on it -- expected gain, information, diversity -- was computed from other
+    families' evidence. The bug was visible as "spread over 188 runs" and was noted as odd
+    and not chased; an external review reproduced it precisely.
+    """
+    return {k: v for k, v in cfg.items() if direction.PLATFORM.get(k) != v}
+
+
+def _families(cfg):
+    ch = _changed(cfg)
+    return [f for f, spec in direction.FAMILIES.items()
+            if set(ch) & set(spec.get("axes", ())) or ch.get(f)]
+
+
 def _device_means(rows):
     by = {}
     for r in rows:
@@ -72,9 +93,8 @@ def family_effects(rows):
         if not r.get("ok") or direction.is_platform(cfg):
             continue
         eff = r["metrics"]["val_bpb"] - dm.get(r.get("gpu"), r["metrics"]["val_bpb"])
-        for fam, spec in direction.FAMILIES.items():
-            if set(cfg) & set(spec.get("axes", ())) or cfg.get(fam):
-                out.setdefault(fam, []).append(eff)
+        for fam in _families(cfg):
+            out.setdefault(fam, []).append(eff)
     return out
 
 
@@ -92,8 +112,7 @@ def score(cfg, rows, state, fx):
     if unknown:
         return -math.inf, {"BLOCKED": f"unrecognised keys {sorted(unknown)}"}
 
-    fams = [f for f, spec in direction.FAMILIES.items()
-            if set(cfg) & set(spec.get("axes", ())) or cfg.get(f)]
+    fams = _families(cfg)
     obs = [e for f in fams for e in fx.get(f, [])]
 
     # EXPECTED GAIN. A family that has paid before is likely to pay again, so use its best
@@ -189,8 +208,7 @@ def batch(cands, rows, state, fx, k):
         for i, (s, c) in enumerate(scored):
             if s == -math.inf or any(c is p for p in picked):
                 continue
-            fams = [f for f, sp in direction.FAMILIES.items()
-                    if set(c) & set(sp.get("axes", ()))]
+            fams = _families(c)
             pen = 0.5 ** sum(used.get(f, 0) for f in fams)
             if best is None or s * pen > best:
                 best, bi = s * pen, i
@@ -198,9 +216,8 @@ def batch(cands, rows, state, fx, k):
             break
         s, c = scored[bi]
         picked.append(c)
-        for f, sp in direction.FAMILIES.items():
-            if set(c) & set(sp.get("axes", ())):
-                used[f] = used.get(f, 0) + 1
+        for f in _families(c):
+            used[f] = used.get(f, 0) + 1
     return picked
 
 

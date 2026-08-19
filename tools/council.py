@@ -125,7 +125,64 @@ def validate(path: pathlib.Path, kind: str) -> list[str]:
                 for f in ("name", "cfg", "rationale", "falsifier"):
                     if not e.get(f):
                         problems.append(f"queue entry {e.get('name','?')!r} lacks '{f}'")
+            problems += _admissible(q)
     return problems
+
+
+def _admissible(entries: list[dict]) -> list[str]:
+    """A round must propose at least one experiment that can ACTUALLY be queued.
+
+    Structural validation checked that a ```queue block existed and that its entries had
+    prose fields. It never asked whether any of them would survive the queue door, so a
+    round could pass while producing nothing runnable -- which is exactly what happened:
+    round 5 validated cleanly and all three of its proposals were rejected by
+    queue_from_round for `hypothesis_id: null`. "Valid round" meant structurally verbose,
+    not executable, and the failure was silent because the two checks lived in different
+    files and neither called the other.
+
+    This runs the same semantic preflight the door runs: recognised config keys, a
+    registered hypothesis (or an explicit instrument-probe declaration), no lesson block,
+    and a variant that builds and differs from the control. Reporting per-entry reasons
+    matters more than the pass/fail: a proposer that never learns WHY its arms bounce will
+    keep writing the same unrunnable rounds.
+    """
+    import claims as _c
+    import direction as _d
+    import make_variant as _mv
+    verdicts, admissible = [], 0
+    known = {h["id"] for h in _c.hypotheses()}
+    for e in entries:
+        name, cfg = e.get("name", "?"), e.get("cfg") or {}
+        hid = e.get("hypothesis_id")
+        why = None
+        if not hid:
+            why = ("no hypothesis_id (set it, or 'none' to declare an instrument probe) "
+                   "-- without one the activation predicate never runs and a null cannot "
+                   "be told from 'never engaged'")
+        elif hid != "none" and hid not in known:
+            why = f"hypothesis_id {hid!r} is not registered"
+        elif _d.unknown_keys(cfg):
+            why = f"unrecognised config keys {sorted(_d.unknown_keys(cfg))}"
+        elif _c.blocked_values(cfg):
+            k, v, les, _r = _c.blocked_values(cfg)[0]
+            why = f"{k}={v} is blocked by {les['id']}"
+        else:
+            try:
+                if _mv.build(cfg) == _mv.build(dict(_d.PLATFORM)):
+                    why = "generated variant is byte-identical to the control"
+            except Exception as exc:                       # noqa: BLE001
+                why = f"variant does not build: {str(exc)[:80]}"
+        if why:
+            verdicts.append(f"  queue entry {name!r} is NOT admissible: {why}")
+        else:
+            admissible += 1
+    if admissible:
+        return []
+    return ([f"NO ADMISSIBLE EXPERIMENT: all {len(entries)} proposals would be refused at "
+             f"the queue door, so this round proposes nothing runnable."] + verdicts)
+
+
+
 
 
 def latest(kind: str):

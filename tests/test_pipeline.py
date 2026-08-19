@@ -10,9 +10,23 @@ import claims, council, direction, lit, make_variant  # noqa: E402
 
 ok = lambda c, m: print(f"  {'PASS' if c else 'FAIL'}  {m}") or (c or sys.exit(f"FAILED: {m}"))
 TMP = REPO / "lit" / "_test"
-for p in (REPO / "lit" / "sources" / "arxiv_2599.99999_fulltext.txt",):
-    p.parent.mkdir(parents=True, exist_ok=True)
+# IDEMPOTENT SETUP. These tests write fixtures into the LIVE corpus, and `ok()` exits the
+# process on the first failure -- so any failure skips the cleanup at the bottom and
+# leaves the fixture behind. A leftover arxiv_2599.99999_fulltext.txt then makes
+# assertion 1 fail on every later run for a reason unrelated to the code under test: the
+# claim is no longer "abstract-only" because the snapshot exists. That is what happened;
+# the file sat in lit/sources for hours. Clear it up FRONT, the same guard
+# test_chain_of_evidence.py already carries for the same reason.
+_FIX = REPO / "lit" / "sources" / "arxiv_2599.99999_fulltext.txt"
+_FIX.parent.mkdir(parents=True, exist_ok=True)
+_FIX.unlink(missing_ok=True)
 
+# The round fixture below declares hypothesis_id "none". council.validate() now runs the
+# real queue preflight -- a round must propose at least ONE experiment that would survive
+# the door -- and an entry with no hypothesis_id is refused, because without one the
+# activation predicate never runs and a null cannot be told from "never engaged". "none"
+# is the explicit instrument-probe declaration, which is the honest way for a fixture to
+# satisfy that contract without pretending to be a research arm.
 print("1. a claim without a full-text snapshot is REJECTED")
 c = {"belief_key": "k1", "statement": "s", "source_id": "2599.99999",
      "locator": "table 1", "stance": "supports", "families": ["capacity"],
@@ -61,7 +75,7 @@ good.write_text(f"""## explorer (ag-1)
 {filler}{filler}
 
 ```queue
-[{{"name":"T_dim768","cfg":{{"dbs":128,"tbs":19,"depth":8,"dim":768,"mlp":4,"ve":2,"win":"SSSL","swdiv":2}},
+[{{"name":"T_dim768","hypothesis_id":"none","cfg":{{"dbs":128,"tbs":19,"depth":8,"dim":768,"mlp":4,"ve":2,"win":"SSSL","swdiv":2}},
   "rationale":"width never varied","falsifier":"steps drop >10%","expected":"lower bpb"}}]
 ```
 """)

@@ -433,26 +433,47 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
                 # Everything else on such a line must stand on its own.
                 import re as _re
                 DERIV = _re.compile(
-                    r"(\d+\.\d{3,})\s*(?:-|\u2212|\+)\s*(\d+\.\d{3,})\s*=\s*"
+                    r"(\d+\.\d{3,})\s*(-|\u2212|\+)\s*(\d+\.\d{3,})\s*=\s*"
                     r"([+\u2212-]?\d+\.\d{3,})")
                 def _g(v):
                     return v in reg or v in declared or any(abs(v - k) < 5e-6 for k in reg)
                 for _ in range(8):
                     before = len(declared)
                     for ln in lines:
-                        for a, b, c in DERIV.findall(ln):
+                        for a, op, b, c in DERIV.findall(ln):
                             av, bv = round(float(a), 6), round(float(b), 6)
-                            cv = round(abs(float(c.replace("\u2212", "-").lstrip("+-"))), 6)
+                            craw = c.replace("\u2212", "-")
+                            cv = round(float(craw), 6)
                             if not (_g(av) and _g(bv)):
                                 continue
-                            if abs(abs(av - bv) - cv) < 5e-6 or abs(abs(av + bv) - cv) < 5e-6:
+                            # SIGNED, and the operator on the page must be the operator
+                            # actually performed. The first version stripped the sign from
+                            # both sides and accepted either operation, so "0.993970 -
+                            # 0.989520 = +0.004450" passed with the sign inverted, and a
+                            # written minus was accepted whenever only the SUM matched.
+                            # Two independent audits defeated it that way within an hour.
+                            want = av - bv if op in "-\u2212" else av + bv
+                            if abs(want - cv) < 5e-6:
+                                declared.add(round(abs(cv), 6))
                                 declared.add(cv)
                         # A line that lists >=3 already-grounded values may declare a
                         # summary statistic over them (a mean, an sd): the inputs are all
                         # visible and checkable by the reader on that same line.
+                        # The >=3-grounded-values allowance existed so a line listing
+                        # four per-device deltas could also state their mean and sd. As
+                        # written it declared ANY number on such a line, which both audits
+                        # used to launder arbitrary figures. A summary statistic of a set
+                        # is bounded by that set: a mean lies inside [min, max], and a
+                        # spread cannot exceed the range. Numbers outside those bounds are
+                        # not summaries of what is on the line and must stand on their own.
                         vals = [round(float(mm.group(1)), 6) for mm in NUM_RE.finditer(ln)]
-                        if len([v for v in vals if _g(v)]) >= 3:
-                            declared.update(vals)
+                        gr = [v for v in vals if _g(v)]
+                        if len(gr) >= 3:
+                            lo, hi = min(gr), max(gr)
+                            rng = hi - lo
+                            for v in vals:
+                                if lo - 5e-6 <= v <= hi + 5e-6 or abs(v) <= rng + 5e-6:
+                                    declared.add(v)
                     if len(declared) == before:
                         break
             for m in NUM_RE.finditer(txt):
