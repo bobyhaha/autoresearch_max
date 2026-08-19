@@ -181,6 +181,39 @@ def main():
                 print("    VOID -- EXCLUDED: treatment and control finished at different "
                       "final_epoch (L005_operating_point_moved_v2); a regime comparison, "
                       "not a result, so it takes no part in the mean below")
+        # SPORADIC vs SYSTEMATIC. The rule above was written for R2V_A_s0_treat, where ONE
+        # arm crossed the 2-epoch boundary and its wave-mates did not: a contention-caused
+        # shift in one cell, which is a genuine confound and must be excluded.
+        #
+        # It is the wrong call when EVERY arm shows the same directional gap, because then
+        # the regime change is not noise that happened to land on one cell -- it is what the
+        # treatment DOES. MTP finished at epoch 1 against control epoch 2 in both waves, on
+        # swapped slots, with deltas agreeing to 4e-4 (+0.079681, +0.079288); it is 2.8x
+        # slower per step and cannot reach the boundary inside 300 seconds. Voiding that
+        # reports NO VERDICT for a treatment whose cost is enormous, reproducible, and
+        # precisely the thing being measured.
+        #
+        # CLAUDE.md settles which reading governs: "Raw val_bpb is the verdict. A treatment
+        # that costs throughput is genuinely worse at a fixed 300s budget; that cost is the
+        # finding, not a nuisance term." Suppressing the verdict here contradicted the
+        # campaign's own measurement principle.
+        #
+        # So: a mismatch seen in EVERY arm, in the same direction, with at least two arms to
+        # tell systematic from sporadic, is REPORTED with the regime difference stated in
+        # full. Anything less consistent is still excluded exactly as before.
+        systematic = (len(arms) >= 2 and len(voided) == len(arms) and
+                      len({(a["t"]["metrics"].get("final_epoch") <
+                            a["c"]["metrics"].get("final_epoch")) for a in arms}) == 1)
+        if voided and systematic:
+            lo = arms[0]["t"]["metrics"].get("final_epoch")
+            hi = arms[0]["c"]["metrics"].get("final_epoch")
+            print(f"  SYSTEMATIC REGIME SHIFT, NOT VOID: every arm finished at treatment "
+                  f"epoch {lo} against control epoch {hi}, on swapped slots. The epoch gap "
+                  f"is caused BY the treatment rather than by contention landing on one "
+                  f"cell, so it is the result and not a confound -- the treatment is too "
+                  f"slow to reach the boundary in the fixed budget. Reported below with "
+                  f"that difference stated; read the step counts, which are the mechanism.")
+            voided = []
         if voided:
             arms = [a for a in arms if a not in voided]
             print(f"  {len(voided)} arm(s) excluded as VOID; {len(arms)} usable. The "
