@@ -197,7 +197,16 @@ def main():
         # swap is needed and no offset is fitted. Detect it and report it as one verdict.
         slots_t = {a["treat_dev"] for a in arms}
         slots_c = {a["ctl_dev"] for a in arms}
-        if len(arms) >= 4 and len(slots_t) >= 4 and slots_t == slots_c:
+        # Prefer SAME-GPU pairing whenever at least two devices ran both roles, not only
+        # when a full four-device quad survives. The fallback path below pairs within a
+        # wave and then discards any GPU-pair that is not internally counterbalanced, so
+        # after a VOID exclusion the ve arm reported a mean over TWO deltas while three
+        # same-GPU pairs existed -- and the paper, which uses same-GPU pairing, certified a
+        # different number than the tool did. Two defensible estimators disagreeing by
+        # 0.00006 is survivable; a tool and a paper disagreeing about the same arm is not.
+        byg_t_all = {a["treat_dev"]: a["t"] for a in arms}
+        byg_c_all = {a["ctl_dev"]: a["c"] for a in arms}
+        if len(arms) >= 2 and len(set(byg_t_all) & set(byg_c_all)) >= 2:
             # Re-pair SAME-GPU across the two waves before averaging. Pairing within a
             # wave leaves the whole device profile inside each delta -- gpu4 is the slow
             # device and gpu7 the fast one, a 0.0025 spread as large as any effect -- so
@@ -246,8 +255,9 @@ def main():
             verdict = ("BETTER than control" if mean < -res_n else
                        "WORSE than control" if mean > res_n else
                        "INSIDE the resolution -- no effect demonstrated")
-            print(f"  QUAD-COUNTERBALANCED over {len(arms)} pairings, treatment on every "
-                  f"slot: mean delta {mean:+.6f} vs resolution {res_n:.6f} "
+            full = len(slots_t) >= 4 and slots_t == slots_c
+            print(f"  {'QUAD-COUNTERBALANCED' if full else 'SAME-GPU PAIRED (INCOMPLETE QUAD)'}"
+                  f" over {len(arms)} pairings: mean delta {mean:+.6f} vs resolution {res_n:.6f} "
                   f"(2*SE at n={n_eff}, control-derived) -> {verdict}")
             if res_paired:
                 agree = (abs(mean) > res_paired) == (abs(mean) > res_n)

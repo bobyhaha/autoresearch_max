@@ -349,7 +349,7 @@ directly against `python3 tools/coe.py registry`.
 
 **`swdiv` 2→4**: 0.991488 − 0.993812 = −0.002324; 0.990407 − 0.992907 = −0.002500; 0.989656 − 0.992444 = −0.002788; 0.989449 − 0.991689 = −0.002240; mean −0.002463, sd 0.000242, sem 0.000121, t −20.3.
 
-**`ve` 2→1** (three devices; the gpu4 pair is void at `final_epoch` 1.0): 0.991366 − 0.992733 = −0.001367; 0.990387 − 0.991751 = −0.001364; 0.989819 − 0.991550 = −0.001731; mean −0.001487, sd 0.000211, sem 0.000122, t −12.2.
+**`ve` 2→1** (three devices; the gpu4 pair is void at `final_epoch` 1.0). NOTE two defensible pairings disagree here and both are recorded rather than reconciled: pairing by DEVICE from the raw runs keeps gpu5, whose control survives the void, and gives the figure below; pairing from pre-formed wave ARMS drops gpu5 because voiding its wave-mate removes that control from the pool, and `tools/verdict.py` therefore certifies -0.001548 over two devices. Same verdict, different certified number, and the gap -- about 0.00006 -- is small only by luck. Derivation by device: 0.991366 − 0.992733 = −0.001367; 0.990387 − 0.991751 = −0.001364; 0.989819 − 0.991550 = −0.001731; mean −0.001487, sd 0.000211, sem 0.000122, t −12.2.
 
 **`precond`**: 0.992871 − 0.993773 = −0.000902; 0.991425 − 0.992570 = −0.001145; 0.990878 − 0.992064 = −0.001186; 0.990345 − 0.991699 = −0.001354; mean −0.001147, sd 0.000187, sem 0.000187 / 2 = 0.000093, t −12.3.
 
