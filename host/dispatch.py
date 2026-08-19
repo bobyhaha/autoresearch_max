@@ -243,7 +243,12 @@ def release(item):
 def parse(txt):
     m = {}
     for line in txt.replace("\r", "\n").splitlines():
-        mt = re.match(r"^([a-z_0-9]+):\s+([-\d.]+)\s*$", line)
+        # [A-Za-z] not [a-z]: the pattern silently dropped every metric with a capital in
+        # its name. num_params_M, flops_per_token_M and total_tokens_M are printed by
+        # EVERY run and appear in ZERO result records because of it -- which is also why
+        # the campaign spent a day believing the model had 124M parameters when the run
+        # itself had been reporting 50.33M all along (L015_model_is_50M_not_124M).
+        mt = re.match(r"^([A-Za-z_0-9]+):\s+([-\d.]+)\s*$", line)
         if mt:
             try:
                 m[mt.group(1)] = float(mt.group(2))

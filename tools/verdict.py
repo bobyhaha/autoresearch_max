@@ -118,6 +118,29 @@ def main():
             if tm.get("final_epoch") != cm.get("final_epoch"):
                 print("    VOID: treatment and control finished at different final_epoch "
                       "(L005_operating_point_moved_v2) -- a regime comparison, not a result")
+        # A QUAD-COUNTERBALANCED design (tools/queue_quad.py) puts the treatment on every
+        # slot once and the control on every slot once across two four-wide waves, so the
+        # whole slot profile cancels in the mean of the within-pair deltas -- no pairwise
+        # swap is needed and no offset is fitted. Detect it and report it as one verdict.
+        slots_t = {a["treat_cores"] for a in arms}
+        slots_c = {a["ctl_cores"] for a in arms}
+        if len(arms) >= 4 and len(slots_t) >= 4 and slots_t == slots_c:
+            mean = st.mean(a["delta"] for a in arms)
+            verdict = ("BETTER than control" if mean < -res else
+                       "WORSE than control" if mean > res else
+                       "INSIDE the resolution -- no effect demonstrated")
+            print(f"  QUAD-COUNTERBALANCED over {len(arms)} pairings, treatment on every "
+                  f"slot: mean delta {mean:+.6f} vs resolution {res:.6f} -> {verdict}")
+            for a in arms:
+                hid = a["t"].get("hypothesis_id")
+                if hid and hid in hyps:
+                    act = hyps[hid]["activation"]
+                    val = (a["t"].get("metrics") or {}).get(act["diagnostic"])
+                    print(f"    ACTIVATION {a['wave']} s{a['treat_cores']}: "
+                          f"{act['diagnostic']}={val}")
+            print()
+            continue
+
         # Group arms by the core-block PAIR they ran on; only within a pair does swapping
         # the roles cancel that pair's fixed offset.
         groups = {}
