@@ -242,6 +242,20 @@ def e3_activation() -> list[str]:
                 f"was wrong independently of this result -- otherwise a failing activation "
                 f"can be cleared by rewriting the test.")
             continue
+        # A RUN THAT DIED CANNOT DEMONSTRATE ANYTHING. R7MLP_P1_s0_treat was OOM-killed by
+        # a foreign tenant one minute after launch (L073) and produced no metrics at all,
+        # and E3 then reported it as failing to emit its activation diagnostic -- which is
+        # true and vacuous. An invalid run is not evidence for the mechanism, against it,
+        # or inconclusive about it; it is not evidence. The distinction that matters is
+        # between a run that RAN and did not engage, which is what this check exists to
+        # catch, and a run that never got to try.
+        #
+        # Deliberately narrow: it skips only records already marked ok:false with a reason
+        # recorded, which the dispatcher writes when it cannot parse a val_bpb or detects a
+        # crash. A completed run missing its diagnostic is still a break.
+        if not r.get("ok") and (r.get("invalid_reason") or r.get("error")
+                                or not (r.get("metrics") or {}).get("val_bpb")):
+            continue
         act = h.get("activation") or {}
         diag = act.get("diagnostic")
         met = r.get("metrics") or {}

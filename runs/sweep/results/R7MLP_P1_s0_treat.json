@@ -1,0 +1,24 @@
+{
+ "name": "R7MLP_P1_s0_treat",
+ "cfg": {
+  "dbs": 128,
+  "tbs": 18,
+  "depth": 8,
+  "dim": 512,
+  "mlp": 2,
+  "ve": 2,
+  "win": "SSSL",
+  "swdiv": 2
+ },
+ "gpu": 1,
+ "hypothesis_id": "hyp_mlp2_capacity_r5_p18",
+ "started": 1787179711.4534175,
+ "ended": 1787179861.3409088,
+ "returncode": 1,
+ "metrics": {},
+ "cotenant_detected": true,
+ "cores": "96-107",
+ "ok": false,
+ "invalid_reason": "gpu co-tenancy during the run",
+ "error": "rocess 2839900 has 124.41 GiB memory in use. Of the allocated memory 14.51 GiB is allocated by PyTorch, and 56.99 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)"
+}

@@ -1,0 +1,175 @@
+{
+ "at": "2026-08-19T23-06-28Z",
+ "state_hash": "0287ad8b1c7ab7e2",
+ "n_results": 172,
+ "candidate_set": [
+  "R7MLP_P2",
+  "R7MLP_P3",
+  "R7MLP_P4",
+  "R7XF_P1",
+  "R7XF_P2",
+  "R7XF_P3",
+  "R7XF_P4",
+  "R7S16_P1",
+  "R7S16_P2",
+  "R7S16_P3",
+  "R7S16_P4",
+  "R7DBS_P1",
+  "R7DBS_P2",
+  "R7DBS_P3",
+  "R7DBS_P4",
+  "R7T17_P1",
+  "R7T17_P2",
+  "R7T17_P3",
+  "R7T17_P4"
+ ],
+ "scores": {
+  "R7MLP_P2": 4.363,
+  "R7MLP_P3": 4.363,
+  "R7MLP_P4": 4.363,
+  "R7XF_P1": 3.913,
+  "R7XF_P2": 3.913,
+  "R7XF_P3": 3.913,
+  "R7XF_P4": 3.913,
+  "R7S16_P1": 3.891,
+  "R7S16_P2": 3.891,
+  "R7S16_P3": 3.891,
+  "R7S16_P4": 3.891,
+  "R7DBS_P1": 0.781,
+  "R7DBS_P2": 0.781,
+  "R7DBS_P3": 0.781,
+  "R7DBS_P4": 0.781,
+  "R7T17_P1": 0.781,
+  "R7T17_P2": 0.781,
+  "R7T17_P3": 0.781,
+  "R7T17_P4": 0.781
+ },
+ "terms": {
+  "R7MLP_P2": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7MLP_P3": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7MLP_P4": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7XF_P1": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 9 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7XF_P2": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 9 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7XF_P3": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 9 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7XF_P4": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 9 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7S16_P1": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 17 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7S16_P2": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 17 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7S16_P3": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 17 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7S16_P4": {
+   "gain": "untouched family; median confirmed -0.002663 as prior",
+   "info": "unmeasured family; spread unknown",
+   "novelty": "least-explored axis has 17 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7DBS_P1": {
+   "gain": "best observed in family +0.000000",
+   "info": "robust spread (MAD) over 107 runs 0.000469",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7DBS_P2": {
+   "gain": "best observed in family +0.000000",
+   "info": "robust spread (MAD) over 107 runs 0.000469",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7DBS_P3": {
+   "gain": "best observed in family +0.000000",
+   "info": "robust spread (MAD) over 107 runs 0.000469",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7DBS_P4": {
+   "gain": "best observed in family +0.000000",
+   "info": "robust spread (MAD) over 107 runs 0.000469",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7T17_P1": {
+   "gain": "best observed in family +0.000000",
+   "info": "robust spread (MAD) over 107 runs 0.000469",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7T17_P2": {
+   "gain": "best observed in family +0.000000",
+   "info": "robust spread (MAD) over 107 runs 0.000469",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7T17_P3": {
+   "gain": "best observed in family +0.000000",
+   "info": "robust spread (MAD) over 107 runs 0.000469",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  },
+  "R7T17_P4": {
+   "gain": "best observed in family +0.000000",
+   "info": "robust spread (MAD) over 107 runs 0.000469",
+   "novelty": "least-explored axis has 0 runs",
+   "cost": "1.1 GPU-hours (equal for all quads; reported, not scored)"
+  }
+ },
+ "selected": [
+  "R7XF_P2"
+ ],
+ "selection_reason": "OPERATOR OVERRIDE: R7XF_P1 landed at -0.002018 but L068/L074 bind to the COUNTERBALANCED mean, not a single pair, so P2's slot swap is what makes the pre-registered retraction test evaluable at all. Leaving it behind other waves would leave the campaign holding a suggestive single pair on its best number indefinitely -- which is the state the pre-registration exists to end.",
+ "operator_override": "R7XF_P2",
+ "weights": {
+  "gain": 1.0,
+  "info": 0.6,
+  "novelty": 0.5,
+  "resolve": 4.0,
+  "activation_penalty": 8.0
+ }
+}
