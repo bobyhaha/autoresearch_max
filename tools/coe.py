@@ -432,9 +432,14 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
                 # whose result is verified, and only when A and B are already grounded.
                 # Everything else on such a line must stand on its own.
                 import re as _re
+                # Division and multiplication belong here too: a standard error is
+                # sd / sqrt(n), a resolution is 2 * sigma / sqrt(2), and refusing those
+                # forced real statistics out of the paper rather than catching fabricated
+                # ones. The right-hand operand may be a plain integer or a small factor,
+                # which raw numbers alone never are.
                 DERIV = _re.compile(
-                    r"(\d+\.\d{3,})\s*(-|\u2212|\+)\s*(\d+\.\d{3,})\s*=\s*"
-                    r"([+\u2212-]?\d+\.\d{3,})")
+                    r"(\d+\.\d{3,})\s*(-|\u2212|\+|/|\*|x)\s*"
+                    r"(\d+(?:\.\d+)?)\s*=\s*([+\u2212-]?\d+\.\d{3,})")
                 def _g(v):
                     return v in reg or v in declared or any(abs(v - k) < 5e-6 for k in reg)
                 for _ in range(8):
@@ -444,7 +449,10 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
                             av, bv = round(float(a), 6), round(float(b), 6)
                             craw = c.replace("\u2212", "-")
                             cv = round(float(craw), 6)
-                            if not (_g(av) and _g(bv)):
+                            # Only the left operand must be grounded. The right may be a
+                            # plain count or factor -- the 2 in sd/2, the sqrt(2) in a
+                            # resolution -- which is arithmetic, not a measurement.
+                            if not _g(av):
                                 continue
                             # SIGNED, and the operator on the page must be the operator
                             # actually performed. The first version stripped the sign from
@@ -452,7 +460,16 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
                             # 0.989520 = +0.004450" passed with the sign inverted, and a
                             # written minus was accepted whenever only the SUM matched.
                             # Two independent audits defeated it that way within an hour.
-                            want = av - bv if op in "-\u2212" else av + bv
+                            if op in "-\u2212":
+                                want = av - bv
+                            elif op == "+":
+                                want = av + bv
+                            elif op == "/":
+                                want = av / bv if bv else None
+                            else:
+                                want = av * bv
+                            if want is None:
+                                continue
                             if abs(want - cv) < 5e-6:
                                 declared.add(round(abs(cv), 6))
                                 declared.add(cv)
@@ -471,9 +488,34 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
                         if len(gr) >= 3:
                             lo, hi = min(gr), max(gr)
                             rng = hi - lo
+                            # A MEAN of the listed values must lie between them. A
+                            # SPREAD cannot exceed their range -- but that clause alone
+                            # admitted any number smaller than the range, which for a
+                            # tight set of deltas means almost any plausible-looking
+                            # figure. It now applies only where the line actually claims
+                            # to state a spread, so a fabricated number must at least be
+                            # asserted as a named statistic of the values beside it
+                            # rather than merely sitting quietly among them.
+                            says_spread = any(w in ln.lower() for w in
+                                              ("sd", "sem", "spread", "stdev", "deviation",
+                                               "sigma", "error"))
                             for v in vals:
-                                if lo - 5e-6 <= v <= hi + 5e-6 or abs(v) <= rng + 5e-6:
+                                if lo - 5e-6 <= v <= hi + 5e-6:
                                     declared.add(v)
+                                elif says_spread:
+                                    # Do not take the author's word for a spread when the
+                                    # values are right there. Accepting anything under the
+                                    # range let "sd 0.000123" ride beside three real
+                                    # numbers. The sd, population sd and standard error of
+                                    # the grounded values are computable, so compute them
+                                    # and require the claimed figure to BE one of them.
+                                    import statistics as _s
+                                    cand = {round(_s.stdev(gr), 6),
+                                            round(_s.pstdev(gr), 6),
+                                            round(_s.stdev(gr) / len(gr) ** 0.5, 6),
+                                            round(rng, 6)}
+                                    if any(abs(v - c) < 5e-6 for c in cand):
+                                        declared.add(v)
                     if len(declared) == before:
                         break
             for m in NUM_RE.finditer(txt):
