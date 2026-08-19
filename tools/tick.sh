@@ -117,6 +117,19 @@ if inc:                       # never prune against an empty or unreadable local
         else:
             removed.append(e['name'])
     cur = keep
+
+# ORDER PROPAGATES, for entries not yet launched. The merge matched entries by name and
+# kept the HOST's ordering, so a locally computed decision -- which wave the selector says
+# runs next -- never reached the dispatcher, which reads its queue top-down. The operator
+# hand-pushed an ordering to the host twice in one session because of this, and both times
+# it was invisible in the repository afterwards. Launched entries keep their position:
+# reordering a run already on disk would misdescribe history.
+want = [e['name'] for e in inc]
+pos = {n: i for i, n in enumerate(want)}
+started = [e for e in cur if launched(e['name'])]
+rest = [e for e in cur if not launched(e['name'])]
+rest.sort(key=lambda e: pos.get(e['name'], 10**6))
+cur = started + rest
 q.write_text(json.dumps(cur, indent=1))
 msg = f'queue: {len(cur)} on host, {added} added, {updated} updated in place'
 if removed:
