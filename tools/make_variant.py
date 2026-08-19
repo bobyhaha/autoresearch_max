@@ -66,6 +66,27 @@ def build(cfg: dict) -> str:
             f"direction.MECHANISMS but have no branch in make_variant.build(); a config "
             f"requesting one would silently generate the control source")
 
+    # AND a key the policy has never heard of is worse, because nothing downstream looks
+    # for it either. Ten registered hypotheses -- adam_group_warmup_only,
+    # cooldown_adam_floor, lr_peak_first_exposure, muon_shape_rule_exact,
+    # beta1_high_variance_groups, periln_branch_norm, lmhead_beta1_horizon,
+    # namo_scale_preserving, kron_byte_input_code, muon_output_projections_only -- name cfg
+    # keys that are in neither KNOB_AXES nor MECHANISMS, so build() dropped them on the
+    # floor and returned the control source byte-for-byte. The registry has been
+    # advertising ten experiments that could never run, and a round could spend a proposal
+    # on any of them before the byte-identical guard at the queue door noticed.
+    #
+    # The mechanism check above was written for exactly this failure and covers only keys
+    # the policy already knows. This covers the rest.
+    _unknown = _d.unknown_keys(cfg)
+    if _unknown:
+        raise VariantEditError(
+            f"cfg key(s) {sorted(_unknown)} are not in direction.KNOB_AXES or "
+            f"direction.MECHANISMS, so build() would ignore them and return the control "
+            f"source unchanged. Either implement the knob and register it with the policy, "
+            f"or stop citing it in a hypothesis -- silently generating a control is how a "
+            f"registry comes to advertise experiments that cannot run.")
+
     s = BASE.read_text()
     obs = []   # activation-observable print lines, injected after the telemetry block
 

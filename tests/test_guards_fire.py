@@ -312,3 +312,19 @@ def test_integrity_lesson_must_report_a_sibling_search():
     sci = claims.validate_lesson({**base, "type": "valid_negative"})
     assert not any("sibling_search" in b for b in sci), (
         "the sibling-search requirement leaked onto scientific lessons")
+
+
+def test_build_refuses_a_cfg_key_the_policy_never_heard_of():
+    """Silently ignoring an unknown key returns the CONTROL source byte-for-byte.
+
+    Ten registered hypotheses named cfg keys in neither KNOB_AXES nor MECHANISMS, so
+    build() dropped them and produced a control. The registry advertised ten experiments
+    that could never run, and only the byte-identical check at the queue door would have
+    noticed -- after a round had already spent a proposal on one.
+    """
+    import make_variant
+    with pytest.raises(Exception) as e:
+        make_variant.build({**direction.PLATFORM, "periln_branch_norm": 1})
+    assert "KNOB_AXES" in str(e.value) or "not in direction" in str(e.value)
+    # And a knob the policy DOES know must still build.
+    assert make_variant.build({**direction.PLATFORM, "zloss": 0.1})
