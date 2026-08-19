@@ -153,9 +153,23 @@ def main() -> int:
     # earliest created_at already on record. The experiment keeps the review timestamp it
     # actually earned. A genuinely new cfg or a different hypothesis finds no match and is
     # frozen exactly as before, which is the case the cutoff exists for.
+    # The key includes the STATED REASONING, not just the config. Keying on cfg and
+    # hypothesis alone let an operator requeue an old reviewed pair under an entirely new
+    # rationale, falsifier and expectation and still inherit the ancient timestamp -- an
+    # audit demonstrated it live against a real queue entry. That is a council-freeze
+    # bypass, and a worse one than the mechanical re-shape this inheritance exists for,
+    # because the words a reviewer would actually read are exactly the ones that changed.
+    #
+    # A genuine width re-shape carries the same cfg, the same hypothesis AND the same
+    # rationale, so it still inherits. Rewriting any of the prose makes it a new decision
+    # and it is frozen until the next council, which is the correct answer.
+    def _ikey(e):
+        return (json.dumps(e.get("cfg"), sort_keys=True), e.get("hypothesis_id"),
+                (e.get("rationale") or "").strip(), (e.get("falsifier") or "").strip(),
+                (e.get("expected") or "").strip())
     _prior = {}
     for e in q:
-        k = (json.dumps(e.get("cfg"), sort_keys=True), e.get("hypothesis_id"))
+        k = _ikey(e)
         ts = e.get("created_at")
         if ts and (k not in _prior or ts < _prior[k]):
             _prior[k] = ts
@@ -173,7 +187,8 @@ def main() -> int:
                  "wave_group": grp,
                  "created_at": _prior.get(
                      (json.dumps(T if role == "t" else P, sort_keys=True),
-                      a.hyp if (role == "t" and a.hyp != "none") else None), stamp),
+                      a.hyp if (role == "t" and a.hyp != "none") else None,
+                      a.rationale.strip(), a.falsifier.strip(), a.expected.strip()), stamp),
                  "source_round": "quad-counterbalanced", "vram_est": 50}
             if role == "t" and a.hyp != "none":
                 e["hypothesis_id"] = a.hyp

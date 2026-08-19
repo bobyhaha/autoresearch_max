@@ -278,8 +278,45 @@ def main():
                 sem = sd / (len(paired) ** 0.5) if sd else 0.0
                 print(f"  SAME-GPU PAIRED over {len(shared)} devices {shared}: "
                       f"deltas {[round(x, 6) for x in paired]}")
-                print(f"    mean {mean:+.6f}  sd {sd:.6f}  sem {sem:.6f}"
-                      + (f"  t={mean/sem:.1f}" if sem else ""))
+                # BOTH PAIRINGS, ALWAYS, WITH THE DEGREES OF FREEDOM. Re-pairing same-GPU
+                # across waves removes the device term from the VARIANCE, which shrinks sd
+                # and inflates t -- for R5MU2 from sd 0.000391 to 0.000117 and t from -26.9
+                # to -90.2. Printing only the flattering one is how it gets quoted, and it
+                # was quoted, twice: z-loss as t=2110 (raw 683.9) and R5MU2 as t=-90.2. The
+                # second happened an hour AFTER a lesson recorded the first, which is the
+                # evidence that a lesson does not bind behaviour and a print statement does.
+                #
+                # df is printed because at two pairs it is 1, and a t on one degree of
+                # freedom is arithmetic rather than evidence however large it looks.
+                _raw = [a["delta"] for a in arms]
+                _rm = st.mean(_raw)
+                _rsd = st.stdev(_raw) if len(_raw) > 1 else 0.0
+                _rsem = _rsd / len(_raw) ** 0.5 if _rsd else 0.0
+                print(f"    same-GPU re-paired: mean {mean:+.6f}  sd {sd:.6f}  "
+                      f"sem {sem:.6f}"
+                      + (f"  t={mean/sem:.1f} (df={len(paired)-1})" if sem else ""))
+                print(f"    raw within-wave:    mean {_rm:+.6f}  sd {_rsd:.6f}  "
+                      f"sem {_rsem:.6f}"
+                      + (f"  t={_rm/_rsem:.1f} (df={len(_raw)-1})" if _rsem else ""))
+                if len(paired) <= 2:
+                    print("    NOTE df<=1: quote the effect against the measured band, "
+                          "not a t computed on one degree of freedom.")
+                # STEP-LAW SHARE, with the extrapolation stated. direction.step_law_explains
+                # returned an `extrapolated` flag that NO caller consulted -- built and not
+                # connected, the failure this campaign has hit seven times. It is consulted
+                # here. The law is fitted on controls spanning 621-1020 steps, so an arm
+                # that ran 303 is outside it, and a share read off an extrapolation must say
+                # so rather than be quoted as though interpolated.
+                try:
+                    _sl = direction.step_law_explains(rows, arms[0]["t"], arms[0]["c"])
+                except Exception:
+                    _sl = None
+                if _sl:
+                    _mark = "  [EXTRAPOLATED beyond the fitted step range]" if _sl.get(
+                        "extrapolated") else ""
+                    print(f"    step law explains {100*_sl['share']:.0f}% "
+                          f"(predicted {_sl['predicted']:+.6f}, residual "
+                          f"{_sl['residual']:+.6f}){_mark}")
             else:
                 mean = st.mean(a["delta"] for a in arms)
             # Threshold at the n ACTUALLY measured, not the n=4 constant. Excluding a

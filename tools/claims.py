@@ -177,11 +177,24 @@ def validate_lesson(l: dict) -> list[str]:
     # instances. The field is cheap when the answer is "grepped X, found none" and it is
     # the whole point when the answer is "found two more". It cannot be satisfied by
     # editing a number -- only by having actually looked.
-    if l.get("type") in ("integrity", "runtime") and not l.get("sibling_search"):
-        bad.append("an integrity/runtime lesson must carry 'sibling_search': what you "
-                   "searched to find OTHER instances of this defect class, and what you "
-                   "found. Fixing one instance and not looking for siblings is this "
-                   "campaign's most repeated failure -- three times in one day.")
+    if l.get("type") in ("integrity", "runtime"):
+        _ss = (l.get("sibling_search") or "").strip()
+        # A presence check accepted "n/a", "." and even "did not search" -- an audit
+        # demonstrated all three passing. The field only does work if it must describe an
+        # actual search, so it has to name WHERE you looked (a path, a module, a tool) and
+        # be long enough to say what you found. This is still not proof anyone looked; it
+        # raises the cost of not looking above the cost of looking, which is the most a
+        # validator can do.
+        _named = any(tok in _ss for tok in ("/", ".py", "grep", "searched", "Searched",
+                                            "Grepped", "grepped", "checked", "Checked"))
+        if not _ss or len(_ss) < 120 or not _named:
+            bad.append(
+                "an integrity/runtime lesson must carry a substantive 'sibling_search': "
+                "what you searched for OTHER instances of this defect class, WHERE you "
+                "looked (name a path, module or tool), and what you found. It must be at "
+                "least 120 characters and name a search target -- a presence check used to "
+                "accept 'n/a' and even 'did not search'. Fixing one instance and not "
+                "looking for siblings is this campaign's most repeated failure.")
     if l.get("type") == "non_activation" and l.get("action") == "block":
         bad.append("a non-activation may not 'block' a direction: the intervention never "
                    "engaged, so the run is inconclusive about the mechanism, not against it")
