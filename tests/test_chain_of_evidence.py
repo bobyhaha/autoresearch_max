@@ -126,16 +126,31 @@ setup(hyps=[HG], results=[
     {"name": "C2", "cfg": CTL, "ok": True, "metrics": {"val_bpb": 1.2, "smax": 0.286}}])
 ok(coe.e3_activation() == [], "a separating, varying diagnostic passes")
 
-# A corrected hypothesis retires its predecessor via `supersedes`, so a fixed defect
-# stops failing the audit -- otherwise the chain fails forever and gets ignored.
-setup(hyps=[HD, {"id": "hd2", "supersedes": "hd",
-                 "activation": {"diagnostic": "smax", "rule": {"op": "gt", "value": 1.0}}}],
-      results=[
+# A corrected hypothesis retires its predecessor via `supersedes`, so a fixed defect stops
+# failing the audit -- otherwise the chain fails forever and gets ignored. But re-judging a
+# COMPLETED run under a new rule is also how a failing activation could be cleared by
+# rewriting the test, so the correction must say why it was right independently of the
+# result it now judges. Unjustified: refused. Justified: accepted. Both are asserted,
+# because a guard that only ever refuses is as broken as one that only ever accepts.
+_SUP = {"id": "hd2", "supersedes": "hd",
+        "activation": {"diagnostic": "smax", "rule": {"op": "gt", "value": 1.0}}}
+_RES = [
     {"name": "T1", "hypothesis_id": "hd", "cfg": {**CTL, "mlp": 9}, "ok": True,
      "metrics": {"val_bpb": 1.1, "clampf": 0.0, "smax": 20.27}},
-    {"name": "C1", "cfg": CTL, "ok": True, "metrics": {"val_bpb": 1.1, "clampf": 0.0, "smax": 0.255}}])
+    {"name": "C1", "cfg": CTL, "ok": True,
+     "metrics": {"val_bpb": 1.1, "clampf": 0.0, "smax": 0.255}}]
+
+setup(hyps=[HD, _SUP], results=_RES)
+_p = coe.e3_activation()
+ok(any("post_hoc_rule_change" in s for s in _p),
+   "an unjustified post-hoc rule change is refused, not silently applied")
+
+setup(hyps=[HD, {**_SUP, "post_hoc_rule_change": "the predecessor tested one side of a "
+                 "two-sided departure and no treatment could satisfy it; the replacement is "
+                 "one-sided by construction and was validated before this result existed"}],
+      results=_RES)
 ok(coe.e3_activation() == [],
-   "results recorded under the broken test are judged by the correction that supersedes it")
+   "a JUSTIFIED correction does re-judge results recorded under the broken test")
 
 print("\nE4 METHOD-CODE -- never spend GPU time on a variant identical to the control")
 import direction, make_variant
