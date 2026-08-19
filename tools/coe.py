@@ -444,7 +444,15 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
             # hatch: there, naming a source token on the line is enough; here the line
             # must carry at least TWO actual registry values, i.e. the arithmetic itself
             # must be on the page. A derivation you cannot check is not a derivation.
-            derivation_lines = d == "papers"
+            # Critiques get BOTH hatches, and this is a strengthening rather than a
+            # loosening. A critique is the document that recomputes the most -- its whole
+            # job is checking the campaign's arithmetic against runs/sweep/results -- and
+            # it was getting the WEAKEST check: name a source token on the line. A dense
+            # recomputation that shows its work in full ("(0.990387-0.991751, ...) =
+            # (-0.001364, -0.001731)") failed, while a bare number beside a hypothesis id
+            # passed. That is exactly backwards. Shown, checkable arithmetic now grounds a
+            # value here too, on the same verified-result terms papers are held to.
+            derivation_lines = d in ("papers", "critiques")
             lines = txt.splitlines()
             # Provenance is declared once per document, not restated at every mention.
             # A derived statistic (a band, an offset, a resolution) is computed from the
@@ -485,9 +493,39 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
                     r"(\d+(?:\.\d+)?)\s*=\s*([+\u2212-]?\d+\.\d{3,})")
                 def _g(v):
                     return v in reg or v in declared or any(abs(v - k) < 5e-6 for k in reg)
+                # Paired analysis is written compactly as tuples --
+                # "(0.990387-0.991751, 0.989819-0.991550) = (-0.001364, -0.001731)" --
+                # which is FULLY shown arithmetic that the scalar matcher cannot parse. It
+                # is checked elementwise here rather than waved through: same grounding
+                # requirement, same verification of the result, just tuple-shaped.
+                TUP = _re.compile(r"\(([^()=]+)\)\s*=\s*\(([^()]+)\)")
+                PAIR = _re.compile(r"(\d+\.\d{3,})\s*(-|\u2212)\s*(\d+\.\d{3,})")
+
+                def _tuples(ln, grounded):
+                    got = []
+                    for lhs, rhs in TUP.findall(ln):
+                        ops = PAIR.findall(lhs)
+                        res = [x for x in _re.findall(r"[+\u2212-]?\d+\.\d{3,}", rhs)]
+                        if not ops or len(ops) != len(res):
+                            continue
+                        for (a, _o, b), c in zip(ops, res):
+                            av, bv = round(float(a), 6), round(float(b), 6)
+                            cv = round(float(c.replace("\u2212", "-")), 6)
+                            if not (grounded(av) and grounded(bv)):
+                                continue
+                            if abs((av - bv) - cv) < 5e-6:
+                                # Both signs: the scanner that reports violations captures
+                                # magnitudes, so declaring only the signed value would
+                                # ground a number the audit never asks about.
+                                got.append(cv)
+                                got.append(abs(cv))
+                    return got
+
                 for _ in range(8):
                     before = len(declared)
                     for ln in lines:
+                        for _cv in _tuples(ln, _g):
+                            declared.add(_cv)
                         for a, op, b, c in DERIV.findall(ln):
                             av, bv = round(float(a), 6), round(float(b), 6)
                             craw = c.replace("\u2212", "-")

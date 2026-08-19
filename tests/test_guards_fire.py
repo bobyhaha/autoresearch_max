@@ -135,3 +135,27 @@ def test_guard_is_present_in_source(guard_file, must_contain):
     still there, not that it fires."""
     assert must_contain in (REPO / guard_file).read_text(), (
         f"{guard_file} no longer contains {must_contain!r}; a guard was removed or renamed")
+
+
+def test_emission_guard_refuses_a_diagnostic_the_variant_never_prints():
+    """Declared-and-discriminating is not the same as EMITTED, and the gap cost 8 runs.
+
+    The z-loss arm named `logz_sq_final`; the generator printed `logz_sq_mean`. Both queue
+    doors passed it, because both checked only whether the field would discriminate. Every
+    one of those runs could only have returned a non-activation.
+    """
+    import make_variant
+    cfg = {**direction.PLATFORM, "zloss": 0.1}
+    bad, msg = make_variant.emits_diagnostic(cfg, "logz_sq_nonexistent")
+    assert not bad, f"a diagnostic no generated line prints was accepted: {msg}"
+    good, msg = make_variant.emits_diagnostic(cfg, "logz_sq_final")
+    assert good, f"the diagnostic the variant does emit was refused: {msg}"
+
+
+def test_emission_guard_is_wired_into_both_queue_doors():
+    """The recurring failure is a guard built and never called. Assert the CALL SITES."""
+    for door in ("queue_quad.py", "queue_from_round.py"):
+        src = (REPO / "tools" / door).read_text()
+        assert "emits_diagnostic" in src, (
+            f"{door} does not call the emission pre-check; the guard exists but nothing "
+            f"consults it, which is how the previous seven went unused")

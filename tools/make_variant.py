@@ -403,7 +403,7 @@ f"""def get_muon_momentum(step):
             if self.training and reduction == 'mean':
                 loss = loss + ZLOSS_W * (torch.logsumexp(logits.view(-1, logits.size(-1)), dim=-1) ** 2).mean()""")
         s = sub(s, "HEAD_DIM = 128",
-                      f"HEAD_DIM = 128\nZLOSS_W = {cfg['zloss']}\n_zl_sum = [0.0, 0.0, 0]")
+                      f"HEAD_DIM = 128\nZLOSS_W = {cfg['zloss']}\n_zl_sum = [0.0, 0.0, 0]\n_zl_hist = []")
         s = sub(s, "                loss = loss + ZLOSS_W * (torch.logsumexp(logits.view(-1, logits.size(-1)), dim=-1) ** 2).mean()",
 """                # chunked: a second full-width logsumexp over [B*T, vocab] materialises
                 # another logit-sized fp32 tensor. Accumulate in slices instead.
@@ -414,9 +414,20 @@ f"""def get_muon_momentum(step):
                     _acc = _acc + (torch.logsumexp(_flat[_i:_i+_CH], dim=-1) ** 2).sum()
                 _z = _acc / _flat.size(0)
                 _zl_sum[0] += _z.detach(); _zl_sum[1] += loss.detach(); _zl_sum[2] += 1
+                # Kept as a 0-dim TENSOR, never a float: float(_z) here would force a
+                # device sync every step, cost throughput, and so change the step count
+                # the 300s budget delivers -- corrupting the very number being measured.
+                _zl_hist.append(_z.detach())
                 loss = loss + ZLOSS_W * _z""")
         obs.append("""_zn = max(_zl_sum[2], 1)
 _zm = float(_zl_sum[0]) / _zn
+# The WHOLE-RUN mean is contaminated by the initialisation transient and cannot be the
+# activation statistic: at init log Z = log(8192) = 9.0, so log^2 Z = 81 and a run-average
+# reads high even where the regulariser worked perfectly. The hypothesis's own predicate
+# says the observable must be the steady state, so report the last 10% of recorded steps.
+_zt = max(1, len(_zl_hist) // 10)
+_zf = float(torch.stack(_zl_hist[-_zt:]).mean()) if _zl_hist else float("nan")
+print(f"logz_sq_final:       {_zf:.6f}")
 print(f"logz_sq_mean:        {_zm:.6f}")
 print(f"zloss_frac_of_total: {ZLOSS_W*_zm/max(float(_zl_sum[1])/_zn,1e-9):.6f}")""")
 
@@ -633,3 +644,29 @@ print(f"final_epoch:      {epoch}")''')
 if __name__ == "__main__":
     cfg = json.loads(sys.argv[1])
     sys.stdout.write(build(cfg))
+
+
+def emits_diagnostic(cfg, field):
+    """Does the variant this cfg builds actually PRINT `field`?
+
+    A hypothesis names the observable that proves its mechanism engaged, and the queue door
+    checked only that the observable would DISCRIMINATE -- never that the generated code
+    emits it at all. The two are independent, and the gap was not hypothetical: the z-loss
+    arm declared `logz_sq_final`, its generator printed `logz_sq_mean`, and eight runs were
+    queued that could only ever have returned a non-activation. The hypothesis even carried
+    a `_needs_build` note describing the missing emission, in prose, which nothing read.
+
+    This is the outcome test for that: build the variant and look for the print. Prose about
+    what ought to be built is not a guard; checking the artifact is.
+    """
+    try:
+        src = build(dict(cfg))
+    except Exception as e:                       # a cfg that will not build fails elsewhere
+        return True, f"could not build to check {field!r}: {e}"
+    if f"{field}:" in src:
+        return True, f"generated variant emits {field!r}"
+    import re as _re
+    printed = sorted(set(_re.findall(r'print\(f?"(\w+):', src)))
+    return False, (f"the generated variant never prints {field!r}; it emits {printed}. "
+                   f"The hypothesis would be untestable by construction and every run "
+                   f"would return a non-activation.")

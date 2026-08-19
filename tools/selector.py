@@ -99,8 +99,26 @@ def family_effects(rows):
         if claims.blocked_values(cfg):
             continue
         eff = r["metrics"]["val_bpb"] - dm.get(r.get("gpu"), r["metrics"]["val_bpb"])
-        for fam in _families(cfg):
-            out.setdefault(fam, []).append(eff)
+        fams = _families(cfg)
+        # A run that moves keys in SEVERAL families measures their JOINT effect, and that
+        # joint effect is not attributable to any one of them. Appending the full delta to
+        # each family -- which this did -- credits every factor with the whole stack.
+        #
+        # It was not hypothetical. The three-lever arm R4X_A_s3_treat (ve=1, swdiv=4,
+        # precond=pre) put its entire -0.004355 into BOTH `attention` and `ve_placement`,
+        # where it stood as each family's largest effect. The real single-factor swdiv
+        # arms measure -0.002298 (2->4) and -0.003360 (2->8): the inflated figure was
+        # roughly double the truth, it set the scoring prior for 12+ queued runs, and it
+        # reached round 6's provenance block labelled "best swdiv effect across 16 runs".
+        # L042 had already measured this stack at 86% of additive, so the campaign knew
+        # the factors were non-additive at the moment it was crediting each with the sum.
+        #
+        # A multi-family arm now scores under its own combination key. Nothing is
+        # discarded -- a stack is real evidence about the stack -- but it can no longer
+        # masquerade as evidence about one of its parts.
+        key = fams[0] if len(fams) == 1 else "stack:" + "+".join(sorted(fams))
+        if fams:
+            out.setdefault(key, []).append(eff)
     return out
 
 

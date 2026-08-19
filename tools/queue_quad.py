@@ -99,6 +99,15 @@ def main() -> int:
                       f"that cannot demonstrate engagement.\n  {_msg}")
                 return 1
             print(f"  activation pre-check: {_msg}")
+            # Discriminating and EMITTED are independent. The z-loss arm passed the first
+            # and failed the second, and eight runs were queued that could only ever have
+            # come back as non-activations.
+            _e_ok, _e_msg = make_variant.emits_diagnostic(T, _act["diagnostic"])
+            if not _e_ok:
+                print(f"refusing: hypothesis {a.hyp!r} declares a diagnostic the built "
+                      f"variant never emits.\n  {_e_msg}")
+                return 1
+            print(f"  emission pre-check:   {_e_msg}")
 
     unknown = direction.unknown_keys(T)
     if unknown:

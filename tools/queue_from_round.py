@@ -70,6 +70,14 @@ def main():
                 if not _ok:
                     skipped.append((e["name"], f"activation diagnostic cannot fire: {_msg}"))
                     continue
+                # Discriminating and EMITTED are independent properties. A hypothesis can
+                # name a perfectly discriminating observable that the generated code never
+                # prints, which yields a run that is a non-activation by construction.
+                _e_ok, _e_msg = make_variant.emits_diagnostic(cfg, _act["diagnostic"])
+                if not _e_ok:
+                    skipped.append((e["name"],
+                                    f"declared diagnostic is never emitted: {_e_msg}"))
+                    continue
 
         vhits = claims.blocked_values(cfg)
         if vhits:
