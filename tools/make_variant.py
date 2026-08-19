@@ -46,7 +46,26 @@ def variant_id(src: str) -> str:
     return hashlib.sha256(src.encode()).hexdigest()[:12] + ".py"
 
 
+# Mechanisms that actually have a branch in build(). Kept next to the code so the
+# guard below cannot drift from reality the way direction.MECHANISMS did.
+_IMPLEMENTED = {"mtp", "unet", "zloss", "noqknorm", "precond"}
+
+
 def build(cfg: dict) -> str:
+    # Every MECHANISM the policy knows about must have a branch here. `prefetch` was
+    # listed in direction.MECHANISMS as the only input_pipeline mechanism and had NO
+    # branch, so building it returned the control source unchanged: the policy ranked a
+    # mechanism that could not exist, and the byte-identical guard downstream would have
+    # rejected it only after a round had already spent a proposal on it. Fail at build
+    # time, next to the code that is missing, rather than at the queue door.
+    import direction as _d
+    _unimplemented = {m for m in _d.MECHANISMS if cfg.get(m) is not None} - _IMPLEMENTED
+    if _unimplemented:
+        raise VariantEditError(
+            f"mechanism(s) {sorted(_unimplemented)} are registered in "
+            f"direction.MECHANISMS but have no branch in make_variant.build(); a config "
+            f"requesting one would silently generate the control source")
+
     s = BASE.read_text()
     obs = []   # activation-observable print lines, injected after the telemetry block
 

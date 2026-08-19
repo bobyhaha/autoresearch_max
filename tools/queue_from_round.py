@@ -77,6 +77,27 @@ def main():
                                        f"to direction.KNOB_AXES/MECHANISMS and a family, "
                                        f"or the run is invisible to the policy"))
             continue
+        # A treatment must cite a registered hypothesis. Without one, coe.py E3 skips the
+        # result (`hid = r.get("hypothesis_id"); if not hid: continue`) and the activation
+        # predicate never runs -- so a null cannot be separated from an intervention that
+        # never engaged, which is the single thing the predicate exists to establish. This
+        # was prose in the protocol and nothing checked it: wd_const=0.4 reached a GPU
+        # with hypothesis_id null. Controls are exempt; they are the instrument, not a
+        # claim. A deliberate instrument probe may opt out with "hypothesis_id": "none".
+        if not direction.is_platform(cfg) and not e.get("hypothesis_id"):
+            skipped.append((e["name"], "no hypothesis_id: a treatment must cite a "
+                                       "registered hypothesis, or its activation predicate "
+                                       "never runs and a null is indistinguishable from "
+                                       "'never engaged'. Register one with claims.py hyp, "
+                                       "or set hypothesis_id to 'none' to declare it an "
+                                       "instrument probe rather than a research arm."))
+            continue
+        if (e.get("hypothesis_id") or "none") != "none":
+            known = {h["id"] for h in claims.hypotheses()}
+            if e["hypothesis_id"] not in known:
+                skipped.append((e["name"], f"cites unregistered hypothesis "
+                                           f"'{e['hypothesis_id']}'"))
+                continue
         why = direction.blocked_reason(cfg, state)
         if why:
             skipped.append((e["name"], why))
