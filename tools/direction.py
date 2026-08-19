@@ -707,7 +707,8 @@ def step_law(results: list[dict], tokens_per_step: float | None = None,
             "resid_sd": _st.stdev(resid) if len(resid) > 1 else 0.0}
 
 
-def step_law_explains(results: list[dict], treat: dict, ctrl: dict):
+def step_law_explains(results: list[dict], treat: dict, ctrl: dict,
+                      baseline: dict | None = None):
     """Share of a paired delta the step law accounts for, with the extrapolation flagged.
 
     Returns None when the two arms do not share a tokens-per-step, because applying the law
@@ -718,7 +719,16 @@ def step_law_explains(results: list[dict], treat: dict, ctrl: dict):
     tm, cm = treat.get("metrics") or {}, ctrl.get("metrics") or {}
     if tm.get("tokens_per_step") != cm.get("tokens_per_step"):
         return None
-    law = step_law(results, tm.get("tokens_per_step"))
+    # FORWARD THE BASELINE. step_law() was given a `baseline` parameter so a retired
+    # operating point stays analysable after adoption, and this caller -- the one that
+    # actually computes the per-pair share -- did not pass it, so it kept returning None
+    # for exactly the historical pairs the parameter was added to rescue. Fixing a function
+    # and not its only caller is the same build-and-not-connect failure this campaign keeps
+    # paying for; a round synthesizer found it within the hour.
+    #
+    # The control's OWN cfg is the right baseline: the pair was measured against it,
+    # whatever the platform has since become.
+    law = step_law(results, tm.get("tokens_per_step"), baseline or (ctrl.get("cfg") or None))
     if not law or not tm.get("num_steps") or not cm.get("num_steps"):
         return None
     ef = _m.log(cm["num_steps"] / tm["num_steps"])
