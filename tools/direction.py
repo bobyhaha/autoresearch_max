@@ -643,7 +643,8 @@ if __name__ == "__main__":
     print(report(res))
 
 
-def step_law(results: list[dict], tokens_per_step: float | None = None):
+def step_law(results: list[dict], tokens_per_step: float | None = None,
+             baseline: dict | None = None):
     """Fit val_bpb against log(steps) on CONTROLS ONLY, at ONE tokens-per-step.
 
     The campaign quoted a step law of -0.05974 bpb per e-fold for hours, in prose, with no
@@ -674,10 +675,18 @@ def step_law(results: list[dict], tokens_per_step: float | None = None):
     # bug with a delayed fuse, and this campaign has now shipped several.
     if tokens_per_step is None:
         tokens_per_step = float(2 ** PLATFORM["tbs"])
+    # THE BASELINE IS A PARAMETER, not always the current platform. Fitting only on
+    # is_platform runs meant that the moment tbs was adopted, the law at the RETIRED
+    # operating point became unfittable -- those controls stopped being controls -- and
+    # every historical analysis that depended on it silently returned None. An audit caught
+    # exactly that: L063's step-law adjustment for the QK-norm arms, which ran at tbs=19,
+    # could no longer be reproduced an hour after it was written. Adoption must not destroy
+    # the ability to analyse what came before it.
+    base = baseline or PLATFORM
     xs, ys = [], []
     for r in results:
         m = r.get("metrics") or {}
-        if not r.get("ok") or not is_platform(r.get("cfg") or {}):
+        if not r.get("ok") or (r.get("cfg") or {}) != base:
             continue
         if m.get("tokens_per_step") != tokens_per_step:
             continue
