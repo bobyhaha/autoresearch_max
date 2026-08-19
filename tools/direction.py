@@ -641,3 +641,74 @@ if __name__ == "__main__":
     res = [json.loads(pathlib.Path(f).read_text())
            for f in glob.glob(str(root / "runs" / "sweep" / "results" / "*.json"))]
     print(report(res))
+
+
+def step_law(results: list[dict], tokens_per_step: float = 524288.0):
+    """Fit val_bpb against log(steps) on CONTROLS ONLY, at ONE tokens-per-step.
+
+    The campaign quoted a step law of -0.05974 bpb per e-fold for hours, in prose, with no
+    code behind it -- so nobody could check what it was fitted on. It was used to argue that
+    two mechanisms failed for a common cause (L053/L054), and an audit was right to call the
+    provenance unverifiable: a fit pooled across 262144/524288/1048576 tokens per step would
+    violate this project's own rule that fit and application must share an operating point,
+    and one that included the judged arms would be circular.
+
+    This settles it by construction. Controls only, so no treatment can influence the law
+    that judges it. One tokens-per-step, so the operating point is shared. The refit gives
+    -0.06822 over 84 controls, close to L006's -0.0687 and NOT the -0.05974 that was being
+    quoted; under it, step count explains 86% of MTP's damage and 56% of z-loss's rather
+    than the 75% and 49% that L054 claimed.
+
+    Returns (slope, n, lo_steps, hi_steps, resid_sd). The step RANGE is returned because it
+    is a real limit: the controls span 621-1020 steps and the arms this was applied to ran
+    303-372, so that application is an EXTRAPOLATION below the fitted range. Callers must
+    say so rather than quietly reading off a number.
+    """
+    import math as _m
+    import statistics as _st
+    xs, ys = [], []
+    for r in results:
+        m = r.get("metrics") or {}
+        if not r.get("ok") or not is_platform(r.get("cfg") or {}):
+            continue
+        if m.get("tokens_per_step") != tokens_per_step:
+            continue
+        if not m.get("num_steps") or m.get("val_bpb") is None:
+            continue
+        xs.append(_m.log(m["num_steps"]))
+        ys.append(m["val_bpb"])
+    if len(xs) < 8:
+        return None
+    mx, my = _st.mean(xs), _st.mean(ys)
+    den = sum((x - mx) ** 2 for x in xs)
+    if den <= 0:
+        return None
+    slope = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / den
+    resid = [y - (my + slope * (x - mx)) for x, y in zip(xs, ys)]
+    return {"slope": slope, "n": len(xs),
+            "lo_steps": _m.exp(min(xs)), "hi_steps": _m.exp(max(xs)),
+            "resid_sd": _st.stdev(resid) if len(resid) > 1 else 0.0}
+
+
+def step_law_explains(results: list[dict], treat: dict, ctrl: dict):
+    """Share of a paired delta the step law accounts for, with the extrapolation flagged.
+
+    Returns None when the two arms do not share a tokens-per-step, because applying the law
+    across that boundary is forbidden here and returning a number anyway is how a rule
+    written in prose gets ignored in practice.
+    """
+    import math as _m
+    tm, cm = treat.get("metrics") or {}, ctrl.get("metrics") or {}
+    if tm.get("tokens_per_step") != cm.get("tokens_per_step"):
+        return None
+    law = step_law(results, tm.get("tokens_per_step"))
+    if not law or not tm.get("num_steps") or not cm.get("num_steps"):
+        return None
+    ef = _m.log(cm["num_steps"] / tm["num_steps"])
+    pred = -law["slope"] * ef
+    act = tm["val_bpb"] - cm["val_bpb"]
+    return {"efolds": ef, "predicted": pred, "actual": act, "residual": act - pred,
+            "share": (pred / act) if act else float("nan"),
+            "extrapolated": tm["num_steps"] < law["lo_steps"]
+                            or tm["num_steps"] > law["hi_steps"],
+            "law": law}
