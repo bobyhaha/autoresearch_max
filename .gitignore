@@ -27,6 +27,11 @@ __pycache__/
 runs/
 !runs/sweep/results/
 !runs/sweep/results/*.json
+# Decision records are evidence too: they are what lets a reader ask whether the campaign
+# would choose the same experiment again from the same state, which is the question two
+# external reviews said this project could not answer.
+!runs/sweep/decisions/
+!runs/sweep/decisions/*.json
 tmp/
 
 # --- literature corpus ------------------------------------------------------

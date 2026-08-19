@@ -89,6 +89,15 @@ def family_effects(rows):
         cfg = r.get("cfg") or {}
         if not r.get("ok") or direction.is_platform(cfg):
             continue
+        # A run whose config is now BLOCKED contributes no information about what to try
+        # next: the campaign will not run that value again. tbs carries the +0.022545
+        # tbs=20 catastrophe, which is blocked by L040 and yet dominated the family's
+        # spread -- making every tbs arm look like the richest available source of
+        # information precisely because of a result already understood and forbidden.
+        # Switching to a robust spread reduced the distortion; excluding blocked runs
+        # removes its cause.
+        if claims.blocked_values(cfg):
+            continue
         eff = r["metrics"]["val_bpb"] - dm.get(r.get("gpu"), r["metrics"]["val_bpb"])
         for fam in _families(cfg):
             out.setdefault(fam, []).append(eff)
