@@ -579,12 +579,24 @@ def main():
     def _load_state():
         try:
             d = json.loads(QSTATE.read_text())
-            return d.get("quarantine", {}), set(d.get("tainted", []))
+            return (d.get("quarantine", {}), set(d.get("tainted", [])),
+                    d.get("burns", {}))
         except (OSError, ValueError):
-            return {}, set()
-    def _save_state(q, t):
+            return {}, set(), {}
+    def _save_state(q, t, b=None):
+        # BURN COUNTS PERSIST TOO. They were process-local for exactly one commit, and the
+        # consequence appeared within the hour: gpu6 and gpu7 destroyed two waves, the
+        # dispatcher was restarted to bind the fix, and the very next release logged "0
+        # prior burn(s)" -- full trust restored to the two devices that had just burned us,
+        # because the counter died with the process.
+        #
+        # This is the same defect the comment below describes for quarantine and taint,
+        # committed again in the fix for it. Anything that decides how much a device is
+        # trusted has to outlive the process that learned it.
         try:
-            QSTATE.write_text(json.dumps({"quarantine": q, "tainted": sorted(t)}, indent=1))
+            QSTATE.write_text(json.dumps(
+                {"quarantine": q, "tainted": sorted(t),
+                 "burns": burn_count if b is None else b}, indent=1))
         except OSError:
             pass
 
@@ -594,7 +606,8 @@ def main():
     # never inherited. The fix for "co-tenancy did not survive a restart" therefore never
     # fired: it is the same build-a-guard-and-not-connect-it failure, committed inside the
     # fix for that failure. Ordering is the connection here.
-    quarantine, tainted = _load_state()   # uuid -> release epoch; job names seen co-tenanted
+    quarantine, tainted, _burns = _load_state()  # uuid -> release epoch; names seen co-tenanted
+    burn_count.update({k: int(v) for k, v in (_burns or {}).items()})
     globals()["_TAINTED_AT_ADOPT"] = set(tainted)
     running = adopt_running()
     release_stranded_claims()   # claims with neither a result nor a work dir
