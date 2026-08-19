@@ -219,6 +219,28 @@ def e3_activation() -> list[str]:
         if hid in {e for l in C.lessons() if l.get("type") == "non_activation"
                    for e in (l.get("evidence") or [])}:
             continue          # documented non-activation; see the lesson, not the audit
+        # POST-HOC RULE CHANGE. Superseding re-judges COMPLETED runs under the new rule,
+        # which is right when a broken test is fixed and is a laundering channel when the
+        # result is already known: an E3 failure can be cleared by registering a friendlier
+        # successor. It was used exactly that way today -- R6XF_P1_s0_treat failed
+        # secmom_ortho_ratio lt 0.1 on the campaign's best val_bpb, and a successor with a
+        # different diagnostic cleared it within the hour. That may well be correct (the
+        # original rule was backwards on physics grounds), but it must never be SILENT.
+        #
+        # So a live hypothesis registered AFTER the run it now blesses must carry a written
+        # justification. The field is the cost: it cannot be satisfied by editing a number,
+        # only by saying in the record why the rule changed and why the change does not
+        # depend on the outcome.
+        if h.get("id") != hid and not h.get("post_hoc_rule_change"):
+            _reg = str(h.get("registered_at") or "")
+            bad.append(
+                f"result '{r['name']}' ran under '{hid}' but is judged by its successor "
+                f"'{h.get('id')}' (registered {_reg or 'unknown'}), which changed the "
+                f"activation rule AFTER the run completed. That is permitted, but the "
+                f"successor must carry a 'post_hoc_rule_change' field stating why the rule "
+                f"was wrong independently of this result -- otherwise a failing activation "
+                f"can be cleared by rewriting the test.")
+            continue
         act = h.get("activation") or {}
         diag = act.get("diagnostic")
         met = r.get("metrics") or {}
