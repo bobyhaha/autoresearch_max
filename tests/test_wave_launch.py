@@ -90,6 +90,24 @@ batch, _ = mod.next_batch(0, 4)
 ok(len(batch) == 4, "an intact 4-wide wave still launches in full")
 mod.load_queue = lambda: []                               # restore for later cases
 
+print("\n5c. a wave whose treatment is FROZEN is held, not launched control-only")
+# The gate freezes non-control entries when a council artifact goes stale. An earlier fix
+# excluded frozen members from the wave-size denominator so the wave would not look split
+# -- but that let the wave launch its CONTROL alone, which would put the control in a
+# different wave from the treatment it is yoked to. That is the cross-wave drift the
+# wave_group mechanism exists to prevent, so the whole wave must wait.
+pair = [{"name": "F_treat", "wave_group": "wfrozen", "cfg": {"mlp": 9}, "created_at": 900},
+        {"name": "F_ctrl",  "wave_group": "wfrozen", "cfg": {},          "created_at": 900}]
+mod.load_queue = lambda: pair
+mod._is_control = lambda cfg: not cfg          # the control has an empty cfg here
+mod.runnable = lambda cutoff: ([pair[1]], 1, 0)   # treatment frozen, control runnable
+batch, waiting = mod.next_batch(500, 4)            # cutoff 500 < created_at 900
+ok(batch == [], f"the lone runnable control does not launch (got {[b['name'] for b in batch]})")
+mod.runnable = lambda cutoff: (list(pair), 0, 0)   # freeze lifted
+batch, _ = mod.next_batch(1000, 4)
+ok(len(batch) == 2, "once the freeze lifts the whole wave goes out together")
+mod.load_queue = lambda: []
+
 print("\n6. the cap really is 4")
 ok("MAX_GPUS = 4" in src, "MAX_GPUS = 4 in host/dispatch.py")
 ok("WAIT_LOG_EVERY_S = 30 * 60" in src, "waiting is reported every 30 minutes")

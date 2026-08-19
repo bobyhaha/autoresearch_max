@@ -211,13 +211,26 @@ def next_batch(cutoff, n_free):
     # A group whose runnable members are fewer than its queued size has already been
     # split -- launching the remnant would hand back a pair that never shared a wave.
     sizes = wave_sizes(cutoff)
-    intact, broken = {}, []
+    sizes_all = wave_sizes(None)          # including members the cutoff froze
+    intact, broken, held = {}, [], []
     for key, members in groups.items():
         want = sizes.get(key, len(members))
-        if len(members) == want:
-            intact[key] = members
-        else:
+        if len(members) != want:
             broken.append((key, len(members), want))
+            continue
+        # A wave that is merely FROZEN is not split -- but it is also not ready. Launching
+        # its controls now would put them in a different wave from the treatment they are
+        # yoked to, which is precisely the cross-wave drift the wave_group mechanism exists
+        # to prevent. Hold the whole wave until the freeze lifts.
+        if sizes_all.get(key, want) > want:
+            held.append((key, want, sizes_all[key]))
+            continue
+        intact[key] = members
+    for key, have, total in held:
+        if int(time.time()) % 1800 < 6:
+            log(f"WAVE HELD {key}: {total - have} member(s) frozen by the decision cutoff; "
+                f"holding the whole wave so its control does not run in a different wave "
+                f"from its treatment")
     for key, have, want in broken:
         log(f"WAVE SPLIT {key}: {have} of {want} members still runnable; refusing to "
             f"launch the remnant (a partial wave is not a yoked comparison)")
