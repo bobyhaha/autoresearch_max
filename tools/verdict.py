@@ -45,13 +45,23 @@ def _load():
 
 
 def _slot(r):
-    """0 or 1 from the taskset core block, ordered NUMERICALLY -- '108-119' sorts before
-    '96-107' as a string, which silently flips the sign of every slot statistic."""
-    c = str(r.get("cores") or "")
-    try:
-        return 0 if int(c.split("-")[0]) < 108 else 1
-    except ValueError:
-        return -1
+    """The taskset core block itself, not a 0/1 index.
+
+    Collapsing core blocks to 0/1 was wrong and would have produced a false verdict. The
+    measured slot offset (+0.000463, 10/10 same sign) is specifically between cores
+    96-107 and 108-119; every one of the campaign's 26 runs used one of those two. When
+    four GPUs came free the dispatcher launched two waves at once and the second landed
+    on cores 120-131 and 132-143, whose relative bias has never been measured. Averaging
+    a delta from one core-block PAIR with a delta from a different pair does not cancel
+    anything -- it adds an unknown offset to a known one. So the pair is part of the
+    identity of a wave, and counterbalancing means the SAME pair with the roles swapped.
+    """
+    return str(r.get("cores") or "?")
+
+
+def _pair(arms):
+    return tuple(sorted({a["treat_cores"] for a in arms} | {a["ctl_cores"] for a in arms},
+                        key=lambda c: int(str(c).split("-")[0])))
 
 
 def waves(rows):
@@ -91,29 +101,44 @@ def main():
         key = direction.label(t["cfg"])
         by_cfg.setdefault(key, []).append({
             "wave": g, "delta": t["metrics"]["val_bpb"] - c["metrics"]["val_bpb"],
-            "treat_slot": _slot(t), "t": t, "c": c})
+            "treat_cores": _slot(t), "ctl_cores": _slot(c), "t": t, "c": c})
 
     print()
     for key, arms in sorted(by_cfg.items()):
         if want and want not in key:
             continue
-        slots = {a["treat_slot"] for a in arms}
         deltas = [a["delta"] for a in arms]
         print(f"=== {key} ===")
         for a in arms:
             tm, cm = a["t"]["metrics"], a["c"]["metrics"]
-            print(f"  {a['wave']:8s} treat_slot={a['treat_slot']} "
+            print(f"  {a['wave']:8s} treat_cores={a['treat_cores']:>8s} "
                   f"delta {a['delta']:+.6f}  "
                   f"steps {tm['num_steps']:.0f} vs {cm['num_steps']:.0f}  "
                   f"epoch {tm.get('final_epoch')}/{cm.get('final_epoch')}")
             if tm.get("final_epoch") != cm.get("final_epoch"):
                 print("    VOID: treatment and control finished at different final_epoch "
                       "(L005_operating_point_moved_v2) -- a regime comparison, not a result")
-        if len(slots) < 2:
-            print(f"  NOT COUNTERBALANCED: treatment only ever ran in slot {slots}. "
-                  f"The slot offset is inseparable from the effect; queue the swapped wave.")
+        # Group arms by the core-block PAIR they ran on; only within a pair does swapping
+        # the roles cancel that pair's fixed offset.
+        groups = {}
+        for a in arms:
+            groups.setdefault(tuple(sorted((a["treat_cores"], a["ctl_cores"]),
+                                           key=lambda c: int(str(c).split("-")[0]))), []).append(a)
+        usable = {}
+        for pair, members in groups.items():
+            if len({m["treat_cores"] for m in members}) >= 2:
+                usable[pair] = members
+            else:
+                print(f"  pair {pair[0]}/{pair[1]}: treatment only ever on "
+                      f"{ {m['treat_cores'] for m in members} } -- NOT counterbalanced on "
+                      f"this pair, so its fixed offset is inseparable from the effect")
+        if not usable:
+            print(f"  NO COUNTERBALANCED PAIR. Queue the swapped wave ON THE SAME CORE "
+                  f"BLOCKS; a swap on a different pair adds an unmeasured offset instead "
+                  f"of cancelling a measured one.")
             print()
             continue
+        deltas = [m["delta"] for members in usable.values() for m in members]
         mean = st.mean(deltas)
         verdict = ("BETTER than control" if mean < -res else
                    "WORSE than control" if mean > res else
