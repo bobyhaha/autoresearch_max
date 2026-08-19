@@ -31,3 +31,7 @@ lit/ACTIVE_DIRECTION.json
 
 # --- remote host config (address, login, port) ---
 .ophis_host
+
+# sharded screen scratch, merged into lit/index.json
+lit/index_shard*.json
+lit/*_progress.json

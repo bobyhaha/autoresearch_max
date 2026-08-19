@@ -1,6 +1,0 @@
-[
- "optimizer_adam_variants",
- "optimizer_benchmark",
- "optimizer_orthogonal",
- "optimizer_secondorder"
-]
