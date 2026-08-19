@@ -189,6 +189,67 @@ def wave_sizes(cutoff=None):
     return sizes
 
 
+def tombstone_split_wave(key) -> bool:
+    """Retire a wave that can never be completed, instead of refusing it forever.
+
+    The split guard is right to refuse a remnant, but refusal alone leaves the stranded
+    members in the queue being re-evaluated and re-logged every poll, indefinitely. That
+    happened to zloss01_A and zloss01_B: their two controls ran, their two treatments did
+    not, and because a wave is sized from the queue the pair could never be reformed. The
+    log filled with identical refusals while the entries sat there looking pending, which
+    reads as work still to come rather than work that is already lost.
+
+    A wave is PERMANENTLY split when some member has a finished result on disk while
+    another has neither result nor claim: the finished member's wave-mates can no longer
+    share its host conditions, so any later run of them would be a cross-wave comparison
+    wearing a wave_group label -- exactly the confound the grouping exists to prevent.
+    Note the deliberate asymmetry: a CLAIMED member is merely in flight and the wave is
+    still forming, so this must never fire on one.
+
+    Stranded members are written as invalid results rather than deleted. Deleting them
+    would make the loss disappear from the accounting; an invalid record makes
+    tools/analyze.py list them and tools/gate.py demand a lesson, which is the honest
+    treatment of GPU time that bought nothing. Returns True when it retired something.
+    """
+    members = [it for it in load_queue() if it.get("wave_group") == key]
+    if not members:
+        return False
+    done, stranded, inflight = [], [], []
+    for it in members:
+        if (ROOT / "results" / f"{it['name']}.json").exists():
+            done.append(it["name"])
+        elif (ROOT / "claims" / it["name"]).exists():
+            inflight.append(it["name"])
+        else:
+            stranded.append(it)
+    # One member still in flight means the wave is STILL FORMING, so none of its mates is
+    # stranded yet -- the claim may be about to produce the result that completes it.
+    # Checking only "this member has no claim" was not enough: a wave with one claimed
+    # and one unclaimed member would tombstone the unclaimed one out from under a run
+    # that was still going. The wave is dead only when nothing is left moving.
+    if not done or not stranded or inflight:
+        return False
+    for it in stranded:
+        rec = {
+            "name": it["name"], "cfg": it.get("cfg"), "gpu": None,
+            "hypothesis_id": it.get("hypothesis_id"),
+            "started": None, "ended": time.time(), "returncode": None,
+            "cotenant_detected": False, "cores": None, "ok": False,
+            "invalid_reason": (
+                f"stranded by a permanently split wave: {len(done)} of {len(members)} "
+                f"members of wave_group {key} already finished ({', '.join(sorted(done))}) "
+                f"while this one was never claimed. It cannot now be run as part of that "
+                f"wave, and running it later would be a cross-wave comparison labelled as "
+                f"a yoked one. Retired unrun; no val_bpb exists for it and none may be "
+                f"inferred."),
+            "error": "",
+        }
+        (ROOT / "results" / f"{it['name']}.json").write_text(json.dumps(rec, indent=1))
+        log(f"WAVE RETIRED {key}: {it['name']} stranded unrun and tombstoned "
+            f"(its wave-mates already finished; the pairing cannot be reformed)")
+    return True
+
+
 def next_batch(cutoff, n_free):
     """Entries to launch on this pass: the largest wave_group that fits in n_free GPUs.
 
@@ -232,6 +293,8 @@ def next_batch(cutoff, n_free):
                 f"holding the whole wave so its control does not run in a different wave "
                 f"from its treatment")
     for key, have, want in broken:
+        if tombstone_split_wave(key):
+            continue
         log(f"WAVE SPLIT {key}: {have} of {want} members still runnable; refusing to "
             f"launch the remnant (a partial wave is not a yoked comparison)")
     if not intact:
@@ -276,7 +339,13 @@ def parse(txt):
         # EVERY run and appear in ZERO result records because of it -- which is also why
         # the campaign spent a day believing the model had 124M parameters when the run
         # itself had been reporting 50.33M all along (L015_model_is_50M_not_124M).
-        mt = re.match(r"^([A-Za-z_0-9]+):\s+([-\d.]+)\s*$", line)
+        # `\s*` not `\s+`: the telemetry block aligns most values with padding but
+        # `flops_per_token_M:{v}` is printed with NO space, so a parser demanding one
+        # silently dropped it from every run in the campaign -- the same class of failure
+        # as the earlier `^[a-z_0-9]+:` pattern that discarded every capitalised metric.
+        # A metric that is printed but never parsed is worse than one never printed: the
+        # variant looks instrumented and the hypothesis citing it can never activate.
+        mt = re.match(r"^([A-Za-z_0-9]+):\s*([-\d.]+)\s*$", line)
         if mt:
             try:
                 m[mt.group(1)] = float(mt.group(2))

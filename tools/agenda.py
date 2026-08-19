@@ -241,7 +241,8 @@ def load_state() -> dict:
     return {"active": None, "since": 0, "cooldown": [], "history": []}
 
 
-def decide(force: str | None = None, commit: bool = True) -> dict:
+def decide(force: str | None = None, commit: bool = True,
+           reason: str | None = None) -> dict:
     results = load_results()
     litst = claims.literature_state()
     cands = candidates(results, litst)
@@ -250,10 +251,17 @@ def decide(force: str | None = None, commit: bool = True) -> dict:
     active, cooldown = st.get("active"), list(st.get("cooldown") or [])
 
     if force:
-        st.update({"active": force, "since": time.time(),
-                   "reason": f"operator override to '{force}'"})
+        # A forced rotation is the one decision here with no evidential trigger behind
+        # it, so it is the one that most needs its justification written down. Without a
+        # reason the ledger records only that someone overrode the controller, which is
+        # indistinguishable from drift a month later -- and this campaign already had a
+        # rotation happen DE FACTO, by queueing another family's runs while the ledger
+        # still named the old direction. Default to the boilerplate so the call site is
+        # not broken, but let a caller say why.
+        why = reason or f"operator override to '{force}'"
+        st.update({"active": force, "since": time.time(), "reason": why})
         st.setdefault("history", []).append(
-            {"family": force, "at": time.time(), "reason": "operator override"})
+            {"family": force, "at": time.time(), "reason": why})
         STATE.parent.mkdir(parents=True, exist_ok=True)
         STATE.write_text(json.dumps(st, indent=1))
         return {"active": force, "reason": st["reason"], "candidates": cands,
@@ -311,10 +319,17 @@ def main() -> int:
             print("--force needs a family name")
             return 1
         force = sys.argv[i + 1]
+        reason = None
+        if "--reason" in sys.argv:
+            j = sys.argv.index("--reason")
+            if j + 1 >= len(sys.argv):
+                print("--reason needs text")
+                return 2
+            reason = sys.argv[j + 1]
         if force not in lit.ALL_FAMILIES:
             print(f"unknown family '{force}'; known: {', '.join(lit.ALL_FAMILIES)}")
             return 1
-    d = decide(force)
+    d = decide(force, reason=locals().get("reason"))
     if "--json" in sys.argv:
         print(json.dumps(d, indent=1))
         return 0

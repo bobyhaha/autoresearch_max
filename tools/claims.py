@@ -244,6 +244,52 @@ _OPS = {"ge": lambda a, b: a >= b, "gt": lambda a, b: a > b,
         "eq": lambda a, b: a == b, "ne": lambda a, b: a != b}
 
 
+def diagnostic_would_discriminate(diag: str, rule: dict) -> tuple[bool, str]:
+    """Would this activation diagnostic actually separate treatment from control?
+
+    Checked BEFORE a hypothesis is registered, not after its runs come back. Three
+    hypotheses in this campaign shipped with a diagnostic the control also satisfies --
+    secmom_clamp_frac (0.0 in both arms), num_steps with rule >0 (every run passes), and
+    qk_q_rms_final (pinned to exactly 1.0 by QK-norm, in all 4 treatments and all 25
+    controls). Each was registered AFTER L030 recorded the failure mode, by the same
+    author. The lesson did not prevent recurrence because nothing mechanical enforced it;
+    a rule that lives only in prose is a rule that will be forgotten.
+
+    Returns (ok, message). Judged against the CONTROL corpus already on disk: if every
+    control reading satisfies the rule, the diagnostic cannot demonstrate engagement.
+    Unknown fields pass -- a diagnostic no control has ever emitted may be perfectly good,
+    and refusing it would block every genuinely new observable.
+    """
+    import direction
+    from analyze import load as _load
+    vals = [r["metrics"][diag] for r in _load()
+            if direction.is_platform(r.get("cfg") or {}) and diag in (r.get("metrics") or {})]
+    if not vals:
+        return True, f"no control has emitted '{diag}' yet; cannot pre-check"
+    op, want = rule.get("op"), rule.get("value")
+    ok_f = {"gt": lambda v: v > want, "lt": lambda v: v < want,
+            "ge": lambda v: v >= want, "le": lambda v: v <= want,
+            "eq": lambda v: v == want}.get(op)
+    if ok_f is None:
+        return True, f"unrecognised op {op!r}; not pre-checked"
+    passing = [v for v in vals if ok_f(v)]
+    if len(passing) == len(vals):
+        return False, (f"REFUSED: every one of {len(vals)} control run(s) also satisfies "
+                       f"{rule} on '{diag}' (e.g. {passing[0]}). A diagnostic the control "
+                       f"passes cannot show the mechanism engaged -- the run would be "
+                       f"INCONCLUSIVE by construction (L030). Pick a quantity whose "
+                       f"control value is known and DIFFERENT.")
+    # NO constancy clause here, deliberately. A control value that is bit-identical but
+    # FAILS the rule is the ideal diagnostic, not a broken one: n_ve_layers reads exactly
+    # 4.0 in every control against a rule of >4, and flops_per_token_M exactly 239.078
+    # against a rule of <230. Both separate the arms perfectly BECAUSE they are
+    # deterministic. A first version of this check refused both -- the same false positive
+    # already made once in coe.py's E3 and fixed there. Treatment-side constancy (the
+    # secmom_ortho_ratio failure) cannot be seen before the runs exist and stays E3's job.
+    return True, (f"ok: {len(vals) - len(passing)} of {len(vals)} controls FAIL the rule, "
+                  f"so the diagnostic separates the arms")
+
+
 def blocked_values(cfg: dict) -> list[tuple]:
     """[(key, value, lesson, rule)] for cfg entries an active lesson forbids by VALUE.
 

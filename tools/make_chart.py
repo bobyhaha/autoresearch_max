@@ -36,6 +36,19 @@ W, H = 980, 430
 PAD_L, PAD_R, PAD_T, PAD_B = 68, 26, 22, 46
 
 
+def _live_gate() -> str:
+    """The gate shown must be the gate USED. This displayed a hardcoded 0.000426 that no
+    longer matched anything: the live threshold is 2*sqrt(2)*sigma/sqrt(n) from
+    direction.device_resolution, currently near 0.000280 at n=4. A chart asserting a
+    stale constant is worse than one asserting none, because it looks authoritative."""
+    try:
+        import analyze, direction
+        dr = direction.device_resolution(analyze.load())
+        return f"{dr['resolution']:.6f} (2*SE, n=4)" if dr else "unmeasured"
+    except Exception:                                          # noqa: BLE001
+        return "unmeasured"
+
+
 def _load_records(root: Path, kind: str) -> list[dict[str, Any]]:
     directory = root / "records" / kind
     if not directory.is_dir():
@@ -389,6 +402,7 @@ def render(rows: list[dict[str, Any]], scope_id: str, excluded: int = 0) -> str:
     ) + baseline_row
 
     sd_text = f"σ {control_sd:.5f} over {len(controls)}" if control_sd else f"{len(controls)} control(s)"
+    gate_text = _live_gate()
 
     # The scope suffix belongs in the title, not just the subtitle: each scope is a
     # separate leaderboard with its own artifact, and a title that does not name the
@@ -534,7 +548,7 @@ def render(rows: list[dict[str, Any]], scope_id: str, excluded: int = 0) -> str:
       <div class="d">#1 is the baseline ({sum(1 for r in rows if r["status"] == "control")} control runs) ·
       {max((r["i"] for r in rows), default=1) - 1} idea(s) tested · {excluded} invalid excluded</div></div>
     <div class="tile"><div class="k">Control noise</div><div class="v">{control_sd:.5f}</div>
-      <div class="d">{sd_text} · gate 0.000426</div></div>
+      <div class="d">{sd_text} · gate {gate_text}</div></div>
   </div>
 
   <div class="card">

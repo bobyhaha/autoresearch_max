@@ -42,6 +42,8 @@ KNOB_AXES = (
     "clip", "ns",                   # optimizer numerics
     "batch_ramp",                   # ramps grad_accum mid-run: moves tokens/step
     "compile_mode", "qk_suppress",  # expressible in make_variant and previously INVISIBLE
+    "mu_warmup",                    # LENGTH of the step-indexed Muon momentum ramp
+    "mu_ceil",                      # CEILING of that ramp; co-scales with batch size
 )
 
 # New causal structure: adds or removes an operation or an objective term. Not a new
@@ -105,8 +107,22 @@ def device_resolution(results: list[dict]) -> dict | None:
     if not sds:
         return None
     pooled = _st.mean(sds.values())
+    # `resolution` is the threshold for a mean of FOUR paired differences, and that is
+    # the only n at which the historical formula 2*pooled/sqrt(2) is correct. A paired
+    # difference has Var = 2*sigma^2 under independence, so SD(delta) = sqrt(2)*sigma and
+    # SE(mean of n) = sqrt(2)*sigma/sqrt(n). A two-sigma threshold is therefore
+    # 2*sqrt(2)*sigma/sqrt(n), which coincides with 2*pooled/sqrt(2) at exactly n=4 and
+    # nowhere else: at n=3 the old constant is 1.7*SE (too lenient) and at n=6 it is
+    # 2.4*SE (too strict). The ve verdict was read at n=3 with one cell void, i.e. under
+    # the lenient case. Callers must use resolution_at(n) with the n they actually have;
+    # the fixed field is retained only so existing readers keep working and is documented
+    # here as the n=4 special case rather than a universal constant.
+    def _res_at(n):
+        return 2 * (2 ** 0.5) * pooled / (n ** 0.5) if n else float("inf")
     return {"per_gpu_sd": sds, "pooled_sd": pooled,
-            "resolution": 2 * pooled / (2 ** 0.5),
+            "resolution": _res_at(4),
+            "resolution_at": _res_at,
+            "sd_paired_diff": (2 ** 0.5) * pooled,
             "n_devices": len(sds),
             "device_means": {g: _st.mean(v) for g, v in by.items()}}
 
@@ -282,7 +298,20 @@ def axis_state(results: list[dict]) -> dict:
     best = min((r["metrics"]["val_bpb"] for r in ok), default=float("inf"))
 
     band, _how = noise_band(results)
-    state = {a: {"n": 0, "dry": 0, "best": None} for a in KNOB_AXES}
+    # Device-corrected effect per run, for the holds-best exemption below. Keying that
+    # exemption on RAW val_bpb was wrong: gpu7 is the fastest device and gpu4 the slowest,
+    # a spread larger than any effect here, so an axis could hold the raw record purely by
+    # landing on gpu7 -- exactly the device confound this campaign refuses to headline
+    # anywhere else. Subtracting the device's own control mean removes it.
+    import statistics as _st
+    _dev = {}
+    for r in results:
+        if (r.get("ok") and is_platform(r.get("cfg") or {})
+                and (r.get("metrics") or {}).get("final_epoch") == 2.0):
+            _dev.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+    _devmean = {g: _st.mean(v) for g, v in _dev.items() if v}
+    state = {a: {"n": 0, "dry": 0, "best": None, "since_best": 0,
+                 "best_eff": None, "best_value": None} for a in KNOB_AXES}
     running_best = float("inf")
     for r in ok:
         v = r["metrics"]["val_bpb"]
@@ -292,14 +321,56 @@ def axis_state(results: list[dict]) -> dict:
         for a in axes_touched(r["cfg"] or {}):
             s = state[a]
             s["n"] += 1
-            s["dry"] = 0 if improved else s["dry"] + 1
+            # The dry streak counts DISTINCT VALUES tried without improvement, not runs.
+            # Counting runs was written for one-run-per-value experiments and quietly
+            # became "one value per axis, ever" when the design moved to counterbalanced
+            # quads: a quad is 4 runs of the SAME value, so DRY_STREAK=4 retired an axis
+            # the instant its first value finished. Measured on this campaign, qk_suppress,
+            # tbs and ve each closed having tried exactly ONE value -- and tbs closed on
+            # tbs=20 being catastrophic (+0.022545), which is the strongest possible reason
+            # to try the OTHER direction rather than to stop. Repeating a value is
+            # replication and buys no new information about the axis, so it must not
+            # advance the streak either.
+            v_here = (r["cfg"] or {}).get(a)
+            if improved:
+                s["dry"] = 0
+                s["_dry_vals"] = set()
+            elif v_here not in s.setdefault("_dry_vals", set()):
+                s["_dry_vals"].add(v_here)
+                s["dry"] = len(s["_dry_vals"])
+            eff = v - _devmean.get(r.get("gpu"), v)
+            if s["best_eff"] is None or eff < s["best_eff"]:
+                s["best_eff"] = eff
+                s["best_value"] = (r["cfg"] or {}).get(a)
             if s["best"] is None or v < s["best"]:
                 s["best"] = v
+                s["since_best"] = 0
+            else:
+                s["since_best"] += 1
         running_best = min(running_best, v)
 
     for a, s in state.items():
         # RULE 1: zero coverage is never closed, and outranks everything.
-        s["open"] = True if s["n"] == 0 else s["dry"] < DRY_STREAK
+        # RULE 1b: NEVER close the axis that currently holds the campaign's best result.
+        # The dry test asks whether a run beat the GLOBAL running best by more than the
+        # band, so an axis is charged a dry strike for failing to beat a record another
+        # axis set. swdiv hit 0.989449 -- a new campaign best -- but the previous best
+        # 0.989819 came from the ve axis, and clearing it by 0.00037 did not clear the
+        # 0.00074 band; four such runs closed the axis that was, at that moment, winning.
+        # Worse, this generalises: any single strong result drives every other axis dry,
+        # so the policy would retire the whole search space on the strength of one number.
+        # Holding the best is sufficient evidence that an axis is still paying.
+        # ...but only while it became leader RECENTLY. An axis flat at the best since its
+        # very first run would otherwise never close, which is the over-broad version of
+        # this exemption and defeats the dry rule entirely. Leading is evidence an axis is
+        # paying; leading from a record set long ago and nothing since is evidence it has
+        # stopped. `since_best` counts runs on this axis after its own best.
+        best_eff = min((t["best_eff"] for t in state.values()
+                        if t["best_eff"] is not None), default=None)
+        holds_best = (s["best_eff"] is not None and best_eff is not None
+                      and s["best_eff"] <= best_eff
+                      and s["since_best"] < DRY_STREAK)
+        s["open"] = True if s["n"] == 0 else (s["dry"] < DRY_STREAK or holds_best)
         s["priority"] = 2 if s["n"] == 0 else (1 if s["open"] else 0)
     return {"axes": state, "best": best, "n_ok": len(ok),
             "band": band, "band_how": _how}
@@ -317,11 +388,32 @@ def blocked_reason(cfg: dict, state: dict) -> str | None:
     if is_platform(cfg):
         return None
     ax = axes_touched(cfg)
+
+    # EXPLOITATION is not exploration, and the dry rule must not conflate them. An axis
+    # closes after DRY_STREAK runs that did not beat the running best -- but the runs that
+    # CONFIRM a lever are exactly those runs, so a knob could be proven to work and then
+    # be permanently unusable. That happened here: ve=1 is a confirmed -0.001487 win at
+    # t=-12.2, and the four runs that established it closed the ve axis, after which
+    # {"ve":1,"swdiv":4} was refused as dry and the precond+ve+swdiv stack was refused as
+    # "a mechanism crossed with a closed axis". The campaign could measure a win and never
+    # spend it.
+    #
+    # So: reusing an axis's OWN BEST-KNOWN VALUE is exploitation and stays allowed even
+    # when the axis is closed to further exploration. Trying a DIFFERENT value of a closed
+    # axis is exploration and stays refused, which is what the dry rule is actually for.
+    def _exploring(a):
+        bv = state["axes"][a].get("best_value")
+        return bv is None or cfg.get(a) != bv
+
     if mechanisms_touched(cfg):
-        shut = [a for a in sorted(ax) if not state["axes"][a]["open"]]
-        return (f"mechanism crossed with closed axis {shut[0]}; test it in isolation first"
+        shut = [a for a in sorted(ax)
+                if not state["axes"][a]["open"] and _exploring(a)]
+        return (f"mechanism crossed with closed axis {shut[0]} at a value that is not its "
+                f"best ({cfg.get(shut[0])!r} vs best "
+                f"{state['axes'][shut[0]].get('best_value')!r}); test it in isolation first"
                 if shut else None)
-    shut = [a for a in sorted(ax) if not state["axes"][a]["open"]]
+    shut = [a for a in sorted(ax)
+            if not state["axes"][a]["open"] and _exploring(a)]
     if shut:
         a = shut[0]
         _b = state.get("band")

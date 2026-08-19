@@ -57,10 +57,22 @@ ok(st["axes"]["mlp"]["open"],
    "an axis improving steadily stays OPEN (an over-wide fixed band closed it)")
 ok(d.blocked_reason({"mlp": 11}, st) is None, "and further work on it is not blocked")
 
-# a genuinely flat axis still closes
-res2 = ctl + [run({"swdiv": 4}, 1.0200) for _ in range(d.DRY_STREAK + 1)]
+# A genuinely flat axis still closes -- but "flat axis" now means DISTINCT VALUES that
+# each failed to pay, not one value repeated. The streak counts values, because a
+# counterbalanced quad is 4 runs of the SAME value and counting runs retired every axis
+# after its first experiment (measured: qk_suppress, tbs and ve each closed having tried
+# exactly one value).
+res2 = ctl + [run({"swdiv": v}, 1.0200) for v in (4, 8, 16, 32, 64)]
 st2 = d.axis_state(res2)
-ok(not st2["axes"]["swdiv"]["open"], "a genuinely flat axis still closes as dry")
+ok(not st2["axes"]["swdiv"]["open"],
+   "an axis flat across DISTINCT values still closes as dry")
+
+# ...and repeating ONE value, however many times, does not close an axis: replication
+# buys confidence in that value, not information about the axis.
+res3 = ctl + [run({"swdiv": 4}, 1.0200) for _ in range(d.DRY_STREAK + 4)]
+st3 = d.axis_state(res3)
+ok(st3["axes"]["swdiv"]["open"],
+   "one value repeated does NOT close the axis -- that is replication, not exploration")
 
 print("\n3. DEFECT: injected activation observables called max() with one non-iterable")
 print("   argument, raising TypeError in the trainer's summary block after training.")

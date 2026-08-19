@@ -74,6 +74,69 @@ setup(hyps=[H], results=[{"name": "R1", "hypothesis_id": "h1",
                           "metrics": {"val_bpb": 1.1, "ema_updates": 42}}])
 ok(coe.e3_activation() == [], "an activated run passes")
 
+print("\nE3b DISCRIMINATION -- a diagnostic the CONTROL also passes proves nothing")
+# hyp_precond_pre_r1_v3 declared secmom_clamp_frac < 0.01. Every treatment passed -- and
+# so did every control, because the field reads 0.0 in both arms. Existence plus rule was
+# not enough; the test has to SEPARATE the arms. (L030)
+import direction
+CTL = dict(direction.PLATFORM)
+HD = {"id": "hd", "activation": {"diagnostic": "clampf", "rule": {"op": "lt", "value": 0.01}}}
+setup(hyps=[HD], results=[
+    {"name": "T1", "hypothesis_id": "hd", "cfg": {**CTL, "mlp": 9}, "ok": True,
+     "metrics": {"val_bpb": 1.1, "clampf": 0.0}},
+    {"name": "C1", "cfg": CTL, "ok": True, "metrics": {"val_bpb": 1.1, "clampf": 0.0}},
+    {"name": "C2", "cfg": CTL, "ok": True, "metrics": {"val_bpb": 1.2, "clampf": 0.0}}])
+probs = coe.e3_activation()
+ok(any("does not separate the arms" in p for p in probs),
+   "a rule every control also passes is caught")
+
+# And a constant is caught even with no control emitting the field at all.
+HC = {"id": "hc", "activation": {"diagnostic": "ratio", "rule": {"op": "gt", "value": 1.0}}}
+setup(hyps=[HC], results=[
+    {"name": "T1", "hypothesis_id": "hc", "cfg": {**CTL, "mlp": 9}, "ok": True,
+     "metrics": {"val_bpb": 1.1, "ratio": 15.08494568}},
+    {"name": "T2", "hypothesis_id": "hc", "cfg": {**CTL, "mlp": 9}, "ok": True,
+     "metrics": {"val_bpb": 1.2, "ratio": 15.08494568}}])
+ok(any("bit-identical" in p for p in coe.e3_activation()),
+   "a diagnostic identical across independent runs is caught as a path constant")
+
+# A DETERMINISTIC STRUCTURAL COUNT is bit-identical by construction and must NOT be
+# flagged: n_ve_layers reads exactly 8 in every ve=1 treatment and exactly 4 in every
+# control, so it discriminates perfectly. The earlier rule called this correct hypothesis
+# broken. Constancy is only a defect when NO control reading fails the rule.
+HS = {"id": "hs", "activation": {"diagnostic": "n_ve", "rule": {"op": "gt", "value": 4.0}}}
+setup(hyps=[HS], results=[
+    {"name": "T1", "hypothesis_id": "hs", "cfg": {**CTL, "mlp": 9}, "ok": True,
+     "metrics": {"val_bpb": 1.1, "n_ve": 8.0}},
+    {"name": "T2", "hypothesis_id": "hs", "cfg": {**CTL, "mlp": 9}, "ok": True,
+     "metrics": {"val_bpb": 1.2, "n_ve": 8.0}},
+    {"name": "C1", "cfg": CTL, "ok": True, "metrics": {"val_bpb": 1.1, "n_ve": 4.0}},
+    {"name": "C2", "cfg": CTL, "ok": True, "metrics": {"val_bpb": 1.2, "n_ve": 4.0}}])
+ok(coe.e3_activation() == [],
+   "a constant structural count that separates the arms is NOT flagged")
+
+# A diagnostic that genuinely separates the arms passes clean.
+HG = {"id": "hg", "activation": {"diagnostic": "smax", "rule": {"op": "gt", "value": 1.0}}}
+setup(hyps=[HG], results=[
+    {"name": "T1", "hypothesis_id": "hg", "cfg": {**CTL, "mlp": 9}, "ok": True,
+     "metrics": {"val_bpb": 1.1, "smax": 20.27}},
+    {"name": "T2", "hypothesis_id": "hg", "cfg": {**CTL, "mlp": 9}, "ok": True,
+     "metrics": {"val_bpb": 1.2, "smax": 21.85}},
+    {"name": "C1", "cfg": CTL, "ok": True, "metrics": {"val_bpb": 1.1, "smax": 0.255}},
+    {"name": "C2", "cfg": CTL, "ok": True, "metrics": {"val_bpb": 1.2, "smax": 0.286}}])
+ok(coe.e3_activation() == [], "a separating, varying diagnostic passes")
+
+# A corrected hypothesis retires its predecessor via `supersedes`, so a fixed defect
+# stops failing the audit -- otherwise the chain fails forever and gets ignored.
+setup(hyps=[HD, {"id": "hd2", "supersedes": "hd",
+                 "activation": {"diagnostic": "smax", "rule": {"op": "gt", "value": 1.0}}}],
+      results=[
+    {"name": "T1", "hypothesis_id": "hd", "cfg": {**CTL, "mlp": 9}, "ok": True,
+     "metrics": {"val_bpb": 1.1, "clampf": 0.0, "smax": 20.27}},
+    {"name": "C1", "cfg": CTL, "ok": True, "metrics": {"val_bpb": 1.1, "clampf": 0.0, "smax": 0.255}}])
+ok(coe.e3_activation() == [],
+   "results recorded under the broken test are judged by the correction that supersedes it")
+
 print("\nE4 METHOD-CODE -- never spend GPU time on a variant identical to the control")
 import direction, make_variant
 qdir = REPO / "runs" / "sweep"

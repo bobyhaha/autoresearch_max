@@ -71,7 +71,7 @@ def build(cfg: dict) -> str:
 
     # --- instrumentation: time decomposition + richer telemetry (no math change) ---
     s = sub(s, "t_start_training = time.time()",
-                  "t_start_training = time.time()\n_t_fwdbwd=0.0;_t_loader=0.0;_t_opt=0.0;_t_wait=0.0;_dts=[]")
+                  "t_start_training = time.time()\n_t_fwdbwd=0.0;_t_loader=0.0;_t_opt=0.0;_t_wait=0.0;_dts=[]\n_ev0=torch.cuda.Event(enable_timing=True);_ev1=torch.cuda.Event(enable_timing=True);_gpu_ms=[]")
     s = sub(s, """    for micro_step in range(grad_accum_steps):
         with autocast_ctx:
             loss = model(x, y)
@@ -79,7 +79,8 @@ def build(cfg: dict) -> str:
         loss = loss / grad_accum_steps
         loss.backward()
         x, y, epoch = next(train_loader)
-""", """    for micro_step in range(grad_accum_steps):
+""", """    _ev0.record()
+    for micro_step in range(grad_accum_steps):
         _ta = time.perf_counter()
         with autocast_ctx:
             loss = model(x, y)
@@ -92,10 +93,16 @@ def build(cfg: dict) -> str:
         if step > 10:
             _t_fwdbwd += _tb-_ta; _t_loader += _tc-_tb
 """)
+    s = sub(s, """    optimizer.step()
+    model.zero_grad(set_to_none=True)
+""", """    optimizer.step()
+    model.zero_grad(set_to_none=True)
+    _ev1.record()
+""")
     s = sub(s, """    if step > 10:
         total_training_time += dt
 """, """    if step > 10:
-        total_training_time += dt; _dts.append(dt)
+        total_training_time += dt; _dts.append(dt); _gpu_ms.append(_ev0.elapsed_time(_ev1))
 """)
 
     # --- second-moment telemetry, emitted by EVERY variant including the control ------
@@ -326,6 +333,33 @@ model.eval()""")
         obs.append("""print(f"ema_updates:       {_ema_n}")""")
 
     # M4 gradient geometry: the Contrarian's discriminator -- constant Muon momentum.
+    # mu_warmup: the LENGTH of the Muon momentum ramp, in steps. baseline/train.py:534
+    # defines get_muon_momentum(step) as min(step / 300, 1) -- indexed by STEP, while the
+    # learning-rate and weight-decay schedules are indexed by PROGRESS (elapsed time over
+    # budget). Any lever that changes the step count therefore silently changes what
+    # FRACTION of training the momentum ramp occupies: at tbs=18 the run completes ~2000
+    # steps so the ramp finishes at 15.0% of training, against 30.3% for its ~990-step
+    # control. The largest result in this campaign is consequently a mixture of two
+    # mechanisms -- more optimizer updates, and an earlier-completing momentum schedule --
+    # and no arm run so far can separate them. This knob exists to: set the ramp to N
+    # steps, so a doubled-step arm can hold the ramp at the SAME FRACTION of its run as
+    # the control and the batch-size effect can be measured alone.
+    # mu_ceil: the CEILING of the Muon momentum ramp. baseline/train.py ramps
+    # (1-frac)*0.85 + frac*0.95, so 0.95 is the value held for most of training. The
+    # corpus gives an explicit co-scaling rule for the momentum coefficient when batch
+    # size changes -- alpha_1 = alpha_0 * (b1/b0) * sqrt(T0/T1) with alpha = 1 - beta --
+    # under which halving the batch at a fixed token budget implies alpha 0.05 -> 0.01768,
+    # i.e. beta 0.95 -> 0.9823. Our tbs=18 arm currently inherits the baseline ceiling, so
+    # it is running a momentum coefficient the theory says is too small for its batch.
+    # This knob exists to test that directly rather than to reach it by side effect.
+    if cfg.get("mu_ceil") is not None:
+        s = sub(s, "    return (1 - frac) * 0.85 + frac * 0.95",
+                   f"    return (1 - frac) * 0.85 + frac * {cfg['mu_ceil']}")
+
+    if cfg.get("mu_warmup") is not None:
+        s = sub(s, "    frac = min(step / 300, 1)",
+                   f"    frac = min(step / {cfg['mu_warmup']}, 1)")
+
     if cfg.get("mu_const") is not None:
         # The target here read `min(step / 300)` while baseline/train.py:535 reads
         # `min(step / 300, 1)`. sub() raised VariantEditError on EVERY mu_const build, so
@@ -582,6 +616,11 @@ print(f"grad_accum:       {grad_accum_steps}")
 print(f"flops_per_token_M:{num_flops_per_token/1e6:.3f}")
 print(f"loader_frac:      {_t_loader/_tt:.6f}")
 print(f"fwdbwd_frac:      {_t_fwdbwd/_tt:.6f}")
+_gm = sorted(_gpu_ms)
+_gspan = _gm[len(_gm)//2] if _gm else 0.0
+_smed = _sd[len(_sd)//2]*1000
+print(f"gpu_span_ms_med:  {_gspan:.3f}")
+print(f"gpu_slack_frac:   {max(0.0, 1.0 - _gspan/max(_smed,1e-9)):.6f}")
 print(f"step_ms_p10:      {_sd[len(_sd)//10]*1000:.2f}")
 print(f"step_ms_med:      {_sd[len(_sd)//2]*1000:.2f}")
 print(f"vram_reserved_mb: {torch.cuda.max_memory_reserved()/1024/1024:.1f}")

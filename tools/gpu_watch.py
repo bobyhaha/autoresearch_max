@@ -32,9 +32,14 @@ nvidia-smi --query-compute-apps=pid,gpu_uuid --format=csv,noheader | while IFS=,
   echo "$(ps -o user= -p ${p// /} 2>/dev/null),$u"
 done
 echo '@@OURS'
-pgrep -u "$(whoami)" -af 'bin/python .*train\.py' | wc -l
+pgrep -u "$(whoami)" -af 'bin/python .*train\.py' | grep -v 'bash -c' | wc -l
+# `nohup ... & disown` leaves a resident `bash -c` wrapper whose command line also
+# contains the python path and script name, so a bare pgrep counts one dispatcher
+# as two. health.py already filters it (see its dispatchers predicate); this file
+# did not, and the two tools disagreed. A false '2 dispatchers' is the same signal
+# as a real double-booking, and acting on it means killing a healthy dispatcher.
 echo '@@DISPATCH'
-pgrep -u "$(whoami)" -af 'bin/python .*dispatch\.py' | wc -l
+pgrep -u "$(whoami)" -af 'bin/python .*dispatch\.py' | grep -v 'bash -c' | wc -l
 echo '@@LOAD'
 cat /proc/loadavg
 """

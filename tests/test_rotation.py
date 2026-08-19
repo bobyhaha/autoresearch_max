@@ -136,3 +136,36 @@ with tempfile.TemporaryDirectory() as tmp:
        "HARD CAP still rotates with no band at all - monoculture stays impossible")
 
 print("\nALL ROTATION TESTS PASS")
+
+print("\nHOLDS-BEST -- the axis currently winning is never closed as dry")
+# The dry test compares a run against the GLOBAL running best, so an axis is charged a
+# strike for failing to beat a record ANOTHER axis set. Observed live: swdiv reached
+# 0.989449, a new campaign best, but the prior best 0.989819 came from the ve axis and
+# clearing it by 0.00037 did not clear the 0.00074 band -- four such runs closed the axis
+# that was winning at that moment. Generalised, one strong result retires the whole
+# search space.
+import direction as _d
+def _run_v(axis, aval, val, i):
+    cfg = dict(_d.PLATFORM); cfg[axis] = aval
+    return {"ok": True, "ended": i, "cfg": cfg,
+            "metrics": {"val_bpb": val, "final_epoch": 2.0, "num_steps": 1000}}
+def _run(axis, val, i):
+    cfg = dict(_d.PLATFORM); cfg[axis] = {"swdiv": 4, "mlp": 6}[axis]
+    return {"ok": True, "ended": i, "cfg": cfg,
+            "metrics": {"val_bpb": val, "final_epoch": 2.0, "num_steps": 1000}}
+# Two controls that overlap in time so a band exists at all.
+def _ctl(val, i):
+    return {"ok": True, "ended": i, "started": i - 300, "gpu": i % 4, "cfg": dict(_d.PLATFORM),
+            "metrics": {"val_bpb": val, "final_epoch": 2.0, "num_steps": 1000}}
+rows = [_ctl(0.9990 + 0.0001 * k, 1000 + k) for k in range(6)]
+# mlp sets a strong best first; swdiv then edges past it by less than the band, 4x.
+rows.append(_run("mlp", 0.9900, 2000))
+# distinct swdiv values, so the streak accrues under value-counting semantics
+rows += [_run_v("swdiv", 4 * 2 ** k, 0.98995 - 0.000001 * k, 2001 + k) for k in range(4)]
+st = _d.axis_state(rows)
+sw = st["axes"]["swdiv"]
+ok(sw["dry"] >= 4, f"swdiv accrued a full dry streak ({sw['dry']})")
+ok(sw["best"] <= st["best"], "swdiv holds the campaign best")
+ok(sw["open"], "and is NOT closed, because retiring the current leader is never right")
+ok(not st["axes"]["mlp"]["open"] or st["axes"]["mlp"]["dry"] < _d.DRY_STREAK,
+   "an overtaken axis still closes normally -- the exemption is only for the leader")

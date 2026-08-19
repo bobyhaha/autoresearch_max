@@ -19,6 +19,7 @@ start = src.index("def runnable(")
 end = src.index("def release(")
 mod = types.ModuleType("dispatch_logic")
 mod.__dict__.update({"os": __import__("os"), "time": __import__("time"),
+                     "json": __import__("json"),
                      "collections": __import__("collections"),
                      "log": lambda m: None, "release": lambda it: None})
 exec(compile(src[start:end], "dispatch_logic", "exec"), mod.__dict__)
@@ -106,6 +107,52 @@ ok(batch == [], f"the lone runnable control does not launch (got {[b['name'] for
 mod.runnable = lambda cutoff: (list(pair), 0, 0)   # freeze lifted
 batch, _ = mod.next_batch(1000, 4)
 ok(len(batch) == 2, "once the freeze lifts the whole wave goes out together")
+mod.load_queue = lambda: []
+
+print("\n5d. a PERMANENTLY split wave is tombstoned, not refused forever")
+# zloss01_A/B ran their two controls and never their two treatments. Because a wave is
+# sized from the queue, the pair could never be reformed -- so every poll re-evaluated
+# the same dead entries and logged the same refusal, indefinitely, while the queue went
+# on presenting them as pending work. Refusing is right; refusing FOREVER is a leak.
+# The stranded members are written as INVALID results so the loss stays in the
+# accounting, rather than deleted, which would make it vanish.
+import json as _json, tempfile as _tf
+with _tf.TemporaryDirectory() as tmp:
+    root = pathlib.Path(tmp)
+    (root / "results").mkdir(); (root / "claims").mkdir()
+    mod.ROOT = root
+    dead = [{"name": "Z_ctrl0", "wave_group": "zdead", "cfg": {}},
+            {"name": "Z_ctrl1", "wave_group": "zdead", "cfg": {}},
+            {"name": "Z_treat0", "wave_group": "zdead", "cfg": {"zloss": 0.1}},
+            {"name": "Z_treat1", "wave_group": "zdead", "cfg": {"zloss": 0.1}}]
+    mod.load_queue = lambda: dead
+    (root / "results" / "Z_ctrl0.json").write_text("{}")   # the two controls finished
+    (root / "results" / "Z_ctrl1.json").write_text("{}")
+
+    # In flight is NOT stranded: a claimed member means the wave is still forming.
+    (root / "claims" / "Z_treat0").mkdir()
+    ok(mod.tombstone_split_wave("zdead") is False,
+       "a wave with a CLAIMED member is left alone -- it may still complete")
+    ok(not (root / "results" / "Z_treat1.json").exists(),
+       "and nothing was tombstoned while that claim was live")
+
+    (root / "claims" / "Z_treat0").rmdir()                 # the claim went away unrun
+    ok(mod.tombstone_split_wave("zdead") is True, "the dead wave is retired")
+    for n in ("Z_treat0", "Z_treat1"):
+        rec = _json.loads((root / "results" / f"{n}.json").read_text())
+        ok(rec["ok"] is False and "stranded" in rec["invalid_reason"],
+           f"{n} recorded as INVALID, so analyze.py counts the loss")
+        ok("val_bpb" not in (rec.get("metrics") or {}),
+           f"{n} carries no val_bpb -- none exists and none may be inferred")
+    ok(mod.tombstone_split_wave("zdead") is False,
+       "and it does not fire twice: the entries now have results")
+
+    # An intact wave, none of whose members have finished, is never touched.
+    live = [{"name": "L0", "wave_group": "zlive", "cfg": {}},
+            {"name": "L1", "wave_group": "zlive", "cfg": {}}]
+    mod.load_queue = lambda: live
+    ok(mod.tombstone_split_wave("zlive") is False,
+       "a wave with no finished member is not a split wave")
 mod.load_queue = lambda: []
 
 print("\n6. the cap really is 4")

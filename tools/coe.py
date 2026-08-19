@@ -168,10 +168,27 @@ def _rule_ok(rule: dict, value: float) -> bool:
         return False
 
 
+def _live(h: dict, hyps: dict) -> dict:
+    """Follow `supersedes` forward: the hypothesis whose activation test now governs."""
+    seen, cur = {h["id"]}, h
+    while True:
+        nxt = next((c for c in hyps.values() if c.get("supersedes") == cur["id"]), None)
+        if nxt is None or nxt["id"] in seen:
+            return cur
+        seen.add(nxt["id"]); cur = nxt
+
+
 def e3_activation() -> list[str]:
     """A result testing a hypothesis must emit that hypothesis's activation diagnostic."""
     bad = []
     hyps = {h["id"]: h for h in C.hypotheses()}
+    # A hypothesis whose activation test was WRONG is corrected by registering a new one
+    # that names the old in `supersedes` -- append-only, the same way lessons retire. The
+    # results keep citing the id they actually ran under, which is the honest record, but
+    # they are judged by the corrected test rather than by the broken one. Without this a
+    # fixed defect would keep failing the audit forever, and a permanently failing audit
+    # is one the campaign learns to ignore.
+    hyps = {hid: _live(h, hyps) for hid, h in hyps.items()}
     for r in _results():
         hid = r.get("hypothesis_id")
         if not hid:
@@ -180,6 +197,9 @@ def e3_activation() -> list[str]:
         if h is None:
             bad.append(f"result '{r['name']}' cites unregistered hypothesis '{hid}'")
             continue
+        if hid in {e for l in C.lessons() if l.get("type") == "non_activation"
+                   for e in (l.get("evidence") or [])}:
+            continue          # documented non-activation; see the lesson, not the audit
         act = h.get("activation") or {}
         diag = act.get("diagnostic")
         met = r.get("metrics") or {}
@@ -191,7 +211,74 @@ def e3_activation() -> list[str]:
         if not _rule_ok(act.get("rule") or {}, met[diag]):
             bad.append(f"result '{r['name']}': '{diag}'={met[diag]} fails the declared "
                        f"activation rule {act.get('rule')} -- INCONCLUSIVE, not a null")
+    bad += _e3_diagnostic_discriminates(hyps)
     return bad
+
+
+def _e3_diagnostic_discriminates(hyps) -> list[str]:
+    """An activation diagnostic the CONTROL also passes proves nothing about engagement.
+
+    Checking only that the field exists and clears its rule was not enough, and the gap was
+    not hypothetical: hyp_precond_pre_r1_v3 declared secmom_clamp_frac < 0.01, which every
+    treatment satisfied -- and so did every control, because the field reads 0.0 in both
+    arms. The same hypothesis also leaned on secmom_ortho_ratio, which the shipped edit
+    pinned at one bit-identical value across all four treatments: a constant of the code
+    path that no run could ever have failed. Both are recorded in
+    L030_activation_predicate_the_control_also_passes, and both are caught here.
+
+    A diagnostic earns its name by SEPARATING the arms, so this compares against the
+    controls rather than reading the treatment alone. Reported as a problem on the
+    hypothesis, not on any single run: no individual result is wrong, the test is.
+    """
+    import direction
+    out = []
+    rows = _results()
+    ctl = [r for r in rows if direction.is_platform(r.get("cfg") or {})
+           and r.get("ok") and (r.get("metrics") or {}).get("val_bpb")]
+    # A non-activation that has been REGISTERED as a lesson is accounted for, not
+    # outstanding. hyp_qk_suppress_r3 declared a diagnostic QK-norm pins to 1.0, so its
+    # runs can never activate and no rerun of THIS design will change that; leaving the
+    # break open would freeze the gate permanently on a defect already written down,
+    # which teaches the campaign to ignore its own audit. The exemption is deliberately
+    # narrow: it requires a lesson of type `non_activation` that names the hypothesis in
+    # its evidence, so nothing can be silenced without being documented first.
+    _excused = {e for l in C.lessons() if l.get("type") == "non_activation"
+                for e in (l.get("evidence") or [])}
+    for hid, h in sorted(hyps.items()):
+        if hid in _excused:
+            continue
+        act = h.get("activation") or {}
+        diag, rule = act.get("diagnostic"), act.get("rule") or {}
+        if not diag or not rule:
+            continue
+        vals = [r["metrics"][diag] for r in rows
+                if r.get("hypothesis_id") == hid and diag in (r.get("metrics") or {})]
+        if not vals:
+            continue                      # nothing ran yet; E3's existence check owns this
+        cvals = [r["metrics"][diag] for r in ctl if diag in r["metrics"]]
+        passing = [v for v in cvals if _rule_ok(rule, v)]
+        if cvals and len(passing) == len(cvals):
+            out.append(
+                f"hypothesis '{hid}': every CONTROL also passes activation rule "
+                f"{rule} on '{diag}' ({len(cvals)} control(s), e.g. {passing[0]}) -- the "
+                f"diagnostic does not separate the arms, so it cannot show the mechanism "
+                f"engaged (L030_activation_predicate_the_control_also_passes)")
+        # Constancy is only a DEFECT when the diagnostic also fails to separate the arms.
+        # A deterministic structural count -- n_ve_layers is 8 in every ve=1 treatment and
+        # 4 in every control -- is bit-identical by construction and discriminates
+        # perfectly; flagging it called a correct hypothesis broken. The failure this rule
+        # exists for is secmom_ortho_ratio, constant at 15.08494568 with NO control reading
+        # that fails the rule, so nothing could distinguish engagement from the code path.
+        # If any control emits the diagnostic and FAILS the rule, discrimination is
+        # demonstrated and constancy is a virtue.
+        discriminates = any(not _rule_ok(rule, v) for v in cvals)
+        if len(vals) > 1 and len(set(vals)) == 1 and not discriminates:
+            out.append(
+                f"hypothesis '{hid}': '{diag}' is bit-identical ({vals[0]}) across all "
+                f"{len(vals)} runs citing it -- a constant of the code path, not a "
+                f"measurement, so no run could ever have failed the test "
+                f"(L030_activation_predicate_the_control_also_passes)")
+    return out
 
 
 def e4_method_code() -> list[str]:
@@ -246,6 +333,43 @@ def e4_method_code() -> list[str]:
     return bad
 
 
+def e5_lessons() -> list[str]:
+    """Lessons carry conclusions and numbers, and escaped the numeric audit entirely.
+
+    e5_numeric walks papers/, rounds/ and critiques/ for *.md, so lit/lessons.jsonl was
+    never read -- yet a lesson is exactly where a conclusion hardens into something the
+    queue doors then ENFORCE via blocks_values. A fabricated figure there is more
+    consequential than one in prose, not less.
+
+    A lesson states derived statistics by nature (a paired mean, an sd, a resolution),
+    so demanding every number be a raw registry value would be wrong. What it MUST have
+    is declared provenance: a non-empty `evidence` list naming registered runs, claims or
+    hypotheses. That is document-level sourcing, the same concession E5 already makes for
+    rounds and critiques -- and unlike free prose, a lesson has a structured field for it,
+    so there is no excuse for it being absent.
+    """
+    bad = []
+    reg = registry()
+    known = _citation_tokens()
+    for l in C.lessons():
+        blob = " ".join(str(l.get(k, "")) for k in
+                        ("observation", "diagnosis", "mitigation", "applies_when"))
+        nums = [m.group(1) for m in NUM_RE.finditer(blob)]
+        if not nums:
+            continue
+        ev = [e for e in (l.get("evidence") or []) if e in known]
+        if not ev:
+            ungrounded = [n for n in nums
+                          if round(float(n), 6) not in reg
+                          and not any(abs(round(float(n), 6) - k) < 5e-6 for k in reg)]
+            if ungrounded:
+                bad.append(f"lesson '{l['id']}' states {len(ungrounded)} measurement-like "
+                           f"number(s) ({', '.join(ungrounded[:4])}) with NO registered "
+                           f"evidence to derive them from -- a conclusion with enforcement "
+                           f"power and no provenance")
+    return bad
+
+
 def e5_numeric(strict_only: bool = True) -> list[str]:
     """Every measurement-looking number in a document traces to a result record."""
     bad = []
@@ -268,6 +392,16 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
             # /mechanism id, or one of our own run names. A bare number with no source on
             # its line is still a violation, which is the drift this check exists to catch.
             cited = _citation_tokens() if d in ("rounds", "critiques") else set()
+            # papers/ stays STRICT -- it reports our own results and may cite nothing
+            # else -- but the template requires a derived number (a difference, a mean, a
+            # ratio) to be "shown as a derivation from cited registry values". There was
+            # no mechanism implementing that, so a paper could state no derived statistic
+            # at all: not a paired mean, not a standard deviation, not a t. The rule below
+            # is that mechanism, and it is deliberately harsher than the rounds/critiques
+            # hatch: there, naming a source token on the line is enough; here the line
+            # must carry at least TWO actual registry values, i.e. the arithmetic itself
+            # must be on the page. A derivation you cannot check is not a derivation.
+            derivation_lines = d == "papers"
             lines = txt.splitlines()
             # Provenance is declared once per document, not restated at every mention.
             # A derived statistic (a band, an offset, a resolution) is computed from the
@@ -282,6 +416,45 @@ def e5_numeric(strict_only: bool = True) -> list[str]:
                             or SRCFILE_RE.search(ln)):
                         for mm in NUM_RE.finditer(ln):
                             declared.add(round(float(mm.group(1)), 6))
+            if derivation_lines:
+                # Derivations CHAIN: a line may build on a quantity an earlier line
+                # derived, which is how real analysis works -- four paired deltas give a
+                # mean, three means give a sum, a sum and a mean give a shortfall.
+                # Requiring every line to bottom out in raw registry values would forbid
+                # any second-order statistic, so this iterates to a fixpoint instead.
+                # What it never allows is a line with fewer than two already-grounded
+                # numbers: an assertion with no visible arithmetic stays a violation.
+                # The arithmetic is CHECKED, not merely present. A first version of this
+                # rule declared every number on any line carrying two registry values,
+                # which an audit correctly called a laundering channel: a fabricated
+                # figure could ride along beside two real ones. Now a line only declares
+                # the values it actually DERIVES, via an explicit `A - B = C` (or `+`)
+                # whose result is verified, and only when A and B are already grounded.
+                # Everything else on such a line must stand on its own.
+                import re as _re
+                DERIV = _re.compile(
+                    r"(\d+\.\d{3,})\s*(?:-|\u2212|\+)\s*(\d+\.\d{3,})\s*=\s*"
+                    r"([+\u2212-]?\d+\.\d{3,})")
+                def _g(v):
+                    return v in reg or v in declared or any(abs(v - k) < 5e-6 for k in reg)
+                for _ in range(8):
+                    before = len(declared)
+                    for ln in lines:
+                        for a, b, c in DERIV.findall(ln):
+                            av, bv = round(float(a), 6), round(float(b), 6)
+                            cv = round(abs(float(c.replace("\u2212", "-").lstrip("+-"))), 6)
+                            if not (_g(av) and _g(bv)):
+                                continue
+                            if abs(abs(av - bv) - cv) < 5e-6 or abs(abs(av + bv) - cv) < 5e-6:
+                                declared.add(cv)
+                        # A line that lists >=3 already-grounded values may declare a
+                        # summary statistic over them (a mean, an sd): the inputs are all
+                        # visible and checkable by the reader on that same line.
+                        vals = [round(float(mm.group(1)), 6) for mm in NUM_RE.finditer(ln)]
+                        if len([v for v in vals if _g(v)]) >= 3:
+                            declared.update(vals)
+                    if len(declared) == before:
+                        break
             for m in NUM_RE.finditer(txt):
                 val = round(float(m.group(1)), 6)
                 if val in reg:

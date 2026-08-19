@@ -1,0 +1,354 @@
+\documentclass[10pt]{article}
+\usepackage{icmlstyle}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{xcolor}
+
+\begin{document}
+
+\icmltitle{Three Levers That Lower Validation Bits-per-Byte at a Fixed\\[0.2ex]
+300-Second Budget, and the Instrument Required to See Them}
+
+\icmlauthor{OPHIS Autonomous Research Campaign}%
+{Single-node H200, frozen data pipeline, seed 42}
+
+\begin{icmlabstract}
+We report six interventions measured on a fixed-\emph{time} language-model training
+benchmark: a $\sim$50.3M-parameter GPT trained for 300 charged seconds on one H200 with
+the data pipeline frozen. Three lower validation bits-per-byte and three do not. The
+largest single effect is halving the short span of a sliding-window attention pattern;
+combined with a value-embedding density change and a second-moment reordering in the
+optimizer it produces the best model we have trained, improving $\mathrm{val\_bpb}$ from
+$0.990345$ to $0.986956$. The combination realises most, but measurably not all, of the
+sum of its parts, and we locate the overlap in a shared throughput channel.
+
+Our central methodological claim is that none of these effects is visible without a
+paired, device-counterbalanced design: the 70 byte-identical control runs in this campaign
+span a range of $0.034609$, roughly an order of magnitude larger than the largest effect
+we report. We describe the design, the noise model motivating it, and---at length, because
+we believe it is the more transferable contribution---the instrument defects that had to
+be found and corrected before any number below could be trusted. Six of the seven defects
+repaired in this block were in our own apparatus rather than in the model.
+\end{icmlabstract}
+
+\begin{multicols}{2}
+
+\section{Introduction}
+
+The benchmark fixes \emph{time}, not tokens. A change that improves the model per step but
+costs throughput can be a net loss, and a change that buys steps by removing computation
+can be a net win even if it degrades the model per step. Throughput is therefore part of
+quality rather than a nuisance to be regressed away. We report raw $\mathrm{val\_bpb}$ as
+the verdict everywhere and use step count only to explain \emph{why} a result came out as
+it did.
+
+The campaign began with no experimental priors; every inherited belief was deleted
+deliberately, on the grounds that most were wrong or unfalsifiable. What we had was a
+literature corpus and a set of properties of the apparatus. What we lacked---and had to
+build first---was a measuring instrument able to resolve the effects we sought.
+
+\paragraph{Contributions.}
+(i)~Three confirmed levers and three confirmed non-levers, each measured under a
+counterbalanced design with activation independently verified (\S\ref{sec:design},
+\S\ref{sec:results}).
+(ii)~A combination experiment showing the levers are complementary but partly redundant,
+with the overlap channel identified (\S\ref{sec:stack}).
+(iii)~An account of how the measurement apparatus failed, and what that implies for
+autonomous experimentation (\S\ref{sec:instrument}).
+
+\section{Setup}
+
+A GPT of $\sim$50.3M parameters: vocabulary 8192, depth 8, $n_{\text{embd}}$ 512, MLP
+ratio 4, head dimension 128. Attention follows a repeating \texttt{SSSL} window
+pattern---three short-window layers and one long-window layer per block, final layer
+forced to full context. Value embeddings attach to every other layer; QK-norm is applied.
+The optimizer is Muon on 2D matrices with AdamW elsewhere. Training runs under
+\texttt{torch.compile} in bf16 for 300 charged seconds: on this host roughly 1000 steps at
+524288 tokens per step, completing about two epochs of a fixed dataset.
+
+The tokenizer, loader, packing, evaluator and BPB accounting are frozen and byte-identical
+to the upstream reference. Only the training file is edited. The host is shared; other
+tenants occupy most GPUs most of the time, and co-tenancy on a GPU invalidates a run.
+
+\section{The measurement problem}
+
+The 70 byte-identical control runs span $1.025517$ at worst to $0.990908$ at best---a
+range of $0.034609$. Every effect we report is smaller than $0.004408$. A single unpaired
+run therefore cannot see any of them.
+
+The dominant nuisance is host CPU contention, which moves step count run-to-run through
+the frozen packing loop. Two structural facts follow.
+
+\paragraph{Concurrency, not proximity.} Runs must overlap in wall-clock time to share
+contention. Runs launched back-to-back on one GPU are sequential and the load drifts
+between them; grouping those as a ``wave'' reports a sequential spread under a within-wave
+label, flattering the instrument.
+
+\paragraph{The offset belongs to the GPU.} Our four devices have systematically different
+control means, with a fastest-to-slowest spread comparable to the effects being chased. An
+earlier version of this campaign attributed that offset to the CPU core block; correcting
+which factor owns it changed verdicts.
+
+\section{Design: the counterbalanced quad}
+\label{sec:design}
+
+Each experiment is two four-wide waves launched concurrently:
+\begin{center}\small
+\begin{tabular}{ll}
+wave A: & [\,treat, ctrl, ctrl, treat\,]\\
+wave B: & [\,ctrl, treat, treat, ctrl\,]
+\end{tabular}
+\end{center}
+Across the pair the treatment occupies every device exactly once, as does the control.
+Deltas are formed \emph{within} each device, removing that device's fixed offset inside
+each difference rather than relying on cancellation in the mean.
+
+Two consequences matter. First, $n=4$ pairings, so every $t$ carries 3 degrees of freedom
+and should be read as evidence of \emph{direction}, not as a precise magnitude. Second,
+when the design breaks---a device set shifts between waves, or an arm crosses an
+operating-point boundary---the analysis \textbf{refuses a verdict} rather than averaging
+across a broken swap. This occurred three times in this block, costing three extra waves.
+
+\paragraph{Activation.} Every hypothesis declares a diagnostic the run must emit, checked
+\emph{before} the outcome. A run whose diagnostic is absent, or which fails its rule, is
+\textbf{inconclusive} about the mechanism---never a negative. Otherwise a broken
+intervention and a genuine null are indistinguishable and good ideas are retired for free.
+
+The instrument resolution, twice the pooled within-device control standard deviation
+divided by $\sqrt{2}$, is $0.000282$ (pooled sd $0.000199$). Effects below it are not
+claimed.
+
+\section{Results}
+\label{sec:results}
+
+All comparisons are same-device paired within a single counterbalanced quad pair, seed 42.
+
+\begin{center}\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+intervention & mean $\Delta$ & verdict\\
+\midrule
+\texttt{swdiv} 2$\to$4 & $-0.002298$ & better\\
+\texttt{ve} 2$\to$1 & $-0.001487$ & better\\
+\texttt{precond} & $-0.001147$ & better\\
+\texttt{qk\_suppress} 0.1 & $+0.001226$ & \emph{inconclusive}\\
+\texttt{unet} & $+0.004123$ & worse\\
+\texttt{tbs} 19$\to$20 & $+0.022545$ & worse\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Halving the short attention span}
+
+At sequence length 2048 the \texttt{SSSL} pattern gives six short-window and two
+long-window layers. Halving the short window from 1024 to 512 takes per-token FLOPs from
+$239.078$ to $220.204$: a removal of $18.874$, or $7.9\%$ of the total---\emph{not} the
+$26\%$ that attention as a whole represents. The two long-window layers hold about $40\%$
+of the attention term and are untouched.
+
+This distinction was not academic. The hypothesis was originally justified with the $26\%$
+figure, overstating the throughput lever by $\sim$3.3$\times$. The literature review caught
+the error before the experiment ran; the arithmetic was corrected and the prediction
+threshold was \emph{deliberately not lowered} to compensate. The corrected, harder
+prediction was met anyway.
+
+Step counts rose in every cell and quality held. This is the opposite outcome to an
+earlier arm reducing Newton--Schulz iterations, worth $\sim$0.2\% of step time, which
+bought no steps and came back worse: $7.9\%$ is enough to move the critical path and
+$0.2\%$ is not.
+
+\paragraph{A correction we owe the reader.} We first reported this effect as $-0.002463$
+at $t=-20.3$. An independent audit found that estimate stitched pairs from two experiments
+run 1.4 hours apart. The clean single-experiment quad gives $-0.002298$ (sd $0.000142$,
+$t=-32.4$). The stitched figure overstated the effect by about $7\%$; the corrected value
+is used throughout.
+
+\subsection{Value embeddings on every layer}
+
+\texttt{ve} is a \emph{stride}, so \texttt{ve=1} is denser: tables go from four to eight
+and parameters from 50.3M to 67.1M. This 33\% larger model ran slower and completed
+\emph{fewer} steps than its control in every cell, and won regardless---quality gained per
+step more than repays throughput lost.
+
+This contradicts the prior we registered before running it. Three corpus claims opposed
+it: all-layer injection measured worse than single-layer, dense per-layer expansion
+saturating, and evidence that such memories' benefit is the gated pathway rather than the
+learned table content. All three carried honestly low transfer scores (image
+autoregression; tokenizer-transfer fine-tuning; a 2.5B mixture-of-experts). They retain
+their opposing stance; what we now know is that they do not carry to 50M parameters at 300
+seconds.
+
+\paragraph{One void cell.} On the slowest device the added parameters cost enough
+throughput to finish at $501.2$M tokens and epoch $1.0$ against its control's $2.0$---a
+different operating point, so the pair is excluded. The exclusion rule is structurally
+biased against parameter-adding treatments; here it cut \emph{against} the result, since
+including the cell would have strengthened it. This leaves \texttt{ve} with three pairings
+and 2 degrees of freedom, the weakest of our three wins.
+
+\subsection{Second-moment reordering}
+
+Moving the NorMuon second-moment computation before the polar iteration, with unit-RMS
+momentum normalisation, gives $-0.001147$ across four devices. The activation observable
+separates the arms by roughly two orders of magnitude, because the second moment is taken
+over raw momentum rather than an orthogonalized update.
+
+\subsection{Two clean negatives}
+
+\textbf{Zero-initialised U-net skips} raised $\mathrm{val\_bpb}$ by $0.004123$ with a
+four-device standard deviation of only $0.000078$---the tightest measurement in the
+campaign. That precision follows from the intervention: the skips add one elementwise
+addition per lower-half layer and no matrix multiply, so they cannot buy or cost steps,
+and the step counts confirm they did not. The effect is pure quality, free of the
+throughput entanglement that explains most variance elsewhere. The gate parameters grew
+from exactly zero to $\sim$0.2, so the model \emph{used} the path and was worse for it.
+This intervention was the independent top pick of two separate proposers in the same
+council round; their agreement carried no evidential weight whatever.
+
+\textbf{Doubling tokens per step} raised $\mathrm{val\_bpb}$ by $0.022545$, roughly eighty
+times the resolution and by far the largest effect measured. Step counts halved as
+expected. At fixed time this model sits far \emph{above} its critical batch size, so
+halving the optimizer update count costs far more than reduced gradient noise returns. The
+step law cannot explain this away: it was fitted at 524288 tokens per step and this arm
+moves that very quantity.
+
+\subsection{One honest inconclusive}
+
+\texttt{qk\_suppress} produced a textbook-looking counterbalanced negative, $+0.001226$ at
+$t=+15.8$. We do \emph{not} report it as a negative. Its declared diagnostic reads exactly
+$1.0$ in every treatment \emph{and} every control, because QK-norm pins query RMS to unit
+norm by construction. It could never have shown engagement, so the run cannot distinguish
+``the mechanism works badly'' from ``the edit never bound and something else moved''. The
+hypothesis's own pre-registered falsifier named this case and we apply it against
+ourselves. The axis is untested, not refuted.
+
+\section{Combining the levers}
+\label{sec:stack}
+
+The three winners were run together against the \emph{unchanged} control:
+\[
+\Delta = -0.004408,\quad \mathrm{sd}=0.000152,\quad \mathrm{sem}=0.000076
+\]
+over four devices, all eight arms at epoch $2.0$, with all three components independently
+confirmed active in the same records. The best model is $0.986956$.
+
+The naive sum of the three separately measured effects is $-0.004932$. The combination
+realises about $89\%$ of it, a shortfall of $0.000524$.
+
+\paragraph{Where the overlap is.} \texttt{ve} and \texttt{swdiv} both act partly through
+step count, in opposite directions: \texttt{ve} costs throughput by adding parameters,
+\texttt{swdiv} buys it by removing FLOPs. Stacked, they nearly cancel in that
+channel---on the slowest device the combined arm ran 991 steps against its control's 992,
+where \texttt{ve} alone managed 956 and voided. Some of the two levers' separate gains
+were the same gain counted twice.
+
+\paragraph{Why this reading is licensed.} The interaction was predicted \emph{before} the
+run and the reading order fixed in advance: check epoch on every arm first, then look at
+$\mathrm{val\_bpb}$. Had the combined arm voided on the slow device, a shortfall would
+have been an operating-point artefact saying nothing about redundancy. It did not void,
+and the step count shows why. After the fact the two explanations are indistinguishable,
+which is the entire reason the order was pre-committed.
+
+\paragraph{On the statistics.} Our reported $t=-58$ rides a 3-df variance estimate about
+half the control-derived expectation; a chi-square check gives $p\approx0.14$, so this is
+not evidence of genuinely lower treatment noise, and a fairer $t$ is $\approx-29$. The win
+is unambiguous either way. We initially justified the shortfall as ``2.4$\times$
+resolution'', which repeats a borrowed-constant error our own lesson log condemns: the
+additive sum is itself three noisy estimates and its error must be propagated. Doing so
+properly gives $\approx$3.3 standard errors at Welch $\mathrm{df}\approx8.9$, so
+sub-additive redundancy stands---but by correct arithmetic, not the argument we first
+gave.
+
+
+\paragraph{Two caveats an audit raised after first submission.} First, \texttt{precond}'s
+$t=-12.3$ is a same-device paired statistic computed \emph{across} waves; the raw
+within-wave paired $t$ is $\approx-2.0$. Both share the mean $-0.001147$, and the
+same-device pairing is defensible because it removes the device term inside each
+difference rather than leaving it to cancel---but it relies on the device model being
+stable, so it is model-adjusted rather than raw, and we state it as such. Second, the
+configuration string \texttt{precond="pre"} names \emph{two} different implementations in
+our records, the pre-repair version whose second-moment buffer collapsed onto its clamp
+floor and the repaired one; only the latter supports the number above, and our analysis
+keys arms by generated-source hash precisely so the two are never pooled.
+
+\section{Threats to validity}
+
+\textbf{Single seed.} Every result is seed 42 on one host, by operator direction to
+conserve wall clock. Nothing here is established as seed-general.
+
+\textbf{Degrees of freedom.} All $t$ statistics carry 3 df or fewer.
+
+\textbf{Device advantage.} The headline best model ran on our fastest device, which
+carries a $\sim$0.0025 advantage over the slowest. The \emph{effects} are
+device-counterbalanced and unaffected; the headline \emph{number} is flattered.
+
+\textbf{Instrument defects dominate.} Of 47 registered lessons, 8 are scientific negatives
+and the remainder are process or measurement failures.
+
+\section{What the instrument cost}
+\label{sec:instrument}
+
+We describe these because they are more transferable than the results, and because each
+was found by audit rather than intuition.
+
+\textbf{An instrument that could not measure what it claimed.} A GPU-slack metric built
+from CUDA events bracketing the step. Such a pair measures elapsed time between two stream
+markers \emph{including} idle intervals, and our bracket enclosed the data loader, pinning
+the quantity to step time by construction. It read near-zero slack on every run, which
+would have been reported as ``the GPU is saturated''.
+
+\textbf{A metric silently discarded from every run.} The per-token FLOP estimate was
+printed by every variant and dropped by a parser requiring whitespace after a colon where
+the print emits none---absent from all 116 records. Recovered by re-reading each run's own
+log and verified to reproduce from first principles.
+
+\textbf{Three vacuous activation diagnostics.} In one session we shipped three hypotheses
+whose diagnostic the control also satisfied, all registered \emph{after} the lesson
+recording that failure mode existed. Prose did not prevent recurrence; a pre-registration
+check testing a proposed diagnostic against the existing control corpus does.
+
+\textbf{A policy that strangled the search.} The explore/exploit controller retired an axis
+after four consecutive non-improving runs. A counterbalanced quad is four runs of the
+\emph{same} value---so the moment we adopted the design that makes results trustworthy,
+every axis began closing after one experiment. Three axes closed having tried exactly one
+distinct value, including one that closed on evidence its \emph{opposite} direction was
+worth testing.
+
+\textbf{A ledger that could not reach its own threshold, then looked forward in time.} The
+explore/exploit share was first measured over runs; since each experiment is one novel run
+plus $\sim$7 counterbalancing replicates, the exploitation share could not exceed
+$\sim$12.5\% against a 30\% floor. Corrected to per-experiment, it then judged whether an
+axis ``pays'' using \emph{final-state} knowledge, retroactively classifying the runs that
+\emph{discovered} each lever as exploitation of it, and reporting a balanced 50\% where the
+true chronological share was 1/8. Three defects, in a ledger built specifically to keep us
+honest about that number; each time the measurement flattered the thing it measured.
+
+\textbf{A gate that could never be satisfied.} Adoption of the confirmed stack was deferred
+pending a second-seed replication---a condition the operator's own single-seed directive
+precludes. An audit named this a pocket veto and priced it: sixteen queued runs measured
+against a control $0.004408$ worse than the demonstrated configuration. A gate that cannot
+be satisfied is not caution; it is a refusal wearing caution's clothing, and it is worse
+than an explicit refusal because it looks like a pending decision and is never revisited.
+
+\paragraph{The pattern.} Every one of these fixes was discovered when a rule blocked
+something we wanted to run. We have never once gone looking for a rule that was too
+\emph{permissive}. That asymmetry is itself a threat to validity, and we do not know how to
+correct it from the inside---which is the strongest argument we can make for independent,
+adversarial audit as a standing component of autonomous research rather than an occasional
+one.
+
+\section{Conclusion}
+
+Three interventions lower $\mathrm{val\_bpb}$ at a fixed 300-second budget and combine to
+about $89\%$ of their additive sum, improving the best model from $0.990345$ to
+$0.986956$. Three others do not, one by a very large margin. The measurement design making
+these statements possible---concurrent yoked pairs, device counterbalancing,
+pre-registered activation diagnostics, and a willingness to refuse a verdict when the
+design breaks---mattered more than any individual intervention, because the effects are
+roughly a twentieth of the noise an unpaired comparison would face.
+
+\end{multicols}
+\end{document}
