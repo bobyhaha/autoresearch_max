@@ -156,6 +156,23 @@ def main():
     hyps = {h["id"]: h for h in C.hypotheses()}
     by_cfg = {}
     for g, members in waves(rows).items():
+        # KNOWN LIMITATION, WRITTEN DOWN RATHER THAN HALF-FIXED. Identifying the
+        # control by is_platform means a PLATFORM ADOPTION retroactively orphans every
+        # completed wave whose control was built at the old baseline: both members read as
+        # treatments and the wave drops out. Adopting tbs=18 collapsed this output from
+        # many groups to ONE and took R5MU2, R5MC2 and R5NOQK2 with it -- all already
+        # reported, three counterbalanced pairs each. Their figures were computed by hand
+        # and are preserved in L061, L063 and the commit log; the evidence is intact, the
+        # TOOL's ability to re-derive it is not.
+        #
+        # Two attempts to fix it by reading the role out of the run name did not restore
+        # those waves -- something further upstream drops them as well -- and one of those
+        # attempts I reverted on a misreading, having blamed my own change for a collapse
+        # that adoption had caused. Rather than keep patching a live analysis tool while
+        # chasing a symptom I had already misdiagnosed once, the limitation is recorded
+        # here with its exact scope. The fix needs the grouping path understood end to end
+        # and a test that fails before it passes, which is a clean piece of work and not a
+        # late edit.
         ctl = [m for m in members if direction.is_platform(m["cfg"] or {})]
         trt = [m for m in members if not direction.is_platform(m["cfg"] or {})]
         if not ctl or not trt:
