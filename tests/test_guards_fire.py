@@ -271,3 +271,24 @@ def test_systematic_regime_shift_requires_magnitude_not_just_consistency():
     window = src[i:i + 700]
     assert "_big_throughput" in window and "_resolvable" in window, (
         "the magnitude guards exist but are not part of the systematic predicate")
+
+
+def test_explore_debt_does_not_count_controls_against_exploration():
+    """A control is the instrument, not a choice between exploring and exploiting.
+
+    Controls sat in the denominator and could never be in the numerator, so with 62% of
+    valid runs being controls the metric was permanently biased toward "explore more" --
+    and permanently disagreed with balance.py, which an audit called instrument-shopping.
+    """
+    import analyze
+    rows = analyze.load()
+    state = direction.axis_state(rows)
+    real = direction.explore_debt(rows, state)
+
+    # Adding pure controls must not move the debt: they are not evidence either way.
+    ctl = {"ok": True, "cfg": dict(direction.PLATFORM),
+           "metrics": {"val_bpb": 0.9915, "final_epoch": 2.0}, "gpu": 6}
+    padded = direction.explore_debt(rows + [dict(ctl) for _ in range(40)], state)
+    assert abs(real - padded) < 1e-9, (
+        f"40 extra controls moved explore_debt from {real:+.4f} to {padded:+.4f}; the "
+        f"instrument is being counted as a research decision")

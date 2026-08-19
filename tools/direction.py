@@ -455,7 +455,17 @@ def blocked_reason(cfg: dict, state: dict) -> str | None:
 def explore_debt(results: list[dict], state: dict) -> float:
     """How far below EXPLORE_FLOOR the campaign is running. >0 means the next launch
     should be exploration. Exploitation drifts into a monoculture without this."""
-    ok = [r for r in results if r.get("ok")]
+    # CONTROLS ARE NOT A RESEARCH CHOICE, so they belong in neither term. They were in the
+    # denominator and never in the numerator: a control touches no axis and no mechanism, so
+    # it can never count as exploration, and 62% of valid runs are controls. The metric was
+    # therefore biased toward "explore more" by the runs that are the INSTRUMENT rather than
+    # a decision between exploring and exploiting.
+    #
+    # It also made this tool disagree permanently with tools/balance.py, which counts
+    # EXPERIMENTS. An audit called that out as instrument-shopping -- two numbers for one
+    # question, letting whichever flatters be quoted. They are now measuring the same
+    # population, and any remaining gap is unit (runs vs experiments), not definition.
+    ok = [r for r in results if r.get("ok") and not is_platform(r.get("cfg") or {})]
     if not ok:
         return 1.0
     exp = sum(1 for r in ok
