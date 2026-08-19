@@ -44,6 +44,17 @@ def _load():
     return out
 
 
+def _variant_of(name):
+    """Which generated source a run actually executed, read from the queue."""
+    try:
+        for e in json.loads((REPO / "runs" / "sweep" / "queue.json").read_text()):
+            if e["name"] == name:
+                return (e.get("variant") or "?")[:12]
+    except (OSError, ValueError):
+        pass
+    return "?"
+
+
 def _slot(r):
     """The GPU INDEX, which is what actually carries the offset.
 
@@ -96,19 +107,40 @@ def main():
               f"COUNTERBALANCED RESOLUTION {res:.6f}")
     else:
         res = band or 0.0
+    dr = direction.device_resolution(rows)
+    if dr:
+        res = dr["resolution"]
+        print(f"device model: pooled within-GPU sd {dr['pooled_sd']:.6f} over "
+              f"{dr['n_devices']} GPUs -> GPU-COUNTERBALANCED RESOLUTION {res:.6f} (L020)")
 
     hyps = {h["id"]: h for h in C.hypotheses()}
     by_cfg = {}
     for g, members in waves(rows).items():
         ctl = [m for m in members if direction.is_platform(m["cfg"] or {})]
         trt = [m for m in members if not direction.is_platform(m["cfg"] or {})]
-        if len(ctl) != 1 or len(trt) != 1:
+        if not ctl or not trt:
             continue
-        c, t = ctl[0], trt[0]
-        key = direction.label(t["cfg"])
-        by_cfg.setdefault(key, []).append({
-            "wave": g, "delta": t["metrics"]["val_bpb"] - c["metrics"]["val_bpb"],
-            "treat_dev": _slot(t), "ctl_dev": _slot(c), "t": t, "c": c})
+        # A wave may be 2-wide (one pair) or 4-wide (two pairs). Pair members by ADJACENT
+        # GPU index -- gpu4 with gpu5, gpu6 with gpu7 -- which is how the dispatcher fills
+        # slots and therefore which runs actually shared their moment of host contention.
+        # Requiring exactly one control and one treatment silently DROPPED every quad wave,
+        # so the counterbalanced design this campaign switched to produced no verdict at all.
+        members_sorted = sorted(members, key=lambda m: m.get("gpu", 0))
+        for i in range(0, len(members_sorted) - 1, 2):
+            a, b = members_sorted[i], members_sorted[i + 1]
+            ac, bc = direction.is_platform(a["cfg"] or {}), direction.is_platform(b["cfg"] or {})
+            if ac == bc:
+                continue                      # not a treatment/control pair
+            c, t = (a, b) if ac else (b, a)
+            # Key on the VARIANT as well as the label. `mech:precond` names the same
+            # mechanism before and after its repair, but the pre-repair runs never engaged
+            # (secmom_clamp_frac 0.998) and pooling them with the repaired ones reported
+            # "no effect demonstrated" for a mechanism whose fixed version had not yet been
+            # given a verdict. A repaired implementation is a different experiment.
+            key = f"{direction.label(t['cfg'])}  [variant {t.get('variant') or _variant_of(t['name'])}]"
+            by_cfg.setdefault(key, []).append({
+                "wave": g, "delta": t["metrics"]["val_bpb"] - c["metrics"]["val_bpb"],
+                "treat_dev": _slot(t), "ctl_dev": _slot(c), "t": t, "c": c})
 
     print()
     for key, arms in sorted(by_cfg.items()):
