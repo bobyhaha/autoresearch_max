@@ -3968,52 +3968,6 @@
   "hypothesis_id": "hyp_noqknorm_r5_p18"
  },
  {
-  "name": "R7NOQK_P3_s0_ctrl",
-  "cfg": {
-   "dbs": 128,
-   "tbs": 18,
-   "depth": 8,
-   "dim": 512,
-   "mlp": 4,
-   "ve": 2,
-   "win": "SSSL",
-   "swdiv": 2
-  },
-  "variant": "50ceed0a255d.py",
-  "label": "control",
-  "rationale": "Rebuilt at the adopted tbs=18 platform. The prior version carried an explicit tbs=19 in both arms, so after adoption its control was no longer a platform control and verdict.py would have found zero controls and two treatments in every wave. L043 warned that PLATFORM defines 'control' and that adoption should happen at a clean boundary; adoption happened mid-queue and orphaned 21 entries. Now a single-factor arm: removing QK-norm at tbs=18.",
-  "falsifier": "QK-norm removal does not move val_bpb outside the 0.000604 band with qk rms confirmed changed.",
-  "expected": "Measured against the current platform rather than a retired one.",
-  "wave_group": "R7NOQK_P3",
-  "created_at": 1787170391.0066938,
-  "source_round": "quad-counterbalanced",
-  "vram_est": 50
- },
- {
-  "name": "R7NOQK_P3_s1_treat",
-  "cfg": {
-   "dbs": 128,
-   "tbs": 18,
-   "depth": 8,
-   "dim": 512,
-   "mlp": 4,
-   "ve": 2,
-   "win": "SSSL",
-   "swdiv": 2,
-   "noqknorm": 1
-  },
-  "variant": "78df3a513fa9.py",
-  "label": "mech:noqknorm",
-  "rationale": "Rebuilt at the adopted tbs=18 platform. The prior version carried an explicit tbs=19 in both arms, so after adoption its control was no longer a platform control and verdict.py would have found zero controls and two treatments in every wave. L043 warned that PLATFORM defines 'control' and that adoption should happen at a clean boundary; adoption happened mid-queue and orphaned 21 entries. Now a single-factor arm: removing QK-norm at tbs=18.",
-  "falsifier": "QK-norm removal does not move val_bpb outside the 0.000604 band with qk rms confirmed changed.",
-  "expected": "Measured against the current platform rather than a retired one.",
-  "wave_group": "R7NOQK_P3",
-  "created_at": 1787170391.0066938,
-  "source_round": "quad-counterbalanced",
-  "vram_est": 50,
-  "hypothesis_id": "hyp_noqknorm_r5_p18"
- },
- {
   "name": "R7NOQK_P4_s0_treat",
   "cfg": {
    "dbs": 128,
