@@ -159,3 +159,43 @@ def test_emission_guard_is_wired_into_both_queue_doors():
         assert "emits_diagnostic" in src, (
             f"{door} does not call the emission pre-check; the guard exists but nothing "
             f"consults it, which is how the previous seven went unused")
+
+
+def test_multi_axis_arms_do_not_contribute_to_single_factor_estimates():
+    """A joint effect is not evidence about any one factor in it.
+
+    Both attribution instruments had this bug at once. selector.family_effects credited a
+    multi-family arm's FULL delta to every family it touched, so the three-lever stack's
+    -0.004355 stood as the largest effect in both `attention` and `ve_placement` and set the
+    queue's ranking prior. balance.sweeps did the same to the per-axis ladders, inflating
+    swdiv=4 from -0.002194 to -0.002889 -- and those ladders decide saturation, which decides
+    whether the campaign explores or keeps exploiting.
+    """
+    import analyze
+    import balance
+    import selector
+    rows = analyze.load()
+
+    # No single-factor family may carry a multi-family arm's delta.
+    fx = selector.family_effects(rows)
+    stack_keys = [k for k in fx if k.startswith("stack:")]
+    assert stack_keys, ("multi-family arms are no longer scored under their own key; if a "
+                        "stack arm is being folded back into a single family, the delta is "
+                        "being counted several times over")
+    for k in fx:
+        if k.startswith("stack:"):
+            continue
+        for r in rows:
+            cfg = r.get("cfg") or {}
+            if not r.get("ok") or direction.is_platform(cfg):
+                continue
+            if len(selector._families(cfg)) > 1 and k in selector._families(cfg):
+                assert selector._families(cfg) != [k], "unreachable; guards the shape above"
+
+    # The swdiv ladder must report the single-factor value, not the stack's.
+    state = direction.axis_state(rows)
+    lad = balance.sweeps(rows, state)
+    if "swdiv" in lad and 4 in lad["swdiv"]:
+        assert abs(lad["swdiv"][4] - (-0.002194)) < 5e-5, (
+            f"swdiv=4 reads {lad['swdiv'][4]:+.6f}; the single-factor arms measure -0.002194. "
+            f"A multi-axis arm is leaking into the ladder again.")

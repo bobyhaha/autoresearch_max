@@ -100,16 +100,39 @@ def classify(rows, state, res=None):
 
 
 def sweeps(rows, state):
-    """Per-axis rung ladder: each distinct value's device-corrected effect."""
+    """Per-axis rung ladder: each distinct value's device-corrected effect.
+
+    ONLY single-axis arms count. A run that moves several axes measures their joint effect,
+    and adding that whole delta to each axis's ladder -- which this did -- credits every
+    knob with the others' work. The three-lever stack put its full delta into the swdiv
+    ladder AND the ve ladder, inflating swdiv=4 from -0.002194 to -0.002889 and ve=1 from
+    -0.001432 to -0.002855.
+
+    That is not cosmetic. These ladders decide SATURATION, saturation decides when a knob
+    stops paying, and that decides whether the campaign explores or keeps exploiting. An
+    inflated rung makes a knob look like it is still paying and holds budget on it. The
+    identical bug was found in tools/selector.py the same hour, where it set the queue's
+    ranking prior, so this is a pattern in how the campaign attributes multi-key arms and
+    not a one-off.
+    """
     dm = _device_means(rows)
-    out = {}
+    out, skipped = {}, 0
     for r in rows:
         cfg = r.get("cfg") or {}
         if not r.get("ok") or direction.is_platform(cfg):
             continue
-        for a in direction.axes_touched(cfg):
-            eff = r["metrics"]["val_bpb"] - dm.get(r.get("gpu"), r["metrics"]["val_bpb"])
-            out.setdefault(a, {}).setdefault(cfg.get(a), []).append(eff)
+        touched = list(direction.axes_touched(cfg))
+        if len(touched) != 1:
+            skipped += 1
+            continue
+        a = touched[0]
+        eff = r["metrics"]["val_bpb"] - dm.get(r.get("gpu"), r["metrics"]["val_bpb"])
+        out.setdefault(a, {}).setdefault(cfg.get(a), []).append(eff)
+    # Never a silent cap: a ladder that quietly dropped a third of the corpus would read as
+    # full coverage while resting on a fraction of it.
+    if skipped:
+        print(f"  ({skipped} multi-axis run(s) excluded from the ladders: a joint effect "
+              f"is not evidence about any single knob in it)")
     return {a: {v: st.mean(e) for v, e in rungs.items()} for a, rungs in out.items()}
 
 
