@@ -75,6 +75,29 @@ def main():
     print(f"=== {len(rows)} valid runs | best val_bpb {rows[0]['metrics']['val_bpb']:.6f} "
           f"({rows[0]['name']}) ===\n")
 
+    # THE PLATFORM BASELINE, PRINTED. It was quoted all evening as 0.984205 and printed
+    # by no tool at all -- a prose number, exactly the class of defect the step law was
+    # (L055), and it had already drifted to 0.984181 as more controls landed while the
+    # stale figure kept being repeated. Anything the campaign quotes as a headline has to
+    # come out of a tool, or it silently becomes a memory of a number.
+    _plat = [r["metrics"]["val_bpb"] for r in rows
+             if r.get("ok") and direction.is_platform(r.get("cfg") or {})
+             and (r.get("metrics") or {}).get("final_epoch") == 2.0]
+    if _plat:
+        import collections as _c
+        import statistics as _s
+        _by = _c.defaultdict(list)
+        for r in rows:
+            if (r.get("ok") and direction.is_platform(r.get("cfg") or {})
+                    and (r.get("metrics") or {}).get("final_epoch") == 2.0):
+                _by[r.get("gpu")].append(r["metrics"]["val_bpb"])
+        _sds = [_s.stdev(v) for v in _by.values() if len(v) > 1]
+        _pooled = (sum(s * s for s in _sds) / len(_sds)) ** 0.5 if _sds else float("nan")
+        print(f"PLATFORM BASELINE  {_s.mean(_plat):.6f}  over {len(_plat)} controls on "
+              f"{len(_by)} device(s); pooled within-GPU sd {_pooled:.6f} "
+              f"({len(_sds)} device(s) with n>1)")
+        print(f"  cfg {dict(direction.PLATFORM)}\n")
+
     if band:
         print(f"ALL-CONTROL SPREAD (UNPAIRED)  n={band['n']}  mean {band['mean']:.6f}  "
               f"sd {band['sd']:.6f}  range {band['range']:.6f}  "
