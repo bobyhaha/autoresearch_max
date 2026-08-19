@@ -91,6 +91,37 @@ def families_of(cfg: dict) -> set:
     return fams
 
 
+def _counterbalanced_wins(results: list[dict]) -> set:
+    """Families with a same-GPU paired mean that beats the resolution.
+
+    Pairs each treatment against a control that ran on the SAME device, which removes the
+    device offset inside every difference instead of relying on it to cancel in a mean.
+    """
+    import statistics as _st
+    dr = direction.device_resolution(results)
+    if not dr:
+        return set()
+    res = dr["resolution"]
+    ok = [r for r in results if r.get("ok") and (r.get("metrics") or {}).get("val_bpb")
+          and (r["metrics"].get("final_epoch") or 0) == 2.0]
+    by_cfg = {}
+    for r in ok:
+        if direction.is_platform(r.get("cfg") or {}):
+            continue
+        key = json.dumps(r.get("cfg") or {}, sort_keys=True)
+        by_cfg.setdefault(key, {}).setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+    ctl = {}
+    for r in ok:
+        if direction.is_platform(r.get("cfg") or {}):
+            ctl.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+    wins = set()
+    for key, bygpu in by_cfg.items():
+        deltas = [_st.mean(v) - _st.mean(ctl[g]) for g, v in bygpu.items() if g in ctl]
+        if len(deltas) >= 2 and _st.mean(deltas) < -res:
+            wins |= families_of(json.loads(key))
+    return wins
+
+
 def family_runs(results: list[dict]) -> dict:
     """Per family: total runs, runs since its last real improvement, dry streak."""
     ok = [r for r in results
@@ -99,10 +130,23 @@ def family_runs(results: list[dict]) -> dict:
     band, _ = direction.noise_band(results)
     st = {f: {"runs": 0, "since_improve": 0, "dry": 0, "best": None}
           for f in lit.ALL_FAMILIES}
+    # A family also counts as having improved if a COUNTERBALANCED comparison inside it
+    # cleared the resolution. The raw-best test below compares single runs, and a single
+    # run's val_bpb is dominated by which GPU it landed on: the device spread is about
+    # 0.0025 against a band of 0.00066 (L020_the_offset_is_the_gpu_not_the_core_block).
+    # So a real effect measured properly -- precond at -0.001147 with same-GPU paired
+    # t = -12.3 -- did not register, because the best control already sat on the fastest
+    # device and the treatment's best beat it by less than the band. The policy was about
+    # to rotate away from the only direction that has produced a win. Raw val_bpb remains
+    # the verdict; what changes is that the comparison is made device-to-device rather
+    # than between whichever two runs happened to land on the luckiest hardware.
+    verdict_families = _counterbalanced_wins(results)
     running_best = float("inf")
     for r in ok:
         v = r["metrics"]["val_bpb"]
         improved = True if band is None else v < running_best - band
+        if not improved and (families_of(r.get("cfg") or {}) & verdict_families):
+            improved = True
         for f in families_of(r.get("cfg") or {}):
             if f not in st:
                 st[f] = {"runs": 0, "since_improve": 0, "dry": 0, "best": None}
