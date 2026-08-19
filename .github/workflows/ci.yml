@@ -1,0 +1,29 @@
+name: ci
+
+# The suite existed and nothing ran it. Six executable test scripts passed when invoked by
+# hand and `pytest` collected zero of them, so between changes the only thing standing
+# between a broken policy module and a campaign was a human remembering. Two failures found
+# today -- a fixture leaked into the live corpus, and a validator whose contract had moved
+# out from under its fixture -- would have been caught here on the commit that caused them.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: tests
+        run: uv run --with pytest pytest -q
+      - name: chain of evidence
+        # The audit must pass on the tree as committed. Result records are tracked now, so
+        # a clone -- and therefore CI -- can rebuild the numeric registry and check that
+        # every figure in papers/ traces to a run. Before they were committed this step
+        # could not have run at all.
+        run: uv run python tools/coe.py
+      - name: lint
+        run: uv run --with ruff ruff check tools host tests
+        continue-on-error: true
