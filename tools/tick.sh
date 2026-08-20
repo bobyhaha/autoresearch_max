@@ -39,7 +39,7 @@ tick() {
   # host policy -- ngram was, minutes after being written. is_platform then answered
   # correctly only by accident, because the key was unrecognised rather than because it was
   # a known mechanism, and blocked_reason and label were both wrong about it.
-  for _m in direction.py claims.py lit.py make_variant.py; do
+  for _m in direction.py claims.py lit.py make_variant.py mech_lib.py; do
     [ -f "tools/$_m" ] || continue
     _l=$(md5 -q "tools/$_m" 2>/dev/null || md5sum "tools/$_m" | cut -d' ' -f1)
     _r=$(ssh -n "${SSHOPT[@]}" "$HOST" "md5sum ~/$OPHIS_REMOTE_DIR/sweep/$_m 2>/dev/null | cut -d' ' -f1")
