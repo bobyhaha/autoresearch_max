@@ -273,10 +273,9 @@ def _periln(s, cfg, sub):
         x = x + self.mlp(norm(x))""",
             """        x = x + norm(self.attn(norm(x), ve, cos_sin, window_size))
         x = x + norm(self.mlp(norm(x)))""")
-    # Tell the shared probe that the tensor ADDED to the stream is norm(branch), not the
-    # module output it can hook. Without this the pre-registered diagnostic would measure
-    # the unwrapped branch and report a perfectly engaged mechanism as non-activated.
-    s = sub(s, "HEAD_DIM = 128", "HEAD_DIM = 128\nPERILN_BRANCH_NORM = True")
+    # NOTE: no flag is set for the shared probe. branch_out_rms_absdev was removed as an
+    # arithmetic identity (see make_variant.py); periln has no diagnostic that can fail
+    # and must not be queued until it does.
     # The diagnostic (branch_stream_ratio_mean) is emitted by the SHARED telemetry block
     # in make_variant.py, unconditionally, so the CONTROL emits it too. A diagnostic only
     # the treatment prints cannot be surprising -- there is no distribution to compare
@@ -489,7 +488,11 @@ def _ropefrac(s, cfg, sub):
     # nothing: the cross built cleanly, no lesson blocked the key pair, and neither queue
     # door checks pairwise incompatibility. The only stated reason this arm is safe here
     # is that the platform runs QK-norm, so removing QK-norm removes the reason.
-    if cfg.get("noqknorm"):
+    # `is not None`, matching how the noqknorm branch itself tests. A truthiness test let
+    # noqknorm:0 and noqknorm:false through -- both APPLY the edit (the legacy branch
+    # fires on `is not None`) while reading to a human as "QK-norm on", so the evasion
+    # looked like the safe configuration.
+    if cfg.get("noqknorm") is not None:
         raise VariantEditError(
             "ropefrac x noqknorm is refused: fractional RoPE is safe here only BECAUSE "
             "the platform runs QK-norm (attB_partial_rope_nope_instability -- ppl 340,933 "

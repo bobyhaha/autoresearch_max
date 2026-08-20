@@ -6,7 +6,9 @@ ScientistOne's four integrity checks + AutoResearchClaw's numeric registry.
 """
 import json
 import pathlib
+import shutil
 import sys
+import tempfile
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "tools"))
@@ -154,13 +156,26 @@ ok(coe.e3_activation() == [],
 
 print("\nE4 METHOD-CODE -- never spend GPU time on a variant identical to the control")
 import direction, make_variant
-qdir = REPO / "runs" / "sweep"
+# THE LIVE QUEUE IS NOT A FIXTURE. This block used to write directly into
+# REPO/runs/sweep/queue.json and restore it at the end -- but ok() calls sys.exit() on a
+# failed assertion, so ANY failure here left the campaign's real queue holding two
+# synthetic entries. tick.sh then propagates deletions to the host, and replaying its
+# merge against that state destroys every unlaunched entry: an audit caught the live
+# queue holding 2 against 284, which would have become 56 host deletions on the next
+# tick. A test that can delete the experiment backlog is a worse defect than anything it
+# checks. It now works in a TEMPORARY tree and coe's paths are pointed at it.
+_qtmp = tempfile.mkdtemp(prefix="ophis_e4_")
+qdir = pathlib.Path(_qtmp) / "sweep"
+(qdir / "variants").mkdir(parents=True, exist_ok=True)
+(qdir / "results").mkdir(parents=True, exist_ok=True)
+coe.QUEUE = qdir / "queue.json"
+coe.VARIANTS = qdir / "variants"
+coe.QUEUE.write_text("[]")
 ctl_cfg = dict(direction.PLATFORM)
 ctl_src = make_variant.build(ctl_cfg)
 vid = make_variant.variant_id(ctl_src)
 (qdir / "variants").mkdir(parents=True, exist_ok=True)
 (qdir / "variants" / vid).write_text(ctl_src)
-saved = (qdir / "queue.json").read_text()
 (qdir / "queue.json").write_text(json.dumps([
     {"name": "CTL", "cfg": ctl_cfg, "variant": vid},
     {"name": "FAKE_TREATMENT", "cfg": {**ctl_cfg, "mlp": 9}, "variant": vid},
@@ -183,7 +198,7 @@ ok(any("now generates" in p for p in coe.e4_method_code()),
 ok(not [p for p in coe.e4_method_code() if "X" in p],
    "an absent but correctly-hashed variant is accepted")
 (qdir / "variants" / vid).write_text(ctl_src)
-(qdir / "queue.json").write_text(saved)
+shutil.rmtree(_qtmp, ignore_errors=True)
 
 print("\nE5 NUMERIC -- a document may not cite a number the registry does not contain")
 setup(results=[{"name": "C01", "metrics": {"val_bpb": 1.023456, "num_steps": 640.0}}])

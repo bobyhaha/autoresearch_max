@@ -106,15 +106,21 @@ def main():
         # the rest, which raises the baseline and makes every treatment gap look larger.
         # Repooling silently would move every verdict on record, so both are printed and
         # the reader decides.
-        _entered = [r for r in rows
+        # THE SAME POPULATION AS _plat, final_epoch filter included. Without it these two
+        # blocks selected over a different set than the baseline they claim to correct:
+        # the printed count read 30 where 33 - 4 = 29, and the correction shrank from
+        # 0.000054 to 0.000007 -- erasing about seven eighths of an adjustment that moves
+        # the headline in the UNFLATTERING direction. A correction computed over the
+        # wrong population is worse than no correction, because it looks like diligence.
+        def _pool(pred):
+            return [r for r in rows
                     if r.get("ok") and direction.is_platform(r.get("cfg") or {})
-                    and (r.get("metrics") or {}).get("val_bpb")
-                    and r["name"].endswith("_treat")]
+                    and (r.get("metrics") or {}).get("final_epoch") == 2.0
+                    and pred(r)]
+        _entered = _pool(lambda r: r["name"].endswith("_treat"))
         if _entered:
-            _clean = [r["metrics"]["val_bpb"] for r in rows
-                      if r.get("ok") and direction.is_platform(r.get("cfg") or {})
-                      and (r.get("metrics") or {}).get("val_bpb")
-                      and not r["name"].endswith("_treat")]
+            _clean = [r["metrics"]["val_bpb"]
+                      for r in _pool(lambda r: not r["name"].endswith("_treat"))]
             if _clean:
                 print(f"  of which {len(_entered)} entered by RECLASSIFICATION after an "
                       f"adoption (queued as treatments): "

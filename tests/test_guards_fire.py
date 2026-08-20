@@ -925,3 +925,32 @@ def test_a_hypothesis_must_be_able_to_fail_on_magnitude():
     # a direction alone is still not enough -- magnitude is the point
     withdir = {**base, "prediction": {"direction": "decrease", "metric": "val_bpb"}}
     assert any("minimum_effect" in b for b in claims.validate_hyp(withdir))
+
+
+def test_no_test_writes_to_the_live_campaign_state():
+    """A test that can delete the experiment backlog is worse than anything it checks.
+
+    tests/test_chain_of_evidence.py wrote synthetic entries directly into
+    REPO/runs/sweep/queue.json and restored them at the end -- but its ok() calls
+    sys.exit() on a failed assertion, so ANY failure left the live queue holding two
+    fixtures. tick.sh then propagates deletions to the host: an audit caught the real
+    queue at 2 entries against 284, which the next tick would have turned into 56 host
+    deletions. The fixture had been silently correct only because the test had never
+    failed at that point.
+
+    Static rather than behavioural on purpose: the behavioural version only catches the
+    defect on the runs where the test happens to fail, which is exactly when nobody is
+    looking at this guard's output.
+    """
+    import pathlib, re
+    here = pathlib.Path(__file__).parent
+    live = re.compile(r'REPO\s*/\s*"runs"|REPO\s*/\s*.runs.\s*/\s*.sweep.')
+    write = re.compile(r'\.write_text\(|\.unlink\(|\.mkdir\(|shutil\.rmtree\(')
+    bad = []
+    for f in sorted(here.glob("test_*.py")):
+        for i, line in enumerate(f.read_text().splitlines(), 1):
+            if live.search(line) and write.search(line):
+                bad.append(f"{f.name}:{i}: {line.strip()[:90]}")
+    assert not bad, (
+        "these lines write to the LIVE campaign tree from a test; use a temp dir:\n  "
+        + "\n  ".join(bad))
