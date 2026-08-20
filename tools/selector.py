@@ -68,9 +68,21 @@ def _changed(cfg):
 
 
 def _families(cfg):
+    """Families a cfg touches -- through its KNOB AXES and through its MECHANISMS.
+
+    This consulted direction.FAMILIES only, whose entries list axes, so every mechanism
+    mapped to NO family: precond, ngram and the rest scored as "unmeasured family" on
+    every evaluation forever, collecting the constant below as a bonus that could never
+    be worked off. 15 precond runs are on disk and precond still scored as though nothing
+    had ever been measured about it.
+    """
     ch = _changed(cfg)
-    return [f for f, spec in direction.FAMILIES.items()
-            if set(ch) & set(spec.get("axes", ())) or ch.get(f)]
+    out = [f for f, spec in direction.FAMILIES.items()
+           if set(ch) & set(spec.get("axes", ())) or ch.get(f)]
+    for f, spec in direction.mechanism_families().items():
+        if f not in out and set(ch) & set(spec.get("mechs", ())):
+            out.append(f)
+    return out
 
 
 def _device_means(rows):
@@ -153,7 +165,14 @@ def score(cfg, rows, state, fx):
 
     # INFORMATION. Highest where the family's effect is uncertain or unmeasured. A family
     # measured many times with a tight spread teaches little more, however large its mean.
-    if len(obs) >= 2:
+    # n >= 3, not n >= 2. Median absolute deviation is only robust when there is a
+    # majority to be robust ABOUT: at n=2 the MAD is exactly half the gap between the two
+    # points, so a single catastrophe sets the spread rather than being ignored by it.
+    # That is the very failure the comment below describes for tbs, recurring one rung
+    # lower. It bit immediately: after R9EMA measured +0.051008, the schedule family held
+    # two observations and its "robust" spread put the EMA respecification at +23.46, top
+    # of the ranking, on the strength of the catastrophe that arm exists to correct.
+    if len(obs) >= 3:
         # ROBUST spread. Raw sd made a family containing one catastrophe look maximally
         # informative: tbs carries the +0.022545 tbs=20 result, which alone drove the
         # spread to 0.0076 and would have made every tbs arm look like the best available
@@ -163,8 +182,27 @@ def score(cfg, rows, state, fx):
         info = st.median([abs(e - med) for e in obs]) * 1.4826
         terms["info"] = f"robust spread (MAD) over {len(obs)} runs {info:.6f}"
     else:
-        info = 0.002
-        terms["info"] = "unmeasured family; spread unknown"
+        # A DATA-DRIVEN PRIOR, not a constant that outbids every measurement. This was a
+        # hardcoded 0.002, which enters the score as W_INFO * info / 0.001 = a flat
+        # +1.200, while families that HAVE been measured yield 0.028 to 0.313. So the
+        # term rewarded a family for never having been measured, by four to twenty times,
+        # and that alone decided the ordering: zeroing it moves the win-axis arms from
+        # ranks 19-26 to 3-10. An ordering I applied to the live queue was produced by
+        # this defect.
+        #
+        # An unmeasured family should score like a TYPICAL family, not like the best
+        # imaginable one. The prior is the median of the spreads actually observed across
+        # measured families, falling back to the campaign's within-wave band only when
+        # nothing has been measured at all.
+        _obs_spreads = []
+        for _f, _es in fx.items():
+            _e = [v for v in (_es or []) if v is not None]
+            if len(_e) >= 2:
+                _m = st.median(_e)
+                _obs_spreads.append(st.median([abs(v - _m) for v in _e]) * 1.4826)
+        info = st.median(_obs_spreads) if _obs_spreads else 0.00143
+        terms["info"] = (f"unmeasured family; prior = median spread of {len(_obs_spreads)} "
+                         f"measured famil(ies) = {info:.6f}")
 
     # NOVELTY. Per-axis, not per-family: a family can look busy while hiding an axis never
     # varied once, which is the failure that closed an entire direction in an earlier
