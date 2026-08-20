@@ -410,6 +410,29 @@ def e4_method_code() -> list[str]:
                 if diff:
                     bad.append(f"queue entry '{q['name']}' cfg disagrees with hypothesis "
                                f"'{hid}': {diff} -- the run would not test what was declared")
+    # THE OTHER DIRECTION. Everything above walks the QUEUE, so it can only ever check
+    # experiments that still have an entry. A result whose queue row was removed has no
+    # variant hash and therefore no recoverable code: the number is in the registry, it
+    # feeds analyze.py and the headline, and nothing can say what was run to produce it.
+    # E4 could not see this class at all -- it is invisible by construction to any check
+    # that iterates the queue -- and an audit found 12 such records while every one of
+    # their P1/P2/P4 siblings was still present, which means queue.json is not in fact
+    # append-only for launched work.
+    # Scoped to results that CONTRIBUTE A CITABLE NUMBER. A run that failed before
+    # producing a val_bpb has no entry in the registry, so nothing can cite it and an
+    # unrecoverable variant costs nothing; flagging those too would be crying wolf, and a
+    # check that reports harmless things is a check people learn to skip. What must never
+    # be orphaned is a number the campaign is allowed to quote.
+    named = {q["name"] for q in queue}
+    for r in _results():
+        nm = r.get("name")
+        if not nm or nm in named:
+            continue
+        if not (r.get("ok") and (r.get("metrics") or {}).get("val_bpb")):
+            continue
+        bad.append(f"result '{nm}' contributes a citable val_bpb but has NO queue entry: "
+                   f"its variant hash is gone, so the code that produced the number "
+                   f"cannot be recovered.")
     return bad
 
 
@@ -673,6 +696,28 @@ CHECKS = (("E1 SOURCE      ", e1_source),
           ("E5 NUMERIC     ", e5_numeric))
 
 
+def coverage() -> dict:
+    """How much each check actually had to look at.
+
+    Printed beside the verdict because a verdict without a denominator is not a verdict.
+    The counts are deliberately of the INPUTS, not of the checks that passed: E1 over zero
+    claims and E1 over 727 claims both report "0 problems", and only this line tells them
+    apart.
+    """
+    def _n(fn, *a):
+        try:
+            return len(fn(*a))
+        except Exception:                              # noqa: BLE001
+            return 0
+    try:
+        queue = json.loads(QUEUE.read_text())
+    except (OSError, ValueError):
+        queue = []
+    return {"claims": _n(C.claims), "mechanisms": _n(C.mechanisms),
+            "hypotheses": _n(C.hypotheses), "lessons": _n(C.lessons),
+            "results": _n(_results), "queue": len(queue)}
+
+
 def audit() -> dict:
     out, total = {}, 0
     for name, fn in CHECKS:
@@ -696,10 +741,18 @@ def main() -> int:
         return 0
 
     a = audit()
+    cov = coverage()
     if "--json" in sys.argv:
-        print(json.dumps(a, indent=1))
+        print(json.dumps({**a, "coverage": cov}, indent=1))
         return 0 if a["ok"] else 1
-    print(f"CHAIN OF EVIDENCE: {'INTACT' if a['ok'] else str(a['total']) + ' BREAK(S)'}\n")
+    # WHAT WAS ACTUALLY AUDITED. "INTACT" alone cannot distinguish a clean corpus from an
+    # ABSENT one: on a fresh clone with no lit/ directory and zero claims this printed
+    # INTACT with 0 problems on all five checks, and that reassuring line was quoted
+    # forward as evidence the tree was sound. A pass over nothing is not a pass.
+    _examined = sum(cov.values())
+    print(f"CHAIN OF EVIDENCE: "
+          f"{'NOTHING TO AUDIT (empty corpus)' if not _examined else ('INTACT' if a['ok'] else str(a['total']) + ' BREAK(S)')}\n")
+    print("  audited: " + ", ".join(f"{k} {v}" for k, v in cov.items()) + "\n")
     for name, _ in CHECKS:
         probs = a["checks"][name.strip()]
         print(f"  [{'ok ' if not probs else 'FAIL'}] {name} {len(probs)} problem(s)")
