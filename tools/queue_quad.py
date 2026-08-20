@@ -64,6 +64,10 @@ def main() -> int:
                          "the SAME two devices cancels the same device offset -- just "
                          "across waves rather than within one, so it also carries the host "
                          "drift between those waves.")
+    ap.add_argument("--multifactor", default="", help=
+                    "Required when the treatment differs from its control in more than "
+                    "one key. State why the COMBINATION is the question, since the "
+                    "within-pair delta will not be attributable to either factor alone.")
     a = ap.parse_args()
 
     P = dict(direction.PLATFORM)
@@ -123,6 +127,28 @@ def main() -> int:
                       f"variant never emits.\n  {_e_msg}")
                 return 1
             print(f"  emission pre-check:   {_e_msg}")
+
+    # TWO-FACTOR LINT. A pair whose two arms differ in more than one key cannot attribute
+    # its delta, and this campaign has now made that mistake twice: L085 found the tbs=17
+    # rung was really {dbs:64, tbs:17}, so its +0.004153 had been read as a pure
+    # tokens-per-step effect for a full day and hardened into L083's block on the whole
+    # `tbs` key; and R10WINB was queued as {win:SSSS, swdiv:16} against a plain platform
+    # control within a day of that lesson being written. Prose did not stop the second one.
+    #
+    # Multi-factor arms are legitimate -- the three-lever stack is the campaign's strongest
+    # result -- so this refuses by default and takes an explicit reason rather than a bare
+    # flag. Writing down why you want two factors is the point; it is the sentence that was
+    # missing both times.
+    _delta_ctl = sorted(k for k, v in T.items() if P.get(k) != v)
+    if len(_delta_ctl) > 1 and not a.multifactor:
+        print(f"refusing: treatment differs from its control in {len(_delta_ctl)} keys "
+              f"{_delta_ctl}, so a within-pair delta cannot be attributed to any one of "
+              f"them (L085). Either yoke it to a control that isolates ONE factor -- e.g. "
+              f"make the control carry the other key -- or pass "
+              f"--multifactor 'why the combination is the question'.")
+        return 1
+    if len(_delta_ctl) > 1:
+        print(f"  multi-factor arm ({len(_delta_ctl)} keys {_delta_ctl}): {a.multifactor}")
 
     unknown = direction.unknown_keys(T)
     if unknown:
