@@ -267,6 +267,30 @@ if _ve_ps:
     print(f"ve_table_count:      {len(_ve_ps)}")
 print(f"adamw_group_count:   {len(_ag)}")
 
+# SIGNAL-SCALE OBSERVABLES, emitted by EVERY arm including the control.
+# rope, softcap and x0init all build and all differ from the control, but none emitted a
+# number that distinguished them, so no activation diagnostic could be declared and every
+# proposal on them bounced at the queue door. signal_scale is the ACTIVE direction and was
+# unrunnable for that reason alone -- a direction closed not by evidence but because
+# nothing measured it. Each of these is measured from the trained model or the eval batch,
+# not echoed from the config: a cfg echo proves the print was appended, not that anything
+# changed.
+_x0 = (model._orig_mod if hasattr(model, '_orig_mod') else model).x0_lambdas.detach().float()
+print(f"x0_lambda_mean_final:     {_x0.mean().item():.8f}")
+print(f"x0_lambda_absmax_final:   {_x0.abs().max().item():.8f}")
+_rl = (model._orig_mod if hasattr(model, '_orig_mod') else model).resid_lambdas.detach().float()
+print(f"resid_lambda_mean_final:  {_rl.mean().item():.8f}")
+# Rotary geometry: the mean cosine over the positions actually trained on moves with the
+# rotary base, and is a property of the buffer rather than of the cfg literal.
+_cs = (model._orig_mod if hasattr(model, '_orig_mod') else model).cos.detach().float()
+print(f"rope_cos_mean:            {_cs[:, :MAX_SEQ_LEN].mean().item():.8f}")
+# Softcap engagement: how hard tanh is actually saturating on real logits.
+with torch.no_grad():
+    _lg = (model._orig_mod if hasattr(model, '_orig_mod') else model)(x[:1], None).float()
+    _sat = (_lg.abs() / 15.0).clamp(max=1.0)
+print(f"softcap_sat_mean:         {_sat.mean().item():.8f}")
+print(f"softcap_sat_p99:          {_sat.flatten().quantile(0.99).item():.8f}")
+
 # BRANCH-TO-STREAM AMPLITUDE, emitted by EVERY arm including the control.
 # This is the mediator the signal_path mechanisms (periln, vnorm, ffnpost) name, and it
 # has to live here rather than in their observable blocks: a diagnostic only the

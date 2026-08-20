@@ -214,3 +214,103 @@ hardcodes prior-campaign conclusions into the DIRECTION SPACE table (L019, L011,
 "mfu ~42.6%", "value embeddings are 16.78M of 50.33M params"); these print on the *fresh*
 clone, which has no lessons file. A tree whose CLAUDE.md says "you start with zero
 experimental priors" ships five of them as string constants.
+
+## synthesis (agent-synthesis-04)
+
+**There are two shapes here, not one, and forcing them together loses the diagnosis.**
+
+The first is **indirection by position or name into a collection somebody else is free to
+mutate**. `make_variant` addressed the value-embedding group as `_ag_ordered[2]` while
+`vefreeze` deletes that group; `mech_lib` read the full window as `window_sizes[0][0]`
+while `win` is a live axis that reorders the pattern; `dispatch.runnable()` applied the
+control exemption per ENTRY inside an all-or-nothing WAVE launcher;
+`direction.MECHANISM_FAMILIES` was a hand-copy of a name that `@mechanism(family=...)`
+already carried. The tell in every case is that the wrong answer stays plausible and
+nothing raises: index 2 is still a param group, position 0 is still a window, a released
+control is still a launchable entry. That is why these produced contradictory records
+(`ve_table_count: 1` beside `n_ve_layers: 4`) rather than tracebacks.
+
+The second is **a check whose enumeration domain excludes where the defect lives**. E4
+iterates `queue.json` and `coe.py:364` `continue`s on any entry with a result, so 226
+executed records and every queue-less result are structurally out of scope; E1
+`continue`s past an unfetched snapshot before the locator check; `preflight.py` compares
+`train.py` against `provenance.json`, a file inside the domain being audited; E3 asks
+whether a diagnostic key was printed, never whether its value could have come out
+otherwise; unlearned-failure discharge matches names, not configs. Each is sound over its
+domain and the domain is drawn so the interesting cases fall outside.
+
+Both offered framings are lossy. "A declaration no consumer reads" covers `family=`,
+`ngram_dim` and the `gate.py:174` prose but not `_ag_ordered[2]` or the entry/wave
+mismatch, where both sides are read. "A guard that cannot distinguish absence from
+correctness" misdescribes its own examples: I ran `coe.py` against an empty tree and it
+prints `CHAIN OF EVIDENCE: NOTHING TO AUDIT (empty corpus)`, so it distinguishes exactly
+that; and E4's problem is domain choice, not vacuity. The split matters because the fix
+record splits the same way. Commits `47a5d6c` and `0463d1a` cleared nearly every shape-one
+instance and essentially no shape-two instance, and the reason is structural: shape one has
+a local, testable fix, while shape two requires deciding what the guard is *for*, and a
+guard that never fires feels fine.
+
+**Verified state, not commit messages.** Fixed: `direction.py:673` now seeds from
+`all_mechanisms()`; `direction.mechanism_families()` (`:626`) merges the registry and the
+gaps really moved (ve_placement/attention 0.75, signal_path 0.60); `_WS_FULL` is now
+`min(w[0] for w in window_sizes)` at `mech_lib.py:441`; VE params are selected by `id()`
+(`make_variant.py:247-251`); `ngram_table` is added to `nparams_exclude`
+(`make_variant.py:883`). I built each: `{ropefrac:0.1, noqknorm:1}` raises
+`VariantEditError` (`mech_lib.py:488`), `embwd` is refused above `1.80e-03`, and
+`{swdiv:16, winsched:128}` is refused as a no-op. `tests/test_frozen_contract.py` closes
+the honour-system freeze halfway — it diffs `baseline/prepare.py` against
+`karpathy_pristine/prepare.py` (both `06bea916`, matching `prepare_py_git_blob`) but a
+coordinated two-file edit still passes.
+
+Still open: P1 is untouched. `gate.py:129-137` still takes `min(ages)` over round *and*
+critique, and it bites right now — the round is 1 min old, the critique 315 min old, so the
+cutoff sits at 22:15:24Z. Simulating `runnable()`/`wave_sizes()` against the live 256-entry
+queue: `runnable=0 frozen=32`, INTACT waves **0**. The P0 fix made the two rules agree
+instead of stranding orphans, but delivered zero throughput; 135 min since the last
+completion. The fix may also have missed an asymmetry: `wave_sizes` drops frozen members
+from the denominator per entry, so a mixed wave whose control was created before the cutoff
+and treatment after would size to 1 and launch solo. It does not fire today only because
+`queue_from_round` stamps one `created_at` per wave.
+
+**Ranked by cost to lower `val_bpb` in 300 charged seconds.** (1) The critique-driven
+cutoff of P1, which right now freezes all 32 pending entries including the four
+`R10NGRAM` treatments, and which no amount of round-council work can lift. (2) The
+hard-check surface, which is more volatile than anyone has priced: at 03:30Z `coe.py`
+reported E5 NUMERIC 1 against `rounds/2026-08-20T03-10-53Z_round.md` (24 unregistered
+numbers, of which 0.000476 and 0.000952 are `analyze.py` derivations rather than
+inventions), closing the gate entirely; by 03:34Z it had cleared. A *hard* gate that opens
+and shuts within four minutes on prose freshness is a launch lottery, and E5 firing on
+correctly-derived statistics is the second shape again — the check enumerates literals,
+not derivations. (3) Capacity, which **probably dominates both**. `gpu_watch` shows
+0 of 8 free right now, five foreign tenants at 80-130 GB; across 79 samples in 23.7 h,
+4 GPUs were free in 11.4% and ≥2 in 45.6%. Integrating `min(4, free+ours)` gives **45.5
+claimable GPU-h**, not the 96 the reviewer assumed; we delivered 25.4, so utilisation is
+**56%**, and recoverable headroom is ~20 GPU-h, not ~70. The implication for priority is
+concrete: governance fixes are free because they happen while waiting, so do them all, but
+the highest-value change is to stop sizing waves at 4. A width-2 yoked pair is assemblable
+four times as often as a 4-wide wave, and it buys the same within-wave nuisance control.
+(4) The family fix made the mechanisms visible and simultaneously routed them behind the
+rotation: ve_placement is HARD CAP 12/12, attention 24/12, signal_path STALE 10, so eight
+of nine registered mechanisms sit in families `agenda.py` will never nominate, while the
+active direction `signal_scale` has zero mechanisms. The cap should count knob runs, not
+mechanism runs, in a family whose mechanisms are untouched. (5) `winsched` and `ropefrac`
+still *declare* cfg echoes (`mech_lib.py:356`, `:458`) while printing the real observables
+(`winsched_distinct`) undeclared — a one-line fix. (6) Orphan results are 2, not 12, but
+only because `tick.sh` reconciled ten host-only entries into `queue.json` at 20:27:37;
+that is a sync artifact, not a fix, and two `tick.sh --loop` processes are running (PIDs
+32089, 67320), which is how a non-append-only `queue.json` happens in the first place.
+
+**The claim I would check first is reviewer 2's, that "capacity is the *temporary*
+blocker; the freeze is the standing one."** It sets everyone's priorities and its
+supporting arithmetic uses a denominator the box never offered: `MAX_GPUS=4` allows 96
+GPU-h only if four GPUs are free, and they were free 11% of the time. Inverted, the
+conclusion is that governance is a real but second-order tax on ~45 claimable GPU-h, and
+that pipeline engineering should target *value per claimed GPU-hour* rather than uptime.
+Two other overconfident claims: reviewer 3's "nothing distinguishes audited-and-clean from
+nothing-to-audit" is false of this tree's `coe.py` and was measured on a clone carrying
+different code, which discounts the genuine findings bundled with it (E1's unfetched
+sources, E4's scope); and `periln`'s `1/√ε` range is inflated at the top — `norm()` is
+`F.rms_norm(x, (x.size(-1),))` with `eps=None`, so ε is `finfo(dtype).eps`, 0.0078125 in
+bf16 for ×11.3, not the ×6.7e7 that presumes an fp64 ε this forward never sees, and
+`c_proj` is a Muon matrix parameter whose update is Frobenius-normalised. The mechanism is
+real; the headline number is not.

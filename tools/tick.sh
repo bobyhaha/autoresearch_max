@@ -168,7 +168,26 @@ PYMERGE"
   python3 tools/council.py status
 }
 
+# ONE LOOP, ENFORCED. Two `tick.sh --loop` processes ran concurrently for two days
+# (pids 67320 from Tuesday and 32089 from Wednesday). Both reconcile runs/sweep/queue.json
+# against the host on their own cadence, and the merge is read-modify-write: two of them
+# interleaved is how a queue that is supposed to be append-only for launched work lost 12
+# result-bearing entries, taking the variant hash -- and so the recoverable code -- for
+# every one of them. Nothing detected it; an audit found the orphaned results weeks later.
+# The dispatcher takes a lock for exactly this reason (host/dispatch.py) and this did not.
+_lock() {
+  LOCK="runs/.tick_loop.pid"
+  mkdir -p runs
+  if [ -f "$LOCK" ] && kill -0 "$(cat "$LOCK" 2>/dev/null)" 2>/dev/null; then
+    echo "another tick loop is running (pid $(cat "$LOCK")); exiting" >&2
+    exit 1
+  fi
+  echo $$ > "$LOCK"
+  trap 'rm -f "$LOCK"' EXIT INT TERM
+}
+
 if [ "${1:-}" = "--loop" ]; then
+  _lock
   while true; do tick; sleep "$INTERVAL"; done
 else
   tick

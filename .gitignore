@@ -65,3 +65,6 @@ lit/ACTIVE_DIRECTION.json
 # Sharded screen scratch, merged into lit/index.json. Per-operator and re-derivable.
 lit/index_shard*.json
 lit/*_progress.json
+
+# single-instance lock for tools/tick.sh --loop
+runs/.tick_loop.pid
