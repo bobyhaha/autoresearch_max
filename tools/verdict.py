@@ -327,9 +327,18 @@ def main():
             print(f"  SYSTEMATIC REGIME SHIFT, NOT VOID: every arm finished at treatment "
                   f"epoch {lo} against control epoch {hi}, on swapped slots. The epoch gap "
                   f"is caused BY the treatment rather than by contention landing on one "
-                  f"cell, so it is the result and not a confound -- the treatment is too "
-                  f"slow to reach the boundary in the fixed budget. Reported below with "
-                  f"that difference stated; read the step counts, which are the mechanism.")
+                  f"cell, so it is the result and not a confound. Reported below with that "
+                  f"difference stated; read the step counts, which are the mechanism.")
+            # The CAUSE is deliberately not asserted. This line used to claim the treatment
+            # was "too slow to reach the boundary", which was true of MTP and z-loss -- they
+            # reached epoch 1 by running FEWER steps -- and is false of tbs=17, which reaches
+            # it while running nearly TWICE the steps, because each step sees half the tokens
+            # so the total data is lower. Same observation, opposite mechanism. A verdict line
+            # should report what was observed and leave the cause to whoever reads the step
+            # counts, which are printed immediately above it.
+            print(f"    The cause is not asserted: the same epoch gap arises both from a "
+                  f"treatment that runs FEWER steps and from one that runs more but sees "
+                  f"less data per step. Read the step counts against the deltas.")
             voided = []
         if voided:
             arms = [a for a in arms if a not in voided]
