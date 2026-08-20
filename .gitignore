@@ -68,3 +68,6 @@ lit/*_progress.json
 
 # single-instance lock for tools/tick.sh --loop
 runs/.tick_loop.pid
+
+# stray clones from audit/reproducibility checks
+clone/
