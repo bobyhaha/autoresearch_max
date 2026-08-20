@@ -735,3 +735,28 @@ def test_build_refuses_the_crosses_its_own_docs_call_unsafe():
         make_variant.build({**direction.PLATFORM, "swdiv": 16, "winsched": 128})
     with pytest.raises(VariantEditError):      # decay that erases the tables it decays
         make_variant.build({**direction.PLATFORM, "embwd": 0.01})
+
+
+def test_pre_convention_names_keep_their_role_through_an_adoption():
+    """A run named `_control` is a control, whatever the platform has since become.
+
+    verdict._is_ctl resolves the role from the run name precisely so a PLATFORM ADOPTION
+    cannot retroactively re-role completed waves -- and then its fallback, for names
+    predating the `<wave>_s<slot>_<role>` convention, went straight back to
+    direction.is_platform. 28 runs named `_control` (C01..C06, every W0*_control, every
+    ctrl_*) were classified as TREATMENTS because their cfg carries the old tbs=19.
+    The bug the function exists to prevent, living in its own fallback.
+    """
+    import verdict, direction
+    old = {**direction.PLATFORM, "tbs": 19}          # a control built before the adoption
+    for name in ("C01_control", "W02a_1_control", "ctrl_VE_A", "ctrl_R1N_A_slot1"):
+        assert verdict._is_ctl({"name": name, "cfg": dict(old)}), \
+            f"{name} is named a control and must stay one across an adoption"
+    # ...and a treatment whose NAME merely contains the word must not flip. `poscontrol`
+    # is a positive control for the ns axis, which is an intervention arm.
+    for name in ("ns3_poscontrol_slot0", "precond_pre_slot0", "wd040_slot0"):
+        assert not verdict._is_ctl({"name": name, "cfg": {**old, "ns": 3}}), \
+            f"{name} is a treatment and an unanchored substring test would invert it"
+    # The slot convention still wins where it is present.
+    assert verdict._is_ctl({"name": "R7XF_P1_s1_ctrl", "cfg": dict(direction.PLATFORM)})
+    assert not verdict._is_ctl({"name": "R7XF_P1_s0_treat", "cfg": dict(direction.PLATFORM)})

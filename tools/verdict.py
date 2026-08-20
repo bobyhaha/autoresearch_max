@@ -80,9 +80,26 @@ def _is_ctl(m):
     members <wave>_s<slot>_<role>, so the role is in the name and survives any later
     platform change. is_platform remains the fallback for records predating the convention.
     """
-    mo = _ROLE_RE.search(m.get("name", "") or "")
+    nm = m.get("name", "") or ""
+    mo = _ROLE_RE.search(nm)
     if mo:
         return mo.group(1) != "treat"
+    # PRE-CONVENTION NAMES STILL CARRY THEIR ROLE, and falling straight through to
+    # is_platform threw it away exactly where it was unambiguous. 28 runs named
+    # `_control` -- C01..C06, every W0*_control, every ctrl_* -- were classified as
+    # TREATMENTS, because their cfg carries the old tbs=19 and is_platform is answered
+    # against the platform as it stands today. They were the control block of their era
+    # and they say so in their own names. This is the same platform-adoption failure the
+    # whole function exists to prevent, surviving in its fallback.
+    #
+    # The suffixes are anchored deliberately. `ns3_poscontrol_slot0` contains "control"
+    # and is a genuine treatment (a positive control for the ns axis), so an unanchored
+    # substring test would invert it; it ends in `slot0`, matches nothing here, and
+    # correctly falls through.
+    if nm.endswith("_treat"):
+        return False
+    if nm.endswith("_ctrl") or nm.endswith("_control") or nm.startswith("ctrl_"):
+        return True
     return direction.is_platform(m.get("cfg") or {})
 
 
