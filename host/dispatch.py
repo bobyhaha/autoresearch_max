@@ -722,6 +722,13 @@ def main():
                    # holding the entry. A cut queue entry used to erase a completed run
                    # from every verdict.
                    "wave_group": job["item"].get("wave_group"),
+                   # ROLE, CARRIED FROM THE QUEUE ENTRY THAT ASSIGNED IT. Seven separate
+                   # defects in this campaign came from re-deriving a run's role later by
+                   # comparing its cfg against direction.PLATFORM, which moves under
+                   # adoption: treatments silently became controls and were pooled into
+                   # the baseline that judges treatments. The queue knew the role with
+                   # certainty; nothing downstream should have to infer it.
+                   "role": job["item"].get("role"),
                    "hypothesis_id": job["item"].get("hypothesis_id"),
                    "started": job["started"], "ended": time.time(),
                    "returncode": job["proc"].returncode, "metrics": met,

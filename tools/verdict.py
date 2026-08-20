@@ -80,6 +80,13 @@ def _is_ctl(m):
     members <wave>_s<slot>_<role>, so the role is in the name and survives any later
     platform change. is_platform remains the fallback for records predating the convention.
     """
+    # RECORDED ROLE FIRST. queue_quad/queue_from_round now write `role` at queue time and
+    # dispatch.py carries it into the result, so for anything queued after this the role
+    # is a fact rather than an inference. Name-parsing and the platform comparison below
+    # remain for the records that predate it.
+    rec = m.get("role")
+    if rec in ("treat", "ctrl", "control"):
+        return rec != "treat"
     nm = m.get("name", "") or ""
     mo = _ROLE_RE.search(nm)
     if mo:

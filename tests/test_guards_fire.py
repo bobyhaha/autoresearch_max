@@ -760,3 +760,45 @@ def test_pre_convention_names_keep_their_role_through_an_adoption():
     # The slot convention still wins where it is present.
     assert verdict._is_ctl({"name": "R7XF_P1_s1_ctrl", "cfg": dict(direction.PLATFORM)})
     assert not verdict._is_ctl({"name": "R7XF_P1_s0_treat", "cfg": dict(direction.PLATFORM)})
+
+
+def test_a_recorded_role_beats_every_later_inference():
+    """The role is a fact assigned at queue time, not a property to be re-derived.
+
+    Seven separate defects in this campaign share one cause: a run's role was recomputed
+    later by comparing its cfg against direction.PLATFORM, which MOVES under adoption.
+    Treatments silently became controls and were pooled into the baseline that judges
+    treatments (L091); 28 runs named `_control` were read as treatments. Name-parsing was
+    a better inference but still an inference. queue_quad/queue_from_round now write
+    `role` and dispatch.py carries it into the result record.
+    """
+    import verdict, direction
+    P = dict(direction.PLATFORM)
+    # A recorded role wins even when both other signals would disagree with it.
+    assert verdict._is_ctl({"name": "X_s0_treat", "role": "ctrl", "cfg": P})
+    assert not verdict._is_ctl({"name": "X_s0_ctrl", "role": "treat", "cfg": P})
+    # And the older signals still work where no role was recorded.
+    assert verdict._is_ctl({"name": "X_s0_ctrl", "cfg": P})
+    assert not verdict._is_ctl({"name": "X_s0_treat", "cfg": P})
+
+
+def test_the_queue_door_records_the_role_it_assigns():
+    """A door that knows the role and does not write it down forces a later guess."""
+    import json, subprocess, sys, pathlib, tempfile, shutil
+    repo = pathlib.Path(__file__).resolve().parent.parent
+    with tempfile.TemporaryDirectory() as tmp:
+        t = pathlib.Path(tmp) / "tree"
+        shutil.copytree(repo, t, ignore=shutil.ignore_patterns(
+            ".git", "__pycache__", ".pytest_cache"))
+        r = subprocess.run(
+            [sys.executable, "tools/queue_quad.py", "--name", "roleprobe",
+             "--cfg", '{"ve": 3}', "--hyp", "none", "--rationale", "r",
+             "--falsifier", "f", "--expected", "e"],
+            cwd=t, capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+        q = json.loads((t / "runs/sweep/queue.json").read_text())
+        new = [e for e in q if e["name"].startswith("roleprobe")]
+        assert new, "probe queued nothing"
+        for e in new:
+            assert e.get("role") in ("treat", "ctrl"), f"{e['name']} has no recorded role"
+            assert e["role"] == ("treat" if e["name"].endswith("_treat") else "ctrl")

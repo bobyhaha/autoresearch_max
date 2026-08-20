@@ -221,7 +221,17 @@ def main() -> int:
             nm = f"{grp}_s{i}_{'treat' if role == 't' else 'ctrl'}"
             if nm in have:
                 continue
+            # ROLE RECORDED AT QUEUE TIME. This campaign has now hit the same defect
+            # seven times (L062, L065, L066, L077, L082, L091 and the _is_ctl fallback):
+            # a run's role was RECOMPUTED later by comparing its cfg against
+            # direction.PLATFORM, which moves under adoption, so completed experiments
+            # silently changed role -- treatments became controls and were pooled into
+            # the baseline that judges treatments, and 28 runs named `_control` were
+            # read as treatments. Name-parsing was the first repair and is better, but
+            # it is still inference. The role is known HERE, with certainty, by the code
+            # that assigns it. Writing it down ends the class rather than the instance.
             e = {"name": nm, "cfg": T if role == "t" else P,
+                 "role": "treat" if role == "t" else "ctrl",
                  "variant": vt if role == "t" else vc,
                  "label": direction.label(T if role == "t" else P),
                  "rationale": a.rationale, "falsifier": a.falsifier, "expected": a.expected,
