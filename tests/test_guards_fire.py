@@ -581,3 +581,79 @@ def test_a_registered_mechanism_is_never_mistaken_for_a_control():
             f"{name} is not labelled as a mechanism: {direction.label(cfg)}")
     assert direction.is_platform(dict(direction.PLATFORM)), (
         "the platform itself stopped being recognised as a control")
+
+
+# ---------------------------------------------------------------------------
+# The registry is self-policing.
+#
+# `prefetch` sat in direction.MECHANISMS for the whole campaign with no implementation.
+# The policy counted it toward mechanism coverage, printed it in the DIRECTION SPACE table
+# as a reachable direction, and let a hypothesis register against it -- while building it
+# raised VariantEditError, so nothing could ever launch on it. A name in a coverage table
+# with no code behind it is worse than an absent mechanism: the campaign reports a
+# direction as available and then never runs it, and no single tool is wrong enough to
+# notice. These tests make that state unreachable.
+# ---------------------------------------------------------------------------
+
+def _all_mech_names():
+    import direction
+    return sorted(direction.all_mechanisms())
+
+
+@pytest.mark.parametrize("name", _all_mech_names())
+def test_every_declared_mechanism_actually_builds(name):
+    """Declared and unbuildable is the defect this test exists for."""
+    import ast, direction, make_variant
+    cfg = {**direction.PLATFORM, **_probe_cfg(name)}
+    src = make_variant.build(cfg)                      # raises if the edit target is gone
+    ctl = make_variant.build(dict(direction.PLATFORM))
+    assert src != ctl, f"{name} builds but is byte-identical to the control"
+    ast.parse(src)                                     # the edit must produce valid Python
+
+
+@pytest.mark.parametrize("name", _all_mech_names())
+def test_every_mechanism_emits_its_own_diagnostic(name):
+    """A mechanism whose diagnostic is never printed can only return non-activation.
+
+    The z-loss arm shipped eight runs that could only ever come back INCONCLUSIVE because
+    nothing emitted the number its activation rule tested.
+    """
+    import direction, make_variant
+    spec = make_variant.MECHANISM_REGISTRY.get(name)
+    if spec is None:
+        pytest.skip(f"{name} is a legacy inline branch with no registry diagnostic")
+    cfg = {**direction.PLATFORM, **_probe_cfg(name)}
+    ok, msg = make_variant.emits_diagnostic(cfg, spec["diagnostic"])
+    assert ok, f"{name} declares diagnostic {spec['diagnostic']!r} it never prints: {msg}"
+
+
+@pytest.mark.parametrize("name", _all_mech_names())
+def test_no_mechanism_is_ever_mistaken_for_a_control(name):
+    """is_platform() deciding a mechanism arm is a control is the worst failure here.
+
+    It would exempt the arm from the decision cutoff AND pool it into the very control
+    block that measures the noise band -- corrupting the instrument with the effect.
+    """
+    import direction
+    cfg = {**direction.PLATFORM, **_probe_cfg(name)}
+    assert not direction.is_platform(cfg), f"{name} classified as a CONTROL"
+    assert not direction.unknown_keys(cfg), f"{name} carries keys the policy cannot see"
+    assert direction.mechanisms_touched(cfg) == {name}
+    assert direction.label(cfg) == f"mech:{name}"
+
+
+def _probe_cfg(name):
+    """A minimal engaging value per mechanism, plus any companion parameter it needs."""
+    import make_variant
+    probe = {"mtp": 4, "unet": 1, "zloss": 1e-4, "noqknorm": 1, "precond": "pre",
+             "ngram": 32768, "ngram_gate": 0.1, "prefetch": 2, "vefreeze": 1,
+             "embwd": 0.01, "periln": 1, "vnorm": 1, "ffnpost": 1, "ropefrac": 0.1,
+             "winsched": 128}
+    assert name in probe, (
+        f"mechanism {name!r} has no probe value here, so it is untested. Add one: every "
+        f"mechanism must be provably buildable before it can be offered as a direction.")
+    cfg = {name: probe[name]}
+    for p in (make_variant.MECHANISM_REGISTRY.get(name) or {}).get("params", ()):
+        if p in probe:
+            cfg[p] = probe[p]
+    return cfg

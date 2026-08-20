@@ -288,6 +288,7 @@
  },
  "2502.05967": {
   "abstract": "Large Language Model training with 8-bit floating point (FP8) formats promises significant efficiency improvements, but reduced numerical precision makes training challenging. It is currently possible to train in FP8 only if one is willing to tune various hyperparameters, reduce model scale, or accept the overhead of computing dynamic scale factors. We demonstrate simple, scalable FP8 training that requires no dynamic scaling factors or special hyperparameters, even at large model sizes. Our method, $\u03bc$nit Scaling ($\u03bc$S), also enables simple hyperparameter transfer across model widths, matched numerics across training and inference, and other desirable properties. $\u03bc$nit Scaling is straightforward to implement, consisting of a set of minimal interventions based on a first-principles analysis of common transformer operations. We validate our method by training models from 1B to 13B parameters, performing all hidden linear layer computations in FP8. We achieve quality equal to higher precision baselines while also training up to 33% faster.",
+  "chars": 56152,
   "comment": "ICML 2025; 17 pages, 13 figures",
   "families": [
    "capacity",
@@ -301,7 +302,8 @@
    "mup"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "b07f25e6eb24e23fe83616143c6df2e4741eea8c7d520f5562ea05ebfad0edd1",
+  "status": "fetched",
   "title": "$\u03bc$nit Scaling: Simple and Scalable FP8 LLM Training",
   "why": [
    "+3 fp8",
@@ -1804,6 +1806,7 @@
  },
  "2505.20155": {
   "abstract": "Large Language Models (LLMs) deliver state-of-the-art capabilities across numerous tasks, but their immense size and inference costs pose significant computational challenges for practical deployment. While structured pruning offers a promising avenue for model compression, existing methods often struggle with the detrimental effects of aggressive, simultaneous width and depth reductions, leading to substantial performance degradation. This paper argues that a critical, often overlooked, aspect in making such aggressive joint pruning viable is the strategic re-initialization and adjustment of remaining weights to improve the model post-pruning training accuracies. We introduce Pangu Light, a framework for LLM acceleration centered around structured pruning coupled with novel weight re-initialization techniques designed to address this ``missing piece''. Our framework systematically targets multiple axes, including model width, depth, attention heads, and RMSNorm, with its effectiveness rooted in novel re-initialization methods like Cross-Layer Attention Pruning (CLAP) and Stabilized LayerNorm Pruning (SLNP) that mitigate performance drops by providing the network a better training starting point. Further enhancing efficiency, Pangu Light incorporates specialized optimizations such as absorbing Post-RMSNorm computations and tailors its strategies to Ascend NPU characteristics. The Pangu Light models consistently exhibit a superior accuracy-efficiency trade-off, outperforming p",
+  "chars": 59849,
   "comment": "",
   "families": [
    "capacity",
@@ -1819,7 +1822,8 @@
    "norm_rmsnorm"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "f9681ad2b08f4a8b7511208e8828b046c4f595279ec5216f846cb1ee04e15917",
+  "status": "fetched",
   "title": "Pangu Light: Weight Re-Initialization for Pruning and Accelerating LLMs",
   "why": [
    "+3 initializ",
@@ -2630,6 +2634,7 @@
  },
  "2507.04239": {
   "abstract": "We argue that neither transformers nor sub-quadratic architectures are well suited to training at long sequence lengths: the cost of processing the context is too expensive in the former, too inexpensive in the latter. Approaches such as sliding window attention which reduce the cost-per-token of a transformer impair in-context learning, and so are also unsuitable. To address these limitations, we introduce power attention, an architectural layer for linear-cost sequence modeling whose state size can be adjusted independently of parameters, unlocking the advantages of linear attention on practical domains. We develop and open-source a set of GPU kernels for efficient power attention, identifying a novel pattern of operation fusion to avoid memory and bandwidth bottlenecks. Our experiments on the in-context learning of power attention shows that these models dominate both exponential attention and linear attention at long-context training.",
+  "chars": 103586,
   "comment": "",
   "families": [
    "capacity",
@@ -2644,7 +2649,8 @@
    "attention_window"
   ],
   "score": 9,
-  "status": "screened",
+  "sha256": "bf613a71b845a11d1092d79215c78207c4fed8dcb89f6bf5fe079079fbcd57c5",
+  "status": "fetched",
   "title": "Scaling Context Requires Rethinking Attention",
   "why": [
    "+2 attention",
@@ -5433,6 +5439,7 @@
  },
  "2512.17351": {
   "abstract": "Understanding architectural differences in language models is challenging, especially at academic-scale pretraining (e.g., 1.3B parameters, 100B tokens), where results are often dominated by noise and randomness. To overcome this, we introduce controlled synthetic pretraining tasks that isolate and evaluate core model capabilities. Within this framework, we discover CANON LAYERS: lightweight architectural components -- named after the musical term \"canon\" -- that promote horizontal information flow across neighboring tokens. Canon layers compute weighted sums of nearby token representations and integrate seamlessly into Transformers, linear attention, state-space models, or any sequence architecture. We present 12 key results. This includes how Canon layers enhance reasoning depth (e.g., by $2\\times$), reasoning breadth, knowledge manipulation, etc. They lift weak architectures like NoPE to match RoPE, and linear attention to rival SOTA linear models like Mamba2/GDN -- validated both through synthetic tasks and real-world academic-scale pretraining. This synthetic playground offers an economical, principled path to isolate core model capabilities often obscured at academic scales. Equipped with infinite high-quality data, it may even PREDICT how future architectures will behave as training pipelines improve -- e.g., through better data curation or RL-based post-training -- unlocking deeper reasoning and hierarchical inference.",
+  "chars": 160608,
   "comment": "V1.1 appeared in NeurIPS 2025 main conference; V2 adds GDN experiments, tightens others for a stronger, fairer comparison, and reorganizes sections; V3 adds Result 2.1 and Section 5.2 on how Canon layers improve hierarchical feature learning, from our Jan 2026 talk",
   "families": [
    "capacity",
@@ -5447,7 +5454,8 @@
    "attention_linear"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "48fb91d02787a9a2b7df17e59ff1658a73e52f90b87961feb8dac38249bff1bd",
+  "status": "fetched",
   "title": "Physics of Language Models: Part 4.1, Architecture Design and the Magic of Canon Layers",
   "why": [
    "+3 pretrain",
@@ -5479,6 +5487,7 @@
  },
  "2512.22382": {
   "abstract": "Hyperparameter tuning can dramatically impact training stability and final performance of large-scale models. Recent works on neural network parameterisations, such as $\u03bc$P, have enabled transfer of optimal global hyperparameters across model sizes. These works propose an empirical practice of search for optimal global base hyperparameters at a small model size, and transfer to a large size. We extend these works in two key ways. To handle scaling along most important scaling axes, we propose the Complete$^{(d)}$ Parameterisation that unifies scaling in width and depth -- using an adaptation of CompleteP -- as well as in batch-size and training duration. Secondly, with our parameterisation, we investigate per-module hyperparameter optimisation and transfer. We characterise the empirical challenges of navigating the high-dimensional hyperparameter landscape, and propose practical guidelines for tackling this optimisation problem. We demonstrate that, with the right parameterisation, hyperparameter transfer holds even in the per-module hyperparameter regime. Our study covers an extensive range of optimisation hyperparameters of modern models: learning rates, AdamW parameters, weight decay, initialisation scales, and residual block multipliers. Our experiments demonstrate significant training speed improvements in Large Language Models with the transferred per-module hyperparameters.",
+  "chars": 79843,
   "comment": "",
   "families": [
    "capacity",
@@ -5491,7 +5500,8 @@
    "mup"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "ad3e3cce2ad7a110f7a1fa54789fc9b639d39541b5b0f5cf6f4361268e9d4bbd",
+  "status": "fetched",
   "title": "Completed Hyperparameter Transfer across Modules, Width, Depth, Batch and Duration",
   "why": [
    "+3 learning rate",
@@ -6560,6 +6570,7 @@
  },
  "2602.10545": {
   "abstract": "Modern large-scale neural networks are often trained and released in multiple sizes to accommodate diverse inference budgets. To improve efficiency, recent work has explored model upscaling: initializing larger models from trained smaller ones to accelerate convergence. However, this method can be sensitive to hyperparameters that need to be tuned at the target upscaled model size, which is prohibitively costly to do directly. It remains unclear whether tuning hyperparameters on smaller models and extrapolating via scaling laws is sound in this setting. We address this with principled approaches to width-based upscaling and efficient hyperparameter tuning in this setting. Motivated by $\u03bc$P and any-dimensional architectures, we introduce a general upscaling method that, like Net2Net, copies and perturbs weights, but uses theoretically grounded, width-dependent scalings for the perturbation noise and optimizer hyperparameters. First, we prove that under zero perturbation, the upscaled model is functionally equivalent to the base model throughout training. Second, we extend the $\u03bc$P theory to enable infinite-width limit analysis and establish hyperparameter transfer for upscaled models, greatly reducing the tuning cost. We empirically demonstrate that this method is effective on realistic datasets and architectures.",
+  "chars": 254978,
   "comment": "69 pages, 11 figures, closest to version to be published in ICML 2026",
   "families": [
    "capacity",
@@ -6574,7 +6585,8 @@
    "mup"
   ],
   "score": 16,
-  "status": "screened",
+  "sha256": "48cc36d702c3cb05ac9e1bd2278408660f159f528b890e5eab135ec3c6e97bb3",
+  "status": "fetched",
   "title": "$\u03bc$pscaling small models: Principled warm starts and hyperparameter transfer",
   "why": [
    "+3 optimizer",
@@ -7115,6 +7127,7 @@
  },
  "2603.02731": {
   "abstract": "Training large-scale Mixture-of-Experts (MoE) models is bottlenecked by activation memory and expert-parallel communication, yet FP4 training remains impractical on Hopper-class GPUs without native MXFP4 or NVFP4 support. In this work, we present a training recipe that enables MXFP4 efficiency for MoE models on Hopper architectures without native 4-bit computation support. A central challenge is to integrate FP4 into an existing BF16/FP8 hybrid training pipeline without incurring costly precision round-trips (e.g., FP4 $\\leftrightarrow$ BF16 $\\leftrightarrow$ FP8). We address this challenge by introducing direct FP8-to-FP4 quantization and de-quantization, together with scaling-aware FP4 row-wise to column-wise conversion, enabling FP4 activations and expert-parallel communication with minimal overhead. Core MoE computations are executed in FP8, while activations and expert-parallel communication are compressed using MXFP4, achieving substantial memory and bandwidth savings without degrading convergence. At the 671B parameter scale, our method achieves end-to-end training performance comparable to strong FP8 baselines, while reducing peak activation memory by 14.8\\% (11.8 GB) and improving training throughput by 12.5\\%, from 1157 to 1302 tokens per GPU per second. These results show that FP4 efficiency can be practically realized for large-scale MoE training through careful software-hardware co-design, even without native FP4 Tensor Core support.",
+  "chars": 43238,
   "comment": "",
   "families": [
    "capacity",
@@ -7129,7 +7142,8 @@
    "fp8_training"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "dd6327bd2672a34449a94e73fc58b9d3115cdc282580c62975d43bfb7b93307c",
+  "status": "fetched",
   "title": "Practical FP4 Training for Large-Scale MoE Models on Hopper GPUs",
   "why": [
    "+3 throughput",
@@ -7564,6 +7578,7 @@
  },
  "2603.27432": {
   "abstract": "LayerNorm and RMSNorm impose fundamentally different geometric constraints on their outputs - and this difference has a precise, quantifiable consequence for model complexity. We prove that LayerNorm's mean-centering step, by confining data to a linear hyperplane (through the origin), reduces the Local Learning Coefficient (LLC) of the subsequent weight matrix by exactly $m/2$ (where $m$ is its output dimension); RMSNorm's projection onto a sphere preserves the LLC entirely. This reduction is structurally guaranteed before any training begins, determined by data manifold geometry alone. The underlying condition is a geometric threshold: for the codimension-one manifolds we study, the LLC drop is binary -- any non-zero curvature, regardless of sign or magnitude, is sufficient to preserve the LLC, while only affinely flat manifolds cause the drop. At finite sample sizes this threshold acquires a smooth crossover whose width depends on how much of the data distribution actually experiences the curvature, not merely on whether curvature exists somewhere. We verify both predictions experimentally with controlled single-layer scaling experiments using the wrLLC framework. We further show that Softmax simplex data introduces a \"smuggled bias\" that activates the same $m/2$ LLC drop when paired with an explicit downstream bias, proved via the affine symmetry extension of the main theorem and confirmed empirically.",
+  "chars": 49020,
   "comment": "12 pages, 2 figures",
   "families": [
    "capacity",
@@ -7575,7 +7590,8 @@
    "norm_rmsnorm"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "02c09d2f71722db16d687d7acdf5d2041743654aba042930247867a1174c21e0",
+  "status": "fetched",
   "title": "The Geometric Cost of Normalization: Affine Bounds on the Bayesian Complexity of Neural Networks",
   "why": [
    "+2 normaliz",
@@ -7878,6 +7894,7 @@
  },
  "2604.11890": {
   "abstract": "We study signal propagation at initialization in transformers through the averaged partial Jacobian norm (APJN), a measure of gradient amplification across layers. We extend APJN analysis to transformers with bidirectional attention and permutation-symmetric input token configurations by deriving recurrence relations for activation statistics and APJNs across layers. Our theory predicts how attention modifies the asymptotic behavior of the APJN at large depth and matches APJNs measured in deep vision transformers. The criticality picture known from residual networks carries over to transformers: the pre-LayerNorm architecture exhibits power-law APJN growth, whereas transformers with LayerNorm replaced by elementwise $\\tanh$-like nonlinearities have stretched-exponential APJN growth, indicating that the latter are subcritical. Applied to Dynamic Tanh (DyT) and Dynamic erf (Derf) transformers, the theory explains why these architectures can be more sensitive to initialization and optimization choices and require careful tuning for stable training.",
+  "chars": 102275,
   "comment": "Minor text edits; 10 pages of main text; 34 pages total; 5 figures in the main text, 25 figures total; preprint",
   "families": [
    "capacity",
@@ -7891,7 +7908,8 @@
    "init_scaling"
   ],
   "score": 9,
-  "status": "screened",
+  "sha256": "58c44ddb0e7ade6fb0637ac108b20f93ad99c818946d764b040a42220ec0af17",
+  "status": "fetched",
   "title": "Subcritical Signal Propagation at Initialization in Normalization-Free Transformers",
   "why": [
    "+3 initializ",
@@ -8233,6 +8251,7 @@
  },
  "2605.08238": {
   "abstract": "Cardiac magnetic resonance (CMR) segmentation underpins quantitative assessment of ventricular structure and function, yet reliable delineation remains difficult due to low tissue contrast, fuzzy boundaries, and inter scan variability. We present CardiacNAS, an evolutionary neural architecture search (NAS) framework that couples a UNet like supernet with a cardiac aware search space spanning depth width, kernel size, filter size, attention, fusion, activation, dropout, and residual scaling. The search is explicitly resource aware, jointly optimizing dice similarity coefficient (DSC) and 95th percentile Hausdorff distance (HD95) versus model size and floating point operations (FLOPs) under fixed compute budgets. Candidate architectures are instantiated from the supernet, trained with proxy budgets, and evolved through crossover, mutation, and elitist selection. We evaluate on the ACDC dataset and compare against six state of the art methods, using qualitative comparisons, learning curve analyses, and design factor correlation studies. The resulting model attains 93.22% average DSC and 4.73 mm HD95 with 3.58M parameters and 14.56 GFLOPs, demonstrating a favorable accuracy efficiency trade off. Analyses indicate that searched attention and fusion choices, together with residual scaling, contribute to improved boundary fidelity and stability. CardiacNAS offers a principled, resource aware approach to deployable CMR segmentation with transparent reporting of architectural complexi",
+  "chars": 33048,
   "comment": "",
   "families": [
    "capacity",
@@ -8248,7 +8267,8 @@
    "residual_scaling"
   ],
   "score": 9,
-  "status": "screened",
+  "sha256": "8dcc880e155dddc3ae2e83e840aea0155c902434a2be7ad1e145c8a9371cdb75",
+  "status": "fetched",
   "title": "Resource-Aware Evolutionary Neural Architecture Search for Cardiac MRI Segmentation",
   "why": [
    "+2 attention",
@@ -8475,6 +8495,7 @@
  },
  "2605.09991": {
   "abstract": "Mode connectivity has been widely studied, yet the role of the optimizer remains underexplored. We revisit it through optimizer-induced implicit regularization, asking how connectivity behaves when restricted to solutions constrained by a given optimizer. For two-layer ReLU networks, we show that solutions from a single optimizer -- AdamW, Muon, or others in the Lion-$\\mathcal{K}$ family -- form a connected set at sufficiently large width, a result not implied by prior work. We then characterize how optimizer-induced regions interact: at large width two different regions can be disjoint or overlap depending on regularization, while in our small-width example AdamW and Muon converge to disconnected zero-loss components separated by a provable loss barrier. Empirically, in GPT-2 pretraining, we observe same-optimizer paths preserve each model's spectrum while cross-optimizer paths traverse a smooth transition. Our results reveal optimizer-dependent structure beyond classical mode connectivity literature.",
+  "chars": 138998,
   "comment": "",
   "families": [
    "capacity",
@@ -8488,7 +8509,8 @@
    "optimizer_adam_variants"
   ],
   "score": 16,
-  "status": "screened",
+  "sha256": "e85b7f1cf7541f35e7514e8194338fbc2bb523051d435f97c6607c569350652a",
+  "status": "fetched",
   "title": "Optimizer-Induced Mode Connectivity: From AdamW to Muon",
   "why": [
    "+3 pretrain",
@@ -9615,6 +9637,7 @@
  },
  "2606.04048": {
   "abstract": "Training and scaling Large Language Models demand enormous computational resources, motivating both efficient sub-quadratic architectures and principled hyperparameter tuning methods. While the Maximal Update Parametrization ($\u03bc$P) has enabled zero-shot hyperparameter transfer for standard Transformers, its extension to linear models, particularly those with structured state transitions and complicated architectures, remains largely unexplored. By rigorously propagating coordinate-size estimates through the forward pass, gating mechanisms, and recurrent state dynamics, we derive the scaling rules for Gated Delta Network. Experiments on language-model pre-training confirm that our configurations enable stable learning-rate transfer across model widths under both AdamW and SGD, whereas standard parametrization fails to transfer, validating the correctness and practical utility of our analysis.",
+  "chars": 85709,
   "comment": "",
   "families": [
    "capacity",
@@ -9627,7 +9650,8 @@
    "mup"
   ],
   "score": 9,
-  "status": "screened",
+  "sha256": "9c67b0d0d844fab3fcbd5725a97f47e1dd4a1378945cbf2aa41596e30f6e93e1",
+  "status": "fetched",
   "title": "Unlocking Feature Learning in Gated Delta Networks at Scale",
   "why": [
    "+3 pre-train",
@@ -9795,6 +9819,7 @@
  },
  "2606.12921": {
   "abstract": "Low-Rank Adaptation (LoRA) significantly reduces compute and memory costs for finetuning Deep Learning models but is often harder to tune than dense training: when using factor-wise optimizers such as AdamW, it is sensitive to initialization choices, its optimal learning rates transfer poorly across ranks, and it often fails to beat dense baselines. We derive LoRA-Muon by applying the Muon optimizer's spectral steepest-descent rule to the low-rank setting. Along with our split weight-decay rule, our main claim is that LoRA-Muon is a good low-rank proxy for full-rank Muon and Shampoo-family optimizers. Its optimal learning rates transfer across rank, width, depth, and factor-rescaling. In our compute-matched TinyShakespeare study, a rank-$2$ proxy recovers the dense best tested learning rate, and a rank-$32$ LoRA-Muon run attains lower mean validation loss than the dense baseline in the seed-averaged sweep. We further show that the Spectron optimizer depends on arbitrary factor scaling, so it would likely be a poor fit when finetuning starts from badly imbalanced factors, and that LoRA-RITE's simplified QR-coordinate core implements the same spectral update. LoRA-Muon computes that update without QR-decomposition and avoids storing second moments, making it more accelerator-friendly and memory-efficient.",
+  "chars": 69942,
   "comment": "20 pages, 4 figures",
   "families": [
    "capacity",
@@ -9808,7 +9833,8 @@
    "optimizer_muon"
   ],
   "score": 13,
-  "status": "screened",
+  "sha256": "8512db3c60e6deae0c7b510020b99b392f3fb5d11c0555e368a14ba07238e1fb",
+  "status": "fetched",
   "title": "LoRA-Muon: Spectral Steepest Descent on the Low-Rank Manifold",
   "why": [
    "+3 optimizer",
@@ -10253,6 +10279,7 @@
  },
  "2606.23235": {
   "abstract": "We study Transformer-type residual layers under cross-entropy training through a continuous-depth mean field control viewpoint. Depth is treated as time, layer parameters as controls, and the residual Transformer recursion as an explicit Euler scheme for a controlled hidden-state flow. For fixed controls, we prove an $O(\\varepsilon)$ pathwise approximation of finite-depth trajectories by the continuous flow and combine this with high-probability sampling bounds for the empirical cross-entropy risk. We formulate the limiting population problem as a first-order transport control problem for the law of hidden states and derive a Pontryagin condition whose terminal adjoint contains the softmax residual. We also give finite-class and metric-entropy uniform estimates, compare optimal values, and discuss existence, stability, continuous-to-discrete recovery, initialization, and range estimates for continuous minimizers.",
+  "chars": 159178,
   "comment": "44 pages",
   "families": [
    "capacity",
@@ -10265,7 +10292,8 @@
    "init_scaling"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "18b582f97e9d8e3c614211df72c256d4c2e6fc161d28858246d255db2a80d133",
+  "status": "fetched",
   "title": "A First-Order Mean Field Control Analysis of Transformer Layers under Cross-Entropy Training",
   "why": [
    "+3 initializ",
@@ -10563,6 +10591,7 @@
  },
  "2606.31859": {
   "abstract": "Residual connections add every sublayer's proposed update with a fixed coefficient of one; the network never evaluates whether an update is reliable before committing it. Drawing on the human-factors principle of independent verification, we introduce Review Residuals, which scale each update by a learned, input-dependent gate conditioned on both the current state and the proposed update: h_l = h_{l-1} + r_l * u_l with r_l = sigmoid(W[RMSNorm(h_{l-1}), RMSNorm(u_l)]). Conditioning the gate on the update is the property that distinguishes it from prior gated and scaled residuals. We report two findings. First, a depth-stability result: a convex (Highway-style) form of the gate reintroduces vanishing gradients and fails to train beyond ~20 layers, whereas the additive, identity-preserving form trains stably at all depths we tested. Second, an emergence-with-scale result: trained from scratch across five sizes (60M-1B parameters, multi-seed), Review Residuals show no advantage at small scale but at 590M significantly outperform both a parameter-matched Highway gate and a parameter-matched standard residual (p<0.05), with a larger advantage at 1B. The benefit grows with model size rather than shrinking.",
+  "chars": 18407,
   "comment": "9 pages, 2 figures. Also on Zenodo: https://doi.org/10.5281/zenodo.21053343 ; Code: https://github.com/SixSigmaEngineer/review-residuals",
   "families": [
    "capacity",
@@ -10576,7 +10605,8 @@
    "residual_scaling"
   ],
   "score": 10,
-  "status": "screened",
+  "sha256": "d305ec036224936a2d4777945f16513c61ed2198453f98a66804031b1e41ad21",
+  "status": "fetched",
   "title": "Review Residuals: Update-Conditioned Residual Gating for Transformers",
   "why": [
    "+4 from scratch",

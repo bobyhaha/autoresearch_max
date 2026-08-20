@@ -832,3 +832,8 @@ def _ngram(s, cfg, sub):
 print(f"ngram_emb_rms_final: {_ngt.float().pow(2).mean().sqrt().item():.8f}")
 print(f"ngram_slots:         {NGRAM_SLOTS}")"""]
     return s, obs
+
+
+# Mechanisms defined as a library rather than inline branches. Imported LAST so every
+# @mechanism has registered before the first build() call reads MECHANISM_REGISTRY.
+from mech_lib import *   # noqa: E402,F401,F403
