@@ -6440,5 +6440,54 @@
   "created_at": 1787204268.6096926,
   "source_round": "2026-08-20T05-21-45Z_round.md",
   "vram_est": 60
+ },
+ {
+  "name": "R9EMA_P2_s0_ctrl",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "50ceed0a255d.py",
+  "label": "control",
+  "rationale": "A zero-run schedule axis whose weight swap happens at evaluation time, so it is close to free against the charged clock -- which matters because every compute-ADDING mechanism tested today lost.",
+  "falsifier": "ema_updates exceeds zero (the buffer was genuinely updated) but val_bpb does not improve by more than resolution_at(n).",
+  "expected": "Judged against resolution_at(n) computed at verdict time per L074, not against a frozen band -- the within-wave band drifted 2.4x today while device resolution held steady, and only the latter is what a counterbalanced design buys.",
+  "wave_group": "R9EMA_P2",
+  "created_at": 1787181007.947008,
+  "source_round": "quad-counterbalanced",
+  "vram_est": 50,
+  "role": "ctrl"
+ },
+ {
+  "name": "R9EMA_P2_s1_treat",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 18,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2,
+   "ema": 0.999,
+   "ema_start": 0.6
+  },
+  "variant": "5485ee84efea.py",
+  "label": "knob:ema+ema_start",
+  "rationale": "A zero-run schedule axis whose weight swap happens at evaluation time, so it is close to free against the charged clock -- which matters because every compute-ADDING mechanism tested today lost.",
+  "falsifier": "ema_updates exceeds zero (the buffer was genuinely updated) but val_bpb does not improve by more than resolution_at(n).",
+  "expected": "Judged against resolution_at(n) computed at verdict time per L074, not against a frozen band -- the within-wave band drifted 2.4x today while device resolution held steady, and only the latter is what a counterbalanced design buys.",
+  "wave_group": "R9EMA_P2",
+  "created_at": 1787181007.947008,
+  "source_round": "quad-counterbalanced",
+  "vram_est": 50,
+  "hypothesis_id": "hyp_ema_tail_average_p18",
+  "role": "treat"
  }
 ]

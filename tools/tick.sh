@@ -39,15 +39,22 @@ tick() {
   # host policy -- ngram was, minutes after being written. is_platform then answered
   # correctly only by accident, because the key was unrecognised rather than because it was
   # a known mechanism, and blocked_reason and label were both wrong about it.
-  for _m in direction.py claims.py lit.py make_variant.py mech_lib.py; do
-    [ -f "tools/$_m" ] || continue
-    _l=$(md5 -q "tools/$_m" 2>/dev/null || md5sum "tools/$_m" | cut -d' ' -f1)
-    _r=$(ssh -n "${SSHOPT[@]}" "$HOST" "md5sum ~/$OPHIS_REMOTE_DIR/sweep/$_m 2>/dev/null | cut -d' ' -f1")
+  # host/dispatch.py joins the shipped set. It is the ONLY file here that is not a
+  # tools/ policy module, and leaving it out cost three times in one session: the role
+  # field shipped and took effect, the variant field did not, so results recorded their
+  # role and left `variant: null` -- and E4 then correctly flagged a completed run as
+  # having no recoverable code. A fix committed and never shipped is a fix that exists
+  # only in the repository.
+  for _m in direction.py claims.py lit.py make_variant.py mech_lib.py ../host/dispatch.py; do
+    _src="tools/$_m"; _dst=$(basename "$_m")
+    [ -f "$_src" ] || continue
+    _l=$(md5 -q "$_src" 2>/dev/null || md5sum "$_src" | cut -d' ' -f1)
+    _r=$(ssh -n "${SSHOPT[@]}" "$HOST" "md5sum ~/$OPHIS_REMOTE_DIR/sweep/$_dst 2>/dev/null | cut -d' ' -f1")
     if [ "$_l" != "$_r" ]; then
-      scp -q "${SSHOPT[@]/-p/-P}" "tools/$_m" "$HOST:~/$OPHIS_REMOTE_DIR/sweep/$_m" 2>/dev/null
-      _v=$(ssh -n "${SSHOPT[@]}" "$HOST" "md5sum ~/$OPHIS_REMOTE_DIR/sweep/$_m 2>/dev/null | cut -d' ' -f1")
+      scp -q "${SSHOPT[@]/-p/-P}" "$_src" "$HOST:~/$OPHIS_REMOTE_DIR/sweep/$_dst" 2>/dev/null
+      _v=$(ssh -n "${SSHOPT[@]}" "$HOST" "md5sum ~/$OPHIS_REMOTE_DIR/sweep/$_dst 2>/dev/null | cut -d' ' -f1")
       if [ "$_l" = "$_v" ]; then
-        echo "  shipped $_m ($_l)"
+        echo "  shipped $_dst ($_l)"
         # Shipping is NOT taking effect. host/dispatch.py imports these modules once at
         # startup, so a dispatcher already running keeps the OLD code in memory and goes
         # on enforcing the old policy. That is exactly what happened after the dry-rule
@@ -55,11 +62,11 @@ tick() {
         # split, because the live dispatcher had imported the previous version minutes
         # earlier. A module is live only after a restart.
         if ssh -n "${SSHOPT[@]}" "$HOST" 'pgrep -f "dispatch.py [0-9]" | grep -qv "bash -c"' 2>/dev/null; then
-          echo "    NOTE: a dispatcher is RUNNING and still holds the old $_m in memory."
+          echo "    NOTE: a dispatcher is RUNNING and still holds the old $_dst in memory."
           echo "    Restart it at the next idle gap or the new policy will not bind."
         fi
       else
-        echo "  WARN: $_m FAILED to ship (local $_l host $_v)"
+        echo "  WARN: $_dst FAILED to ship (local $_l host $_v)"
       fi
     fi
   done
