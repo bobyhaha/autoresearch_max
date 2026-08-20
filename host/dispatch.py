@@ -302,6 +302,7 @@ def tombstone_split_wave(key) -> bool:
     for it in stranded:
         rec = {
             "name": it["name"], "cfg": it.get("cfg"), "gpu": None,
+            "role": it.get("role"), "variant": it.get("variant"),
             "hypothesis_id": it.get("hypothesis_id"),
             "started": None, "ended": time.time(), "returncode": None,
             "cotenant_detected": False, "cores": None, "ok": False,
@@ -468,6 +469,16 @@ def recover_orphans():
         r.write_text(json.dumps(
             {"name": d.name, "cfg": cfg or {}, "gpu": _lj.get("gpu", -1),
              "started": _lj.get("started", 0),
+             # role and variant, recovered from the queue entry alongside the
+             # hypothesis. All three result writers must record them or the guarantee is
+             # only as good as which path a run happened to take: an audit found role and
+             # variant reaching one writer of three, so a RECOVERED run -- exactly the
+             # case where provenance matters most, because something already went wrong --
+             # came back with neither.
+             "role": next((e.get("role") for e in load_queue()
+                           if e["name"] == d.name), None),
+             "variant": next((e.get("variant") for e in load_queue()
+                              if e["name"] == d.name), None),
              "hypothesis_id": next((e.get("hypothesis_id") for e in load_queue()
                                     if e["name"] == d.name), None),
              "ended": (d / "out.log").stat().st_mtime, "returncode": 0, "metrics": met,

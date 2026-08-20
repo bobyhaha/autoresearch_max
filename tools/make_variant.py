@@ -807,11 +807,6 @@ print(f"final_epoch:      {epoch}")''')
         s = s + "\n# --- activation observables (mechanism-specific) ---\n" + "\n".join(obs) + "\n"
     return s
 
-if __name__ == "__main__":
-    cfg = json.loads(sys.argv[1])
-    sys.stdout.write(build(cfg))
-
-
 def emits_diagnostic(cfg, field):
     """Does the variant this cfg builds actually PRINT `field`?
 
@@ -936,3 +931,21 @@ print(f"ngram_slots:         {NGRAM_SLOTS}")"""]
 # Mechanisms defined as a library rather than inline branches. Imported LAST so every
 # @mechanism has registered before the first build() call reads MECHANISM_REGISTRY.
 from mech_lib import *   # noqa: E402,F401,F403
+
+
+# THE CLI ENTRY POINT MUST BE LAST, after mech_lib has registered. It used to sit above
+# that import, so running this file as a script executed build() with an EMPTY registry:
+# a cfg naming any registered mechanism silently produced THE CONTROL, byte-identical,
+# with no error. That is the silent-control defect the whole generator is built to make
+# impossible -- an experiment that runs the baseline while its record says otherwise --
+# reachable through the one path that has no test behind it. A guard is added too, so a
+# future reordering fails loudly instead of returning the wrong bytes.
+if __name__ == "__main__":
+    _cfg = json.loads(sys.argv[1])
+    _named = sorted(k for k in _cfg if k in MECHANISM_REGISTRY)
+    _unreg = [k for k in _named if k not in MECHANISM_REGISTRY]
+    if not MECHANISM_REGISTRY:
+        raise SystemExit("MECHANISM_REGISTRY is empty at CLI time: mech_lib did not "
+                         "import, so any mechanism in this cfg would silently build the "
+                         "control. Refusing rather than emitting the wrong bytes.")
+    sys.stdout.write(build(_cfg))

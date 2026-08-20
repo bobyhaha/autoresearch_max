@@ -954,3 +954,25 @@ def test_no_test_writes_to_the_live_campaign_state():
     assert not bad, (
         "these lines write to the LIVE campaign tree from a test; use a temp dir:\n  "
         + "\n  ".join(bad))
+
+
+def test_the_cli_path_sees_the_registry():
+    """Running make_variant as a SCRIPT must build what the library builds.
+
+    The `if __name__ == "__main__"` block sat above `from mech_lib import *`, so a CLI
+    build ran with an EMPTY MECHANISM_REGISTRY: a cfg naming any registered mechanism
+    produced THE CONTROL, byte-identical, with no error and no warning. That is the
+    silent-control defect the generator exists to make impossible -- an experiment that
+    runs the baseline while its record says otherwise -- reachable through the one path
+    nothing tested.
+    """
+    import json, subprocess, sys, pathlib
+    import direction, make_variant
+    repo = pathlib.Path(__file__).resolve().parent.parent
+    cfg = {**direction.PLATFORM, "ngram": 32768, "ngram_gate": 0.1}
+    r = subprocess.run([sys.executable, "tools/make_variant.py", json.dumps(cfg)],
+                       cwd=repo, capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr[-400:]
+    assert r.stdout == make_variant.build(cfg), "CLI output differs from the library build"
+    assert r.stdout != make_variant.build(dict(direction.PLATFORM)), \
+        "CLI silently produced the CONTROL for a mechanism cfg"
