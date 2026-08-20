@@ -647,7 +647,7 @@ def _probe_cfg(name):
     import make_variant
     probe = {"mtp": 4, "unet": 1, "zloss": 1e-4, "noqknorm": 1, "precond": "pre",
              "ngram": 32768, "ngram_gate": 0.1, "prefetch": 2, "vefreeze": 1,
-             "embwd": 0.01, "periln": 1, "vnorm": 1, "ffnpost": 1, "ropefrac": 0.1,
+             "embwd": 0.0005, "periln": 1, "vnorm": 1, "ffnpost": 1, "ropefrac": 0.1,
              "winsched": 128}
     assert name in probe, (
         f"mechanism {name!r} has no probe value here, so it is untested. Add one: every "
@@ -657,3 +657,148 @@ def _probe_cfg(name):
         if p in probe:
             cfg[p] = probe[p]
     return cfg
+
+
+@pytest.mark.parametrize("name", _all_mech_names())
+def test_a_result_using_any_mechanism_flows_through_the_reading_loop(name):
+    """The steering loop must survive a result from every mechanism it offers.
+
+    `mechanism_state()` seeded its counters from the frozen MECHANISMS tuple while
+    `mechanisms_touched()` iterated the registry, so the first result using a REGISTERED
+    mechanism raised KeyError -- taking down analyze.py, direction.py and agenda.py
+    together, while the dispatcher happily kept launching. The campaign would have gone
+    blind at the exact moment its first new mechanism returned data.
+
+    Nothing caught it because no test had ever pushed a registered mechanism's RESULT
+    through the readers; the earlier guards only checked that such a cfg could be built
+    and labelled. A mechanism is not integrated until its result can be read.
+    """
+    import direction
+    cfg = {**direction.PLATFORM, **_probe_cfg(name)}
+    res = [{"name": f"T_{name}", "ok": True, "gpu": 0,
+            "metrics": {"val_bpb": 0.97, "num_steps": 1000}, "cfg": cfg},
+           {"name": "C_ctrl", "ok": True, "gpu": 1,
+            "metrics": {"val_bpb": 0.98, "num_steps": 1000},
+            "cfg": dict(direction.PLATFORM)}]
+    st = direction.mechanism_state(res)
+    assert name in st, f"mechanism_state has no counter for {name}"
+    assert st[name]["n"] == 1, f"{name} result was not counted: {st[name]}"
+    direction.report(res)          # the DIRECTION SPACE table a council reads first
+
+
+@pytest.mark.parametrize("name", _all_mech_names())
+def test_every_registered_mechanism_reaches_the_rotation_table(name):
+    """`family=` was written and never read, so rotation could not see 8 of 9 mechanisms.
+
+    agenda.py decides DRY / STALE / HARD CAP from direction.mechanism_families(). While
+    that table was hand-maintained, signal_path reported "all closed" with periln, vnorm
+    and ffnpost sitting in it, and attention listed no mechanisms at all though winsched
+    and ropefrac were registered there. Their families kept accruing staleness toward
+    rotation as if nothing had been added, and their exploration gap stayed at 0.00.
+    A declaration no consumer reads is a comment.
+    """
+    import direction, make_variant
+    spec = make_variant.MECHANISM_REGISTRY.get(name)
+    if spec is None:
+        pytest.skip(f"{name} is a legacy inline branch, already in the hand-written table")
+    fam = spec["family"]
+    fams = direction.mechanism_families()
+    assert fam in fams, f"{name} declares family {fam!r} which the rotation table lacks"
+    assert name in fams[fam]["mechs"], f"{name} is missing from family {fam!r}"
+
+
+def test_a_companion_param_without_its_mechanism_is_not_a_control():
+    """`ngram_gate` alone is a typo, not an experiment -- and it read as a control.
+
+    build() ignores a companion whose mechanism is absent, so the generated source equals
+    the control's while the cfg looks like a treatment. is_platform() returned True and
+    label() returned "control", which is the one classification that must never be wrong:
+    it exempts the entry from the decision cutoff and pools it into the control block
+    that measures the noise band.
+    """
+    import direction
+    for orphan in ("ngram_gate", "winsched_frac"):
+        cfg = {**direction.PLATFORM, orphan: 0.9}
+        assert direction.orphan_params(cfg) == {orphan}
+        assert not direction.is_platform(cfg), f"{orphan} alone classified as a CONTROL"
+        assert direction.label(cfg).startswith("INVALID:"), direction.label(cfg)
+    assert direction.is_platform(dict(direction.PLATFORM))
+
+
+def test_build_refuses_the_crosses_its_own_docs_call_unsafe():
+    """Prose is not a guard: the forbidden cross built cleanly until it was coded."""
+    import make_variant, direction
+    from make_variant import VariantEditError
+    with pytest.raises(VariantEditError):
+        make_variant.build({**direction.PLATFORM, "ropefrac": 0.1, "noqknorm": 1})
+    with pytest.raises(VariantEditError):      # a schedule that starts at its own target
+        make_variant.build({**direction.PLATFORM, "swdiv": 16, "winsched": 128})
+    with pytest.raises(VariantEditError):      # decay that erases the tables it decays
+        make_variant.build({**direction.PLATFORM, "embwd": 0.01})
+
+
+def test_pre_convention_names_keep_their_role_through_an_adoption():
+    """A run named `_control` is a control, whatever the platform has since become.
+
+    verdict._is_ctl resolves the role from the run name precisely so a PLATFORM ADOPTION
+    cannot retroactively re-role completed waves -- and then its fallback, for names
+    predating the `<wave>_s<slot>_<role>` convention, went straight back to
+    direction.is_platform. 28 runs named `_control` (C01..C06, every W0*_control, every
+    ctrl_*) were classified as TREATMENTS because their cfg carries the old tbs=19.
+    The bug the function exists to prevent, living in its own fallback.
+    """
+    import verdict, direction
+    old = {**direction.PLATFORM, "tbs": 19}          # a control built before the adoption
+    for name in ("C01_control", "W02a_1_control", "ctrl_VE_A", "ctrl_R1N_A_slot1"):
+        assert verdict._is_ctl({"name": name, "cfg": dict(old)}), \
+            f"{name} is named a control and must stay one across an adoption"
+    # ...and a treatment whose NAME merely contains the word must not flip. `poscontrol`
+    # is a positive control for the ns axis, which is an intervention arm.
+    for name in ("ns3_poscontrol_slot0", "precond_pre_slot0", "wd040_slot0"):
+        assert not verdict._is_ctl({"name": name, "cfg": {**old, "ns": 3}}), \
+            f"{name} is a treatment and an unanchored substring test would invert it"
+    # The slot convention still wins where it is present.
+    assert verdict._is_ctl({"name": "R7XF_P1_s1_ctrl", "cfg": dict(direction.PLATFORM)})
+    assert not verdict._is_ctl({"name": "R7XF_P1_s0_treat", "cfg": dict(direction.PLATFORM)})
+
+
+def test_a_recorded_role_beats_every_later_inference():
+    """The role is a fact assigned at queue time, not a property to be re-derived.
+
+    Seven separate defects in this campaign share one cause: a run's role was recomputed
+    later by comparing its cfg against direction.PLATFORM, which MOVES under adoption.
+    Treatments silently became controls and were pooled into the baseline that judges
+    treatments (L091); 28 runs named `_control` were read as treatments. Name-parsing was
+    a better inference but still an inference. queue_quad/queue_from_round now write
+    `role` and dispatch.py carries it into the result record.
+    """
+    import verdict, direction
+    P = dict(direction.PLATFORM)
+    # A recorded role wins even when both other signals would disagree with it.
+    assert verdict._is_ctl({"name": "X_s0_treat", "role": "ctrl", "cfg": P})
+    assert not verdict._is_ctl({"name": "X_s0_ctrl", "role": "treat", "cfg": P})
+    # And the older signals still work where no role was recorded.
+    assert verdict._is_ctl({"name": "X_s0_ctrl", "cfg": P})
+    assert not verdict._is_ctl({"name": "X_s0_treat", "cfg": P})
+
+
+def test_the_queue_door_records_the_role_it_assigns():
+    """A door that knows the role and does not write it down forces a later guess."""
+    import json, subprocess, sys, pathlib, tempfile, shutil
+    repo = pathlib.Path(__file__).resolve().parent.parent
+    with tempfile.TemporaryDirectory() as tmp:
+        t = pathlib.Path(tmp) / "tree"
+        shutil.copytree(repo, t, ignore=shutil.ignore_patterns(
+            ".git", "__pycache__", ".pytest_cache"))
+        r = subprocess.run(
+            [sys.executable, "tools/queue_quad.py", "--name", "roleprobe",
+             "--cfg", '{"ve": 3}', "--hyp", "none", "--rationale", "r",
+             "--falsifier", "f", "--expected", "e"],
+            cwd=t, capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+        q = json.loads((t / "runs/sweep/queue.json").read_text())
+        new = [e for e in q if e["name"].startswith("roleprobe")]
+        assert new, "probe queued nothing"
+        for e in new:
+            assert e.get("role") in ("treat", "ctrl"), f"{e['name']} has no recorded role"
+            assert e["role"] == ("treat" if e["name"].endswith("_treat") else "ctrl")

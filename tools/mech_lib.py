@@ -183,10 +183,14 @@ def _vefreeze(s, cfg, sub):
             """        assert len(list(self.parameters())) == (len(matrix_params) + len(embedding_params) +
             len(lm_head_params) + len(value_embeds_params) + len(resid_params) + len(x0_params))
         assert not any(p.requires_grad for p in value_embeds_params)""")
+    # ve_emb_rms_final is NOT printed here: the shared telemetry block already emits it
+    # from the model. Printing it twice made this the only variant with a duplicated key,
+    # and host/dispatch.py parses with `m[key] = value`, so which number survived was
+    # decided by print order -- reorder these lines and the record silently becomes the
+    # RMS of a different tensor.
     obs = ["""_vem = (model._orig_mod if hasattr(model,'_orig_mod') else model)
 _vetr = sum(p.numel() for p in _vem.value_embeds.parameters() if p.requires_grad)
-print(f"ve_trainable_params: {_vetr}")
-print(f"ve_emb_rms_final:    {torch.cat([p.detach().float().reshape(-1) for p in _vem.value_embeds.parameters()]).pow(2).mean().sqrt().item():.8f}")"""]
+print(f"ve_trainable_params: {_vetr}")"""]
     return s, obs
 
 
@@ -209,7 +213,25 @@ print(f"ve_emb_rms_final:    {torch.cat([p.detach().float().reshape(-1) for p in
     constant decay applied to those three groups.""",
 )
 def _embwd(s, cfg, sub):
+    from make_variant import VariantEditError
     wd = float(cfg["embwd"])
+    # SCALE THIS KNOB AGAINST ITS OWN LEARNING RATE, or the obvious values annihilate the
+    # tables. AdamW here is DECOUPLED (p.mul_(1 - lr_t * wd_t)), and the embedding and
+    # value-embedding groups run at lr = 0.6 * (512/768)**-0.5 = 0.7348 -- 18x Muon's
+    # 0.04. So the same written number means something wildly different in the two
+    # places, and "0.2, like WEIGHT_DECAY" or even "0.01, a small first value" would end
+    # the run having erased the tables: 0.01 leaves ~2% of the initial norm, 0.05 leaves
+    # 3e-9. That arm would come back as a clean valid-negative on "decay the identity
+    # tables" when what it actually tested was deleting them.
+    _lr_eff = 0.6 * (512 / 768) ** -0.5 * 0.75      # 0.75 = mean lr multiplier over the run
+    _steps = 700                                     # the campaign's usual step count
+    _mult = (1.0 - _lr_eff * wd) ** _steps if _lr_eff * wd < 1 else 0.0
+    if _mult < 0.5:
+        raise VariantEditError(
+            f"embwd={wd} would shrink the identity tables to {_mult:.3g} of their initial "
+            f"norm over ~{_steps} steps (decoupled decay at lr={_lr_eff:.3f}). That is an "
+            f"ablation, not a regularisation. Keep the predicted multiplier above 0.5: "
+            f"embwd <= {(1 - 0.5 ** (1 / _steps)) / _lr_eff:.2e}.")
     for grp in ("lm_head_params", "embedding_params", "value_embeds_params"):
         lr = {"lm_head_params": "unembedding_lr", "embedding_params": "embedding_lr",
               "value_embeds_params": "embedding_lr"}[grp]
@@ -229,7 +251,7 @@ print("emb_wd_applied:   {wd}")"""]
 @mechanism(
     "periln",
     family="signal_path",
-    diagnostic="periln_branches",
+    diagnostic="branch_stream_ratio_mean",
     params=(),
     doc="""Peri-LN: normalise each sub-module's OUTPUT before it is added to the residual
     stream, in addition to the existing normalisation of its input.
@@ -251,14 +273,18 @@ def _periln(s, cfg, sub):
         x = x + self.mlp(norm(x))""",
             """        x = x + norm(self.attn(norm(x), ve, cos_sin, window_size))
         x = x + norm(self.mlp(norm(x)))""")
-    obs = ["""print(f"periln_branches: {2*len((model._orig_mod if hasattr(model,'_orig_mod') else model).transformer.h)}")"""]
+    # The diagnostic (branch_stream_ratio_mean) is emitted by the SHARED telemetry block
+    # in make_variant.py, unconditionally, so the CONTROL emits it too. A diagnostic only
+    # the treatment prints cannot be surprising -- there is no distribution to compare
+    # against, and "the number exists" becomes the whole test.
+    obs = []
     return s, obs
 
 
 @mechanism(
     "vnorm",
     family="signal_path",
-    diagnostic="vnorm_applied",
+    diagnostic="branch_stream_ratio_mean",
     params=(),
     doc="""HybridNorm's QKV-Norm half: extend the existing QK normalisation to the VALUE
     path, so all three attention inputs are normalised rather than two.
@@ -286,14 +312,18 @@ def _vnorm(s, cfg, sub):
             """        v = norm(v)
         cos, sin = cos_sin
         q, k = apply_rotary_emb(q, cos, sin), apply_rotary_emb(k, cos, sin)""")
-    obs = ["""print("vnorm_applied:   1")"""]
+    # The diagnostic (branch_stream_ratio_mean) is emitted by the SHARED telemetry block
+    # in make_variant.py, unconditionally, so the CONTROL emits it too. A diagnostic only
+    # the treatment prints cannot be surprising -- there is no distribution to compare
+    # against, and "the number exists" becomes the whole test.
+    obs = []
     return s, obs
 
 
 @mechanism(
     "ffnpost",
     family="signal_path",
-    diagnostic="ffnpost_applied",
+    diagnostic="branch_stream_ratio_mean",
     params=(),
     doc="""HybridNorm's Post-Norm half: normalise the residual stream AFTER the FFN branch
     is added, instead of normalising only the FFN's input.
@@ -308,7 +338,11 @@ def _vnorm(s, cfg, sub):
 def _ffnpost(s, cfg, sub):
     s = sub(s, """        x = x + self.mlp(norm(x))""",
             """        x = norm(x + self.mlp(x))""")
-    obs = ["""print("ffnpost_applied: 1")"""]
+    # The diagnostic (branch_stream_ratio_mean) is emitted by the SHARED telemetry block
+    # in make_variant.py, unconditionally, so the CONTROL emits it too. A diagnostic only
+    # the treatment prints cannot be surprising -- there is no distribution to compare
+    # against, and "the number exists" becomes the whole test.
+    obs = []
     return s, obs
 
 
@@ -355,8 +389,22 @@ def _ffnpost(s, cfg, sub):
     the record rather than inferred.""",
 )
 def _winsched(s, cfg, sub):
+    from make_variant import VariantEditError
     start = int(cfg["winsched"])
     frac = float(cfg.get("winsched_frac") or 0.64)
+    # A schedule that starts at the span it is ramping TO cannot move. With swdiv=16 the
+    # short span is already 128, so {swdiv:16, winsched:128} builds byte-DIFFERENT from
+    # the control -- it carries the whole scheduler -- and then holds the window fixed
+    # for the entire run. It would pass the byte-identical queue guard and burn a 300s
+    # slot as a real attention-axis run measuring nothing. `ns` refuses its own no-op at
+    # build time for exactly this reason; this now does too.
+    _seq, _swdiv = 2048, int(cfg.get("swdiv") or 2)
+    _short = _seq // _swdiv
+    if start >= _short:
+        raise VariantEditError(
+            f"winsched={start} is a NO-OP: the short span under swdiv={_swdiv} is already "
+            f"{_short}, so the schedule starts at its own target and never moves. Pick a "
+            f"start below {_short}, or change swdiv.")
     s = sub(s, """    def _compute_window_sizes(self, config):""",
             f"""    def set_short_window(self, w):
         # Rebuild the per-layer window list with a new SHORT span; long layers and the
@@ -384,7 +432,13 @@ f"""    progress = min(total_training_time / TIME_BUDGET, 1.0)
         (model._orig_mod if hasattr(model, '_orig_mod') else model).set_short_window(_ws_target)
     lrm = get_lr_multiplier(progress)""")
     s = sub(s, """train_loader = make_dataloader(tokenizer, DEVICE_BATCH_SIZE, MAX_SEQ_LEN, "train")""",
-f"""_WS_FULL = (model._orig_mod if hasattr(model, '_orig_mod') else model).window_sizes[0][0]
+f"""# The SHORT span is the minimum over the per-layer windows, NOT window_sizes[0].
+# Position 0 is whatever the pattern's first character says: under any pattern starting
+# with 'L' (e.g. "LSSS") it is the FULL sequence length, so the ramp would have
+# terminated by setting every short layer to full context -- strictly MORE attention
+# FLOPs than the control, under a mechanism whose entire thesis is FLOP reduction, and
+# `win` is an untouched top-priority axis so win x winsched is a live proposal.
+_WS_FULL = min(w[0] for w in (model._orig_mod if hasattr(model, '_orig_mod') else model).window_sizes)
 _ws_cur = [_WS_FULL]
 _ws_seen = set()
 (model._orig_mod if hasattr(model, '_orig_mod') else model).set_short_window({start})
@@ -423,7 +477,19 @@ print(f"winsched_final_window: {{_ws_cur[0]}}")"""]
     removing attention work at fixed budget.""",
 )
 def _ropefrac(s, cfg, sub):
+    from make_variant import VariantEditError
     fr = float(cfg["ropefrac"])
+    # PROSE IS NOT A GUARD. The docstring above says this "must never be crossed with
+    # noqknorm", citing attB_partial_rope_nope_instability -- reducing positional
+    # information without QK-norm diverged to perplexity 340,933. That sentence stopped
+    # nothing: the cross built cleanly, no lesson blocked the key pair, and neither queue
+    # door checks pairwise incompatibility. The only stated reason this arm is safe here
+    # is that the platform runs QK-norm, so removing QK-norm removes the reason.
+    if cfg.get("noqknorm"):
+        raise VariantEditError(
+            "ropefrac x noqknorm is refused: fractional RoPE is safe here only BECAUSE "
+            "the platform runs QK-norm (attB_partial_rope_nope_instability -- ppl 340,933 "
+            "without it). Test them separately.")
     # The baseline uses the SPLIT-HALF convention: channel i is paired with channel i+d,
     # where d = head_dim/2, and cos/sin are indexed by PAIR. Slicing a contiguous leading
     # block of channels would therefore re-pair them against different partners and leave

@@ -85,7 +85,7 @@ def families_of(cfg: dict) -> set:
     for fam, spec in direction.FAMILIES.items():
         if ax & set(spec["axes"]):
             fams.add(fam)
-    for fam, spec in direction.MECHANISM_FAMILIES.items():
+    for fam, spec in direction.mechanism_families().items():
         if me & set(spec["mechs"]):
             fams.add(fam)
     return fams
@@ -174,14 +174,14 @@ def family_virgin(fam: str, axst: dict, mechst: dict) -> list:
     families. Computing this only from axes left mechanism families looking exhausted
     the moment one of their mechanisms ran once."""
     axes = direction.FAMILIES.get(fam, {}).get("axes", ())
-    mechs = direction.MECHANISM_FAMILIES.get(fam, {}).get("mechs", ())
+    mechs = direction.mechanism_families().get(fam, {}).get("mechs", ())
     return ([a for a in axes if axst.get(a, {}).get("n", 0) == 0]
             + [m for m in mechs if mechst.get(m, {}).get("n", 0) == 0])
 
 
 def family_levers(fam: str) -> int:
     return (len(direction.FAMILIES.get(fam, {}).get("axes", ()))
-            + len(direction.MECHANISM_FAMILIES.get(fam, {}).get("mechs", ())))
+            + len(direction.mechanism_families().get(fam, {}).get("mechs", ())))
 
 
 def exit_trigger(fam: str, runs: dict, axst: dict, mechst: dict) -> str | None:

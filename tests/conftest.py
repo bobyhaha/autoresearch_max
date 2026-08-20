@@ -25,6 +25,7 @@ import pathlib
 # module and is collected normally.
 _SCRIPTS = [
     "test_chain_of_evidence.py",
+    "test_frozen_contract.py",
     "test_lessons.py",
     "test_pipeline.py",
     "test_policy_defects.py",
@@ -32,7 +33,37 @@ _SCRIPTS = [
     "test_wave_launch.py",
 ]
 
-collect_ignore = list(_SCRIPTS)
+
+def _module_level_exit(path: pathlib.Path) -> bool:
+    """True if importing this file would call sys.exit() -- i.e. it is a script.
+
+    The list above was hand-maintained, and a script missing from it does not fail
+    cleanly: pytest imports it during COLLECTION, the module-level sys.exit raises
+    SystemExit inside the collector, and the whole run dies with INTERNALERROR and
+    `no tests ran` -- every other test silently unexecuted. Adding one file cost the
+    entire suite. So the list is now documentation and this is the mechanism: any
+    script is detected whether or not somebody remembered to write it down.
+    """
+    import ast
+    try:
+        tree = ast.parse(path.read_text())
+    except (OSError, SyntaxError):
+        return False
+    for node in tree.body:                      # module level only, not inside defs
+        for sub in ast.walk(node):
+            if (isinstance(sub, ast.Call) and isinstance(sub.func, ast.Attribute)
+                    and sub.func.attr == "exit"
+                    and isinstance(sub.func.value, ast.Name)
+                    and sub.func.value.id == "sys"):
+                return True
+    return False
+
+
+_HERE = pathlib.Path(__file__).parent
+collect_ignore = sorted({
+    *(_SCRIPTS),
+    *(p.name for p in _HERE.glob("test_*.py") if _module_level_exit(p)),
+})
 
 
 def pytest_collection_modifyitems(config, items):

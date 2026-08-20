@@ -170,8 +170,16 @@ def main():
         when = ("since the campaign began" if g["decision_cutoff"] < 1e6 else
                 f"as of {(time.time() - g['decision_cutoff'])/60:.0f} min ago")
         print(f"  NEW DECISIONS FROZEN {when}: {g['decision_cutoff_reason']}")
-        print("  (controls are exempt and keep running -- they are the instrument)")
-        print("  (already-queued work keeps launching; GPUs do not idle for prose)")
+        # These two lines used to assert that queued work keeps launching. An audit
+        # simulated next_batch against the live queue and found it launched NOTHING:
+        # every pending wave was a yoked pair, the per-entry control exemption released
+        # the control and froze the treatment, and the wave-held guard then refused the
+        # orphaned control. The freeze idled 100% of remaining work while this text said
+        # the opposite -- the most dangerous kind of wrong, because it is the line an
+        # operator reads to decide whether the freeze is costing anything.
+        print("  (a wave of CONTROLS is exempt and keeps running -- it is the instrument)")
+        print("  (a wave containing a treatment freezes WHOLE: a pair cannot launch half)")
+        print("  => if every pending wave is a yoked pair, this freeze stops all launches.")
     return 0 if g["gate_open"] else 1
 
 

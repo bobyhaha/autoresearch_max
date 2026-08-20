@@ -238,9 +238,20 @@ _V = _mm.config.vocab_size
 # them -- and because ve:1 ADDS four tables, a shape-filtered statistic changes its own
 # composition with the treatment, which makes cross-arm comparison meaningless. AdamW
 # groups are built lm_head, wte, value_embeds, resid, x0 (baseline/train.py:258-262).
+# ...and select by IDENTITY, not by position either. Position is only stable while the
+# group LIST is: a mechanism that removes the value-embeds group (vefreeze) shifts every
+# later group down, so _ag_ordered[2] silently became resid_lambdas -- the run then
+# printed ve_table_count: 1 while n_ve_layers: 4 in the same record, contradicting
+# itself. Matching the model's own parameters by id() cannot be shifted by any group a
+# mechanism adds or drops.
 _ag_ordered = [g for g in optimizer.param_groups if g.get('kind') == 'adamw']
-_head_ps = _ag_ordered[0]['params'] if len(_ag_ordered) > 0 else []
-_ve_ps = _ag_ordered[2]['params'] if len(_ag_ordered) > 2 else []
+_mdl = model._orig_mod if hasattr(model, '_orig_mod') else model
+_ve_want = {id(p) for p in _mdl.value_embeds.parameters()}
+_head_want = {id(p) for p in _mdl.lm_head.parameters()}
+_head_ps = [p for g in _ag_ordered for p in g['params'] if id(p) in _head_want]
+# The VE tables are read from the MODEL, not from the optimizer: a mechanism may freeze
+# them out of every group, and "frozen" is exactly when their final RMS is worth seeing.
+_ve_ps = list(_mdl.value_embeds.parameters())
 _hm = [optimizer.state[p] for p in _head_ps if p in optimizer.state
        and 'exp_avg' in optimizer.state[p]]
 if _hm:
@@ -254,7 +265,59 @@ if _ve_ps:
     _vv = torch.cat([p.detach().float().flatten() for p in _ve_ps])
     print(f"ve_emb_rms_final:    {_vv.pow(2).mean().sqrt().item():.8f}")
     print(f"ve_table_count:      {len(_ve_ps)}")
-print(f"adamw_group_count:   {len(_ag)}")""")
+print(f"adamw_group_count:   {len(_ag)}")
+
+# SIGNAL-SCALE OBSERVABLES, emitted by EVERY arm including the control.
+# rope, softcap and x0init all build and all differ from the control, but none emitted a
+# number that distinguished them, so no activation diagnostic could be declared and every
+# proposal on them bounced at the queue door. signal_scale is the ACTIVE direction and was
+# unrunnable for that reason alone -- a direction closed not by evidence but because
+# nothing measured it. Each of these is measured from the trained model or the eval batch,
+# not echoed from the config: a cfg echo proves the print was appended, not that anything
+# changed.
+_x0 = (model._orig_mod if hasattr(model, '_orig_mod') else model).x0_lambdas.detach().float()
+print(f"x0_lambda_mean_final:     {_x0.mean().item():.8f}")
+print(f"x0_lambda_absmax_final:   {_x0.abs().max().item():.8f}")
+_rl = (model._orig_mod if hasattr(model, '_orig_mod') else model).resid_lambdas.detach().float()
+print(f"resid_lambda_mean_final:  {_rl.mean().item():.8f}")
+# Rotary geometry: the mean cosine over the positions actually trained on moves with the
+# rotary base, and is a property of the buffer rather than of the cfg literal.
+_cs = (model._orig_mod if hasattr(model, '_orig_mod') else model).cos.detach().float()
+print(f"rope_cos_mean:            {_cs[:, :MAX_SEQ_LEN].mean().item():.8f}")
+# Softcap engagement: how hard tanh is actually saturating on real logits.
+with torch.no_grad():
+    _lg = (model._orig_mod if hasattr(model, '_orig_mod') else model)(x[:1], None).float()
+    _sat = (_lg.abs() / 15.0).clamp(max=1.0)
+print(f"softcap_sat_mean:         {_sat.mean().item():.8f}")
+print(f"softcap_sat_p99:          {_sat.flatten().quantile(0.99).item():.8f}")
+
+# BRANCH-TO-STREAM AMPLITUDE, emitted by EVERY arm including the control.
+# This is the mediator the signal_path mechanisms (periln, vnorm, ffnpost) name, and it
+# has to live here rather than in their observable blocks: a diagnostic only the
+# treatment prints has no control distribution, so it can never be surprising and can
+# never falsify anything -- it only proves the print was appended.
+# Measured on ONE extra no-grad forward AFTER the charged clock stops, so it cannot move
+# val_bpb or the step count.
+_pm = model._orig_mod if hasattr(model, '_orig_mod') else model
+_br_stat = []
+def _br_hook(mod, inp, out):
+    _si = inp[0].detach().float(); _so = out.detach().float()
+    _br_stat.append((_so.pow(2).mean().sqrt().item(), _si.pow(2).mean().sqrt().item()))
+_hs = []
+for _blk in _pm.transformer.h:
+    _hs.append(_blk.attn.register_forward_hook(_br_hook))
+    _hs.append(_blk.mlp.register_forward_hook(_br_hook))
+try:
+    with torch.no_grad():
+        _pm(x, y)
+finally:
+    for _h in _hs:
+        _h.remove()
+if _br_stat:
+    _rat = [o / max(i, 1e-12) for o, i in _br_stat]
+    print(f"branch_stream_ratio_mean: {sum(_rat)/len(_rat):.8f}")
+    print(f"branch_stream_ratio_max:  {max(_rat):.8f}")
+    print(f"branch_probe_sites:       {len(_br_stat)}")""")
 
     # --- evaluator pinned to the baseline batch so the metric stays comparable ---
     s = sub(s, "val_bpb = evaluate_bpb(model, tokenizer, DEVICE_BATCH_SIZE)",
@@ -768,7 +831,7 @@ def emits_diagnostic(cfg, field):
     "ngram",
     family="ve_placement",
     diagnostic="ngram_emb_rms_final",
-    params=("ngram_gate", "ngram_dim"),
+    params=("ngram_gate",),
     doc="""Hashed n-gram memory, Engram-style: a table indexed by a hash of the previous
     n token ids, read once per position and added into the residual stream through a
     small CONSTANT gate.
@@ -794,7 +857,13 @@ def emits_diagnostic(cfg, field):
     mechanism tested, all of which lost.
 
     cfg: ngram = number of hash slots (0/absent = off); ngram_gate = constant gate,
-    default 0.10; ngram_dim = table width, default n_embd.""")
+    default 0.10. NOTE: there is deliberately no `ngram_dim`. It was declared as a
+    companion parameter and never read -- build() ignored it, so two queue entries
+    differing only in ngram_dim produced BYTE-IDENTICAL source, collapsed to one
+    content-addressed variant, and the policy would have recorded two runs on a table-
+    width question that was never varied. A separate width also needs a projection back
+    to n_embd, which adds the FLOPs this mechanism exists to avoid. If width is ever
+    worth testing, implement it before declaring it.""")
 def _ngram(s, cfg, sub):
     slots = int(cfg["ngram"])
     gate = float(cfg.get("ngram_gate", 0.10))
@@ -828,6 +897,18 @@ def _ngram(s, cfg, sub):
         _h = (idx.to(torch.int64) * 1000003 + _prev.to(torch.int64) * 31) % NGRAM_SLOTS
         x = x + NGRAM_GATE * self.ngram_table(_h)
         x = norm(x)""")
+    # A LOOKUP IS NOT A MATMUL, and estimate_flops must be told so. The table lands in
+    # sum(p.numel() for p in self.parameters()) but never in nparams_exclude, so
+    # 6 * (nparams - nparams_exclude) charged it as a dense 6*N matmul: at ngram=65536,
+    # n_embd=512 that is +201.3 MFLOP/token on a 239.1 baseline, inflating
+    # flops_per_token_M and mfu_percent by ~84%. val_bpb is untouched, but every
+    # throughput diagnostic on the arm -- and the cost prose written from them -- would
+    # be wrong by that factor, on a mechanism whose whole claim is that it is FLOP-free.
+    s = sub(s, """        nparams_exclude = (self.transformer.wte.weight.numel() + value_embeds_numel +
+                          self.resid_lambdas.numel() + self.x0_lambdas.numel())""",
+            """        nparams_exclude = (self.transformer.wte.weight.numel() + value_embeds_numel +
+                          self.ngram_table.weight.numel() +
+                          self.resid_lambdas.numel() + self.x0_lambdas.numel())""")
     obs = ["""_ngt = (model._orig_mod if hasattr(model,'_orig_mod') else model).ngram_table.weight.detach()
 print(f"ngram_emb_rms_final: {_ngt.float().pow(2).mean().sqrt().item():.8f}")
 print(f"ngram_slots:         {NGRAM_SLOTS}")"""]

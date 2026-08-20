@@ -144,16 +144,36 @@ def runnable(cutoff):
     """Every queue entry eligible to launch right now, in queue order."""
     state = axis_state(results())
     out, frozen, policy = [], 0, 0
-    for item in load_queue():
+    queue = load_queue()
+    # WHICH WAVES ARE PURE CONTROL BLOCKS. The exemption below is for the instrument --
+    # a block of controls run to measure the noise band -- and a control block is a whole
+    # wave of controls. A control that is one half of a yoked PAIR is not an instrument on
+    # its own; it is half of a research decision, and its other half is the treatment.
+    #
+    # Exempting it per-entry deadlocked the campaign completely. Every pending wave here
+    # is a width-2 pair, so the cutoff released the control and froze the treatment, and
+    # the wave-held guard below then correctly refused to launch a control whose treatment
+    # was missing. Result: `runnable` reported 16 entries, and next_batch could assemble
+    # ZERO waves -- while gate.py printed "already-queued work keeps launching; GPUs do
+    # not idle for prose". A per-entry exemption inside an all-or-nothing wave launcher
+    # cannot do anything except strand the wave.
+    _pure_ctl = {}
+    for it in queue:
+        g = it.get("wave_group")
+        if g:
+            _pure_ctl[g] = _pure_ctl.get(g, True) and _is_control(it["cfg"])
+    for item in queue:
         if (ROOT / "results" / f"{item['name']}.json").exists():
             continue
         if (ROOT / "claims" / item["name"]).exists():
             continue
         # A decision made after the cutoff waits for the overdue council artifact.
-        # Controls are exempt: a control is the measuring instrument, not a research
-        # decision, and freezing it would starve the noise band that every verdict needs.
-        if (float(item.get("created_at") or 0) > cutoff
-                and not _is_control(item["cfg"])):
+        # Exempt only a wave that is ENTIRELY controls: that is the measuring instrument,
+        # not a research decision, and freezing it would starve the noise band every
+        # verdict needs. A mixed wave freezes as a unit, because it IS a unit.
+        _grp = item.get("wave_group")
+        _exempt = _pure_ctl.get(_grp, _is_control(item["cfg"])) if _grp else _is_control(item["cfg"])
+        if float(item.get("created_at") or 0) > cutoff and not _exempt:
             frozen += 1
             continue
         if blocked_reason(item["cfg"], state):
@@ -186,13 +206,27 @@ def wave_sizes(cutoff=None):
     # four GPUs. The campaign's own rule is that already-queued work keeps launching and
     # GPUs do not idle for prose, so the cutoff-frozen members are excluded from the
     # denominator rather than counted as casualties.
+    # The exemption must match runnable()'s EXACTLY or the two disagree about what is
+    # launchable: this counts a frozen pair's control as a 1-wide wave while runnable()
+    # yields nothing from that group, and next_batch is left sizing a wave that has no
+    # members. Only a wave that is entirely controls is the instrument; see runnable().
+    # `_is_control` imports direction, which the pure-logic test harness does not provide
+    # until it stubs it; resolve it dynamically and fall back to "nothing is exempt",
+    # which is the conservative direction -- it holds a wave rather than launching half.
+    _ic = globals().get("_is_control") or (lambda cfg: False)
+    _pure_ctl = {}
+    if cutoff is not None:
+        for it in queue:
+            g = it.get("wave_group")
+            if g:
+                _pure_ctl[g] = _pure_ctl.get(g, True) and _ic(it.get("cfg") or {})
     sizes = collections.Counter()
     for item in queue:
         g = item.get("wave_group")
         if not g:
             continue
         if (cutoff is not None and float(item.get("created_at") or 0) > cutoff
-                and not _is_control(item.get("cfg") or {})):
+                and not _pure_ctl.get(g, _ic(item.get("cfg") or {}))):
             continue
         sizes[g] += 1
     return sizes
@@ -688,6 +722,13 @@ def main():
                    # holding the entry. A cut queue entry used to erase a completed run
                    # from every verdict.
                    "wave_group": job["item"].get("wave_group"),
+                   # ROLE, CARRIED FROM THE QUEUE ENTRY THAT ASSIGNED IT. Seven separate
+                   # defects in this campaign came from re-deriving a run's role later by
+                   # comparing its cfg against direction.PLATFORM, which moves under
+                   # adoption: treatments silently became controls and were pooled into
+                   # the baseline that judges treatments. The queue knew the role with
+                   # certainty; nothing downstream should have to infer it.
+                   "role": job["item"].get("role"),
                    "hypothesis_id": job["item"].get("hypothesis_id"),
                    "started": job["started"], "ended": time.time(),
                    "returncode": job["proc"].returncode, "metrics": met,

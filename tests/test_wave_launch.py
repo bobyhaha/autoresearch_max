@@ -109,6 +109,28 @@ batch, _ = mod.next_batch(1000, 4)
 ok(len(batch) == 2, "once the freeze lifts the whole wave goes out together")
 mod.load_queue = lambda: []
 
+print("\n5c-bis. the cutoff exempts a CONTROL BLOCK, not a control inside a pair")
+# The exemption exists for the instrument: a wave of controls run to measure the noise
+# band. Applied per-ENTRY it exempted the control half of every yoked pair and froze the
+# treatment half, and the wave-held guard above then refused the orphaned control -- so
+# with 16 pending pairs the dispatcher could assemble ZERO waves while gate.py printed
+# "already-queued work keeps launching; GPUs do not idle for prose". Two individually
+# correct rules composed into a total launch block.
+mixed = [{"name": "M_treat", "wave_group": "wmix", "cfg": {"mlp": 9}, "created_at": 900},
+         {"name": "M_ctrl",  "wave_group": "wmix", "cfg": {},         "created_at": 900}]
+purec = [{"name": "P_c0", "wave_group": "wpure", "cfg": {}, "created_at": 900},
+         {"name": "P_c1", "wave_group": "wpure", "cfg": {}, "created_at": 900}]
+mod._is_control = lambda cfg: not cfg
+mod.load_queue = lambda: mixed
+ok(mod.wave_sizes(500).get("wmix", 0) == 0,
+   f"a MIXED wave freezes whole; its control is not a 1-wide wave "
+   f"(got {mod.wave_sizes(500).get('wmix', 0)})")
+mod.load_queue = lambda: purec
+ok(mod.wave_sizes(500).get("wpure", 0) == 2,
+   f"a PURE CONTROL block stays exempt and keeps measuring the band "
+   f"(got {mod.wave_sizes(500).get('wpure', 0)})")
+mod.load_queue = lambda: []
+
 print("\n5d. a PERMANENTLY split wave is tombstoned, not refused forever")
 # zloss01_A/B ran their two controls and never their two treatments. Because a wave is
 # sized from the queue, the pair could never be reformed -- so every poll re-evaluated

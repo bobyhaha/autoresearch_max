@@ -100,6 +100,27 @@ def known_keys():
             | frozenset(PLATFORM) | frozenset(EXTRA_KEYS) | _registered_params())
 
 
+def orphan_params(cfg: dict) -> set:
+    """Companion parameters present WITHOUT the mechanism that owns them.
+
+    `ngram_gate` alone is not an experiment, it is a typo -- build() never reads it if
+    `ngram` is absent, so the generated source equals the control's while the cfg looks
+    like a treatment. is_platform() said True and label() said "control" for such a cfg,
+    which is the one classification that must never be wrong: it would exempt the entry
+    from the decision cutoff and pool it into the control block that measures the band.
+    Only the downstream byte-identical guard caught it, and that guard is the last line
+    of defence, not the first.
+    """
+    out = set()
+    for m, spec in _registry_specs().items():
+        if cfg.get(m) not in (None, 0, False):
+            continue
+        for prm in spec.get("params", ()):
+            if cfg.get(prm) is not None:
+                out.add(prm)
+    return out
+
+
 def _registered_params():
     """Companion settings declared by registered mechanisms (a gate strength, a table
     width). Read from the registry so implementing a mechanism teaches the policy about
@@ -360,15 +381,28 @@ def is_platform(cfg: dict) -> bool:
     instrument. Failing safe on ANY unrecognised key makes the whole class impossible,
     not just the three instances that were found.
     """
+    # orphan_params is part of the same fail-safe: a companion setting whose mechanism is
+    # absent is understood by the policy but MEANINGLESS to the generator, which is a
+    # third way for a non-control cfg to look like a control.
     return (not axes_touched(cfg) and not mechanisms_touched(cfg)
-            and not unknown_keys(cfg))
+            and not unknown_keys(cfg) and not orphan_params(cfg))
 
 
 def label(cfg: dict) -> str:
     ms, ax = sorted(mechanisms_touched(cfg)), sorted(axes_touched(cfg))
     if ms:
         return "mech:" + "+".join(ms) + (("|knob:" + "+".join(ax)) if ax else "")
-    return ("knob:" + "+".join(ax)) if ax else "control"
+    if ax:
+        return "knob:" + "+".join(ax)
+    # is_platform() already refuses these; the LABEL must agree or the dispatcher log and
+    # every verdict grouping still call the entry a control. Saying "control" about a cfg
+    # the policy has just refused to treat as one is how a misclassification survives a
+    # fix -- the guard is in one function and the words a reader trusts come from another.
+    if orphan_params(cfg):
+        return "INVALID:orphan-params:" + "+".join(sorted(orphan_params(cfg)))
+    if unknown_keys(cfg):
+        return "INVALID:unknown-keys:" + "+".join(sorted(unknown_keys(cfg)))
+    return "control"
 
 
 def axis_state(results: list[dict]) -> dict:
@@ -589,10 +623,54 @@ MECHANISM_FAMILIES = {
 }
 
 
+def mechanism_families() -> dict:
+    """MECHANISM_FAMILIES with every REGISTERED mechanism folded into its own family.
+
+    The table above is hand-maintained, and `@mechanism(family=...)` was being written
+    and never read: nothing in tools/ or host/ ever looked at spec["family"]. So eight of
+    nine registered mechanisms were invisible here -- signal_path showed "all closed"
+    while periln, vnorm and ffnpost existed in it; attention showed its knob axes only,
+    with winsched and ropefrac absent entirely. agenda.family_virgin() reads this table,
+    so those families kept accruing DRY and STALE toward rotation as though nothing had
+    been added to them, and their exploration gap stayed at 0.00.
+
+    This is L028 recurring through a new route. L028's mitigation was that a mechanism
+    family must use a name in lit.ALL_FAMILIES -- and mech_lib DOES use legal names. The
+    defect is not the name, it is that the name never reached the table rotation reads.
+    A declaration that no consumer reads is a comment.
+
+    Registry entries are merged, never overriding a hand-written cost note.
+    """
+    out = {k: dict(v) for k, v in MECHANISM_FAMILIES.items()}
+    for name, spec in _registry_specs().items():
+        fam = spec.get("family") or "unclassified"
+        ent = out.setdefault(fam, {"mechs": (), "cost": "registered mechanism family"})
+        if name not in ent["mechs"]:
+            ent["mechs"] = tuple(ent["mechs"]) + (name,)
+    return out
+
+
+def _registry_specs() -> dict:
+    try:
+        import make_variant
+        return dict(make_variant.MECHANISM_REGISTRY)
+    except Exception:
+        return {}
+
+
 def mechanism_state(results: list[dict]) -> dict:
     """Per-mechanism run counts. Untracked mechanisms were invisible to the old policy."""
     ok = [r for r in results if r.get("ok") and (r.get("metrics") or {}).get("val_bpb")]
-    st = {m: {"n": 0, "best": None} for m in MECHANISMS}
+    # all_mechanisms(), NOT the frozen MECHANISMS tuple. mechanisms_touched() below
+    # iterates the registry, so seeding from the legacy tuple leaves every REGISTERED
+    # mechanism without a key and `st[m]["n"] += 1` raises KeyError on the first result
+    # that uses one. That is not a cosmetic gap: analyze.py, direction.py and agenda.py
+    # all call this, so the first n-gram run to come back would have silenced the entire
+    # steering loop while the dispatcher kept launching -- the campaign blind and still
+    # spending GPUs. It is also the SECOND site of the same defect after
+    # mechanisms_touched(), which is the lesson: one tuple read in two places is one
+    # place too many, and fixing the site you happened to look at is not fixing the bug.
+    st = {m: {"n": 0, "best": None} for m in all_mechanisms()}
     for r in ok:
         v = r["metrics"]["val_bpb"]
         for m in mechanisms_touched(r["cfg"] or {}):
@@ -612,7 +690,7 @@ def direction_space(results: list[dict]) -> list[dict]:
         live = [a for a in spec["axes"] if a in ax and ax[a]["open"] and ax[a]["n"]]
         out.append({"family": fam, "kind": "knob", "n": n, "cost": spec["cost"],
                     "unexplored_axes": virgin, "open_axes": live})
-    for fam, spec in MECHANISM_FAMILIES.items():
+    for fam, spec in mechanism_families().items():
         n = sum(me[m]["n"] for m in spec["mechs"] if m in me)
         virgin = [m for m in spec["mechs"] if m in me and me[m]["n"] == 0]
         out.append({"family": fam, "kind": "mechanism", "n": n, "cost": spec["cost"],

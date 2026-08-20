@@ -96,7 +96,32 @@ def main():
         print(f"PLATFORM BASELINE  {_s.mean(_plat):.6f}  over {len(_plat)} controls on "
               f"{len(_by)} device(s); pooled within-GPU sd {_pooled:.6f} "
               f"({len(_sds)} device(s) with n>1)")
-        print(f"  cfg {dict(direction.PLATFORM)}\n")
+        print(f"  cfg {dict(direction.PLATFORM)}")
+        # AND THE POOL WITHOUT ITS OWN JUSTIFYING EVIDENCE (L091). Adopting a value into
+        # PLATFORM retroactively reclassifies the TREATMENT arms that justified the
+        # adoption as controls, because is_platform() reads the cfg against a platform
+        # that has since moved. Four R5T18 tbs=18 treatments entered the pool that way.
+        # They are not obviously wrong to include -- they did run the current platform
+        # config -- but they were selected for having won, and their mean is WORSE than
+        # the rest, which raises the baseline and makes every treatment gap look larger.
+        # Repooling silently would move every verdict on record, so both are printed and
+        # the reader decides.
+        _entered = [r for r in rows
+                    if r.get("ok") and direction.is_platform(r.get("cfg") or {})
+                    and (r.get("metrics") or {}).get("val_bpb")
+                    and r["name"].endswith("_treat")]
+        if _entered:
+            _clean = [r["metrics"]["val_bpb"] for r in rows
+                      if r.get("ok") and direction.is_platform(r.get("cfg") or {})
+                      and (r.get("metrics") or {}).get("val_bpb")
+                      and not r["name"].endswith("_treat")]
+            if _clean:
+                print(f"  of which {len(_entered)} entered by RECLASSIFICATION after an "
+                      f"adoption (queued as treatments): "
+                      f"{', '.join(sorted(r['name'] for r in _entered))}")
+                print(f"  baseline excluding them  {_s.mean(_clean):.6f}  over "
+                      f"{len(_clean)} controls  (L091)")
+        print()
 
     if band:
         print(f"ALL-CONTROL SPREAD (UNPAIRED)  n={band['n']}  mean {band['mean']:.6f}  "

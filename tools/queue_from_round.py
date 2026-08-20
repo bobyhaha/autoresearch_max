@@ -148,7 +148,14 @@ def main():
                 continue
         vid = make_variant.variant_id(src)
         (SWEEP / "variants" / vid).write_text(src)
+        # ROLE RECORDED AT QUEUE TIME -- see the note in tools/queue_quad.py. A round
+        # entry names its members <wave>_s<slot>_<role>, so the role is known here; this
+        # writes it down instead of leaving it to be re-derived against a platform that
+        # moves. Falls back to the name only if a round ever omits the suffix.
+        _role = ("treat" if e["name"].endswith("_treat")
+                 else "ctrl" if e["name"].endswith(("_ctrl", "_control")) else None)
         queue.append({"name": e["name"], "cfg": cfg, "variant": vid,
+                      **({"role": _role} if _role else {}),
                       "label": direction.label(cfg), "rationale": e["rationale"],
                       "falsifier": e["falsifier"], "expected": e.get("expected", ""),
                       # Entries sharing a wave_group launch CONCURRENTLY on separate
