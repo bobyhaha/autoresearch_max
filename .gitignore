@@ -62,9 +62,6 @@ lit/ACTIVE_DIRECTION.json
 # --- remote host config (address, login, port) ---
 .ophis_host
 
-# sharded screen scratch, merged into # lit/index.json carries each source's sha256 and fetch status. E1 needs it to tell an
-# absent-but-indexed source from one that was never recorded, so without it a clone
-# cannot distinguish 'not fetched here' from 'no provenance at all'. It is small.
-!lit/index.json
+# Sharded screen scratch, merged into lit/index.json. Per-operator and re-derivable.
 lit/index_shard*.json
 lit/*_progress.json

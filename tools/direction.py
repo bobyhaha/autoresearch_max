@@ -592,7 +592,16 @@ MECHANISM_FAMILIES = {
 def mechanism_state(results: list[dict]) -> dict:
     """Per-mechanism run counts. Untracked mechanisms were invisible to the old policy."""
     ok = [r for r in results if r.get("ok") and (r.get("metrics") or {}).get("val_bpb")]
-    st = {m: {"n": 0, "best": None} for m in MECHANISMS}
+    # all_mechanisms(), NOT the frozen MECHANISMS tuple. mechanisms_touched() below
+    # iterates the registry, so seeding from the legacy tuple leaves every REGISTERED
+    # mechanism without a key and `st[m]["n"] += 1` raises KeyError on the first result
+    # that uses one. That is not a cosmetic gap: analyze.py, direction.py and agenda.py
+    # all call this, so the first n-gram run to come back would have silenced the entire
+    # steering loop while the dispatcher kept launching -- the campaign blind and still
+    # spending GPUs. It is also the SECOND site of the same defect after
+    # mechanisms_touched(), which is the lesson: one tuple read in two places is one
+    # place too many, and fixing the site you happened to look at is not fixing the bug.
+    st = {m: {"n": 0, "best": None} for m in all_mechanisms()}
     for r in ok:
         v = r["metrics"]["val_bpb"]
         for m in mechanisms_touched(r["cfg"] or {}):

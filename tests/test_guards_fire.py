@@ -657,3 +657,30 @@ def _probe_cfg(name):
         if p in probe:
             cfg[p] = probe[p]
     return cfg
+
+
+@pytest.mark.parametrize("name", _all_mech_names())
+def test_a_result_using_any_mechanism_flows_through_the_reading_loop(name):
+    """The steering loop must survive a result from every mechanism it offers.
+
+    `mechanism_state()` seeded its counters from the frozen MECHANISMS tuple while
+    `mechanisms_touched()` iterated the registry, so the first result using a REGISTERED
+    mechanism raised KeyError -- taking down analyze.py, direction.py and agenda.py
+    together, while the dispatcher happily kept launching. The campaign would have gone
+    blind at the exact moment its first new mechanism returned data.
+
+    Nothing caught it because no test had ever pushed a registered mechanism's RESULT
+    through the readers; the earlier guards only checked that such a cfg could be built
+    and labelled. A mechanism is not integrated until its result can be read.
+    """
+    import direction
+    cfg = {**direction.PLATFORM, **_probe_cfg(name)}
+    res = [{"name": f"T_{name}", "ok": True, "gpu": 0,
+            "metrics": {"val_bpb": 0.97, "num_steps": 1000}, "cfg": cfg},
+           {"name": "C_ctrl", "ok": True, "gpu": 1,
+            "metrics": {"val_bpb": 0.98, "num_steps": 1000},
+            "cfg": dict(direction.PLATFORM)}]
+    st = direction.mechanism_state(res)
+    assert name in st, f"mechanism_state has no counter for {name}"
+    assert st[name]["n"] == 1, f"{name} result was not counted: {st[name]}"
+    direction.report(res)          # the DIRECTION SPACE table a council reads first
