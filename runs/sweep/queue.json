@@ -1,0 +1,128 @@
+[
+ {
+  "name": "C01_control",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 19,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "7d538ad931e1.py",
+  "label": "control",
+  "rationale": "measure the noise band under CPU-pinned, thread-capped launch",
+  "falsifier": "if the within-wave sd is not small relative to the effects you intend to chase, every single-run comparison on this box stays uninterpretable",
+  "expected": "sd well under the spread measured without pinning",
+  "created_at": 1787058978.4769468,
+  "source_round": "bootstrap",
+  "vram_est": 50
+ },
+ {
+  "name": "C02_control",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 19,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "7d538ad931e1.py",
+  "label": "control",
+  "rationale": "measure the noise band under CPU-pinned, thread-capped launch",
+  "falsifier": "if the within-wave sd is not small relative to the effects you intend to chase, every single-run comparison on this box stays uninterpretable",
+  "expected": "sd well under the spread measured without pinning",
+  "created_at": 1787058978.4769468,
+  "source_round": "bootstrap",
+  "vram_est": 50
+ },
+ {
+  "name": "C03_control",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 19,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "7d538ad931e1.py",
+  "label": "control",
+  "rationale": "measure the noise band under CPU-pinned, thread-capped launch",
+  "falsifier": "if the within-wave sd is not small relative to the effects you intend to chase, every single-run comparison on this box stays uninterpretable",
+  "expected": "sd well under the spread measured without pinning",
+  "created_at": 1787058978.4769468,
+  "source_round": "bootstrap",
+  "vram_est": 50
+ },
+ {
+  "name": "C04_control",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 19,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "7d538ad931e1.py",
+  "label": "control",
+  "rationale": "measure the noise band under CPU-pinned, thread-capped launch",
+  "falsifier": "if the within-wave sd is not small relative to the effects you intend to chase, every single-run comparison on this box stays uninterpretable",
+  "expected": "sd well under the spread measured without pinning",
+  "created_at": 1787058978.4769468,
+  "source_round": "bootstrap",
+  "vram_est": 50
+ },
+ {
+  "name": "C05_control",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 19,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "7d538ad931e1.py",
+  "label": "control",
+  "rationale": "measure the noise band under CPU-pinned, thread-capped launch",
+  "falsifier": "if the within-wave sd is not small relative to the effects you intend to chase, every single-run comparison on this box stays uninterpretable",
+  "expected": "sd well under the spread measured without pinning",
+  "created_at": 1787058978.4769468,
+  "source_round": "bootstrap",
+  "vram_est": 50
+ },
+ {
+  "name": "C06_control",
+  "cfg": {
+   "dbs": 128,
+   "tbs": 19,
+   "depth": 8,
+   "dim": 512,
+   "mlp": 4,
+   "ve": 2,
+   "win": "SSSL",
+   "swdiv": 2
+  },
+  "variant": "7d538ad931e1.py",
+  "label": "control",
+  "rationale": "measure the noise band under CPU-pinned, thread-capped launch",
+  "falsifier": "if the within-wave sd is not small relative to the effects you intend to chase, every single-run comparison on this box stays uninterpretable",
+  "expected": "sd well under the spread measured without pinning",
+  "created_at": 1787058978.4769468,
+  "source_round": "bootstrap",
+  "vram_est": 50
+ }
+]

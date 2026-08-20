@@ -1,0 +1,43 @@
+{
+ "name": "C02_control",
+ "cfg": {
+  "dbs": 128,
+  "tbs": 19,
+  "depth": 8,
+  "dim": 512,
+  "mlp": 4,
+  "ve": 2,
+  "win": "SSSL",
+  "swdiv": 2
+ },
+ "gpu": 5,
+ "started": 1787056669.2514567,
+ "ended": 1787057185.663406,
+ "returncode": 0,
+ "metrics": {
+  "val_bpb": 1.032631,
+  "training_seconds": 300.4,
+  "total_seconds": 510.1,
+  "peak_vram_mb": 45060.2,
+  "mfu_percent": 24.04,
+  "num_steps": 580.0,
+  "depth": 8.0,
+  "seed": 42.0,
+  "n_embd": 512.0,
+  "mlp_ratio": 4.0,
+  "n_ve_layers": 4.0,
+  "tokens_per_step": 524288.0,
+  "grad_accum": 2.0,
+  "loader_frac": 0.742185,
+  "fwdbwd_frac": 0.046205,
+  "step_ms_p10": 444.3,
+  "step_ms_med": 541.51,
+  "vram_reserved_mb": 48858.0,
+  "final_epoch": 1.0
+ },
+ "cotenant_detected": true,
+ "cores": "96-107",
+ "ok": false,
+ "invalid_reason": "gpu co-tenancy during the run",
+ "error": ""
+}
