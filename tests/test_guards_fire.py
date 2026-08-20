@@ -976,3 +976,47 @@ def test_the_cli_path_sees_the_registry():
     assert r.stdout == make_variant.build(cfg), "CLI output differs from the library build"
     assert r.stdout != make_variant.build(dict(direction.PLATFORM)), \
         "CLI silently produced the CONTROL for a mechanism cfg"
+
+
+@pytest.mark.parametrize("label,pred,fals", [
+    ("minimum_effect below any instrument", {"direction": "decrease", "metric": "val_bpb",
+                                             "minimum_effect": 1e-12}, ["x" * 60]),
+    ("minimum_effect absurdly large",       {"direction": "decrease", "metric": "val_bpb",
+                                             "minimum_effect": 999.0}, ["x" * 60]),
+    ("minimum_effect negative",             {"direction": "decrease", "metric": "val_bpb",
+                                             "minimum_effect": -0.5}, ["x" * 60]),
+    ("direction not a direction",           {"direction": "sideways", "metric": "val_bpb",
+                                             "minimum_effect": 0.001}, ["x" * 60]),
+    ("falsifier one character",             {"direction": "decrease", "metric": "val_bpb",
+                                             "minimum_effect": 0.001}, ["x"]),
+    ("falsifier empty",                     {"direction": "decrease", "metric": "val_bpb",
+                                             "minimum_effect": 0.001}, [""]),
+])
+def test_falsifiability_check_refuses_vacuous_predictions(label, pred, fals):
+    """A requirement satisfied by "x" is a requirement in name only.
+
+    The first version of this check tested PRESENCE, and an audit walked six vacuous
+    inputs through it -- minimum_effect of 1e-12, of 999, of a negative number, a
+    direction of "sideways", and a one-character falsifier. That is the same defect one
+    level up as the unfalsifiable hypotheses it was written to catch: a door that opens
+    for anything is not a door.
+    """
+    import claims
+    h = {"id": "x", "statement": "s", "control_design": "yoked_pair",
+         "families": ["schedule"], "claim_keys": [], "mechanism_names": [],
+         "activation": {"predicate": "p", "diagnostic": "d",
+                        "rule": {"op": "gt", "value": 0}, "failure_status": "inconclusive"},
+         "prediction": pred, "falsifiers": fals}
+    bad = [b for b in claims.validate_hyp(h)
+           if "prediction" in b or "falsifier" in b or "direction" in b]
+    assert bad, f"vacuous input accepted: {label}"
+
+
+def test_a_real_hypothesis_still_passes_the_falsifiability_check():
+    """The guard must refuse the vacuous WITHOUT refusing the genuine."""
+    import claims
+    h = next((x for x in claims.hypotheses()
+              if x["id"] == "hyp_ema_tail_average_respecified_r11"), None)
+    if h is None:
+        pytest.skip("needs campaign data: that hypothesis is not in this corpus")
+    assert not claims.validate_hyp(h), claims.validate_hyp(h)

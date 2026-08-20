@@ -470,16 +470,41 @@ def validate_hyp(h: dict) -> list[str]:
     #
     # Enforced at registration only, so the existing corpus is unaffected: those eight
     # keep whatever standing their evidence gives them and are not retroactively voided.
+    # AND THE FIELDS MUST MEAN SOMETHING. The first version of this check tested only
+    # presence, and an audit walked six vacuous inputs straight through it: a
+    # minimum_effect of 1e-12 (below any instrument that will ever exist), of 999, of a
+    # NEGATIVE number, a direction of "sideways", and a falsifier that was one character
+    # or the empty string. A requirement satisfied by "x" is a requirement in name only,
+    # which is the same defect one level up as the hypotheses it was written to catch.
     pred = h.get("prediction") or {}
-    if not pred.get("direction"):
-        bad.append("prediction.direction is required -- 'increase' or 'decrease'")
-    if pred.get("minimum_effect") in (None, "", 0):
-        bad.append("prediction.minimum_effect is required: the smallest effect that would "
-                   "count as support. Without it the hypothesis cannot fail on magnitude, "
-                   "and any delta of the right sign reads as confirmation.")
-    if not (h.get("falsifiers") or []):
+    _dir = pred.get("direction")
+    if _dir not in ("increase", "decrease"):
+        bad.append(f"prediction.direction must be 'increase' or 'decrease', got {_dir!r}")
+    _min = pred.get("minimum_effect")
+    if not isinstance(_min, (int, float)) or isinstance(_min, bool):
+        bad.append("prediction.minimum_effect is required and must be a number: the "
+                   "smallest effect that would count as support. Without it the "
+                   "hypothesis cannot fail on magnitude and any delta of the right sign "
+                   "reads as confirmation.")
+    elif _min <= 0:
+        bad.append(f"prediction.minimum_effect must be POSITIVE ({_min} given); it is a "
+                   f"magnitude, and the sign is carried by prediction.direction")
+    elif _min < 1e-4:
+        bad.append(f"prediction.minimum_effect {_min} is below anything this instrument "
+                   f"can resolve -- the counterbalanced resolution is around 3e-4 -- so "
+                   f"the prediction could never be demonstrated and never fail")
+    elif _min > 0.5:
+        bad.append(f"prediction.minimum_effect {_min} exceeds any val_bpb effect ever "
+                   f"measured here; the largest on record is about 0.05. A threshold "
+                   f"nothing can meet is not a prediction")
+    _fals = [f for f in (h.get("falsifiers") or []) if isinstance(f, str)]
+    if not _fals:
         bad.append("at least one falsifier is required -- state what observation would "
                    "kill this hypothesis, before the run rather than after it")
+    elif not any(len(f.strip()) >= 40 for f in _fals):
+        bad.append("no falsifier is substantive: at least one must actually describe an "
+                   "OBSERVATION that would kill the hypothesis, in enough words to be "
+                   "checkable against a result record")
     act = h.get("activation") or {}
     for f in ("predicate", "diagnostic", "rule", "failure_status"):
         if not act.get(f):
