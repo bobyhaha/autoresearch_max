@@ -473,3 +473,19 @@ def test_step_law_baseline_survives_a_platform_adoption():
     assert law is not None and law["n"] == 10, (
         "passing the retired baseline did not recover the law -- adoption would have made "
         "every historical analysis unreproducible")
+
+
+def test_systematic_regime_shift_requires_a_real_device_swap():
+    """The verdict line SAYS "on swapped slots"; nothing used to check that it was true.
+
+    Two arms with the treatment on the same device satisfied every other condition, so the
+    line asserted a counterbalancing it had not verified. An audit built the fixture.
+    """
+    src = (REPO / "tools" / "verdict.py").read_text()
+    i = src.index("systematic = (")
+    window = src[i:i + 500]
+    assert "_treat_devs" in window, (
+        "the systematic predicate no longer requires the treatment to occupy more than one "
+        "device, so it can claim a swap that did not happen")
+    assert "len(_treat_devs) >= 2" in window, (
+        "the device-swap condition is present but not part of the predicate")

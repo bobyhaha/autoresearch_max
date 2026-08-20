@@ -317,10 +317,18 @@ def main():
         _big_throughput = bool(_ratios) and min(_ratios) >= 0.10
         _mean_delta = sum(a["delta"] for a in arms) / len(arms) if arms else 0.0
         _resolvable = abs(_mean_delta) > max(res, band or 0.0)
+        # AND THE TREATMENT MUST ACTUALLY HAVE MOVED. The message below says "on swapped
+        # slots", and nothing verified it: two arms with the treatment on the SAME device
+        # satisfied every other condition, so the line asserted a counterbalancing it had
+        # not checked. An audit demonstrated the fixture. Today's three systematic results
+        # all happen to qualify -- MTP on gpu6/gpu7, z-loss on gpu6/gpu7, tbs=17 on
+        # gpu5/gpu6 -- so no conclusion changes, but the guard was claiming more than it
+        # knew and would have done so silently on the next arm that did not.
+        _treat_devs = {a.get("treat_dev") or _slot(a["t"]) for a in arms}
         systematic = (len(arms) >= 2 and len(voided) == len(arms) and
                       len({(a["t"]["metrics"].get("final_epoch") <
                             a["c"]["metrics"].get("final_epoch")) for a in arms}) == 1
-                      and _big_throughput and _resolvable)
+                      and _big_throughput and _resolvable and len(_treat_devs) >= 2)
         if voided and systematic:
             lo = arms[0]["t"]["metrics"].get("final_epoch")
             hi = arms[0]["c"]["metrics"].get("final_epoch")
