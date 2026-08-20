@@ -317,7 +317,20 @@ if _br_stat:
     _rat = [o / max(i, 1e-12) for o, i in _br_stat]
     print(f"branch_stream_ratio_mean: {sum(_rat)/len(_rat):.8f}")
     print(f"branch_stream_ratio_max:  {max(_rat):.8f}")
-    print(f"branch_probe_sites:       {len(_br_stat)}")""")
+    print(f"branch_probe_sites:       {len(_br_stat)}")
+    # branch_out_rms_absdev, as hyp_periln_branch_norm_r1 pre-registered it: the MAXIMUM
+    # over all 16 sub-module outputs of |RMS(tensor ADDED TO THE RESIDUAL STREAM) - 1|.
+    # That last phrase decides the implementation. A plain module hook sees the branch
+    # BEFORE any wrapper, and periln's whole edit is to wrap it in norm() -- so hooking
+    # the module would measure a tensor the treatment never adds, read far from 1, and
+    # report the mechanism as NOT ENGAGED when it engaged perfectly. PERILN_BRANCH_NORM
+    # is set by the mechanism, so the probe applies the same transform the forward does.
+    # Resolved at RUNTIME with a default, not by editing this line: the mechanism that
+    # changes what is added defines the flag near the top of the file, and the order in
+    # which build() assembles these two blocks is then irrelevant.
+    _pn = globals().get('PERILN_BRANCH_NORM', False)
+    _add = [(o / max(o, 1e-12) if _pn else o) for o, _ in _br_stat]
+    print(f"branch_out_rms_absdev:    {max(abs(v - 1.0) for v in _add):.8f}")""")
 
     # --- evaluator pinned to the baseline batch so the metric stays comparable ---
     s = sub(s, "val_bpb = evaluate_bpb(model, tokenizer, DEVICE_BATCH_SIZE)",

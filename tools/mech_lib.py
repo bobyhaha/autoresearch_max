@@ -273,6 +273,10 @@ def _periln(s, cfg, sub):
         x = x + self.mlp(norm(x))""",
             """        x = x + norm(self.attn(norm(x), ve, cos_sin, window_size))
         x = x + norm(self.mlp(norm(x)))""")
+    # Tell the shared probe that the tensor ADDED to the stream is norm(branch), not the
+    # module output it can hook. Without this the pre-registered diagnostic would measure
+    # the unwrapped branch and report a perfectly engaged mechanism as non-activated.
+    s = sub(s, "HEAD_DIM = 128", "HEAD_DIM = 128\nPERILN_BRANCH_NORM = True")
     # The diagnostic (branch_stream_ratio_mean) is emitted by the SHARED telemetry block
     # in make_variant.py, unconditionally, so the CONTROL emits it too. A diagnostic only
     # the treatment prints cannot be surprising -- there is no distribution to compare
