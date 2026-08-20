@@ -33,7 +33,13 @@ tick() {
   # This has now cost the campaign three times (L012 first, then a dry-rule fix that left
   # the swdiv repair refused as split, then a metric-parser fix that ran stale for half an
   # hour). Remembering to scp is not a control; comparing digests is.
-  for _m in direction.py claims.py lit.py; do
+  # make_variant.py joins the shipped set: direction._registered_mechanisms() imports it
+  # to learn which mechanisms exist. Without it on the host, that import fails SILENTLY and
+  # returns an empty tuple, so a mechanism implemented in the registry is invisible to the
+  # host policy -- ngram was, minutes after being written. is_platform then answered
+  # correctly only by accident, because the key was unrecognised rather than because it was
+  # a known mechanism, and blocked_reason and label were both wrong about it.
+  for _m in direction.py claims.py lit.py make_variant.py; do
     [ -f "tools/$_m" ] || continue
     _l=$(md5 -q "tools/$_m" 2>/dev/null || md5sum "tools/$_m" | cut -d' ' -f1)
     _r=$(ssh -n "${SSHOPT[@]}" "$HOST" "md5sum ~/$OPHIS_REMOTE_DIR/sweep/$_m 2>/dev/null | cut -d' ' -f1")

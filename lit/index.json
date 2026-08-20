@@ -440,6 +440,7 @@
  },
  "2502.11664": {
   "abstract": "Rotary Position Embedding (RoPE) has shown strong performance in text-based Large Language Models (LLMs), but extending it to video remains a challenge due to the intricate spatiotemporal structure of video frames. Existing adaptations, such as RoPE-3D, attempt to encode spatial and temporal dimensions separately but suffer from two major limitations: positional bias in attention distribution and disruptions in video-text transitions. To overcome these issues, we propose Video Rotary Position Embedding (VRoPE), a novel positional encoding method tailored for Video-LLMs. Specifically, we introduce a more balanced encoding strategy that mitigates attention biases, ensuring a more uniform distribution of spatial focus. Additionally, our approach restructures positional indices to ensure a smooth transition between video and text tokens. Extensive experiments on different models demonstrate that VRoPE consistently outperforms previous RoPE variants, achieving significant improvements in video understanding, temporal reasoning, and retrieval tasks. Code is available at https://github.com/johncaged/VRoPE.",
+  "chars": 43487,
   "comment": "EMNLP 2025 Main Camera Ready",
   "families": [
    "attention",
@@ -453,7 +454,8 @@
    "positional"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "5cc958e2c87ddeea8681bb2421e3d45b7efa63a060d84617be6119b08245ee67",
+  "status": "fetched",
   "title": "VRoPE: Rotary Position Embedding for Video Large Language Models",
   "why": [
    "+2 attention",
@@ -604,6 +606,7 @@
  },
  "2502.18845": {
   "abstract": "Recent advances in transformer-based Large Language Models (LLMs) have demonstrated remarkable capabilities across various tasks. However, their quadratic computational complexity concerning sequence length remains a significant bottleneck for processing long documents. As a result, many efforts like sparse attention and state space models have been proposed to improve the efficiency of LLMs over long sequences. Though effective, these approaches compromise the performance or introduce structural complexity. This calls for a simple yet efficient model that preserves the fundamental Transformer architecture. To this end, we introduce SWAT, which enables efficient long-context handling via Sliding Window Attention Training. This paper first attributes the inefficiency of Transformers to the attention sink phenomenon resulting from the high variance of softmax operation. Then, we replace softmax with the sigmoid function and utilize a balanced ALiBi and Rotary Position Embedding for efficient information compression and retention. Experiments demonstrate that SWAT achieves SOTA performance compared with state-of-the-art linear recurrent architectures on eight benchmarks. Code is available at https://github.com/Fzkuji/swat-attention.",
+  "chars": 59968,
   "comment": "14 pages, 5 figures",
   "families": [
    "attention",
@@ -619,7 +622,8 @@
    "attention_window"
   ],
   "score": 10,
-  "status": "screened",
+  "sha256": "a6ebe2351d229a310f10634389d45d081e0588bd81ca1f2d3be7ff55893f3494",
+  "status": "fetched",
   "title": "Sliding Window Attention Training for Efficient Large Language Models",
   "why": [
    "+2 attention",
@@ -732,6 +736,7 @@
  },
  "2503.04784": {
   "abstract": "Large language models have demonstrated remarkable performance across various tasks, yet they face challenges such as low computational efficiency, gradient vanishing, and difficulties in capturing complex feature interactions. To address these limitations, a novel framework has been proposed. This framework incorporates a learnable dense residual skip connection mechanism, a TransformerX module a transformer based component integrating multiscale convolution and adaptive activation functions and a multitoken prediction interaction module. The learnable dense residual connections enhance information flow and feature capture across layers. Within the TransformerX module, large convolutional kernels aggregate semantic information from extensive text segments, while smaller convolutions focus on local word order and syntactic structures. The adaptive activation function dynamically adjusts its parameters based on the semantic features of the input text, improving the model's ability to handle diverse semantic expressions and complex relationships. The multitoken prediction module boosts data utilization and accelerates inference by predicting multiple future tokens. These components significantly enhance the performance and efficiency of large language models.",
+  "chars": 68256,
   "comment": "21 pages",
   "families": [
    "ve_placement",
@@ -747,7 +752,8 @@
    "activation"
   ],
   "score": 7,
-  "status": "screened",
+  "sha256": "578b3ee0a956d6c8ee733e6e81221968847121b3474daa07bc1c83e8717f36d3",
+  "status": "fetched",
   "title": "KunlunBaize: LLM with Multi-Scale Convolution and Multi-Token Prediction Under TransformerX Framework",
   "why": [
    "+2 kernel",
@@ -759,6 +765,7 @@
  },
  "2503.05920": {
   "abstract": "Recent advancements in large language models have intensified the need for efficient and deployable models within limited inference budgets. Structured pruning pipelines have shown promise in token efficiency compared to training target-size models from scratch. In this paper, we advocate incorporating enlarged model pretraining, which is often ignored in previous works, into pruning. We study the enlarge-and-prune pipeline as an integrated system to address two critical questions: whether it is worth pretraining an enlarged model even when the model is never deployed, and how to optimize the entire pipeline for better pruned models. We propose an integrated enlarge-and-prune pipeline, which combines enlarge model training, pruning, and recovery under a single cosine annealing learning rate schedule. This approach is further complemented by a novel iterative structured pruning method for gradual parameter removal. The proposed method helps to mitigate the knowledge loss caused by the rising learning rate in naive enlarge-and-prune pipelines and enable effective redistribution of model capacity among surviving neurons, facilitating smooth compression and enhanced performance. We conduct comprehensive experiments on compressing 2.8B models to 1.3B with up to 2T tokens in pretraining. It demonstrates the integrated approach not only provides insights into the token efficiency of enlarged model pretraining but also achieves superior performance of pruned models.",
+  "chars": 53381,
   "comment": "",
   "families": [
    "token_exposure",
@@ -770,7 +777,8 @@
    "lr_schedule"
   ],
   "score": 14,
-  "status": "screened",
+  "sha256": "b562dc2f16bb1827c72d365e52d4b568bc9260f15a4d891ba324070913e1239d",
+  "status": "fetched",
   "title": "IDEA Prune: An Integrated Enlarge-and-Prune Pipeline in Generative Language Model Pretraining",
   "why": [
    "+3 pretrain",
@@ -834,6 +842,7 @@
  },
  "2503.11426": {
   "abstract": "We challenge the prevailing assumption that LLMs must rely fully on sub-word tokens for high-quality text generation. To this end, we propose the \"Generative Pretrained Thoughtformer\" (GPTHF), a hierarchical transformer language model capable of text generation by compressing text into sentence embeddings and employing a sentence attention mechanism. GPTHF retains GPT's architecture, modifying only token interactions via dynamic sparse attention masks. Our experiments show that GPTHF achieves an up to an order of magnitude improvement in FLOPs efficiency and a threefold increase in runtime speed compared to equally-sized GPT models in the low-size regime. This is achieved through a unique generation method that caches and reuses sentence embeddings, allowing significant portions of the input to bypass large parts of the network.",
+  "chars": 27370,
   "comment": "accepted to NAACL SRW 2025",
   "families": [
    "attention",
@@ -846,7 +855,8 @@
    "attention_sparse"
   ],
   "score": 14,
-  "status": "screened",
+  "sha256": "5b39a44472eea3df6d85274434dbc8797a920d441409a6b91438463ec3e9bd75",
+  "status": "fetched",
   "title": "Text Compression for Efficient Language Generation",
   "why": [
    "+3 pretrain",
@@ -913,6 +923,7 @@
  },
  "2503.15450": {
   "abstract": "Recent advancements in LLM pretraining have featured ever-expanding context windows to process longer sequences. However, our pilot study reveals that models pretrained with shorter context windows consistently outperform their long-context counterparts under a fixed token budget. This finding motivates us to explore an optimal context window scheduling strategy to better balance long-context capability with pretraining efficiency. To this end, we propose SkyLadder, a simple yet effective approach that implements a short-to-long context window transition. SkyLadder preserves strong standard benchmark performance, while matching or exceeding baseline results on long context tasks. Through extensive experiments, we pre-train 1B-parameter models (up to 32K context) and 3B-parameter models (8K context) on 100B tokens, demonstrating that SkyLadder yields consistent gains of up to 3.7% on common benchmarks, while achieving up to 22% faster training speeds compared to baselines. The code is at https://github.com/sail-sg/SkyLadder.",
+  "chars": 74395,
   "comment": "Accepted to NeurIPS 2025. 10 pages",
   "families": [
    "attention"
@@ -923,7 +934,8 @@
    "optimizer_benchmark"
   ],
   "score": 10,
-  "status": "screened",
+  "sha256": "3c4eda2977c4cf1882c48d69ebd11a11c74d13e78dbe06fcbd1e3b002c3d53b8",
+  "status": "fetched",
   "title": "SkyLadder: Better and Faster Pretraining via Context Window Scheduling",
   "why": [
    "+3 pretrain",
@@ -1394,6 +1406,7 @@
  },
  "2505.04005": {
   "abstract": "The muon optimizer has picked up much attention as of late as a possible replacement to the seemingly omnipresent Adam optimizer. Recently, care has been taken to document the scaling laws of hyper-parameters under muon such as weight decay and learning rate. However, at much larger scales the iterative orthogonalization procedure present in muon may suffer a possible issue as the singular values of random matrices shrink with scale. This paper shows this scaling behavior theoretically and empirically on random matrices but does not suggest what to do about it.",
+  "chars": 11228,
   "comment": "",
   "families": [
    "capacity",
@@ -1407,7 +1420,8 @@
    "optimizer_orthogonal"
   ],
   "score": 16,
-  "status": "screened",
+  "sha256": "d27baffd8e2e9bd325209e72478af7aabe2e2fc82c13dc2e2b74f4a7d2badaa3",
+  "status": "fetched",
   "title": "Iterative Orthogonalization Scaling Laws",
   "why": [
    "+3 optimizer",
@@ -1669,6 +1683,7 @@
  },
  "2505.13898": {
   "abstract": "Modern LLMs are increasingly deep, and depth correlates with performance, albeit with diminishing returns. However, do these models use their depth efficiently? Do they compose more features to create higher-order computations that are impossible in shallow models, or do they merely spread the same kinds of computation out over more layers? To address these questions, we analyze the residual stream of the Llama 3.1, Qwen 3, and OLMo 2 family of models. We find: First, comparing the output of the sublayers to the residual stream reveals that layers in the second half contribute much less than those in the first half, with a clear phase transition between the two halves. Second, skipping layers in the second half has a much smaller effect on future computations and output predictions. Third, for multihop tasks, we are unable to find evidence that models are using increased depth to compose subresults in examples involving many hops. Fourth, we seek to directly address whether deeper models are using their additional layers to perform new kinds of computation. To do this, we train linear maps from the residual stream of a shallow model to a deeper one. We find that layers with the same relative depth map best to each other, suggesting that the larger model simply spreads the same computations out over its many layers. All this evidence suggests that deeper models are not using their depth to learn new kinds of computation, but only using the greater depth to perform more fine-gr",
+  "chars": 83013,
   "comment": "Accepted to NeurIPS 2025",
   "families": [
    "capacity",
@@ -1681,7 +1696,8 @@
    "residual_scaling"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "d48ec1a2ab436a30d631f9b2f835109b316a1aece9d726246abecf531f739596",
+  "status": "fetched",
   "title": "Do Language Models Use Their Depth Efficiently?",
   "why": [
    "+5 neurips",
@@ -1717,6 +1733,7 @@
  },
  "2505.17505": {
   "abstract": "Large language models (LLMs) have achieved notable progress. Despite their success, next-token prediction (NTP), the dominant method for LLM training and inference, is constrained in both contextual coverage and inference efficiency due to its inherently sequential process. To overcome these challenges, we propose leap multi-token prediction~(L-MTP), an innovative token prediction method that extends the capabilities of multi-token prediction (MTP) by introducing a leap-based mechanism. Unlike conventional MTP, which generates multiple tokens at adjacent positions, L-MTP strategically skips over intermediate tokens, predicting non-sequential ones in a single forward pass. This structured leap not only enhances the model's ability to capture long-range dependencies but also enables a decoding strategy specially optimized for non-sequential leap token generation, effectively accelerating inference. We theoretically demonstrate the benefit of L-MTP in improving inference efficiency. Experiments across diverse benchmarks validate its merit in boosting both LLM performance and inference speed. The source code is available at https://github.com/Xiaohao-Liu/L-MTP.",
+  "chars": 71516,
   "comment": "Accepted by NeurIPS 2025. Codes are available at https://github.com/Xiaohao-Liu/L-MTP",
   "families": [
    "ve_placement",
@@ -1728,7 +1745,8 @@
    "multi_token"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "4f3d529dbeb536a9bab55e45548ed3517c53adacae55bdeae288138fe45fc130",
+  "status": "fetched",
   "title": "L-MTP: Leap Multi-Token Prediction Beyond Adjacent Context for Large Language Models",
   "why": [
    "+3 multi-token prediction",
@@ -1887,6 +1905,7 @@
  },
  "2505.21910": {
   "abstract": "Scaling Transformer to a large scale without using some technical tricks such as learning rate warump and using an obviously lower learning rate is an extremely challenging task, and is increasingly gaining more attention. In this paper, we provide a theoretical analysis for the process of training Transformer and reveal the rationale behind the model crash phenomenon in the training process, termed \\textit{spectral energy concentration} of ${\\bW_q}^{\\top} \\bW_k$, which is the reason for a malignant entropy collapse, where ${\\bW_q}$ and $\\bW_k$ are the projection matrices for the query and the key in Transformer, respectively. To remedy this problem, motivated by \\textit{Weyl's Inequality}, we present a novel optimization strategy, \\ie, making the weight updating in successive steps smooth -- if the ratio $\\frac{\u03c3_{1}(\\nabla \\bW_t)}{\u03c3_{1}(\\bW_{t-1})}$ is larger than a threshold, we will automatically bound the learning rate to a weighted multiple of $\\frac{\u03c3_{1}(\\bW_{t-1})}{\u03c3_{1}(\\nabla \\bW_t)}$, where $\\nabla \\bW_t$ is the updating quantity in step $t$. Such an optimization strategy can prevent spectral energy concentration to only a few directions, and thus can avoid malignant entropy collapse which will trigger the model crash. We conduct extensive experiments using ViT, Swin-Transformer and GPT, showing that our optimization strategy can effectively and stably train these Transformers without using learning rate warmup.",
+  "chars": 81903,
   "comment": "This paper is published as a conference paper at ICLR 2025",
   "families": [
    "attention",
@@ -1898,7 +1917,8 @@
    "lr_warmup"
   ],
   "score": 16,
-  "status": "screened",
+  "sha256": "6457a9fa7483b0fc8c78032307902352f9179c1edd76f0cc5c3eee410cae3f4f",
+  "status": "fetched",
   "title": "Taming Transformer Without Using Learning Rate Warmup",
   "why": [
    "+3 learning rate",
@@ -1910,6 +1930,7 @@
  },
  "2505.22014": {
   "abstract": "The successful training of deep neural networks requires addressing challenges such as overfitting, numerical instabilities leading to divergence, and increasing variance in the residual stream. A common solution is to apply regularization and normalization techniques that usually require tuning additional hyperparameters. An alternative is to force all parameters and representations to lie on a hypersphere. This removes the need for regularization and increases convergence speed, but comes with additional costs. In this work, we propose a more holistic, approximate normalization via simple scalar multiplications motivated by the tight concentration of the norms of high-dimensional random vectors. Additionally, instead of applying strict normalization for the parameters, we constrain their norms. These modifications remove the need for weight decay and learning rate warm-up as well, but do not increase the total number of normalization layers. Our experiments with transformer architectures show up to 40% faster convergence compared to GPT models with QK normalization, with only 3% additional runtime cost. When deriving scaling laws, we found that our method enables training with larger batch sizes while preserving the favorable scaling characteristics of classic GPT architectures.",
+  "chars": 70776,
   "comment": "In Proceedings of the 39th Conference on Neural Information Processing Systems (NeurIPS 2025)",
   "families": [
    "capacity",
@@ -1925,7 +1946,8 @@
    "norm_rmsnorm"
   ],
   "score": 16,
-  "status": "screened",
+  "sha256": "03a0795085415ebff5f5638373c6f8e365b0452e2189ffa591cb3d2bd56be7c8",
+  "status": "fetched",
   "title": "Learning in Compact Spaces with Approximately Normalized Transformer",
   "why": [
    "+3 learning rate",
@@ -2181,6 +2203,7 @@
  },
  "2506.04408": {
   "abstract": "Humans have a remarkable ability to acquire and understand grammatical phenomena that are seen rarely, if ever, during childhood. Recent evidence suggests that language models with human-scale pretraining data may possess a similar ability by generalizing from frequent to rare constructions. However, it remains an open question how widespread this generalization ability is, and to what extent this knowledge extends to meanings of rare constructions, as opposed to just their forms. We fill this gap by testing human-scale transformer language models on their knowledge of both the form and meaning of the (rare and quirky) English LET-ALONE construction. To evaluate our LMs we construct a bespoke synthetic benchmark that targets syntactic and semantic properties of the construction. We find that human-scale LMs are sensitive to form, even when related constructions are filtered from the dataset. However, human-scale LMs do not make correct generalizations about LET-ALONE's meaning. These results point to an asymmetry in the current architectures' sample efficiency between language form and meaning, something which is not present in human language learners.",
+  "chars": 48904,
   "comment": "Empirical Methods for Natural Language Processing (EMNLP) 2025, Camera-Ready Version",
   "families": [
    "token_exposure",
@@ -2195,7 +2218,8 @@
    "sample_efficiency"
   ],
   "score": 12,
-  "status": "screened",
+  "sha256": "85633f974a348bf23b158648a383000911c65ac04f14d76c191828fd338ff919",
+  "status": "fetched",
   "title": "Unpacking Let Alone: Human-Scale Models Generalize to a Rare Construction in Form but not Meaning",
   "why": [
    "+3 pretrain",
@@ -2232,6 +2256,7 @@
  },
  "2506.05249": {
   "abstract": "Transformer models have emerged as fundamental tools across various scientific and engineering disciplines, owing to their outstanding performance in diverse applications. Despite this empirical success, the theoretical foundations of Transformers remain relatively underdeveloped, particularly in understanding their training dynamics. Existing research predominantly examines isolated components--such as self-attention mechanisms and feedforward networks--without thoroughly investigating the interdependencies between these components, especially when residual connections are present. In this paper, we aim to bridge this gap by analyzing the convergence behavior of a structurally complete yet single-layer Transformer, comprising self-attention, a feedforward network, and residual connections. We demonstrate that, under appropriate initialization, gradient descent exhibits a linear convergence rate, where the convergence speed is determined by the minimum and maximum singular values of the output matrix from the attention layer. Moreover, our analysis reveals that residual connections serve to ameliorate the ill-conditioning of this output matrix, an issue stemming from the low-rank structure imposed by the softmax operation, thereby promoting enhanced optimization stability. We also extend our theoretical findings to a multi-layer Transformer architecture, confirming the linear convergence rate of gradient descent under suitable initialization. Empirical results corroborate our",
+  "chars": 114557,
   "comment": "",
   "families": [
    "attention",
@@ -2245,7 +2270,8 @@
    "init_scaling"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "5e312ecbeb464cea7fd7517fe59d0bb18cc34f1f05817103a092ba0686aa1c92",
+  "status": "fetched",
   "title": "On the Convergence of Gradient Descent on Learning Transformers with Residual Connections",
   "why": [
    "+3 initializ",
@@ -2257,6 +2283,7 @@
  },
  "2506.08889": {
   "abstract": "We introduce SeerAttention-R, a sparse attention framework specifically tailored for the long decoding of reasoning models. Extended from SeerAttention, SeerAttention-R retains the design of learning attention sparsity through a self-distilled gating mechanism, while removing query pooling to accommodate auto-regressive decoding. With a lightweight plug-in gating, SeerAttention-R is flexible and can be easily integrated into existing pretrained model without modifying the original parameters. We demonstrate that SeerAttention-R, trained on just 0.4B tokens, maintains near-lossless reasoning accuracy with 4K token budget in AIME benchmark under large sparse attention block sizes (64/128). Using TileLang, we develop a highly optimized sparse decoding kernel that achieves near-theoretical speedups of up to 9x over FlashAttention-3 on H100 GPU at 90% sparsity. Code is available at: https://github.com/microsoft/SeerAttention.",
+  "chars": 62893,
   "comment": "",
   "families": [
    "attention",
@@ -2269,7 +2296,8 @@
    "attention_sparse"
   ],
   "score": 14,
-  "status": "screened",
+  "sha256": "56117fd0c79a6e59fcafe11ee85b7249da9b9ea31bea0085af5984c8663287ea",
+  "status": "fetched",
   "title": "SeerAttention-R: Sparse Attention Adaptation for Long Reasoning",
   "why": [
    "+3 pretrain",
@@ -2404,6 +2432,7 @@
  },
  "2506.12543": {
   "abstract": "Adam is known to perform significantly better than Stochastic Gradient Descent (SGD) in language models, a phenomenon for which a number of explanations have been proposed. In this work, we revisit this \"optimizer gap\" through a series of comprehensively tuned baseline training runs for language modeling with Transformers. We exhaustively study how momentum, gradient clipping, and batch size affect the gap between SGD and Adam. Our empirical findings show that SGD with momentum can actually perform similarly to Adam in small-batch settings, if tuned correctly. We revisit existing explanations for Adam's advantage, including heavy-tailed class imbalance, directional sharpness, and Hessian heterogeneity, which struggle to directly explain this phenomenon. Towards bridging this gap in our understanding, by analyzing our Transformer training runs and simple quadratic settings inspired by the literature, we provide new insights, driven by stochastic differential equation models, into the role of batch size on the training dynamics.",
+  "chars": 65312,
   "comment": "Short version accepted at the 2025 HiLD Workshop at ICML",
   "families": [
    "token_exposure",
@@ -2416,7 +2445,8 @@
    "gradient_clip"
   ],
   "score": 12,
-  "status": "screened",
+  "sha256": "4442f3ddd350d47d3249f4057733e0a507f38510f9a8449f3cd772f87b6633ca",
+  "status": "fetched",
   "title": "Is your batch size the problem? Revisiting the Adam-SGD gap in language modeling",
   "why": [
    "+3 optimizer",
@@ -2835,6 +2865,7 @@
  },
  "2507.22565": {
   "abstract": "The tension between data privacy and model utility has become the defining bottleneck for the practical deployment of large language models (LLMs) trained on sensitive corpora including healthcare. Differentially private stochastic gradient descent (DP-SGD) guarantees formal privacy, yet it does so at a pronounced cost: gradients are forcibly clipped and perturbed with noise, degrading sample efficiency and final accuracy. Numerous variants have been proposed to soften this trade-off, but they all share a handicap: their control knobs are hard-coded, global, and oblivious to the evolving optimization landscape. Consequently, practitioners are forced either to over-spend privacy budget in pursuit of utility, or to accept mediocre models in order to stay within privacy constraints. We present RLDP, the first framework to cast DP optimization itself as a closed-loop control problem amenable to modern deep reinforcement learning (RL). RLDP continuously senses rich statistics of the learning dynamics and acts by selecting fine-grained per parameter gradient-clipping thresholds as well as the magnitude of injected Gaussian noise. A soft actor-critic (SAC) hyper-policy is trained online during language model fine-tuning; it learns, from scratch, how to allocate the privacy budget where it matters and when it matters. Across more than 1,600 ablation experiments on GPT2-small, Llama-1B, Llama-3B, and Mistral-7B, RLDP delivers perplexity reductions of 1.3-30.5% (mean 5.4%) and an avera",
+  "chars": 122068,
   "comment": "",
   "families": [
    "token_exposure",
@@ -2846,7 +2877,8 @@
    "gradient_clip"
   ],
   "score": 9,
-  "status": "screened",
+  "sha256": "3f1e96e9d212c944b258fafc8dcde99ac39eb4bd14a2ddea7c322f75f34ea478",
+  "status": "fetched",
   "title": "Efficient Differentially Private Fine-Tuning of LLMs via Reinforcement Learning",
   "why": [
    "+4 from scratch",
@@ -2861,6 +2893,7 @@
  },
  "2507.23083": {
   "abstract": "Positional encoding is a vital component of Transformer architectures, enabling models to incorporate sequence order into self-attention mechanisms. Rotary Positional Embeddings (RoPE) have become a widely adopted solution due to their compatibility with relative position encoding and computational efficiency. However, RoPE relies on static, input-independent sinusoidal frequency patterns, limiting its ability to model context-sensitive relationships. In this work, we propose CARoPE (Context-Aware Rotary Positional Embedding), a novel generalization of RoPE that dynamically generates head-specific frequency patterns conditioned on token embeddings. This design introduces token- and context-sensitive positional representations while preserving RoPE efficiency and architectural simplicity. CARoPE computes input-dependent phase shifts using a bounded transformation of token embeddings and integrates them into the rotary mechanism across attention heads. We evaluate CARoPE on the FineWeb-Edu-10B dataset using GPT-2 variants trained on next-token prediction tasks. Experimental results show that CARoPE consistently outperforms RoPE and other common positional encoding baselines, achieving significantly lower perplexity, even at longer context lengths. Additionally, CARoPE enables faster training throughput without sacrificing model stability. These findings demonstrate that CARoPE offers a scalable, expressive, and efficient upgrade to existing positional encoding strategies in Tra",
+  "chars": 18201,
   "comment": "4 pages, 1 table",
   "families": [
    "attention",
@@ -2877,7 +2910,8 @@
    "positional"
   ],
   "score": 12,
-  "status": "screened",
+  "sha256": "340a8365ec3f7eb0fad2b1a7c09e776cce32e2fc49c84fbc288484898c604b84",
+  "status": "fetched",
   "title": "Context-aware Rotary Position Embedding",
   "why": [
    "+2 attention",
@@ -2991,6 +3025,7 @@
  },
  "2508.05302": {
   "abstract": "The convergence behavior of mini-batch stochastic gradient descent (SGD) is highly sensitive to the batch size and learning rate settings. Recent theoretical studies have identified the existence of a critical batch size that minimizes stochastic first-order oracle (SFO) complexity, defined as the expected number of gradient evaluations required to reach a stationary point of the empirical loss function in a deep neural network. An adaptive scheduling strategy is introduced to accelerate SGD that leverages theoretical findings on the critical batch size. The batch size and learning rate are adjusted on the basis of the observed decay in the full gradient norm during training. Experiments using an adaptive joint scheduler based on this strategy demonstrated improved convergence speed compared with that of existing schedulers.",
+  "chars": 40624,
   "comment": "",
   "families": [
    "token_exposure",
@@ -3002,7 +3037,8 @@
    "batch_size_law"
   ],
   "score": 13,
-  "status": "screened",
+  "sha256": "6fbd43206a2fc48ad3ab1514af3f1709966c7536beb28bff2853b9366ebea6cc",
+  "status": "fetched",
   "title": "Adaptive Batch Size and Learning Rate Scheduler for Stochastic Gradient Descent Based on Minimization of Stochastic First-order Oracle Complexity",
   "why": [
    "+3 learning rate",
@@ -3205,6 +3241,7 @@
  },
  "2509.10167": {
   "abstract": "We study the gradient-based training of large-depth residual networks (ResNets) from standard random initializations. We show that infinite-depth ResNets behave as if they were infinitely wide, regardless of their actual width. More precisely, we obtain that with a fixed embedding dimension $D$, the training dynamics converges to a unique Neural Mean ODE training dynamics as the depth $L$ diverges, regardless of the scaling of the hidden width $M$. For a residual scale $\u0398_D\\big(\\frac\u03b1{LM}\\big)$ with $\u03b1=\u0398_D(1)$, we obtain the error bound $O_D\\big(\\frac{1}{L}+ \\frac{1}{\\sqrt{LM}}\\big)$ between the model's output and its limit after a fixed number gradient of steps. In this regime, the limit exhibits maximal local feature updates, i.e. the Mean ODE is genuinely non-linearly parameterized. In contrast, we show that $\u03b1\\to \\infty$ yields a lazy ODE regime where the Mean ODE is linearly parameterized, and we derive a convergence rate in this case as well. We then focus on the particular case of ResNets with two-layer perceptron blocks, for which we study how these scalings depend on the embedding dimension $D$. We identify the residual scale $O\\big(\\frac{\\sqrt{D}}{LM}\\big)$ as necessary and sufficient for maximal local feature updates. In this regime, we prove a high-probability error bound $O\\big(\\frac{1}{L}+ \\frac{\\sqrt{D}}{\\sqrt{LM}}\\big)$ between the ResNet and its limit after a fixed number of gradient steps. Our convergence results rely on a novel mathematical perspective on R",
+  "chars": 147420,
   "comment": "",
   "families": [
    "capacity",
@@ -3219,7 +3256,8 @@
    "residual_scaling"
   ],
   "score": 10,
-  "status": "screened",
+  "sha256": "dc0e04b2f80807851c1190261f2039ac510058ddb775cdebcb7e666307a5526a",
+  "status": "fetched",
   "title": "The Hidden Width of Deep ResNets: Tight Error Bounds and Phase Diagram",
   "why": [
    "+3 initializ",
@@ -3427,6 +3465,7 @@
  },
  "2509.24320": {
   "abstract": "Orthogonal momentum gradient updates have emerged to overcome the limitations of vector-based optimizers like Adam. The vector-based optimizer Adam suffers from high memory costs and ill-conditioned momentum gradient updates. However, traditional Orthogonal momentum approaches, such as SVD/QR decomposition, suffer from high computational and memory costs and underperform compared to well-tuned SGD with momentum. Recent advances, such as Muon, improve efficiency by applying momentum before orthogonalization and approximate orthogonal matrices via Newton-Schulz iterations, which gives better GPU utilization, active high TFLOPS, and reduces memory usage by up to 3x. Nevertheless, Muon(Vanilla) suffers from exploding attention logits and has cubic computation complexity. In this paper, we deep dive into orthogonal momentum gradient updates to find the main properties that help Muon achieve remarkable performance. We propose AuON (Alternative Unit-norm momentum updates by Normalized nonlinear scaling), a linear-time optimizer that achieves strong performance without approximate orthogonal matrices, while preserving structural alignment and reconditioning ill-posed updates. AuON has an automatic \"emergency brake\" to handle exploding attention logits. We further introduce a hybrid variant, Hybrid-AuON, that applies the linear transformations with Newton-Schulz iterations, which outperforms Muon in the language modeling tasks. Code is available at: https://github.com/ryyzn9/AuON",
+  "chars": 47086,
   "comment": "",
   "families": [
    "attention",
@@ -3440,7 +3479,8 @@
    "optimizer_orthogonal"
   ],
   "score": 13,
-  "status": "screened",
+  "sha256": "4db049938570182b4ae76939889b51d85b7bc6fdeba37cfe8d079a88ffe01595",
+  "status": "fetched",
   "title": "AuON: A Linear-time Alternative to Orthogonal Momentum Updates",
   "why": [
    "+3 optimizer",
@@ -3669,6 +3709,7 @@
  },
  "2510.01163": {
   "abstract": "The factors driving the performance of in-context learning (ICL) in large language models (LLMs) remain poorly understood despite ICL's surprising effectiveness, enabling models to adapt to new tasks from only a handful of examples. To clarify and improve these capabilities, we characterize how the statistical properties of the pretraining distribution (e.g., tail behavior, coverage) shape ICL. We develop a theoretical framework that encompasses generalization and task selection and show how distributional properties govern sample efficiency, task retrieval, and robustness. To this end, we generalize existing concentration results to heavy-tailed priors and dependent sequences, better reflecting the structure of LLM pretraining data. Our framework reveals a fundamental design trade-off: heavy-tailed pretraining distributions facilitate robust task selection under distribution shifts but are detrimental to generalization, especially in low-data regimes. We then empirically evaluate our predictions by studying how ICL performance varies with the pretraining distribution on challenging tasks such as stochastic differential equations and stochastic processes with memory. Together, these findings suggest that controlling key statistical properties of the pretraining distribution is essential for building ICL-capable and reliable LLMs.",
+  "chars": 280546,
   "comment": "57 pages, 15 figures; to be presented at ICML 2026",
   "families": [
    "token_exposure",
@@ -3681,7 +3722,8 @@
    "sample_efficiency"
   ],
   "score": 12,
-  "status": "screened",
+  "sha256": "3a241597bae5b319e12f4643e5648e9e981bf4956f526051a82290d7352c49aa",
+  "status": "fetched",
   "title": "How Does the Pretraining Distribution Shape In-Context Learning? A Fundamental Trade-Off",
   "why": [
    "+3 pretrain",
@@ -4003,6 +4045,7 @@
  },
  "2510.09487": {
   "abstract": "We study online adversarial imitation learning (AIL), where an agent learns from offline expert demonstrations and interacts with the environment online without access to rewards. Despite strong empirical results, the benefits of online interaction and the impact of stochasticity remain poorly understood. We address these gaps by introducing a model-based AIL algorithm (MB-AIL) and establish its horizon-free, second-order sample-complexity guarantees under general function approximations for both expert data and reward-free interactions. These second-order bounds provide an instance-dependent result that can scale with the variance of returns under the relevant policies and therefore tighten as the system approaches determinism. Together with second-order, information-theoretic lower bounds on a newly constructed hard-instance family, we show that MB-AIL attains minimax-optimal sample complexity for online interaction (up to logarithmic factors) with limited expert demonstrations and matches the lower bound for expert demonstrations in terms of the dependence on horizon $H$, precision $\u03b5$ and the policy variance $\u03c3^2$. Experiments further validate our theoretical findings and demonstrate that a practical implementation of MB-AIL matches or surpasses the sample efficiency of existing methods.",
+  "chars": 153489,
   "comment": "39 pages, 4 figures, 6 tables, accepted by ICLR 2026",
   "families": [
    "token_exposure",
@@ -4016,7 +4059,8 @@
    "lr_horizon_free"
   ],
   "score": 7,
-  "status": "screened",
+  "sha256": "159b5219475a2fbcfba8d8a119c4d8b7f016b83a03c45e46274ac2d8c101fd12",
+  "status": "fetched",
   "title": "Near-Optimal Second-Order Guarantees for Model-Based Adversarial Imitation Learning",
   "why": [
    "+3 sample efficiency",
@@ -4131,6 +4175,7 @@
  },
  "2510.16807": {
   "abstract": "Transformer models have driven breakthroughs across various language tasks by their strong capability to learn rich contextual representations. Scaling them to improve representation, however, often demands substantial memory and compute costs, such as the Key-Value (KV) cache used during auto-regressive decoding. Skip connections offer a promising way to improve representation without bloating resource usage, yet most prior works either improve expressivity while leaving KV costs unchanged, or reduce memory at the cost of weaker representation. In this work, we propose SkipV1Former, a Transformer variant that uses skip connections from the first layer's Value heads to strengthen model representation and reduce KV cache. Specifically, from the second block onward, each layer reuses half of its Value heads from the very first layer, while computing the other half as usual-cutting Value projections and V cache by nearly 50 \\%. Theoretically, we show that routing uncompressed first-layer Values into deeper layers restores information lost to compression and accelerates the model's implicit mesa-optimization-a key pattern of Transformer in auto-regressive tasks. Empirically, across different model scales, SkipV1Former delivers consistent reductions of approximately 25 \\% in KV cache while improving perplexity relative to standard Multi-Head Attention (MHA) Transformers and some advanced variants. Moreover, we propose a recipe for uptraining existing MHA Transformer checkpoints to",
+  "chars": 122159,
   "comment": "The code is available at: \\url{https://github.com/Zhoutong-Wu/SkipV1Former}",
   "families": [
    "attention",
@@ -4144,7 +4189,8 @@
    "value_residual"
   ],
   "score": 6,
-  "status": "screened",
+  "sha256": "7333c1338d347b8f568e9dfdbef264a9168f8ea07c12a01d0195c10608337e39",
+  "status": "fetched",
   "title": "Improving Model Representation and Reducing KV Cache via Skip Connections with First Value Heads",
   "why": [
    "+2 attention",
@@ -4242,6 +4288,7 @@
  },
  "2510.20280": {
   "abstract": "We propose ContextLM, a framework that implicitly learns multi-token prediction by augmenting standard pretraining with an intrinsic next-context prediction objective. ContextLM builds a language model on top of context embeddings that span multiple tokens, enabling better next-token prediction by predicting the next context. Our model is fully compatible with standard autoregressive, token-by-token evaluation paradigms (e.g., perplexity). Extensive experiments with GPT-2 and Pythia backbones (up to 1.5B parameters and 300B training tokens) reveal that ContextLM shifts the Pareto frontier of scaling laws, exhibiting superior efficiency in parameters, training tokens, and FLOPs. Our results show that ContextLM could already achieve the baseline perplexity using 39\\% fewer parameters and demonstrates robust generalization improvements on extensive downstream tasks under equivalent parameter counts.",
+  "chars": 49750,
   "comment": "19pages,6 figures, 13 Tables",
   "families": [
    "capacity",
@@ -4254,7 +4301,8 @@
    "multi_token"
   ],
   "score": 12,
-  "status": "screened",
+  "sha256": "68a217eb5e861517b9a95e4dd9a98722c2094327f913b56794211206fec68830",
+  "status": "fetched",
   "title": "Context-level Language Modeling by Learning Predictive Context Embeddings",
   "why": [
    "+3 pretrain",
@@ -4265,6 +4313,7 @@
  },
  "2510.20787": {
   "abstract": "Linear-attention models that compress the entire input sequence into a fixed-size recurrent state offer an efficient alternative to Transformers, but their finite memory induces forgetfulness that harms retrieval-intensive tasks. To mitigate the issue, we explore a series of hybrid models that restore direct access to past tokens. We interleave token mixers with intermediate time and space complexity between linear and full attention, including sparse attention with token eviction, and the query-aware native sparse attention. Particularly, we propose a novel learnable token eviction approach. Combined with sliding-window attention, an end-to-end trainable lightweight CNN aggregates information from both past and future adjacent tokens to adaptively retain a limited set of critical KV-pairs per head, maintaining linear attention's constant time and space complexity. Efficient Triton kernels for the sparse attention mechanisms are provided. Empirical evaluations on retrieval-intensive benchmarks support the effectiveness of our approaches.",
+  "chars": 81713,
   "comment": "19 pages, 5 figures",
   "families": [
    "attention",
@@ -4277,7 +4326,8 @@
    "attention_window"
   ],
   "score": 10,
-  "status": "screened",
+  "sha256": "c66e6a143763259b1958a664b366318b62b4a7aa4f04c302fb41c1e3ced95205",
+  "status": "fetched",
   "title": "Alleviating Forgetfulness of Linear Attention by Hybrid Sparse Attention and Contextualized Learnable Token Eviction",
   "why": [
    "+2 attention",
@@ -4768,6 +4818,7 @@
  },
  "2511.17388": {
   "abstract": "Position information is essential for language modeling. In softmax transformers, Rotary Position Embeddings (\\textit{RoPE}) encode positions through \\textit{fixed-angle} rotations, while in linear transformers, order is handled via input-dependent (selective) gating that decays past key-value associations. Selectivity has generally been shown to improve language-related tasks. Inspired by this, we introduce \\textit{Selective RoPE}, an \\textit{input-dependent} rotary embedding mechanism, that generalizes \\textit{RoPE}, and enables rotation in \\textit{arbitrary angles} for both linear and softmax transformers. We show that softmax attention already performs a hidden form of these rotations on query-key pairs, uncovering an implicit positional structure. We further show that in state-space models and gated linear transformers, the real part manages forgetting while the imaginary part encodes positions through rotations. We validate our method by equipping gated transformers with \\textit{Selective RoPE}, demonstrating that its input-dependent rotations improve performance in language modeling and on difficult sequence tasks like copying, state tracking, and retrieval.",
+  "chars": 100038,
   "comment": "ICLR 2026",
   "families": [
    "attention",
@@ -4782,7 +4833,8 @@
    "positional"
   ],
   "score": 10,
-  "status": "screened",
+  "sha256": "f0917178f82857a158d40d0c2258e56da27ff780729af921c98f0de87f8646cc",
+  "status": "fetched",
   "title": "Selective Rotary Position Embedding",
   "why": [
    "+2 attention",
@@ -5052,6 +5104,7 @@
  },
  "2512.05865": {
   "abstract": "We introduce a simple post-training method that makes transformer attention sparse without sacrificing performance. Applying a flexible sparsity regularisation under a constrained-loss objective, we show on models up to 7B parameters that it is possible to retain the original pretraining loss while reducing attention connectivity to $\\approx 0.4 \\%$ of its edges. Unlike sparse-attention methods designed for computational efficiency, our approach leverages sparsity as a structural prior: it preserves capability while exposing a more organized and interpretable connectivity pattern. We find that this local sparsity cascades into global circuit simplification: task-specific circuits involve far fewer components (attention heads and MLPs) with up to 100x fewer edges connecting them. Additionally, using cross-layer transcoders, we show that sparse attention substantially simplifies attention attribution, enabling a unified view of feature-based and circuit-based perspectives. These results demonstrate that transformer attention can be made orders of magnitude sparser, suggesting that much of its computation is redundant and that sparsity may serve as a guiding principle for more structured and interpretable models.",
+  "chars": 35700,
   "comment": "",
   "families": [
    "attention",
@@ -5063,7 +5116,8 @@
    "attention_sparse"
   ],
   "score": 13,
-  "status": "screened",
+  "sha256": "5bdd0e7e7df0fd1a4ad5dc91e471505f940e068883af82b945538994ea994312",
+  "status": "fetched",
   "title": "Intrinsically Interpretable Attention via Sparse Post-Training",
   "why": [
    "+3 pretrain",
@@ -5448,6 +5502,7 @@
  },
  "2512.22423": {
   "abstract": "Label-free 3D brightfield microscopy offers a fast and noninvasive way to visualize cellular morphology, yet robust volumetric segmentation still typically depends on fluorescence or heavy post-processing. We address this gap by introducing Bright-4B, a 4 billion parameter foundation model that learns on the unit hypersphere to segment subcellular structures directly from 3D brightfield volumes. Bright-4B combines a hardware-aligned Native Sparse Attention mechanism (capturing local, coarse, and selected global context), depth-width residual HyperConnections that stabilize representation flow, and a soft Mixture-of-Experts for adaptive capacity. A plug-and-play anisotropic patch embed further respects confocal point-spread and axial thinning, enabling geometry-faithful 3D tokenization. The resulting model produces morphology-accurate segmentations of nuclei, mitochondria, and other organelles from brightfield stacks alone--without fluorescence, auxiliary channels, or handcrafted post-processing. Across multiple confocal datasets, Bright-4B preserves fine structural detail across depth and cell types, outperforming contemporary CNN and Transformer baselines. All code, pretrained weights, and models for downstream finetuning will be released to advance large-scale, label-free 3D cell mapping.",
+  "chars": 61496,
   "comment": "20 pages, 15 figures",
   "families": [
    "capacity",
@@ -5460,7 +5515,8 @@
    "attention_sparse"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "579dc3d4506d807a4235235747d856f87d4964d84cd88bbc9b9ce5efea81af69",
+  "status": "fetched",
   "title": "Bright 4B: Scaling Hyperspherical Learning for Segmentation in 3D Brightfield Microscopy",
   "why": [
    "+3 pretrain",
@@ -5662,6 +5718,7 @@
  },
  "2601.12279": {
   "abstract": "Electroencephalography (EEG) decoding requires models that can effectively extract and integrate complex temporal, spectral, and spatial features from multichannel signals. To address this challenge, we propose a lightweight and generalizable decoding framework named Hierarchical Convolutional Fusion Transformer (HCFT), which combines dual-branch convolutional encoders and hierarchical Transformer blocks for multi-scale EEG representation learning. Specifically, the model first captures local temporal and spatiotemporal dynamics through time-domain and time-space convolutional branches, and then aligns these features via a cross-attention mechanism that enables interaction between branches at each stage. Subsequently, a hierarchical Transformer fusion structure is employed to encode global dependencies across all feature stages, while a customized Dynamic Tanh normalization module is introduced to replace traditional Layer Normalization in order to enhance training stability and reduce redundancy. Extensive experiments are conducted on two representative benchmark datasets, BCI Competition IV-2b and CHB-MIT, covering both event-related cross-subject classification and continuous seizure prediction tasks. Results show that HCFT achieves 80.83% average accuracy and a Cohen's kappa of 0.6165 on BCI IV-2b, as well as 99.10% sensitivity, 0.0236 false positives per hour, and 98.82% specificity on CHB-MIT, consistently outperforming over ten state-of-the-art baseline methods. Ablati",
+  "chars": 61162,
   "comment": "Submitted to IEEE Journals",
   "families": [
    "attention",
@@ -5674,7 +5731,8 @@
    "norm_placement"
   ],
   "score": 10,
-  "status": "screened",
+  "sha256": "fb81da6f1ec3fb91d78c33b350588160be3c296eb7d144900c6b5d279c52262a",
+  "status": "fetched",
   "title": "HCFT: Hierarchical Convolutional Fusion Transformer for EEG Decoding",
   "why": [
    "+2 normaliz",
@@ -5785,6 +5843,7 @@
  },
  "2601.18702": {
   "abstract": "The prevailing scaling paradigm of Large Language Models (LLMs) rests on a substrate of \"Fuzzy\" floating-point arithmetic. To mitigate the inherent instability of this approximate foundation, modern architectures have erected a complex scaffolding of structural and numerical heuristics--Complex Residuals, Pre-RMSNorm, Attention Scaling, and Gradient Clipping--consuming significant compute solely to prevent numerical collapse. We propose a paradigm shift to the \"Exact\". We introduce the Halo Architecture, grounded in the Rational Field (Q) and powered by a custom Exact Inference Unit (EIU). To resolve the exponential bit-width growth of rational arithmetic, Halo employs a Dual-Ring Topology that unifies two complementary control mechanisms: (1) The Micro-Ring (Continuum Maintenance), which strictly bounds memory complexity via Diophantine Approximation; and (2) The Macro-Ring (Symbolic Alignment), which enforces logical consistency via periodic state collapse. This stable dual-ring substrate allows for the \"Great Dismantling\" of numerical scaffolding, reducing the Transformer block to its \"Clean\" algebraic form (Tabula Rasa). Furthermore, we verify the \"Efficiency Paradox\": the elimination of gradient noise (sigma -> 0) allows for Macro-Learning Rates, potentially reducing the Total Time-to-Convergence by orders of magnitude. Halo demonstrates that General Intelligence requires the hybridization of continuous fields and discrete chains under a rigorous mathematical framework.",
+  "chars": 37833,
   "comment": "Architecture update: Formalizes the Dual-Ring Topology and the Clean Transformer",
   "families": [
    "capacity",
@@ -5800,7 +5859,8 @@
    "gradient_clip"
   ],
   "score": 10,
-  "status": "screened",
+  "sha256": "e2c5b3ad88dd93ee57f68d57948b53279d4cd0bbd4c1bfa618aeb210b9184858",
+  "status": "fetched",
   "title": "From Fuzzy to Exact: The Halo Architecture for Infinite-Depth Reasoning via Rational Arithmetic",
   "why": [
    "+3 learning rate",
@@ -5866,6 +5926,7 @@
  },
  "2601.19936": {
   "abstract": "The opacity of massive pretraining corpora in Large Language Models (LLMs) raises significant privacy and copyright concerns, making pretraining data detection a critical challenge. Existing state-of-the-art methods typically rely on token likelihoods, yet they often overlook the gap between the target token and the model's top-1 prediction, as well as local correlations between adjacent tokens. In this work, we propose Gap-K%, a novel pretraining data detection method grounded in the optimization dynamics of LLM pretraining. By analyzing the next-token prediction objective, we observe that discrepancies between the model's top-1 prediction and the target token induce strong gradient signals, which are explicitly penalized during training. Motivated by this, Gap-K% leverages the log probability gap between the top-1 predicted token and the target token, incorporating a sliding window strategy to capture local correlations and mitigate token-level fluctuations. Extensive experiments on the WikiMIA and MIMIR benchmarks demonstrate that Gap-K% achieves state-of-the-art performance, consistently outperforming prior baselines across various model sizes and input lengths.",
+  "chars": 50126,
   "comment": "ACL 2026 Main Conference; 15 pages",
   "families": [
    "attention",
@@ -5877,7 +5938,8 @@
    "optimizer_benchmark"
   ],
   "score": 15,
-  "status": "screened",
+  "sha256": "6b4a97fc913a68e0dace24396ca9842bb90e0b43b47309285c4286341221e7c5",
+  "status": "fetched",
   "title": "Gap-K%: Measuring Top-1 Prediction Gap for Detecting Pretraining Data",
   "why": [
    "+3 pretrain",
@@ -6108,6 +6170,7 @@
  },
  "2602.01642": {
   "abstract": "With limited high-quality data and growing compute, multi-epoch training is gaining back its importance across sub-areas of deep learning. Adam(W), versions of which are go-to optimizers for many tasks such as next token prediction, has two momentum hyperparameters $(\u03b2_1, \u03b2_2)$ controlling memory and one very important hyperparameter, batch size, controlling (in particular) the amount mini-batch noise. We introduce a theoretical framework to understand how mini-batch noise influences the implicit bias of memory in Adam (depending on $\u03b2_1$, $\u03b2_2$) towards sharper or flatter regions of the loss landscape, which is commonly observed to correlate with the generalization gap in multi-epoch training. We find that in the case of large batch sizes, higher $\u03b2_2$ increases the magnitude of anti-regularization by memory (hurting generalization), but as the batch size becomes smaller, the dependence of (anti-)regulariation on $\u03b2_2$ is reversed. A similar monotonicity shift (in the opposite direction) happens in $\u03b2_1$. In particular, the commonly \"default\" pair $(\u03b2_1, \u03b2_2) = (0.9, 0.999)$ is a good choice if batches are small; for larger batches, in many settings moving $\u03b2_1$ closer to $\u03b2_2$ is much better in terms of validation accuracy in multi-epoch training. Moreover, our theoretical derivations connect the scale of the batch size at which the shift happens to the scale of the critical batch size. We illustrate this effect in experiments with small-scale data in the about-to-overfit r",
+  "chars": 103988,
   "comment": "",
   "families": [
    "token_exposure",
@@ -6120,7 +6183,8 @@
    "batch_size_law"
   ],
   "score": 13,
-  "status": "screened",
+  "sha256": "b78224dedf525981c43e0ba683587fbe4968155cb72fa37c83bc87dba751235c",
+  "status": "fetched",
   "title": "The Effect of Mini-Batch Noise on the Implicit Bias of Adam",
   "why": [
    "+3 optimizer",
@@ -6158,6 +6222,7 @@
  },
  "2602.02201": {
   "abstract": "Molecular property prediction is crucial for drug discovery when labeled data are scarce. This work presents CardinalGraphFormer, a graph transformer augmented with a query-conditioned cardinality-preserving attention (CPA) channel that retains dynamic support-size signals complementary to static centrality embeddings. The approach combines structured sparse attention with Graphormer-inspired biases (shortest-path distance, centrality, direct-bond features) and unified dual-objective self-supervised pretraining (masked reconstruction and contrastive alignment of augmented views). Evaluation on 11 public benchmarks spanning MoleculeNet, OGB, and TDC ADMET demonstrates consistent improvements over protocol-matched baselines under matched pretraining, optimization, and hyperparameter tuning. Rigorous ablations confirm CPA's contributions and rule out simple size shortcuts. Code and reproducibility artifacts are provided.",
+  "chars": 23076,
   "comment": "",
   "families": [
    "attention",
@@ -6172,7 +6237,8 @@
    "optimizer_benchmark"
   ],
   "score": 7,
-  "status": "screened",
+  "sha256": "98637690fc6297dbef176752fe23922a7f07e074644ea5da1de1ef14dd2b119a",
+  "status": "fetched",
   "title": "Cardinality-Preserving Attention Channels for Graph Transformers in Molecular Property Prediction",
   "why": [
    "+3 pretrain",
@@ -6385,6 +6451,7 @@
  },
  "2602.06702": {
   "abstract": "We investigate grokking in transformers through the lens of inductive bias: dispositions arising from architecture or optimization that let the network prefer one solution over another. We first show that architectural choices such as the position of Layer Normalization (LN) strongly modulates grokking speed. This modulation is explained by isolating how LN on specific pathways shapes shortcut-learning and attention entropy. Subsequently, we study how different optimization settings modulate grokking, inducing distinct interpretations of previously proposed controls such as readout scale. Particularly, we find that using readout scale as a control for lazy training can be confounded by learning rate and weight decay in our setting. Accordingly, we show that features evolve continuously throughout training, suggesting grokking in transformers can be more nuanced than a lazy-to-rich transition of the learning regime. Finally, we show how generalization predictably emerges with feature compressibility in grokking, across different modulators of inductive bias. Our code is released at https://tinyurl.com/y52u3cad.",
+  "chars": 61066,
   "comment": "Total 15 pages, 9 figures",
   "families": [
    "attention",
@@ -6399,7 +6466,8 @@
    "norm_placement"
   ],
   "score": 10,
-  "status": "screened",
+  "sha256": "cb27422212fd370a5271c2437dca1519ad930fb16df794d6156c1ae10c4a6230",
+  "status": "fetched",
   "title": "Explaining Grokking in Transformers through the Lens of Inductive Bias",
   "why": [
    "+3 learning rate",
@@ -6722,6 +6790,7 @@
  },
  "2602.17497": {
   "abstract": "Learning from self-sampled data and sparse environmental feedback remains a fundamental challenge in training self-evolving agents. Temporal credit assignment mitigates this issue by transforming sparse feedback into dense supervision signals. However, previous approaches typically depend on learning task-specific value functions for credit assignment, which suffer from poor sample efficiency and limited generalization. In this work, we propose to leverage pretrained knowledge from large language models (LLMs) to transform sparse rewards into dense training signals (i.e., the advantage function) through retrospective in-context learning (RICL). We further propose an online learning framework, RICOL, which iteratively refines the policy based on the credit assignment results from RICL. We empirically demonstrate that RICL can accurately estimate the advantage function with limited samples and effectively identify critical states in the environment for temporal credit assignment. Extended evaluation on four BabyAI scenarios show that RICOL achieves comparable convergent performance with traditional online RL algorithms with significantly higher sample efficiency. Our findings highlight the potential of leveraging LLMs for temporal credit assignment, paving the way for more sample-efficient and generalizable RL paradigms.",
+  "chars": 90994,
   "comment": "Accepted to NeurIPS 2025",
   "families": [
    "token_exposure",
@@ -6734,7 +6803,8 @@
    "sample_efficiency"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "58f28279527493ff78291b650da44835334036383ac440c7da24b82fbe9cd330",
+  "status": "fetched",
   "title": "Retrospective In-Context Learning for Temporal Credit Assignment with Large Language Models",
   "why": [
    "+3 pretrain",
@@ -6748,6 +6818,7 @@
  },
  "2602.18109": {
   "abstract": "Real-time schedulers must reason about tight deadlines under strict compute budgets. We present TempoNet, a reinforcement learning scheduler that pairs a permutation-invariant Transformer with a deep Q-approximation. An Urgency Tokenizer discretizes temporal slack into learnable embeddings, stabilizing value learning and capturing deadline proximity. A latency-aware sparse attention stack with blockwise top-k selection and locality-sensitive chunking enables global reasoning over unordered task sets with near-linear scaling and sub-millisecond inference. A multicore mapping layer converts contextualized Q-scores into processor assignments through masked-greedy selection or differentiable matching. Extensive evaluations on industrial mixed-criticality traces and large multiprocessor settings show consistent gains in deadline fulfillment over analytic schedulers and neural baselines, together with improved optimization stability. Diagnostics include sensitivity analyses for slack quantization, attention-driven policy interpretation, hardware-in-the-loop and kernel micro-benchmarks, and robustness under stress with simple runtime mitigations; we also report sample-efficiency benefits from behavioral-cloning pretraining and compatibility with an actor-critic variant without altering the inference pipeline. These results establish a practical framework for Transformer-based decision making in high-throughput real-time scheduling.",
+  "chars": 161900,
   "comment": "43 pages, 12 figures",
   "families": [
    "attention",
@@ -6762,7 +6833,8 @@
    "attention_sparse"
   ],
   "score": 13,
-  "status": "screened",
+  "sha256": "e652c528a980019106c3ff9d0cc787d729f1103e5a4ab44f6a5c1c2b76e880ac",
+  "status": "fetched",
   "title": "TempoNet: Slack-Quantized Transformer-Guided Reinforcement Scheduler for Adaptive Deadline-Centric Real-Time Dispatchs",
   "why": [
    "+3 pretrain",
@@ -6968,6 +7040,7 @@
  },
  "2603.00742": {
   "abstract": "While Adam has long been the ubiquitous default optimizer for deep neural networks, Muon has recently seen rapid adoption due to its superior training speed. Although much of the literature focuses on validating the benefits of Muon, our work investigates the potential downsides of the mechanism driving this speedup. On the theoretical front, we analyze the learning dynamics of simplified Muon on deep linear networks and linear attention. Our analysis reveals that Muon gains speed by avoiding saddle points, but does so at the expense of the simplicity bias characteristic of Gradient Descent (GD), where the complexity of the functional solution learned grows sequentially. Experiments demonstrate the consequences of losing the simplicity bias, showing that Muon struggles to uncover common underlying structure across tasks and may be prone to fitting spurious features. More broadly, this paper serves as a reminder that faster optimization is rarely a free lunch; improvements in optimization can come at the cost of changes in the inductive biases that shape generalization.",
+  "chars": 57237,
   "comment": "More experiments and linear attention theory",
   "families": [
    "attention",
@@ -6979,7 +7052,8 @@
    "optimizer_muon"
   ],
   "score": 12,
-  "status": "screened",
+  "sha256": "124d851183a4913ad73cf09028482ad720b42ef6d34f7a7d40ab22f49b246ea4",
+  "status": "fetched",
   "title": "To Use or not to Use Muon: How Simplicity Bias in Optimizers Matters",
   "why": [
    "+3 optimizer",
@@ -7164,6 +7238,7 @@
  },
  "2603.11611": {
   "abstract": "Rotary Positional Embedding (RoPE) is a common choice in transformer architectures for encoding relative positional information. Although earlier work has examined omitting RoPE in specific layers, the effect of varying the fraction of hidden dimensions that receive rotary transformations remains largely unexplored. This design choice can yield substantial memory savings, which becomes especially significant at long context lengths. We find up to 10x memory savings over the standard RoPE cache, while achieving comparable final loss. In this work, we present a systematic study examining the impact of partial RoPE on training dynamics and convergence across architectures and datasets. Our findings uncover several notable patterns: (1) applying RoPE to only a small fraction of dimensions (around 10%) achieves convergence comparable to using full RoPE; (2) these trends hold consistently across model size, sequence lengths and datasets of varying quality and architectures, with higher-quality data resulting in lower overall loss and similar benchmark performance; and (3) some models trained with NoPE (No Positional Encoding) showcase unstable learning trajectories, which can be alleviated through minimal RoPE application or QK-Norm which converges to a higher loss. Together, these results offer practical guidance for model designers aiming to balance efficiency and training stability, while emphasizing the previously overlooked importance of partial RoPE.",
+  "chars": 64358,
   "comment": "",
   "families": [
    "ve_placement",
@@ -7178,7 +7253,8 @@
    "norm_rmsnorm"
   ],
   "score": 9,
-  "status": "screened",
+  "sha256": "8d364a3a044fc3f2a08a107788e12bdad6ab7dd3711d88b47f19b7815f2ffc3d",
+  "status": "fetched",
   "title": "Fractional Rotation, Full Potential? Investigating Performance and Convergence of Partial RoPE",
   "why": [
    "+2 convergence",
@@ -7301,6 +7377,7 @@
  },
  "2603.17484": {
   "abstract": "Language models struggle to generalize beyond pretraining context lengths, limiting long-horizon reasoning and retrieval. Continued pretraining on long-context data can help but is expensive due to the quadratic scaling of Attention. We observe that most tokens do not require (Global) Attention over the entire sequence and can rely on local context. Based on this, we propose L2A (Learning To Attend), a layer that enables conditional (token-wise) long-range memory access by deciding when to invoke global attention. We evaluate L2A on Qwen 2.5 and Qwen 3 models, extending their effective context length from 32K to 128K tokens. L2A matches the performance of standard long-context training to within 3\\% while skipping Global Attention for $\\sim$80\\% of tokens, outperforming prior baselines. We also design custom Triton kernels to efficiently implement this token-wise conditional Attention on GPUs, achieving up to $\\sim$2$\\times$ improvements in training throughput and time-to-first-token over FlashAttention. Moreover, L2A enables post-training pruning of highly sparse Global Attention layers, reducing KV cache memory by up to 50\\% with negligible performance loss. Our code is released under Apache 2.0 at https://github.com/awslabs/hybrid-model-factory/tree/main/examples/research/L2A.",
+  "chars": 90935,
   "comment": "26 pages, 11 Tables, 18 Figures. Accepted at ICML 2026",
   "families": [
    "attention",
@@ -7315,7 +7392,8 @@
    "attention_local_global"
   ],
   "score": 15,
-  "status": "screened",
+  "sha256": "00aa7b99c2bed30be68fc49a54c67e5d560490ecacdf5ecff2815f3d63ad73f8",
+  "status": "fetched",
   "title": "Learning When to Attend: Conditional Memory Access for Long-Context LLMs",
   "why": [
    "+3 pretrain",
@@ -7330,6 +7408,7 @@
  },
  "2603.17771": {
   "abstract": "Attention sinks and massive activations are recurring and closely related phenomena in Transformer models. Existing explanations have largely focused on the forward pass, yet in pre-norm Transformers, large residual-stream norms play only an indirect forward role because sublayers operate on normalized inputs. We study this relationship from the perspective of backpropagation. Empirically and theoretically, we show that under causal masking, attention sinks can induce pronounced gradient concentration, which we term gradient sinks. Since the RMSNorm Jacobian attenuates gradients roughly in inverse proportion to input norm, massive activations can be understood as adaptive regulators of this localized gradient pressure during training. This interpretation predicts that attenuating sink-induced gradients should weaken massive activations. We test this prediction with V-scale, a modification that adjusts backpropagated gradients on the value path. In V-scale models, attention sinks are preserved, whereas massive activations are suppressed. These results identify gradient sinks as a backward-pass counterpart of attention sinks, and massive activations as an adaptive RMSNorm-mediated response that attenuates the resulting localized training pressure. Our code is available at https://anonymous.4open.science/r/GradientSinkCode-B309.",
+  "chars": 37717,
   "comment": "29 pages, 14 figures, 7 tables",
   "families": [
    "attention",
@@ -7343,7 +7422,8 @@
    "norm_rmsnorm"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "32073f5c75735ee36057a2dc4fe3bc379833bc21a6b34609e34a11ee387a69e3",
+  "status": "fetched",
   "title": "Attention Sinks Induce Gradient Sinks: Massive Activations as Gradient Regulators in Transformers",
   "why": [
    "+2 normaliz",
@@ -7455,6 +7535,7 @@
  },
  "2603.26554": {
   "abstract": "Spectral optimizers such as Muon have recently shown strong empirical performance in large-scale language model training, but the source and extent of their advantage remain poorly understood. We study this question through the linear associative memory problem, a tractable model for factual recall in transformer-based models. In particular, we go beyond orthogonal embeddings and consider Gaussian inputs and outputs, which allows the number of stored associations to greatly exceed the embedding dimension. Our main result sharply characterizes the recovery rates of one step of Muon, SGD, and Newton's method on the logistic regression loss under a power law frequency distribution. We show that the storage capacity of Muon significantly exceeds that of SGD, and even matches Newton's method while only using first-order information. Moreover, Muon saturates at a larger critical batch size. We further analyze the multi-step dynamics under a thresholded gradient approximation and show that Muon achieves a substantially faster initial recovery rate than SGD, while both methods eventually converge to the information-theoretic limit at comparable speeds. Experiments on synthetic tasks validate the predicted scaling laws. Our analysis provides a quantitative understanding of the signal amplification of spectral preconditioners and lays the groundwork for establishing scaling laws across more practical language modeling tasks and optimizers.",
+  "chars": 227560,
   "comment": "84 pages, 9 figures",
   "families": [
    "capacity",
@@ -7469,7 +7550,8 @@
    "batch_size_law"
   ],
   "score": 17,
-  "status": "screened",
+  "sha256": "fa1ad7ee06ef6df2b3afe9f3f16d2d334cfdb96834dca46dcea44b1b880b629c",
+  "status": "fetched",
   "title": "Sharp Capacity Scaling of Spectral Optimizers in Learning Associative Memory",
   "why": [
    "+3 optimizer",
@@ -7642,6 +7724,7 @@
  },
  "2604.01978": {
   "abstract": "We study a random model of deep multi-head self-attention in which the weights are resampled independently across layers and heads, as at initialization of training. Viewing depth as a time variable, the residual stream defines a discrete-time interacting particle system on the unit sphere. We prove that, under suitable joint scalings of the depth, the residual step size, and the number of heads, this dynamics admits a nontrivial homogenized limit. Depending on the scaling, the limit is either deterministic or stochastic with common noise; in the mean-field regime, the latter leads to a stochastic nonlinear Fokker--Planck equation for the conditional law of a representative token. In the Gaussian setting, the limiting drift vanishes, making the homogenized dynamics explicit enough to study representation collapse. This yields quantitative trade-offs between dimension, context length, and temperature, and identifies regimes in which clustering can be mitigated.",
+  "chars": 177895,
   "comment": "",
   "families": [
    "capacity",
@@ -7656,7 +7739,8 @@
    "residual_scaling"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "c33ef2b23c036c7ea7d6596e0c38228cfd297a6b9b1ef17fc51b5cb9f4793fd3",
+  "status": "fetched",
   "title": "Homogenized Transformers",
   "why": [
    "+3 initializ",
@@ -7769,6 +7853,7 @@
  },
  "2604.10791": {
   "abstract": "We propose two complementary modifications to transformer attention blocks. First, a non-linear pre-projection MLP is inserted between layer norm and Q/K/V projections, constructing richer features in a position-agnostic manner before any positional encoding is applied. Second, a content skip connection routes the pre-projection's features around the attention mechanism, allowing content information to bypass position-aware attention where beneficial. In frozen-probe experiments on Pythia-160M and 410M, the combined approach achieves the strongest results across methods: +40.6% LAMBADA accuracy and -39% perplexity at 160M scale. Learned skip connection weights reveal a consistent pattern across model sizes: later transformer layers activate the content bypass more strongly than earlier layers, suggesting that deeper layers benefit from content information that does not pass through positional attention. All modifications add no K/V cache overhead.",
+  "chars": 16848,
   "comment": "7 pages, 2 figures, 5 tables. Code: https://github.com/cs-cmyk/preprojection",
   "families": [
    "attention",
@@ -7782,7 +7867,8 @@
    "value_residual"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "5bd024cce1fc61ca3deed487776dd870ba7270cd2881a8fa229c668edf2f51ca",
+  "status": "fetched",
   "title": "Position-Agnostic Pre-Projection for Transformer Attention: Nonlinear Feature Construction and Content Skip Before Q/K/V",
   "why": [
    "+2 attention",
@@ -8568,6 +8654,7 @@
  },
  "2605.15290": {
   "abstract": "Hyperparameter transfer across model architectures dramatically reduces the amount of compute necessary for tuning large language models (LLMs). The maximal update parameterization (\u03bcP) ensures transfer through principled mathematical analysis but can be challenging to derive for new model architectures. Building on the spectral feature-learning view of Yang et al. (2023a), we make two advances. First, we promote spectral norm conditions on the weights from a heuristic to the definition of feature learning, and as a consequence arrive at the Complete-P depth and weight-decay scalings without recourse to lazy-learning. Second, we consider a modified spectral norm that preserves the valid scaling law of network weights when weight matrices are not full rank. This enables (to our knowledge, the first) derivation of \u03bcP scalings for grouped-query attention (GQA). We demonstrate the efficacy of our theoretical derivations by showing learning rate transfer across the GQA repetition hyperparameter as well as experiments regarding transfer over weight decay.",
+  "chars": 63479,
   "comment": "18 pages",
   "families": [
    "capacity",
@@ -8581,7 +8668,8 @@
    "mup"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "339db48b8ef99d36e419d5bf333cff5b69f59f9b7418df8b1b03a397c4f03b3f",
+  "status": "fetched",
   "title": "GQA-\u03bcP: The maximal parameterization update for grouped query attention",
   "why": [
    "+3 learning rate",
@@ -8980,6 +9068,7 @@
  },
  "2605.23893": {
   "abstract": "We propose Complete-muE, a framework which targets hyperparameter transfer across dense FFN and any Mixture-of-Experts (MoE) setups in transformer blocks. Existing tools such as $\u03bc$P (requires fixed architectue) or SDE (requires fixed per-step token count) cannot directly solve the hyperparameter transfer problem in MoE setups because Dense to MoE transfer or MoE total experts scaling changes both architecture and tokens per expert. Complete-muE solves this challenge with a two-bridge system: Bridge~I maps between dense FFN and Dense MoE by active-width $\u03bc$P with a normalized router scale. Bridge~II maps between Dense MoE and sparse MoE by activated-expert scaling, where the first-order SDE LR/WD correction cancels while a bounded residual $\u03c3_0$ shift remains. The resulting transfer rule, which we term as Complete muE, covers changes in activated experts, total capacity, granularity, and shared/group-balanced hybrids for MoE models as well as network width/depth, batch size, and duration changes for general Transformer models. Extensive language model and diffusion model pretraining experiments confirm that complete-muE yields relatively stable hyperparameter optima across model architectures and parameter counts -- with only minor drift consistent with the non-strict SDE behavior of Bridge~II. In practice this drift is small enough that hyperparameters tuned on a single dense reference transfer near-optimally to all MoE configurations -- \\emph{tune dense once, transfer to al",
+  "chars": 104194,
   "comment": "27 pages",
   "families": [
    "capacity",
@@ -8995,7 +9084,8 @@
    "mup"
   ],
   "score": 9,
-  "status": "screened",
+  "sha256": "4897fc61659e21c91c6ef0f1363349eb15c6a1094302bb3b8850c22e000295ae",
+  "status": "fetched",
   "title": "Complete-muE: Optimal Hyperparameter Transfer and Scaling for MoE Models",
   "why": [
    "+3 pretrain",
@@ -9061,6 +9151,7 @@
  },
  "2605.24879": {
   "abstract": "Large language models (LLMs) are trained on vast datasets that may contain sensitive information. Differential privacy (DP), the de facto standard for formal privacy guarantees, provides a principled framework for training LLMs with provable privacy protection. However, state-of-the-art DP training implementations rely on fast gradient clipping techniques with memory overhead $O(B \\min\\{T^2, d^2\\})$, where $B$ is the batch size, $T$ is the sequence length, and $d$ is the model width. This becomes prohibitive as both model size and context length grow. We propose DP-SGD-RC, a novel variant of DP-SGD with randomized clipping that reduces memory and compute complexity. DP-SGD-RC leverages stochastic trace estimation methods, specifically Hutchinson's estimator[Hutchinson, 1989] and its improved variant, Hutch++[Meyer et al., 2021], to reduce the memory footprint of per-sample gradient norm estimation. We provide a tight privacy analysis showing that DP-SGD-RC achieves noise multipliers competitive with deterministic clipping. Experiments fine-tuning Llama~3.2-1B on long-context benchmarks spanning classification, question answering, and summarization tasks demonstrate that DP-SGD-RC matches baseline utility while significantly reducing memory and compute requirements.",
+  "chars": 138508,
   "comment": "Accepted at ICML 2026",
   "families": [
    "capacity",
@@ -9073,7 +9164,8 @@
    "gradient_clip"
   ],
   "score": 8,
-  "status": "screened",
+  "sha256": "3b723804b9631de6cd087b1e3c3a154ea2a1ffe64baa4189a8d11cb6808bd487",
+  "status": "fetched",
   "title": "Efficient DP-SGD for LLMs with Randomized Clipping",
   "why": [
    "+2 batch size",
@@ -9086,6 +9178,7 @@
  },
  "2605.25698": {
   "abstract": "High-quality data is scarce in large language model (LLM) training, yet how to schedule its use jointly with training dynamics lacks theoretical guidance. We extend functional scaling laws by incorporating a data-quality dimension, and solve the joint data-quality and batch-size scheduling problem in asymptotic closed form. The solution reveals two regimes and a dual role of high-quality data. In the noise-limited regime, high-quality data should be used as a signal amplifier: lowering the batch size converts cleaner data into more signal without amplifying noise. In the signal-limited regime, it should be used as a noise suppressor: late placement reduces terminal noise without sacrificing signal accumulation. Existing curriculum-style pipelines primarily exploit the second role by placing cleaner data late, but miss the first role because conventional decay schedules reduce update intensity exactly when high-quality data becomes available. Guided by this, we propose Drop-Stable-Rampup for LLM midtraining: upon the quality transition, drop the batch size, hold it stable to accumulate signal, then ramp up to suppress terminal noise. On a 15B Mixture-of-Experts model midtrained on 108B tokens, Drop-Stable-Rampup improves average accuracy over Warmup-Stable-Decay (WSD) by +1.70 and over Cosine-decay by +2.98, with particularly large gains on mathematical reasoning benchmarks such as GSM8K (+4.23) and MATH (+2.80).",
+  "chars": 108904,
   "comment": "",
   "families": [
    "capacity",
@@ -9098,7 +9191,8 @@
    "lr_wsd"
   ],
   "score": 13,
-  "status": "screened",
+  "sha256": "aa05c2b8b139042482251332704608ad3a7827f124d970606ae7cc4805ab75d6",
+  "status": "fetched",
   "title": "How Should LLMs Consume High-Quality Data? Optimal Data Scheduling via Quality-Aware Functional Scaling Laws",
   "why": [
    "+2 schedule",
@@ -9223,6 +9317,7 @@
  },
  "2605.27980": {
   "abstract": "The ability to process ultra-long contexts is crucial for large language models (LLMs) to perform long-horizon tasks. While recent efforts have extended context windows to 1M and beyond, model performance degrades when sequence length exceeds the pre-trained range of positional encodings (e.g., RoPE), i.e., position exhaustion. This fundamental limitation must be overcome to achieve a truly infinite context. To address it, we propose Periodic RoPE (P-RoPE), a positional encoding mechanism designed to circumvent this exhaustion. It operates in conjunction with sliding window attention (SWA) to capture local dependencies and relative positions within each window. This local layer is then complemented by a global attention layer with No Positional Encoding (NoPE), enabling unbounded interaction across the entire sequence without positional constraints. By stacking these two types of layers, the model avoids the need for positional extrapolation to generalize longer and theoretically supports an infinite context window. Empirical results show that our model, MiniWin, outperforms MiniMInd with standard GPT architectures in long-context efficiency and stability. Our work provides a possible pathway toward LLMs with genuine infinite-context understanding. The code is available at \\href{https://github.com/Cominder/miniwin}{https://github.com/Cominder/miniwin}.",
+  "chars": 25963,
   "comment": "5 pages",
   "families": [
    "attention",
@@ -9236,7 +9331,8 @@
    "attention_local_global"
   ],
   "score": 15,
-  "status": "screened",
+  "sha256": "2386a99a3b0062b8e72c4646105d92f74efe5682e8c49db3a2d27cb172393fb8",
+  "status": "fetched",
   "title": "Periodic RoPE for Infinite Context LLMs",
   "why": [
    "+3 pre-train",
@@ -9541,6 +9637,7 @@
  },
  "2606.04511": {
   "abstract": "Sparse attention reduces compute and memory bandwidth for long-context LLM inference. However, two key challenges remain: (1) KV cache capacity still grows with sequence length, and offloading to CPU memory introduces a PCIe transfer bottleneck; (2) the sparse selection step itself retains $O(T^2)$ complexity and can dominate attention cost at long contexts. We propose SparDA, a decoupled sparse attention architecture that introduces a fourth per-layer projection, the Forecast, alongside Query, Key, and Value. The Forecast predicts the KV blocks needed by the next layer, enabling lookahead selection that overlaps CPU-to-GPU prefetch with current-layer execution. Because Forecast is decoupled from the attention query, our GQA implementation uses one Forecast head per GQA group, reducing selection overhead versus the original multi-head selector. SparDA adds $<$0.5% parameters and trains only the Forecast projections by matching the original selector's attention distribution. On two sparse-pretrained 8B models, SparDA matches or slightly improves accuracy and delivers up to 1.25$\\times$ prefill speedup and 1.7$\\times$ decode speedup over the sparse-attention offload baseline. By enabling larger feasible batch sizes on a single GPU, SparDA further reaches up to 5.3$\\times$ higher decode throughput than the non-offload sparse baseline. Our source code is available at https://github.com/NVlabs/SparDA.",
+  "chars": 68250,
   "comment": "",
   "families": [
    "capacity",
@@ -9557,7 +9654,8 @@
    "attention_sparse"
   ],
   "score": 13,
-  "status": "screened",
+  "sha256": "a06e16cf8817b646ceef61ae75d69954ce7ad9dfee71fb3dc607029b5ba99d43",
+  "status": "fetched",
   "title": "SparDA: Sparse Decoupled Attention for Efficient Long-Context LLM Inference",
   "why": [
    "+3 pretrain",
@@ -9856,6 +9954,7 @@
  },
  "2606.16429": {
   "abstract": "Hybrid linear attention models offer an appealing path to faster long-context inference: they reduce the quadratic cost and KV-cache burden of full softmax attention while retaining much of the quality of Transformer models. A practical way to obtain such models is to convert a pretrained Transformer instead of pretraining a new architecture from scratch, but this conversion is still brittle. Simply copying the teacher attention projections into a Gated DeltaNet (GDN) student does not specify the new recurrent decay, write, and output-gating dynamics. As a result, the converted model often starts in a poor dynamical regime and must spend many distillation tokens repairing initialization rather than learning the remaining teacher behavior. We propose Taylor-Calibrate, a lightweight initialization method for hybrid GDN students. The method uses Taylor-guided teacher attention statistics to set the value projection, memory timescale, write gates, and output gate, then applies a short per-layer alignment step to match each converted layer to the teacher output. Across four teacher settings and three retained-layer policies, Taylor-Calibrate gives substantially stronger zero-shot students, with up to an 88x improvement in a representative ablation, and reaches matched recovery targets with 4.9x--9.2x fewer training tokens than naive conversion.",
+  "chars": 106820,
   "comment": "24 pages, 9 figures",
   "families": [
    "attention",
@@ -9869,7 +9968,8 @@
    "init_scaling"
   ],
   "score": 12,
-  "status": "screened",
+  "sha256": "14a9ff958464b168fa261492af3af976d06b080e1c99725883d212c6410b95a9",
+  "status": "fetched",
   "title": "Taylor-Calibrate: Principled Initialization for Hybrid Linear Attention Distillation",
   "why": [
    "+3 pretrain",
@@ -10019,6 +10119,7 @@
  },
  "2606.19179": {
   "abstract": "Stochastic momentum methods such as heavy ball (HB), Nesterov momentum, and variants of Accelerated SGD (ASGD) [Kidambi et al., 2018] are widely used in modern training, but their stochastic benefits depend on two distinct quantities: serial runtime, the number of iterations needed to reach a target accuracy, and compute efficiency (CE), the inverse total gradient-query or FLOP cost. Larger batches reduce serial runtime without hurting CE only when the contraction gap grows linearly with batch size. We study stochastic HB and ASGD for consistent linear regression with Gaussian covariates and prove finite-dimensional, discrete-time lower bounds on their batch-size tradeoffs. Our first result shows that HB does not improve the CE frontier over SGD for arbitrary spectra; rather, it preserves SGD-level CE over a larger batch-size window, allowing larger batches to reduce serial runtime until HB reaches its deterministic accelerated scale. This window can be a factor $\\sqrt\u03ba$ larger than the SGD critical batch size. For ASGD, the picture is more spectrum-dependent: for rapidly decaying power-law spectra, ASGD improves small-batch CE over HB/SGD, but as batch size grows it trades this CE advantage for improved serial runtime. Synthetic linear-regression experiments verify these qualitative regimes, including near-overlap of ASGD and HB for slowly decaying spectra and the predicted CE--serial tradeoff for rapidly decaying spectra.",
+  "chars": 90303,
   "comment": "",
   "families": [
    "token_exposure",
@@ -10031,7 +10132,8 @@
    "batch_size_law"
   ],
   "score": 7,
-  "status": "screened",
+  "sha256": "5b18e9e9babd03afdc67ecaeeaf5659272a4e7883a835abfc87a30e0136a141b",
+  "status": "fetched",
   "title": "Compute Efficiency and Serial Runtime Tradeoffs for Stochastic Momentum Methods",
   "why": [
    "+2 batch size",
@@ -10514,6 +10616,7 @@
  },
  "2607.02303": {
   "abstract": "Linear-attention and state-space language models compress the prefix into a fixed-size recurrent state, yielding O(1) memory at the cost of a lossy exact memory: when many key--value associations compete, earlier facts are overwritten and needle recall degrades. Inspired by Complementary Learning Systems, we give linear attention a hippocampal complement. HOLA (Hippocampal Linear Attention) keeps the usual delta-rule state as a compressive memory and adds a bounded exact KV cache, forming a semiparametric test-time memory: the state models linearly compressible structure, while the cache stores associations that should not be forced through that state. The cache writes without a learned eviction module, keeping tokens with large beta * ||e||, the prediction residual actually committed to the state; a decoupled RMSNorm-gamma cache read then turns these exact KV pairs into sharp retrieval rather than soft averaging. At 340M parameters trained on 15B SlimPajama tokens, HOLA lowers Wikitext perplexity from 27.32 to 22.92 (-16.1%), below a full-attention Transformer++ (26.88), and improves LAMBADA perplexity from 30.95 to 30.26. It also achieves the best linear in-context retrieval and remains much more robust than GDN or a matched HOLA+recency cache on RULER needle-in-a-haystack recall out to 32k tokens (16x its training length).",
+  "chars": 49451,
   "comment": "12 pages",
   "families": [
    "attention",
@@ -10527,7 +10630,8 @@
    "attention_linear"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "c29fd1c44934870f13c6f8597c7644142e17d99301e2c9412e993982ade0a50d",
+  "status": "fetched",
   "title": "A Hippocampus for Linear Attention: An Exact Memory for What the Recurrent State Forgets",
   "why": [
    "+3 rmsnorm",
@@ -11040,6 +11144,7 @@
  },
  "2607.18363": {
   "abstract": "Feed-forward networks hold two thirds of a transformer's non-embedding parameters, yet the architecture has not received a necessity test that controls parameters, compute, and depth at once. We pretrain attention-only decoder transformers (Simple Attention Networks, SANs) against standard transformers matched separately for parameter count, training FLOPs, and depth (2 to 48 layers), for up to 105B tokens at 6M to 87M parameters. Deleting feed-forward layers in place is costly: the standard transformer leads by 0.47 nats at matched depth and 0.26 nats at matched FLOPs. Reallocating the freed budget into attention depth closes the gap: at matched parameters the difference is 0.006 nats (0.27 percent of loss), reproducible to one part in ten thousand across seed pairs, shrinking across 5B, 30B, and 105B budgets, and holding near 0.02 nats across a 29x size range. Three measurements localize the remaining gap to parametric recall: attention-only models are better on context-grounded answers and worse where knowledge must come from weights. Weight spectra show why: routing matrices (Q/K) crystallize early, content matrices accumulate rank slowly, and removing feed-forward layers relocates this accumulation to the attention output projection. QK-normalization, not feed-forward layers or residual gating, keeps 48-layer attention-only stacks trainable. The deficit concentrates on low-context query prediction and localizes there entirely by the largest budget. A pre-registered test ",
+  "chars": 49100,
   "comment": "10 pages, 8 figures",
   "families": [
    "capacity",
@@ -11056,7 +11161,8 @@
    "norm_rmsnorm"
   ],
   "score": 11,
-  "status": "screened",
+  "sha256": "843fb1740f53c4c2e077f1872eac9b1d2ad3d6cb6e8b471ed9cb29add12715d4",
+  "status": "fetched",
   "title": "A Controlled Study of Attention-Only Transformers",
   "why": [
    "+3 pretrain",
