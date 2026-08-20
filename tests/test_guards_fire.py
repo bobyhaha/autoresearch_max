@@ -399,3 +399,77 @@ def test_role_resolution_refuses_a_name_that_contradicts_its_cfg():
     assert verdict._role_conflict(liar), (
         "a member named _ctrl while carrying a treatment cfg was accepted silently")
     assert not verdict._role_conflict(truth), "an honest control was flagged as conflicting"
+
+
+def _mk(cfg, val, steps, tps, ok=True, epoch=2.0, gpu=6, name="X"):
+    return {"name": name, "cfg": dict(cfg), "ok": ok, "gpu": gpu,
+            "metrics": {"val_bpb": val, "num_steps": steps, "tokens_per_step": tps,
+                        "final_epoch": epoch}}
+
+
+def test_step_law_fits_controls_only_at_one_operating_point():
+    """The law must not be influenced by the treatments it judges, nor pool operating points.
+
+    It was quoted from prose for hours with no code behind it (L055), used to argue two
+    mechanisms shared a cause, and nobody could check what it was fitted on.
+    """
+    P = dict(direction.PLATFORM)
+    tps = float(2 ** P["tbs"])
+    # val_bpb must FALL as steps rise, which is what the law describes; a first version
+    # of this fixture had it rising and the slope assertion caught the fixture, not the code.
+    rows = [_mk(P, 0.990 - i * 0.001, 1000 + i * 100, tps, name=f"c{i}") for i in range(10)]
+    # A treatment at the same operating point must NOT enter the fit.
+    rows.append(_mk({**P, "mlp": 2}, 5.0, 900, tps, name="wild_treatment"))
+    # A control at a DIFFERENT operating point must NOT enter it either.
+    rows.append(_mk({**P, "tbs": P["tbs"] + 1}, 5.0, 500, tps * 2, name="other_point"))
+    law = direction.step_law(rows)
+    assert law is not None and law["n"] == 10, (
+        f"fit used n={law and law['n']}; it must use the 10 controls at this operating "
+        f"point only, excluding treatments and other tokens_per_step")
+    assert law["slope"] < 0, "more steps must predict LOWER val_bpb"
+
+
+def test_step_law_refuses_across_a_tokens_per_step_boundary():
+    """CLAUDE.md forbids applying the law across a change in tokens-per-step.
+
+    Returning a number anyway is how a rule that lives in prose gets ignored in practice.
+    """
+    P = dict(direction.PLATFORM)
+    tps = float(2 ** P["tbs"])
+    rows = [_mk(P, 0.990 - i * 0.001, 1000 + i * 100, tps, name=f"c{i}") for i in range(10)]
+    treat = _mk({**P, "tbs": P["tbs"] - 1}, 0.99, 2000, tps / 2, name="t")
+    ctrl = _mk(P, 0.984, 1000, tps, name="c")
+    assert direction.step_law_explains(rows, treat, ctrl) is None, (
+        "the law was applied across a tokens_per_step boundary, which CLAUDE.md forbids")
+
+
+def test_step_law_flags_extrapolation_beyond_its_fitted_range():
+    """A share read off an extrapolation must say so; today's arms ran outside the range."""
+    P = dict(direction.PLATFORM)
+    tps = float(2 ** P["tbs"])
+    rows = [_mk(P, 0.990 - i * 0.0005, 1900 + i * 10, tps, name=f"c{i}") for i in range(10)]
+    ctrl = _mk(P, 0.9840, 1950, tps, name="c")
+    inside = _mk({**P, "swdiv": 4}, 0.9835, 1960, tps, name="t_in")
+    outside = _mk({**P, "swdiv": 4}, 0.9820, 2400, tps, name="t_out")
+    r_in = direction.step_law_explains(rows, inside, ctrl)
+    r_out = direction.step_law_explains(rows, outside, ctrl)
+    assert r_in and not r_in["extrapolated"], "an in-range arm was flagged as extrapolated"
+    assert r_out and r_out["extrapolated"], (
+        "an arm far outside the fitted step range was NOT flagged; every quality-cost "
+        "figure quoted today depends on this flag being right")
+
+
+def test_step_law_baseline_survives_a_platform_adoption():
+    """Adoption must not destroy the ability to analyse what came before it (L065)."""
+    P = dict(direction.PLATFORM)
+    retired = {**P, "tbs": P["tbs"] + 1}
+    tps_retired = float(2 ** retired["tbs"])
+    rows = [_mk(retired, 0.992 - i * 0.0004, 900 + i * 20, tps_retired, name=f"o{i}")
+            for i in range(10)]
+    assert direction.step_law(rows, tps_retired) is None, (
+        "the retired point fitted without an explicit baseline; those runs are no longer "
+        "is_platform, so this must require the baseline to be named")
+    law = direction.step_law(rows, tps_retired, retired)
+    assert law is not None and law["n"] == 10, (
+        "passing the retired baseline did not recover the law -- adoption would have made "
+        "every historical analysis unreproducible")
