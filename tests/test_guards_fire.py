@@ -887,3 +887,41 @@ def test_selector_apply_reorders_without_editing_anything():
             b = [e["name"] for e in before if e.get("wave_group") == g]
             a = [e["name"] for e in after if e.get("wave_group") == g]
             assert a == b, f"within-wave member order changed for {g}: {b} -> {a}"
+
+
+def test_append_only_logs_resolve_to_the_latest_record():
+    """These files are append-only, so an amendment is a second record under the same id.
+
+    Every reader did `next(x for x in hypotheses() if x["id"] == wanted)`, which takes the
+    FIRST -- so an amendment was written to disk and never read. Eight ids carried two
+    copies and the shadowed field was always the one that mattered: the stack hypothesis
+    behind the campaign's best result had post_hoc_rule_change=null in copy one and a full
+    disclosure in copy two, and four others had a pre-adoption tbs in their intervention
+    cfg. The campaign disclosed honestly and the tooling hid the disclosure.
+    """
+    import claims, json
+    for loader in (claims.hypotheses, claims.lessons, claims.claims, claims.mechanisms):
+        recs = loader()
+        ids = [r.get("id") or r.get("belief_key") or r.get("name") for r in recs]
+        real = [i for i in ids if i is not None]
+        assert len(real) == len(set(real)), \
+            f"{loader.__name__} returned duplicate ids: resolution is not last-wins"
+
+
+def test_a_hypothesis_must_be_able_to_fail_on_magnitude():
+    """activation says whether the mechanism ENGAGED; it never says how big counts.
+
+    Eight hypotheses were registered with neither a prediction nor a falsifier, so their
+    statements ("lowers val_bpb") were true of any negative delta however small. One of
+    them backs the campaign's best result.
+    """
+    import claims
+    base = {"id": "x", "statement": "s",
+            "activation": {"predicate": "p", "diagnostic": "d",
+                           "rule": {"op": "gt", "value": 0}, "failure_status": "inconclusive"}}
+    bad = claims.validate_hyp(dict(base))
+    assert any("minimum_effect" in b for b in bad), bad
+    assert any("falsifier" in b for b in bad), bad
+    # a direction alone is still not enough -- magnitude is the point
+    withdir = {**base, "prediction": {"direction": "decrease", "metric": "val_bpb"}}
+    assert any("minimum_effect" in b for b in claims.validate_hyp(withdir))

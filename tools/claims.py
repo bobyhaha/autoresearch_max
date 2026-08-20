@@ -112,6 +112,27 @@ MECH_TEMPLATE = {
 
 
 def _read(path: pathlib.Path) -> list[dict]:
+    """Records from an append-only log, with LAST-WINS resolution per id.
+
+    These files are append-only, so the way to amend a record is to append a corrected
+    one under the same id. Every reader here then did `next(h for h in hypotheses() if
+    h["id"] == wanted)`, which takes the FIRST -- so an amendment was written to disk and
+    never read. Eight ids carried two copies, and the shadowed field was exactly the one
+    that mattered:
+
+      * hyp_stack_transfers_to_tbs18_r6_v3, which backs the campaign's best result, has
+        post_hoc_rule_change = null in the first copy and a full disclosure of why the
+        activation rule was changed in the second. Every tool saw the null. The campaign
+        disclosed the rule change honestly and its own tooling hid the disclosure -- the
+        exact laundering an hourly critique flagged as invisible to the chain audit,
+        arrived at by accident rather than by intent.
+      * hyp_noqknorm_r5_p18 and three siblings carry intervention.cfg with tbs=19 in the
+        first copy and the post-adoption tbs=18 in the second, so E4's "cfg disagrees
+        with hypothesis" check compares against a platform two adoptions stale.
+
+    Ordering is otherwise preserved, so anything iterating the corpus still sees it in
+    registration order; only the DUPLICATES collapse, to their latest version.
+    """
     if not path.exists():
         return []
     out = []
@@ -123,7 +144,18 @@ def _read(path: pathlib.Path) -> list[dict]:
             out.append(json.loads(line))
         except ValueError:
             continue
-    return out
+    seen, keep = {}, []
+    for rec in out:
+        rid = rec.get("id") if isinstance(rec, dict) else None
+        if rid is None:
+            keep.append(rec)
+            continue
+        if rid in seen:
+            keep[seen[rid]] = rec          # later record supersedes, in place
+        else:
+            seen[rid] = len(keep)
+            keep.append(rec)
+    return keep
 
 
 def claims() -> list[dict]:
@@ -426,6 +458,28 @@ def validate_hyp(h: dict) -> list[str]:
     for fam in h.get("families") or []:
         if fam not in lit.ALL_FAMILIES:
             bad.append(f"unknown family '{fam}'")
+    # A HYPOTHESIS MUST BE ABLE TO FAIL ON MAGNITUDE, not only on engagement.
+    # activation answers "did the mechanism engage"; it says nothing about how large an
+    # effect would count. Eight registered hypotheses carry neither a prediction nor a
+    # falsifier -- including hyp_stack_transfers_to_tbs18_r6_v3, which backs the
+    # campaign's best result and 7 completed runs, and hyp_ema_tail_average_p18, which
+    # was running when this was found. Their statements say a lever "lowers val_bpb" at
+    # NO stated magnitude, so any negative delta however small reads as support and the
+    # hypothesis cannot be wrong. That is the shape the whole chain of evidence exists to
+    # prevent, sitting inside the chain.
+    #
+    # Enforced at registration only, so the existing corpus is unaffected: those eight
+    # keep whatever standing their evidence gives them and are not retroactively voided.
+    pred = h.get("prediction") or {}
+    if not pred.get("direction"):
+        bad.append("prediction.direction is required -- 'increase' or 'decrease'")
+    if pred.get("minimum_effect") in (None, "", 0):
+        bad.append("prediction.minimum_effect is required: the smallest effect that would "
+                   "count as support. Without it the hypothesis cannot fail on magnitude, "
+                   "and any delta of the right sign reads as confirmation.")
+    if not (h.get("falsifiers") or []):
+        bad.append("at least one falsifier is required -- state what observation would "
+                   "kill this hypothesis, before the run rather than after it")
     act = h.get("activation") or {}
     for f in ("predicate", "diagnostic", "rule", "failure_status"):
         if not act.get(f):
