@@ -20,6 +20,26 @@
    "+3 strong-lab signal"
   ]
  },
+ "2501.03855": {
+  "abstract": "The BabyLM challenge called on participants to develop sample-efficient language models. Submissions were pretrained on a fixed English corpus, limited to the amount of words children are exposed to in development (<100m). The challenge produced new architectures for data-efficient language modelling, which outperformed models trained on trillions of words. This is promising for low-resource languages, where available corpora are limited to much less than 100m words. In this paper, we explore the potential of BabyLMs for low-resource languages, using the isiXhosa language as a case study. We pretrain two BabyLM architectures, ELC-BERT and MLSM, on an isiXhosa corpus. They outperform a vanilla pretrained model on POS tagging and NER, achieving notable gains (+3.2 F1) for the latter. In some instances, the BabyLMs even outperform XLM-R. Our findings show that data-efficient models are viable for low-resource languages, but highlight the continued importance, and lack of, high-quality pretraining data. Finally, we visually analyse how BabyLM architectures encode isiXhosa.",
+  "comment": "",
+  "families": [
+   "signal_path"
+  ],
+  "id": "2501.03855",
+  "published": "2025-01-07",
+  "queries": [
+   "sample_efficiency"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "BabyLMs for isiXhosa: Data-Efficient Language Modelling in a Low-Resource Context",
+  "why": [
+   "+3 pretrain",
+   "+3 sample-efficient",
+   "+3 strong-lab signal"
+  ]
+ },
  "2501.07032": {
   "abstract": "Kolmogorov-Arnold Networks (KANs) represent an innovation in neural network architectures, offering a compelling alternative to Multi-Layer Perceptrons (MLPs) in models such as Convolutional Neural Networks (CNNs), Recurrent Neural Networks (RNNs), and Transformers. By advancing network design, KANs drive groundbreaking research and enable transformative applications across various scientific domains involving neural networks. However, existing KANs often require significantly more parameters in their network layers than MLPs. To address this limitation, this paper introduces PRKANs (Parameter-Reduced Kolmogorov-Arnold Networks), which employ several methods to reduce the parameter count in KAN layers, making them comparable to MLP layers. Experimental results on the MNIST and Fashion-MNIST datasets demonstrate that PRKANs outperform several existing KANs, and their variant with attention mechanisms rivals the performance of MLPs, albeit with slightly longer training times. Furthermore, the study highlights the advantages of Gaussian Radial Basis Functions (GRBFs) and layer normalization in KAN designs. The repository for this work is available at: https://github.com/hoangthangta/All-KAN.",
   "comment": "24 pages",
@@ -39,6 +59,29 @@
   "why": [
    "+2 normaliz",
    "+2 attention",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2501.17116": {
+  "abstract": "The growing computational demands of training large language models (LLMs) necessitate more efficient methods. Quantized training presents a promising solution by enabling low-bit arithmetic operations to reduce these costs. While FP8 precision has demonstrated feasibility, leveraging FP4 remains a challenge due to significant quantization errors and limited representational capacity. This work introduces the first FP4 training framework for LLMs, addressing these challenges with two key innovations: a differentiable quantization estimator for precise weight updates and an outlier clamping and compensation strategy to prevent activation collapse. To ensure stability, the framework integrates a mixed-precision training scheme and vector-wise quantization. Experimental results demonstrate that our FP4 framework achieves accuracy comparable to BF16 and FP8, with minimal degradation, scaling effectively to 13B-parameter LLMs trained on up to 100B tokens. With the emergence of next-generation hardware supporting FP4, our framework sets a foundation for efficient ultra-low precision training.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "input_pipeline"
+  ],
+  "id": "2501.17116",
+  "published": "2025-01-28",
+  "queries": [
+   "fp8_training"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Optimizing Large Language Model Training Using FP4 Quantization",
+  "why": [
+   "+3 fp8",
+   "+2 bf16",
+   "+2 stability",
+   "-2 quantiz",
    "+3 strong-lab signal"
   ]
  },
@@ -139,6 +182,7 @@
  },
  "2502.02531": {
   "abstract": "We theoretically characterize gradient descent dynamics in deep linear networks trained at large width from random initialization and on large quantities of random data. Our theory captures the ``wider is better\" effect of mean-field/maximum-update parameterized networks as well as hyperparameter transfer effects, which can be contrasted with the neural-tangent parameterization where optimal learning rates shift with model width. We provide asymptotic descriptions of both non-residual and residual neural networks, the latter of which enables an infinite depth limit when branches are scaled as $1/\\sqrt{\\text{depth}}$. We also compare training with one-pass stochastic gradient descent to the dynamics when training data are repeated at each iteration. Lastly, we show that this model recovers the accelerated power law training dynamics for power law structured data in the rich regime observed in recent works.",
+  "chars": 109863,
   "comment": "ICML Camera Ready",
   "families": [
    "capacity",
@@ -153,7 +197,8 @@
    "residual_scaling"
   ],
   "score": 19,
-  "status": "screened",
+  "sha256": "be0746820c5f3824bfd06f2a10e7043af19f8477d8c91a4aadc979b1ca472f7f",
+  "status": "fetched",
   "title": "Deep Linear Network Training Dynamics from Random Initialization: Data, Width, Depth, and Hyperparameter Transfer",
   "why": [
    "+3 learning rate",
@@ -252,6 +297,7 @@
   "id": "2502.05967",
   "published": "2025-02-09",
   "queries": [
+   "fp8_training",
    "mup"
   ],
   "score": 11,
@@ -344,6 +390,7 @@
   "id": "2502.11034",
   "published": "2025-02-16",
   "queries": [
+   "gradient_clip",
    "stability"
   ],
   "score": 27,
@@ -389,6 +436,31 @@
    "+2 bf16",
    "+2 stability",
    "-2 quantiz"
+  ]
+ },
+ "2502.11664": {
+  "abstract": "Rotary Position Embedding (RoPE) has shown strong performance in text-based Large Language Models (LLMs), but extending it to video remains a challenge due to the intricate spatiotemporal structure of video frames. Existing adaptations, such as RoPE-3D, attempt to encode spatial and temporal dimensions separately but suffer from two major limitations: positional bias in attention distribution and disruptions in video-text transitions. To overcome these issues, we propose Video Rotary Position Embedding (VRoPE), a novel positional encoding method tailored for Video-LLMs. Specifically, we introduce a more balanced encoding strategy that mitigates attention biases, ensuring a more uniform distribution of spatial focus. Additionally, our approach restructures positional indices to ensure a smooth transition between video and text tokens. Extensive experiments on different models demonstrate that VRoPE consistently outperforms previous RoPE variants, achieving significant improvements in video understanding, temporal reasoning, and retrieval tasks. Code is available at https://github.com/johncaged/VRoPE.",
+  "comment": "EMNLP 2025 Main Camera Ready",
+  "families": [
+   "attention",
+   "ve_placement",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2502.11664",
+  "published": "2025-02-17",
+  "queries": [
+   "positional"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "VRoPE: Rotary Position Embedding for Video Large Language Models",
+  "why": [
+   "+2 attention",
+   "-2 reasoning",
+   "+3 emnlp",
+   "+3 strong-lab signal",
+   "+2 code released"
   ]
  },
  "2502.15015": {
@@ -446,6 +518,7 @@
  },
  "2502.15938": {
   "abstract": "LLMs are commonly trained with a learning rate (LR) warmup, followed by cosine decay to 10% of the maximum (10x decay). In a large-scale empirical study, we show that under an optimal peak LR, a simple linear decay-to-zero (D2Z) schedule consistently outperforms other schedules when training at compute-optimal dataset sizes. D2Z is superior across a range of model sizes, batch sizes, datasets, and vocabularies. Benefits increase as dataset size increases. Leveraging a novel interpretation of AdamW as an exponential moving average of weight updates, we show how linear D2Z optimally balances the demands of early training (moving away from initial conditions) and late training (averaging over more updates in order to mitigate gradient noise). In experiments, a 610M-parameter model trained for 80 tokens-per-parameter (TPP) using D2Z achieves lower loss than when trained for 200 TPP using 10x decay, corresponding to an astonishing 60% compute savings. Models such as Llama2-7B, trained for 286 TPP with 10x decay, could likely have saved a majority of compute by training with D2Z.",
+  "chars": 102817,
   "comment": "ICLR 2025",
   "families": [
    "capacity",
@@ -459,7 +532,8 @@
    "lr_warmup"
   ],
   "score": 27,
-  "status": "screened",
+  "sha256": "3c1d0922936102e88f0c69b7a65a3423af2c081eb6df1067669d67c7f4aae068",
+  "status": "fetched",
   "title": "Straight to Zero: Why Linearly Decaying the Learning Rate to Zero Works Best for LLMs",
   "why": [
    "+3 learning rate",
@@ -577,6 +651,32 @@
    "+3 strong-lab signal"
   ]
  },
+ "2503.00808": {
+  "abstract": "Language model pretraining involves training on extensive corpora, where data quality plays a pivotal role. In this work, we aim to directly estimate the contribution of data during pretraining and select pretraining data in an efficient manner. Specifically, we draw inspiration from recent findings showing that compression efficiency (i.e., the normalized loss) of diverse models on certain text correlates strongly with their downstream performance, when the text domain aligns with the downstream benchmarks(Huang et al., 2024). Building on this observation, we hypothesize that data on which model losses are predictive of downstream abilities also contribute effectively to learning, which shares similar intuition with Thrush et al.(2024). To leverage this insight, we introduce predictive data selection (PreSelect), a lightweight and efficient data selection method that requires training and deploying only a fastText-based scorer. Through comprehensive experiments with 1B and 3B parameter models, we demonstrate that models trained on 30B tokens selected with PreSelect surpass the performance of the vanilla baseline trained on 300B tokens, achieving a 10x reduction in compute requirements. Furthermore, PreSelect significantly outperforms other competitive data selection baselines, such as DCLM and FineWeb-Edu on a scale of 3B models trained on 100B tokens. We open-source our trained data selection scorer along with the curated datasets at https://github.com/hkust-nlp/PreSelect.",
+  "chars": 79213,
+  "comment": "ICML 2025",
+  "families": [
+   "signal_scale"
+  ],
+  "id": "2503.00808",
+  "published": "2025-03-02",
+  "queries": [
+   "data_quality"
+  ],
+  "score": 18,
+  "sha256": "d89af29b4f0a6752e6c4aac1b564a461f2603cc1397f08ca2778e3d74cbbcf65",
+  "status": "fetched",
+  "title": "Predictive Data Selection: The Data That Predicts Is the Data That Teaches",
+  "why": [
+   "+3 pretrain",
+   "+2 normaliz",
+   "+2 loss",
+   "+1 open-source",
+   "+5 icml",
+   "+3 strong-lab signal",
+   "+2 code released"
+  ]
+ },
  "2503.02844": {
   "abstract": "The ever-growing availability of unlabeled data presents both opportunities and challenges for training artificial intelligence systems. While self-supervised learning (SSL) has emerged as a powerful paradigm for extracting meaningful representations from vast amounts of unlabeled data, existing methods still struggle to adapt to the non-stationary, non-IID nature of real-world data streams without forgetting previously learned knowledge. Recent works have adopted a repeated cosine annealing schedule for large-scale continual pre-training; however, these schedules (1) inherently cause forgetting during the re-warming phase and (2) have not been systematically compared to existing continual SSL methods. In this work, we systematically compare the widely used cosine schedule with the recently proposed infinite learning rate schedule and empirically find the latter to be a more effective alternative. Our extensive empirical evaluation across diverse image and language datasets demonstrates that the infinite learning rate schedule consistently enhances continual pre-training performance compared to a repeated cosine decay without being restricted to a fixed iteration budget. For instance, in a small-scale MAE pre-training setup, it outperforms several strong baselines from the literature. We then scale up our experiments to larger MAE pre-training and autoregressive language model pre-training. Our results show that the infinite learning rate schedule remains effective at scale, ",
   "chars": 82085,
@@ -628,6 +728,33 @@
    "+2 gradient",
    "+5 neurips",
    "+2 code released"
+  ]
+ },
+ "2503.04784": {
+  "abstract": "Large language models have demonstrated remarkable performance across various tasks, yet they face challenges such as low computational efficiency, gradient vanishing, and difficulties in capturing complex feature interactions. To address these limitations, a novel framework has been proposed. This framework incorporates a learnable dense residual skip connection mechanism, a TransformerX module a transformer based component integrating multiscale convolution and adaptive activation functions and a multitoken prediction interaction module. The learnable dense residual connections enhance information flow and feature capture across layers. Within the TransformerX module, large convolutional kernels aggregate semantic information from extensive text segments, while smaller convolutions focus on local word order and syntactic structures. The adaptive activation function dynamically adjusts its parameters based on the semantic features of the input text, improving the model's ability to handle diverse semantic expressions and complex relationships. The multitoken prediction module boosts data utilization and accelerates inference by predicting multiple future tokens. These components significantly enhance the performance and efficiency of large language models.",
+  "comment": "21 pages",
+  "families": [
+   "ve_placement",
+   "schedule",
+   "objective",
+   "signal_path",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2503.04784",
+  "published": "2025-02-27",
+  "queries": [
+   "activation"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "KunlunBaize: LLM with Multi-Scale Convolution and Multi-Token Prediction Under TransformerX Framework",
+  "why": [
+   "+2 kernel",
+   "+2 gradient",
+   "+3 multi-token prediction",
+   "-3 inference",
+   "+3 strong-lab signal"
   ]
  },
  "2503.05920": {
@@ -852,6 +979,26 @@
    "+3 strong-lab signal"
   ]
  },
+ "2503.21801": {
+  "abstract": "In this short report, we introduce joint multi-token prediction (JTP), a lightweight modification of standard next-token prediction designed to enrich hidden state representations by jointly predicting multiple future tokens. Unlike previous multi-token prediction approaches, JTP strategically employs teacher forcing of future-tokens through a carefully designed representation bottleneck, allowing the model to encode rich predictive information with minimal computational overhead during training. We show that the JTP approach achieves a short-horizon belief state representation, while popular alternatives for multi-token prediction fail to do so. We demonstrate the effectiveness of our method on the synthetic star graph navigation task from from Bachmann and Nagarajan [2024], highlighting a significant performance improvement over existing methods. This manuscript presents promising preliminary results intended to stimulate further research.",
+  "comment": "Technical report; comments welcome!",
+  "families": [
+   "schedule",
+   "objective"
+  ],
+  "id": "2503.21801",
+  "published": "2025-03-24",
+  "queries": [
+   "multi_token"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Efficient Joint Prediction of Multiple Future Tokens",
+  "why": [
+   "+3 multi-token prediction",
+   "+3 strong-lab signal"
+  ]
+ },
  "2504.01961": {
   "abstract": "We address the challenge of representation learning from a continuous stream of video as input, in a self-supervised manner. This differs from the standard approaches to video learning where videos are chopped and shuffled during training in order to create a non-redundant batch that satisfies the independently and identically distributed (IID) sample assumption expected by conventional training paradigms. When videos are only available as a continuous stream of input, the IID assumption is evidently broken, leading to poor performance. We demonstrate the drop in performance when moving from shuffled to sequential learning on three tasks: the one-video representation learning method DoRA, standard VideoMAE on multi-video datasets, and the task of future video prediction. To address this drop, we propose a geometric modification to standard optimizers, to decorrelate batches by utilising orthogonal gradients during training. The proposed modification can be applied to any optimizer -- we demonstrate it with Stochastic Gradient Descent (SGD) and AdamW. Our proposed orthogonal optimizer allows models trained from streaming videos to alleviate the drop in representation learning performance, as evaluated on downstream tasks. On three scenarios (DoRA, VideoMAE, future prediction), we show our orthogonal optimizer outperforms the strong AdamW in all three scenarios.",
   "comment": "CVPR2025",
@@ -884,6 +1031,7 @@
   "id": "2504.02507",
   "published": "2025-04-03",
   "queries": [
+   "gradient_clip",
    "stability"
   ],
   "score": 16,
@@ -900,8 +1048,35 @@
    "+2 code released"
   ]
  },
+ "2504.04728": {
+  "abstract": "Implicit neural representations (INRs), which leverage neural networks to represent signals by mapping coordinates to their corresponding attributes, have garnered significant attention. They are extensively utilized for image representation, with pixel coordinates as input and pixel values as output. In contrast to prior works focusing on investigating the effect of the model's inside components (activation function, for instance), this work pioneers the exploration of the effect of kernel transformation of input/output while keeping the model itself unchanged. A byproduct of our findings is a simple yet effective method that combines scale and shift to significantly boost INR with negligible computation overhead. Moreover, we present two perspectives, depth and normalization, to interpret the performance benefits caused by scale and shift transformation. Overall, our work provides a new avenue for future works to understand and improve INR through the lens of kernel transformation.",
+  "comment": "Accepted at IEEE Transactions on Multimedia (TMM) on December 20, 2024 (To appear on IEEE Website soon)",
+  "families": [
+   "capacity",
+   "attention",
+   "signal_scale",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2504.04728",
+  "published": "2025-04-07",
+  "queries": [
+   "activation"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Exploring Kernel Transformations for Implicit Neural Representations",
+  "why": [
+   "+2 normaliz",
+   "+2 attention",
+   "+2 kernel",
+   "-3 lora",
+   "+3 strong-lab signal"
+  ]
+ },
  "2504.05295": {
   "abstract": "Orthonormalized updates accelerate training, improve stability, and enable robust hyperparameter transfer, but existing methods like Muon rely on dense matrix operations that clash with sharded weights in large-scale LLM training, causing high compute and communication cost. We introduce Dion (Distributed Orthonormalization), a scalable and efficient update rule that replaces Newton-Schulz iteration with amortized power iteration on a momentum buffer, avoiding full-matrix reconstruction and integrating cleanly with weight sharding. The rank-fraction parameter with error feedback enables low-rank updates that balance quality with significant cost savings. On language models from 160M to 3B parameters, Dion retains the benefits of orthonormalized updates, while markedly reducing wall-clock time at scale, making it a practical optimizer for next-generation foundation models. Code is available at: https://github.com/microsoft/dion/",
+  "chars": 28720,
   "comment": "\"Version 3\" with various new updates",
   "families": [
    "signal_scale",
@@ -916,7 +1091,8 @@
    "mup"
   ],
   "score": 24,
-  "status": "screened",
+  "sha256": "dff02634d4c0e7868b395d2a4a58edd93d6d5b651a25aab6cfe6e6045ef4aba7",
+  "status": "fetched",
   "title": "Dion: Distributed Orthonormalized Updates",
   "why": [
    "+3 optimizer",
@@ -1045,6 +1221,27 @@
    "+5 iclr"
   ]
  },
+ "2504.16041": {
+  "abstract": "This paper investigates the impact of different optimizers on the grokking phenomenon, where models exhibit delayed generalization. We conducted experiments across seven numerical tasks (primarily modular arithmetic) using a modern Transformer architecture. The experimental configuration systematically varied the optimizer (Muon vs. AdamW) and the softmax activation function (standard softmax, stablemax, and sparsemax) to assess their combined effect on learning dynamics. Our empirical evaluation reveals that the Muon optimizer, characterized by its use of spectral norm constraints and second-order information, significantly accelerates the onset of grokking compared to the widely used AdamW optimizer. Specifically, Muon reduced the mean grokking epoch from 153.09 to 102.89 across all configurations, a statistically significant difference (t = 5.0175, p = 6.33e-08). This suggests that the optimizer choice plays a crucial role in facilitating the transition from memorization to generalization.",
+  "comment": "8 pages, 4 figures",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2504.16041",
+  "published": "2025-04-22",
+  "queries": [
+   "activation"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Muon Optimizer Accelerates Grokking",
+  "why": [
+   "+3 optimizer",
+   "+5 muon"
+  ]
+ },
  "2504.20070": {
   "abstract": "Deep Knowledge Tracing (DKT) models student learning behavior by using Recurrent Neural Networks (RNNs) to predict future performance based on historical interaction data. However, the original implementation relied on standard RNNs in the Lua-based Torch framework, which limited extensibility and reproducibility. In this work, we revisit the DKT model from two perspectives: architectural improvements and optimization efficiency. First, we enhance the model using gated recurrent units, specifically Long Short-Term Memory (LSTM) networks and Gated Recurrent Units (GRU), which better capture long-term dependencies and help mitigate vanishing gradient issues. Second, we re-implement DKT using the PyTorch framework, enabling a modular and accessible infrastructure compatible with modern deep learning workflows. We also benchmark several optimization algorithms SGD, RMSProp, Adagrad, Adam, and AdamW to evaluate their impact on convergence speed and predictive accuracy in educational modeling tasks. Experiments on the Synthetic-5 and Khan Academy datasets show that GRUs and LSTMs achieve higher accuracy and improved training stability compared to basic RNNs, while adaptive optimizers such as Adam and AdamW consistently outperform SGD in both early-stage learning and final model performance. Our open-source PyTorch implementation provides a reproducible and extensible foundation for future research in neural knowledge tracing and personalized learning systems.",
   "comment": "11 pages, 2 figures",
@@ -1120,6 +1317,7 @@
  },
  "2505.01618": {
   "abstract": "We study compute efficiency of LLM training when using different parameterizations, i.e., rules for adjusting model and optimizer hyperparameters (HPs) as model size changes. Some parameterizations fail to transfer optimal base HPs (such as learning rate) across changes in model depth, requiring practitioners to either re-tune these HPs as they scale up (expensive), or accept sub-optimal training when re-tuning is prohibitive. Even when they achieve HP transfer, we develop theory to show parameterizations may still exist in the lazy learning regime where layers learn only features close to their linearization, preventing effective use of depth and nonlinearity. Finally, we identify and adopt the parameterization we call CompleteP that achieves both depth-wise HP transfer and non-lazy learning in all layers. CompleteP enables a wider range of model width/depth ratios to remain compute-efficient, unlocking shapes better suited for different hardware settings and operational contexts. Moreover, CompleteP enables 12-34% compute efficiency improvements over the prior state-of-the-art. All experiments were run on Cerebras CS-3 systems. A minimal implementation is available at https://github.com/EleutherAI/nanoGPT-mup/tree/completep.",
+  "chars": 100354,
   "comment": "NeurIPS 2025. v4 fixes Table 1 typo to match AdamW eps to Equation 40",
   "families": [
    "capacity",
@@ -1132,7 +1330,8 @@
    "mup"
   ],
   "score": 19,
-  "status": "screened",
+  "sha256": "9f8189cb99d30d5299b5804f92838fe53c710be81f0b935f4ba496276e6ed216",
+  "status": "fetched",
   "title": "Don't be lazy: CompleteP enables compute-efficient deep transformers",
   "why": [
    "+3 optimizer",
@@ -1386,6 +1585,7 @@
  },
  "2505.13389": {
   "abstract": "Scaling video diffusion transformers (DiTs) is limited by their quadratic 3D attention, even though most of the attention mass concentrates on a small subset of positions. We turn this observation into VSA, a trainable, hardware-efficient sparse attention that replaces full attention at \\emph{both} training and inference. In VSA, a lightweight coarse stage pools tokens into tiles and identifies high-weight \\emph{critical tokens}; a fine stage computes token-level attention only inside those tiles subjecting to block computing layout to ensure hard efficiency. This leads to a single differentiable kernel that trains end-to-end, requires no post-hoc profiling, and sustains 85\\% of FlashAttention3 MFU. We perform a large sweep of ablation studies and scaling-law experiments by pretraining DiTs from 60M to 1.4B parameters. VSA reaches a Pareto point that cuts training FLOPS by 2.53$\\times$ with no drop in diffusion loss. Retrofitting the open-source Wan-2.1 model speeds up attention time by 6$\\times$ and lowers end-to-end generation time from 31s to 18s with comparable quality. These results establish trainable sparse attention as a practical alternative to full attention and a key enabler for further scaling of video diffusion models. Code will be available at https://github.com/hao-ai-lab/FastVideo.",
+  "chars": 66731,
   "comment": "Accepted by Neurips 2025",
   "families": [
    "attention",
@@ -1398,7 +1598,8 @@
    "attention_sparse"
   ],
   "score": 18,
-  "status": "screened",
+  "sha256": "b4a706129d5264737889823abcaf6774412011d7e60f8a8cd13359767c7d362f",
+  "status": "fetched",
   "title": "VSA: Faster Video Diffusion with Trainable Sparse Attention",
   "why": [
    "+3 pretrain",
@@ -1413,6 +1614,7 @@
  },
  "2505.13738": {
   "abstract": "Efficient LLM pre-training requires well-tuned hyperparameters (HPs), including learning rate $\u03b7$ and weight decay $\u03bb$. We study scaling laws for HPs: formulas for how to scale HPs as we scale model size N, dataset size D, and batch size B. Recent work suggests the AdamW timescale, $\u03c4= B/(\u03b7\u03bbD)$, should remain constant across training settings, and we verify the implication that optimal $\u03bb$ scales linearly with B, for a fixed N and D. However, as N and D scale, we show optimal $\u03c4$ obeys a precise power law in the tokens-per-parameter ratio, D/N. This law thus provides a method to accurately predict $\u03bb$opt in advance of large-scale training. We also study scaling laws for optimal batch size Bopt (the B enabling lowest loss at a given N,D) and critical batch size Bcrit (the B beyond which further data parallelism becomes ineffective). In contrast to prior work, we find both Bopt and Bcrit scale as power laws in D, independent of model size, N. Finally, we analyze how these findings inform the real-world selection of Pareto-optimal N and D under dual training time and compute objectives. All experiments were run on Cerebras CS-3 systems.",
+  "chars": 99563,
   "comment": "NeurIPS 2025",
   "families": [
    "capacity",
@@ -1426,7 +1628,8 @@
    "batch_size_law"
   ],
   "score": 21,
-  "status": "screened",
+  "sha256": "2c8148cf6453cf953e8dc82cac343487fe7f5d3598cae157060c76958f2f000d",
+  "status": "fetched",
   "title": "Power Lines: Scaling Laws for Weight Decay and Batch Size in LLM Pre-training",
   "why": [
    "+3 pre-train",
@@ -1512,6 +1715,51 @@
    "+3 strong-lab signal"
   ]
  },
+ "2505.17505": {
+  "abstract": "Large language models (LLMs) have achieved notable progress. Despite their success, next-token prediction (NTP), the dominant method for LLM training and inference, is constrained in both contextual coverage and inference efficiency due to its inherently sequential process. To overcome these challenges, we propose leap multi-token prediction~(L-MTP), an innovative token prediction method that extends the capabilities of multi-token prediction (MTP) by introducing a leap-based mechanism. Unlike conventional MTP, which generates multiple tokens at adjacent positions, L-MTP strategically skips over intermediate tokens, predicting non-sequential ones in a single forward pass. This structured leap not only enhances the model's ability to capture long-range dependencies but also enables a decoding strategy specially optimized for non-sequential leap token generation, effectively accelerating inference. We theoretically demonstrate the benefit of L-MTP in improving inference efficiency. Experiments across diverse benchmarks validate its merit in boosting both LLM performance and inference speed. The source code is available at https://github.com/Xiaohao-Liu/L-MTP.",
+  "comment": "Accepted by NeurIPS 2025. Codes are available at https://github.com/Xiaohao-Liu/L-MTP",
+  "families": [
+   "ve_placement",
+   "objective"
+  ],
+  "id": "2505.17505",
+  "published": "2025-05-23",
+  "queries": [
+   "multi_token"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "L-MTP: Leap Multi-Token Prediction Beyond Adjacent Context for Large Language Models",
+  "why": [
+   "+3 multi-token prediction",
+   "-3 inference",
+   "-2 decoding",
+   "+5 neurips",
+   "+3 strong-lab signal",
+   "+2 code released"
+  ]
+ },
+ "2505.19482": {
+  "abstract": "The increasing demand for privacy protection and security considerations leads to a significant rise in the proportion of encrypted network traffic. Since traffic content becomes unrecognizable after encryption, accurate analysis is challenging, making it difficult to classify applications and detect attacks. Deep learning is currently the predominant approach for encrypted traffic classification through feature analysis. However, these methods face limitations due to their high dependence on labeled data and difficulties in detecting attack variants. First, their performance is highly sensitive to data quality, where the highcost manual labeling process and dataset imbalance significantly degrade results. Second, the rapid evolution of attack patterns makes it challenging for models to identify new types of attacks. To tackle these challenges, we present GBC, a generative model based on pre-training for encrypted traffic comprehension. Since traditional tokenization methods are primarily designed for natural language, we propose a protocol-aware tokenization approach for encrypted traffic that improves model comprehension of fields specific to network traffic. In addition, GBC employs pretraining to learn general representations from extensive unlabeled traffic data. Through prompt learning, it effectively adapts to various downstream tasks, enabling both high-quality traffic generation and effective detection. Evaluations across multiple datasets demonstrate that GBC achiev",
+  "comment": "This work has been submitted to the IEEE for possible publication",
+  "families": [
+   "schedule"
+  ],
+  "id": "2505.19482",
+  "published": "2025-05-26",
+  "queries": [
+   "data_quality"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Language of Network: A Generative Pre-trained Model for Encrypted Traffic Comprehension",
+  "why": [
+   "+3 pretrain",
+   "+3 pre-train",
+   "-2 prompt",
+   "+3 strong-lab signal"
+  ]
+ },
  "2505.19893": {
   "abstract": "Large language model pretraining is compute-intensive, yet many tokens contribute marginally to learning, resulting in inefficiency. We introduce Efficient Selective Language Modeling (ESLM), a risk-aware algorithm that improves training efficiency and distributional robustness by performing online token-level batch selection. ESLM leverages per-token statistics (e.g., entropy or loss) and applies value-at-risk thresholding to retain only the most informative tokens per batch. This data-centric mechanism reshapes the training loss, prioritizing high-risk tokens and eliminating redundant gradient computation. We frame ESLM as a bilevel game: the model competes with a masking adversary that selects worst-case token subsets under a constrained thresholding rule. In the loss-based setting, ESLM recovers conditional value-at-risk loss minimization, providing a principled connection to distributionally robust optimization. We extend our approach to Ada-ESLM, which adaptively tunes the selection confidence during training. Experiments on GPT-2 pretraining show that ESLM significantly reduces training FLOPs while maintaining or improving both perplexity and downstream performance compared to baselines. Our approach also scales across model sizes, pretraining corpora, and integrates naturally with knowledge distillation.",
   "chars": 99656,
@@ -1583,6 +1831,57 @@
    "+3 pretrain",
    "+2 loss",
    "-2 reasoning",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2505.20524": {
+  "abstract": "Despite the significant potential of FP8 data formats for large language model (LLM) pre-training, their adoption has been limited due to challenges in maintaining stability at scale. Existing approaches often rely on suboptimal fine-grained FP8 kernels or fall back to higher-precision matrix multiplications (GEMMs) in sensitive components, such as attention projections, compromising potential throughput gains. We introduce a new class of LLM architectures that, for the first time, support FP8 computation for all GEMMs within transformer blocks during both forward and backward passes. This enables unprecedented throughput gains, particularly at scale, while matching the downstream performance of standard BF16 training. Our architecture design reduces large outlier activations, promoting stable long-term FP8 training. In addition, we identify key metrics to monitor low-precision training and predict potential future divergences.",
+  "chars": 50514,
+  "comment": "19 pages including appendix",
+  "families": [
+   "attention",
+   "signal_path",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2505.20524",
+  "published": "2025-05-26",
+  "queries": [
+   "fp8_training"
+  ],
+  "score": 20,
+  "sha256": "bb764ffb374ddbb162c67293a7dea4ea6ed3b94bee29e886d269a3fa79166370",
+  "status": "fetched",
+  "title": "Towards Fully FP8 GEMM LLM Training at Scale",
+  "why": [
+   "+3 pre-train",
+   "+2 attention",
+   "+3 throughput",
+   "+3 fp8",
+   "+2 bf16",
+   "+2 kernel",
+   "+2 stability",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2505.20817": {
+  "abstract": "Gradient clipping is a widely used technique in Machine Learning and Deep Learning (DL), known for its effectiveness in mitigating the impact of heavy-tailed noise, which frequently arises in the training of large language models. Additionally, first-order methods with clipping, such as Clip-SGD, exhibit stronger convergence guarantees than SGD under the $(L_0,L_1)$-smoothness assumption, a property observed in many DL tasks. However, the high-probability convergence of Clip-SGD under both assumptions -- heavy-tailed noise and $(L_0,L_1)$-smoothness -- has not been fully addressed in the literature. In this paper, we bridge this critical gap by establishing the first high-probability convergence bounds for Clip-SGD applied to convex $(L_0,L_1)$-smooth optimization with heavy-tailed noise. Our analysis extends prior results by recovering known bounds for the deterministic case and the stochastic setting with $L_1 = 0$ as special cases. Notably, our rates avoid exponentially large factors and do not rely on restrictive sub-Gaussian noise assumptions, significantly broadening the applicability of gradient clipping.",
+  "comment": "33 pages",
+  "families": [
+   "signal_scale",
+   "optimizer_numeric"
+  ],
+  "id": "2505.20817",
+  "published": "2025-05-27",
+  "queries": [
+   "gradient_clip"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Convergence of Clipped-SGD for Convex $(L_0,L_1)$-Smooth Optimization with Heavy-Tailed Noise",
+  "why": [
+   "+2 convergence",
+   "+2 gradient",
    "+3 strong-lab signal"
   ]
  },
@@ -1693,6 +1992,7 @@
  },
  "2505.23725": {
   "abstract": "DiLoCo is a powerful framework for training large language models (LLMs), enabling larger optimal batch sizes and increased accelerator utilization under networking constraints. However, DiLoCo's performance has been shown to degrade as the number of workers (K) increases (Charles et al., 2025). In this work, we posit that a related but often overlooked factor in DiLoCo's behavior is the choice of inner optimizer, which shapes the pseudogradient used by the outer optimizer. Given the recent success of Muon relative to AdamW for data parallel (DP) training, we examine how Muon's normalized optimizer steps can affect the pseudogradient's quality. We find that, relative to AdamW, Muon yields more directionally correct pseudogradients as the number of workers ($K$) increases. In our experiments pre-training language models, we conduct extensive hyperparameter tuning across 150M, 416M, 914M, 1.76B, and 3.1B models for DiLoCo, MuLoCo, AdamW DP, and Muon DP. Consistently across all scales, we find that with $K\\geq1$ workers, MuLoCo (Muon inner optimizer DiLoCo) achieves superior performance to DiLoCo in absolute terms and for $K>2$ it outperforms DiLoCo relative to their data parallel baselines, while being compatible with quantization, streaming, and long synchronization intervals. At $K=1$, we find that MuLoCo can even outperform the data-parallel gold standard while having larger critical batch sizes. Finally, we extrapolate optimal hyperparameters to 15B scale and train a model ",
+  "chars": 38721,
   "comment": "",
   "families": [
    "token_exposure",
@@ -1705,7 +2005,8 @@
    "batch_size_law"
   ],
   "score": 18,
-  "status": "screened",
+  "sha256": "3657c4922e68ebca8c255d114f2cd5cb02572fc48056e241893cac9cd75bc13f",
+  "status": "fetched",
   "title": "MuLoCo: Muon is a practical inner optimizer for DiLoCo",
   "why": [
    "+3 pre-train",
@@ -1744,6 +2045,7 @@
  },
  "2505.23971": {
   "abstract": "The right batch size is important when training language models at scale: a large batch size is necessary for fast training, but a batch size that is too large will harm token efficiency. To navigate this tradeoff, McCandlish et al. (2018) suggest that a critical batch size (CBS), below which training will not substantially degrade loss, can be estimated based on the gradient noise scale during training. While their method has been adopted in practice, e.g., when training GPT-3, strong assumptions are required to justify gradient noise as a proxy for the CBS, which makes it unclear whether their approach should be trusted in practice, limiting its applicability. In this paper, we introduce a simple, empirical approach to directly measure the CBS and show how the CBS evolves over training. Applying our approach to the OLMo models, we find that CBS is near 0 at initialization, increases rapidly at first, and then plateaus as training progresses. Furthermore, we find that this trend holds across different model sizes (1B and 7B), suggesting CBS from small training runs can inform larger-scale training runs. Our findings about how the CBS changes over training motivate batch size warmup as a natural way to reliably train language models at large batch size: start the batch size small and increase it as the CBS grows. To validate this claim, we use batch size warmup to train OLMo 1B to slightly better loss than the original training run with 43% fewer gradient steps. This shows ho",
+  "chars": 55433,
   "comment": "Neurips 2025",
   "families": [
    "token_exposure",
@@ -1757,7 +2059,8 @@
    "batch_size_law"
   ],
   "score": 23,
-  "status": "screened",
+  "sha256": "64d3470c098446990196954ec2ffa5bc698ccca5358a363a406c98c54f5093a8",
+  "status": "fetched",
   "title": "Critical Batch Size Revisited: A Simple Empirical Approach to Large-Batch Language Model Training",
   "why": [
    "+3 warmup",
@@ -1873,6 +2176,31 @@
    "+2 attention",
    "+3 perplexity",
    "+5 iclr",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2506.04408": {
+  "abstract": "Humans have a remarkable ability to acquire and understand grammatical phenomena that are seen rarely, if ever, during childhood. Recent evidence suggests that language models with human-scale pretraining data may possess a similar ability by generalizing from frequent to rare constructions. However, it remains an open question how widespread this generalization ability is, and to what extent this knowledge extends to meanings of rare constructions, as opposed to just their forms. We fill this gap by testing human-scale transformer language models on their knowledge of both the form and meaning of the (rare and quirky) English LET-ALONE construction. To evaluate our LMs we construct a bespoke synthetic benchmark that targets syntactic and semantic properties of the construction. We find that human-scale LMs are sensitive to form, even when related constructions are filtered from the dataset. However, human-scale LMs do not make correct generalizations about LET-ALONE's meaning. These results point to an asymmetry in the current architectures' sample efficiency between language form and meaning, something which is not present in human language learners.",
+  "comment": "Empirical Methods for Natural Language Processing (EMNLP) 2025, Camera-Ready Version",
+  "families": [
+   "token_exposure",
+   "signal_scale",
+   "schedule",
+   "signal_path",
+   "input_pipeline"
+  ],
+  "id": "2506.04408",
+  "published": "2025-06-04",
+  "queries": [
+   "sample_efficiency"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Unpacking Let Alone: Human-Scale Models Generalize to a Rare Construction in Form but not Meaning",
+  "why": [
+   "+3 pretrain",
+   "+3 sample efficiency",
+   "+3 emnlp",
    "+3 strong-lab signal"
   ]
  },
@@ -2074,6 +2402,29 @@
    "+3 strong-lab signal"
   ]
  },
+ "2506.12543": {
+  "abstract": "Adam is known to perform significantly better than Stochastic Gradient Descent (SGD) in language models, a phenomenon for which a number of explanations have been proposed. In this work, we revisit this \"optimizer gap\" through a series of comprehensively tuned baseline training runs for language modeling with Transformers. We exhaustively study how momentum, gradient clipping, and batch size affect the gap between SGD and Adam. Our empirical findings show that SGD with momentum can actually perform similarly to Adam in small-batch settings, if tuned correctly. We revisit existing explanations for Adam's advantage, including heavy-tailed class imbalance, directional sharpness, and Hessian heterogeneity, which struggle to directly explain this phenomenon. Towards bridging this gap in our understanding, by analyzing our Transformer training runs and simple quadratic settings inspired by the literature, we provide new insights, driven by stochastic differential equation models, into the role of batch size on the training dynamics.",
+  "comment": "Short version accepted at the 2025 HiLD Workshop at ICML",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "optimizer_numeric"
+  ],
+  "id": "2506.12543",
+  "published": "2025-06-14",
+  "queries": [
+   "gradient_clip"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Is your batch size the problem? Revisiting the Adam-SGD gap in language modeling",
+  "why": [
+   "+3 optimizer",
+   "+2 batch size",
+   "+2 gradient",
+   "+5 icml"
+  ]
+ },
  "2506.15054": {
   "abstract": "The pursuit of faster optimization algorithms remains an active and important research direction in deep learning. Recently, the Muon optimizer [JJB+24] has demonstrated promising empirical performance, but its theoretical foundation remains less understood. In this paper, we bridge this gap and provide a theoretical analysis of Muon by placing it within the Lion-$\\mathcal{K}$ family of optimizers [CLLL24]. Specifically, we show that Muon corresponds to Lion-$\\mathcal{K}$ when equipped with the nuclear norm, and we leverage the theoretical results of Lion-$\\mathcal{K}$ to establish that Muon (with decoupled weight decay) implicitly solves an optimization problem that enforces a constraint on the spectral norm of weight matrices. This perspective not only demystifies the implicit regularization effects of Muon but also leads to natural generalizations through varying the choice of convex map $\\mathcal{K}$, allowing for the exploration of a broader class of implicitly regularized and constrained optimization algorithms.",
   "comment": "",
@@ -2220,6 +2571,7 @@
  },
  "2507.01598": {
   "abstract": "Muon, a recently proposed optimizer that leverages the inherent matrix structure of neural network parameters, has demonstrated strong empirical performance, indicating its potential as a successor to standard optimizers such as AdamW. This paper presents theoretical analysis to support its practical success. We provide convergence proofs for Muon across four practical settings, systematically examining its behavior with and without the inclusion of Nesterov momentum and weight decay. We then demonstrate that the addition of weight decay ensures almost-sure boundedness of the parameter and gradient norms -- without relying on the commonly imposed bounded-gradient assumption -- and clarify the interplay between the weight decay coefficient and the learning rate. Finally, we derive a lower bound on the critical batch size for Muon -- the batch size that minimizes the stochastic first-order oracle (SFO) complexity of training. Because the resulting formula involves problem-dependent quantities that are not directly observable (gradient variance, target precision, effective rank), it does not predict the critical batch size in absolute terms; rather, it reveals how the hyperparameters $\u03b2$ (momentum) and $\u03bb$ (weight decay) govern the qualitative scaling of this value. Our experiments validate these hyperparameter-dependent predictions across workloads including image classification and language modeling.",
+  "chars": 71002,
   "comment": "",
   "families": [
    "token_exposure",
@@ -2233,7 +2585,8 @@
    "batch_size_law"
   ],
   "score": 20,
-  "status": "screened",
+  "sha256": "1d48011ff3f7738082cd1b43d4456c37d9b2bbbfa3bb67fa376a9db9532e244e",
+  "status": "fetched",
   "title": "Convergence Bound and Critical Batch Size of Muon Optimizer",
   "why": [
    "+3 optimizer",
@@ -2427,6 +2780,7 @@
  "2507.13338": {
   "abstract": "Neural networks are often highly sensitive to input and weight perturbations. This sensitivity has been linked to pathologies such as vulnerability to adversarial examples, divergent training, and overfitting. To combat these problems, past research has looked at building neural networks entirely from Lipschitz components. However, these techniques have not matured to the point where researchers have trained a modern architecture such as a transformer with a Lipschitz certificate enforced beyond initialization. To explore this gap, we begin by developing and benchmarking novel, computationally-efficient tools for maintaining norm-constrained weight matrices. Applying these tools, we are able to train transformer models with Lipschitz bounds enforced throughout training. We find that optimizer dynamics matter: switching from AdamW to Muon improves standard methods -- weight decay and spectral normalization -- allowing models to reach equal performance with a lower Lipschitz bound. Inspired by Muon's update having a fixed spectral norm, we co-design a weight constraint method that improves the Lipschitz vs. performance tradeoff on MLPs and 2M parameter transformers. Our 2-Lipschitz transformer on Shakespeare text reaches validation accuracy 60%. Scaling to 145M parameters, our 10-Lipschitz transformer reaches 21% accuracy on internet text. However, to match the NanoGPT baseline validation accuracy of 39.4%, our Lipschitz upper bound increases to 10^264. Nonetheless, our Lipschi",
   "comment": "",
+  "error": "only 0 chars (no LaTeXML render?)",
   "families": [
    "signal_scale",
    "schedule",
@@ -2439,7 +2793,7 @@
    "init_scaling"
   ],
   "score": 26,
-  "status": "screened",
+  "status": "fetch_failed",
   "title": "Training Transformers with Enforced Lipschitz Constants",
   "why": [
    "+3 optimizer",
@@ -2476,6 +2830,82 @@
    "+3 warmup",
    "+3 mup",
    "-3 fine-tun",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2507.22565": {
+  "abstract": "The tension between data privacy and model utility has become the defining bottleneck for the practical deployment of large language models (LLMs) trained on sensitive corpora including healthcare. Differentially private stochastic gradient descent (DP-SGD) guarantees formal privacy, yet it does so at a pronounced cost: gradients are forcibly clipped and perturbed with noise, degrading sample efficiency and final accuracy. Numerous variants have been proposed to soften this trade-off, but they all share a handicap: their control knobs are hard-coded, global, and oblivious to the evolving optimization landscape. Consequently, practitioners are forced either to over-spend privacy budget in pursuit of utility, or to accept mediocre models in order to stay within privacy constraints. We present RLDP, the first framework to cast DP optimization itself as a closed-loop control problem amenable to modern deep reinforcement learning (RL). RLDP continuously senses rich statistics of the learning dynamics and acts by selecting fine-grained per parameter gradient-clipping thresholds as well as the magnitude of injected Gaussian noise. A soft actor-critic (SAC) hyper-policy is trained online during language model fine-tuning; it learns, from scratch, how to allocate the privacy budget where it matters and when it matters. Across more than 1,600 ablation experiments on GPT2-small, Llama-1B, Llama-3B, and Mistral-7B, RLDP delivers perplexity reductions of 1.3-30.5% (mean 5.4%) and an avera",
+  "comment": "",
+  "families": [
+   "token_exposure",
+   "optimizer_numeric"
+  ],
+  "id": "2507.22565",
+  "published": "2025-07-30",
+  "queries": [
+   "gradient_clip"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "Efficient Differentially Private Fine-Tuning of LLMs via Reinforcement Learning",
+  "why": [
+   "+4 from scratch",
+   "+3 perplexity",
+   "+3 sample efficiency",
+   "+3 ablation",
+   "+2 gradient",
+   "-3 inference",
+   "-3 deployment",
+   "-3 fine-tun"
+  ]
+ },
+ "2507.23083": {
+  "abstract": "Positional encoding is a vital component of Transformer architectures, enabling models to incorporate sequence order into self-attention mechanisms. Rotary Positional Embeddings (RoPE) have become a widely adopted solution due to their compatibility with relative position encoding and computational efficiency. However, RoPE relies on static, input-independent sinusoidal frequency patterns, limiting its ability to model context-sensitive relationships. In this work, we propose CARoPE (Context-Aware Rotary Positional Embedding), a novel generalization of RoPE that dynamically generates head-specific frequency patterns conditioned on token embeddings. This design introduces token- and context-sensitive positional representations while preserving RoPE efficiency and architectural simplicity. CARoPE computes input-dependent phase shifts using a bounded transformation of token embeddings and integrates them into the rotary mechanism across attention heads. We evaluate CARoPE on the FineWeb-Edu-10B dataset using GPT-2 variants trained on next-token prediction tasks. Experimental results show that CARoPE consistently outperforms RoPE and other common positional encoding baselines, achieving significantly lower perplexity, even at longer context lengths. Additionally, CARoPE enables faster training throughput without sacrificing model stability. These findings demonstrate that CARoPE offers a scalable, expressive, and efficient upgrade to existing positional encoding strategies in Tra",
+  "comment": "4 pages, 1 table",
+  "families": [
+   "attention",
+   "ve_placement",
+   "signal_scale",
+   "objective",
+   "signal_path",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2507.23083",
+  "published": "2025-07-30",
+  "queries": [
+   "positional"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Context-aware Rotary Position Embedding",
+  "why": [
+   "+2 attention",
+   "+3 throughput",
+   "+3 perplexity",
+   "+3 gpt-2",
+   "+2 stability",
+   "-4 serving",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2507.23512": {
+  "abstract": "Gradient clipping is a fundamental tool in Deep Learning, improving the high-probability convergence of stochastic first-order methods like SGD, AdaGrad, and Adam under heavy-tailed noise, which is common in training large language models. It is also a crucial component of Differential Privacy (DP) mechanisms. However, existing high-probability convergence analyses typically require the clipping threshold to increase with the number of optimization steps, which is incompatible with standard DP mechanisms like the Gaussian mechanism. In this work, we close this gap by providing the first high-probability convergence analysis for DP-Clipped-SGD with a fixed clipping level, applicable to both convex and non-convex smooth optimization under heavy-tailed noise, characterized by a bounded central $\u03b1$-th moment assumption, $\u03b1\\in (1,2]$. Our results show that, with a fixed clipping level, the method converges to a neighborhood of the optimal solution with a faster rate than the existing ones. The neighborhood can be balanced against the noise introduced by DP, providing a refined trade-off between convergence speed and privacy guarantees.",
+  "comment": "60 pages",
+  "families": [
+   "optimizer_numeric"
+  ],
+  "id": "2507.23512",
+  "published": "2025-07-31",
+  "queries": [
+   "gradient_clip"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "Differentially Private Clipped-SGD: High-Probability Convergence with Arbitrary Clipping Level",
+  "why": [
+   "+2 convergence",
+   "+2 gradient",
    "+3 strong-lab signal"
   ]
  },
@@ -2612,6 +3042,7 @@
   "id": "2508.10975",
   "published": "2025-08-14",
   "queries": [
+   "data_quality",
    "optimizer_benchmark"
   ],
   "score": 6,
@@ -2799,6 +3230,7 @@
  },
  "2509.11983": {
   "abstract": "Neural network (NN) training is inherently a large-scale matrix optimization problem, yet the matrix structure of NN parameters has long been overlooked. Recently, the optimizer Muon \\citep{jordanmuon}, which explicitly exploits this structure, has gained significant attention for its strong performance in foundation model training. A key component contributing to Muon's success is matrix orthogonalization. In this paper, we propose \\textit{low-rank orthogonalization}, which performs orthogonalization by leveraging the low-rank nature of gradients during NN training. Building on this, we introduce low-rank matrix-signed gradient descent (MSGD) and a low-rank variant of Muon. Numerical experiments demonstrate the superior performance of low-rank orthogonalization, with low-rank Muon achieving promising results in GPT-2 and LLaMA pretraining -- surpassing the carefully tuned vanilla Muon on tasks with large model sizes. Theoretically, we establish the iteration complexity of low-rank MSGD for finding an approximate stationary solution, and the iteration complexity of low-rank Muon for finding an approximate stochastic stationary solution under heavy-tailed noise. The code to reproduce our numerical experiments is available at https://github.com/dengzhanwang/Low-rank-Muon.",
+  "chars": 85584,
   "comment": "20 pages, add numerical comparison with Galore and SOAP",
   "families": [
    "attention",
@@ -2810,7 +3242,8 @@
    "optimizer_muon"
   ],
   "score": 20,
-  "status": "screened",
+  "sha256": "249aa51158097daa59de16acdc81fc13ec1839dfda2e3518cd050170ced5ec85",
+  "status": "fetched",
   "title": "Low-rank Orthogonalization for Large-scale Matrix Optimization with Applications to Foundation Model Training",
   "why": [
    "+3 pretrain",
@@ -2824,6 +3257,7 @@
  },
  "2509.14562": {
   "abstract": "Large models recently are widely applied in machine learning, so efficient training of large models has received widespread attention. More recently, the useful Muon optimizer is specifically designed for matrix-structured parameters of large models. Although some works have begun to study the Muon optimizer, the existing Muon and its variants still suffer from high sample complexity or high memory for large models. To fill this gap, we propose a light and fast Muon (LiMuon) optimizer for training large models, which builds on the momentum-based variance reduced technique and randomized Singular Value Decomposition (SVD). In particular, our LiMuon simultaneously has a lower memory and lower sample complexity than the Muon and its variants. Moreover, we prove that our LiMuon with lower memory has a lower sample complexity of $O(\u03b5^{-3})$ for finding an $\u03b5$-stationary solution of non-convex stochastic optimization under the generalized smoothness condition. To further narrow practice and theory gap, we also prove that our LiMuon with Newton-Schulz steps has a lower sample complexity than the Muon with Newton-Schulz steps. Numerical experimental results on pre-training Mamba-130M, Qwen2.5-0.5B and ViT models demonstrate effectiveness of our LiMuon.",
+  "chars": 83752,
   "comment": "Published in ICML 2026",
   "families": [
    "attention",
@@ -2837,7 +3271,8 @@
    "optimizer_muon"
   ],
   "score": 21,
-  "status": "screened",
+  "sha256": "7893b4749d5d8976279b3649824550721d587695cbddd36172cc25e150e2bb04",
+  "status": "fetched",
   "title": "LiMuon: Light and Fast Muon Optimizer for Large Models",
   "why": [
    "+3 pre-train",
@@ -2879,6 +3314,7 @@
  },
  "2509.19189": {
   "abstract": "Scaling laws have emerged as a unifying lens for understanding and guiding the training of large language models (LLMs). However, existing studies predominantly focus on the final-step loss, leaving open whether the entire loss dynamics obey similar laws and, crucially, how the learning rate schedule (LRS) shapes them. We address these gaps in a controlled theoretical setting by analyzing stochastic gradient descent (SGD) on a power-law kernel regression model. The key insight is a novel intrinsic-time viewpoint, which captures the training progress more faithfully than iteration count. We then establish a Functional Scaling Law (FSL) that captures the full loss trajectory under arbitrary LRSs, with the schedule's influence entering through a simple convolutional functional. We further instantiate the theory for three representative LRSs -- constant, exponential decay, and warmup-stable-decay (WSD) -- and derive explicit scaling relations in both data- and compute-limited regimes. These comparisons explain key empirical phenomena: (i) higher-capacity models are more data- and compute-efficient; (ii) learning-rate decay improves training efficiency; and (iii) WSD-type schedules outperform pure decay. Finally, experiments on LLMs ranging from 0.1B to 1B parameters demonstrate the practical relevance of FSL as a surrogate model for fitting and predicting loss trajectories in large-scale pre-training.",
+  "chars": 184579,
   "comment": "60 pages, accepted by NeurIPS 2025 as a spotlight paper",
   "families": [
    "capacity",
@@ -2894,7 +3330,8 @@
    "lr_wsd"
   ],
   "score": 28,
-  "status": "screened",
+  "sha256": "63349e084462d739169630d81907171c31f354d0799b46141ebb092b5c518b33",
+  "status": "fetched",
   "title": "Functional Scaling Laws in Kernel Regression: Loss Dynamics and Learning Rate Schedules",
   "why": [
    "+3 pre-train",
@@ -2932,8 +3369,36 @@
    "+3 strong-lab signal"
   ]
  },
+ "2509.22536": {
+  "abstract": "The immense computational cost of training Large Language Models (LLMs) presents a major barrier to innovation. While FP8 training offers a promising solution with significant theoretical efficiency gains, its widespread adoption has been hindered by the lack of a comprehensive, open-source training recipe. To bridge this gap, we introduce an end-to-end FP8 training recipe that seamlessly integrates continual pre-training and supervised fine-tuning. Our methodology employs a fine-grained, hybrid-granularity quantization strategy to maintain numerical fidelity while maximizing computational efficiency. Through extensive experiments, including the continue pre-training of models on a 160B-token corpus, we demonstrate that our recipe is not only remarkably stable but also essentially lossless, achieving performance on par with the BF16 baseline across a suite of reasoning benchmarks. Crucially, this is achieved with substantial efficiency improvements, including up to a 22% reduction in training time, a 14% decrease in peak memory usage, and a 19% increase in throughput. Our results establish FP8 as a practical and robust alternative to BF16, and we will release the accompanying code to further democratize large-scale model training.",
+  "comment": "This paper has been withdrawn by the authors due to a significant bug discovered in our data processing pipeline. This bug affects the validity of the experimental results, and we can no longer stand by the conclusions presented",
+  "families": [
+   "schedule",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2509.22536",
+  "published": "2025-09-26",
+  "queries": [
+   "fp8_training"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "A Comprehensive FP8 Training Recipe for Reasoning-Enhanced Language Models",
+  "why": [
+   "+3 pre-train",
+   "+3 throughput",
+   "+3 fp8",
+   "+2 bf16",
+   "+2 loss",
+   "+1 open-source",
+   "-2 quantiz",
+   "-3 fine-tun"
+  ]
+ },
  "2509.24218": {
   "abstract": "Large language models (LLMs) have demonstrated impressive generalization and emergent capabilities, yet their pre-training remains computationally expensive and sensitive to optimization dynamics. While Adam-based optimizers offer fast convergence by adapting learning rates coordinate-wise, recent studies reveal that their updates often suffer from poor spectral conditioning and low-rank structures, hindering efficiency. Muon addresses this issue via global spectral normalization but lacks the per-coordinate adaptivity of Adam. In this work, we propose Column-Normalized Adam (Conda), a novel optimizer that bridges the strengths of both approaches. Conda projects updates into an orthogonal subspace and applies column-wise second moment normalization based on the projected gradients, thereby achieving both improved spectral conditioning and maintaining coordinate-wise adaptivity. This design alleviates the spectral pathologies of Adam while preserving its fast convergence behavior. Extensive experiments on the LLaMA and GPT-2 series show that Conda consistently outperforms AdamW, Muon, and other baselines in pre-training. Remarkably, on the LLaMA series, Conda achieves 2-2.5 the convergence speed of AdamW, measured in both training steps and training time. Further ablations demonstrate its robustness under diverse training setups. These results collectively highlight Conda as an effective and broadly applicable optimizer for large-scale LLM training. The code is released on htt",
+  "chars": 87320,
   "comment": "",
   "families": [
    "signal_scale",
@@ -2946,7 +3411,8 @@
    "optimizer_adam_variants"
   ],
   "score": 22,
-  "status": "screened",
+  "sha256": "3c2bf492242ad47e394ab2528c790d71debcd93e11c83311e748813f81728e4d",
+  "status": "fetched",
   "title": "Conda: Column-Normalized Adam for Training Large Language Models Faster",
   "why": [
    "+3 pre-train",
@@ -2998,7 +3464,8 @@
   "id": "2509.24356",
   "published": "2025-09-29",
   "queries": [
-   "data_ordering"
+   "data_ordering",
+   "sample_efficiency"
   ],
   "score": 8,
   "sha256": "f2303acaccd92078063ee7f98b6ff2fb9ce336b94d1ddb1d2a547dacf298c42e",
@@ -3016,6 +3483,7 @@
  },
  "2509.24406": {
   "abstract": "We present a comprehensive theoretical and empirical study of the Muon optimizer for training transformers only with a small to medium decoder (30M - 200M parameters), with an emphasis on its mathematical foundations, convergence properties and synergistic interactions with modern architectural optimizations. Building on recent work showing Muon's scalability, we provide rigorous theoretical analysis including: (i)showing the convergence rate under standard assumptions, (ii) spectral regularization properties that prevent gradient explosion, (iii) connection to natural gradient descent on the Stiefel manifold, and (iv) equivalence to steepest gradient descent under the spectral norm. Crucially, we demonstrate that Muon expands the Pareto frontier in the compute-time trade-off by maintaining superior data efficiency at large batch sizes, a key finding of~\\cite{essentialai2025muon} that we validate across our model scales. Empirically, Muon reaches the target loss with 48-52\\% of the training calculated by AdamW while maintaining or improving the final perplexity, consistent with larger-scale results. When combined with Multi-Head Latent Attention (MLA) and Mixture-of-Experts (MoE), we observe multiplicative efficiency gains: MLA+MoE+Muon achieves 68\\% memory reduction and 3.2$\\times$ inference speedup, while improving perplexity by 8-12\\%. We provide detailed procedures on 15 architectural and optimizer components, stability analyzes across 100+ training runs, and practical im",
+  "chars": 27423,
   "comment": "",
   "families": [
    "token_exposure",
@@ -3030,7 +3498,8 @@
    "optimizer_adam_variants"
   ],
   "score": 23,
-  "status": "screened",
+  "sha256": "de06c0407a949b2c66cb21f20fa8ee63aaccdc2bbd9d54acd76d00701bd07d4c",
+  "status": "fetched",
   "title": "Muon: Training and Trade-offs with Latent Attention and MoE",
   "why": [
    "+3 optimizer",
@@ -3160,7 +3629,8 @@
   "id": "2510.00345",
   "published": "2025-09-30",
   "queries": [
-   "init_scaling"
+   "init_scaling",
+   "value_residual"
   ],
   "score": 6,
   "sha256": "a3ca9c071703df5d7b162f0b472c30de51d85b3a5b7db3e9704b8b78ee2b879c",
@@ -3173,6 +3643,7 @@
  },
  "2510.00643": {
   "abstract": "Recent optimizers like Muon, Scion, and Gluon have pushed the frontier of large-scale deep learning by exploiting layer-wise linear minimization oracles (LMOs) over non-Euclidean norm balls, capturing neural network structure in ways traditional algorithms cannot. Yet, no principled distributed framework exists for these methods, and communication bottlenecks remain unaddressed. The very few distributed variants are heuristic, with no convergence guarantees in sight. We introduce EF21-Muon, the first communication-efficient, non-Euclidean LMO-based optimizer with rigorous convergence guarantees. EF21-Muon supports stochastic gradients, momentum, and bidirectional compression with error feedback-marking the first extension of error feedback beyond the Euclidean setting. It recovers Muon/Scion/Gluon when compression is off and specific norms are chosen, providing the first efficient distributed implementation of this powerful family. Our theory covers non-Euclidean smooth and the more general $(L^0, L^1)$-smooth setting, matching best-known Euclidean rates and enabling faster convergence under suitable norm choices. We further extend the analysis to layer-wise (generalized) smoothness regimes, capturing the anisotropic structure of deep networks. Experiments on NanoGPT benchmarking EF21-Muon against uncompressed Muon/Scion/Gluon demonstrate up to $7\\times$ communication savings with no accuracy degradation.",
+  "chars": 269203,
   "comment": "",
   "families": [
    "schedule",
@@ -3184,7 +3655,8 @@
    "optimizer_muon"
   ],
   "score": 20,
-  "status": "screened",
+  "sha256": "1342ac5cea4d82e866c370cb498520ca7097d1c6fb497c4ea24fcea030bd30e3",
+  "status": "fetched",
   "title": "Error Feedback for Muon and Friends",
   "why": [
    "+3 optimizer",
@@ -3192,6 +3664,54 @@
    "+2 convergence",
    "+5 nanogpt",
    "+2 gradient",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.01163": {
+  "abstract": "The factors driving the performance of in-context learning (ICL) in large language models (LLMs) remain poorly understood despite ICL's surprising effectiveness, enabling models to adapt to new tasks from only a handful of examples. To clarify and improve these capabilities, we characterize how the statistical properties of the pretraining distribution (e.g., tail behavior, coverage) shape ICL. We develop a theoretical framework that encompasses generalization and task selection and show how distributional properties govern sample efficiency, task retrieval, and robustness. To this end, we generalize existing concentration results to heavy-tailed priors and dependent sequences, better reflecting the structure of LLM pretraining data. Our framework reveals a fundamental design trade-off: heavy-tailed pretraining distributions facilitate robust task selection under distribution shifts but are detrimental to generalization, especially in low-data regimes. We then empirically evaluate our predictions by studying how ICL performance varies with the pretraining distribution on challenging tasks such as stochastic differential equations and stochastic processes with memory. Together, these findings suggest that controlling key statistical properties of the pretraining distribution is essential for building ICL-capable and reliable LLMs.",
+  "comment": "57 pages, 15 figures; to be presented at ICML 2026",
+  "families": [
+   "token_exposure",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2510.01163",
+  "published": "2025-10-01",
+  "queries": [
+   "sample_efficiency"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "How Does the Pretraining Distribution Shape In-Context Learning? A Fundamental Trade-Off",
+  "why": [
+   "+3 pretrain",
+   "+3 sample efficiency",
+   "-2 in-context learning",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.01571": {
+  "abstract": "Protein language models (PLMs) have advanced computational protein science through large-scale pretraining and scalable architectures. In parallel, reinforcement learning (RL) has broadened exploration and enabled precise multi-objective optimization in protein design. Yet whether RL can push PLMs beyond their pretraining priors to uncover latent sequence-structure-function rules remains unclear. We address this by pairing RL with PLMs across four domains: antimicrobial peptide design, kinase variant optimization, antibody engineering, and inverse folding. Using diverse RL algorithms and model classes, we ask if RL improves sampling efficiency and, more importantly, if it reveals capabilities not captured by supervised learning. Across benchmarks, RL consistently boosts success rates and sample efficiency. Performance follows a three-factor interaction: task headroom, reward fidelity, and policy capacity jointly determine gains. When rewards are accurate and informative, policies have sufficient capacity, and tasks leave room beyond supervised baselines, improvements scale; when rewards are noisy or capacity is constrained, gains saturate despite exploration. This view yields practical guidance for RL in protein design: prioritize reward modeling and calibration before scaling policy size, match algorithm and regularization strength to task difficulty, and allocate capacity where marginal gains are largest. Implementation is available at https://github.com/chq1155/RL-PLM.",
+  "comment": "24 pages, 7 figures, 4 tables",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "objective",
+   "signal_path"
+  ],
+  "id": "2510.01571",
+  "published": "2025-10-02",
+  "queries": [
+   "sample_efficiency"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "From Supervision to Exploration: What Does Protein Language Model Learn During Reinforcement Learning?",
+  "why": [
+   "+3 pretrain",
+   "+3 sample efficiency",
+   "-3 lora",
    "+3 strong-lab signal"
   ]
  },
@@ -3531,6 +4051,7 @@
  },
  "2510.11354": {
   "abstract": "Adam is a popular and widely used adaptive gradient method in deep learning, which has also received tremendous focus in theoretical research. However, most existing theoretical work primarily analyzes its full-batch version, which differs fundamentally from the stochastic variant used in practice. Unlike SGD, stochastic Adam does not converge to its full-batch counterpart even with infinitesimal learning rates. We present the first theoretical characterization of how batch size affects Adam's generalization, analyzing two-layer over-parameterized CNNs on image data. Our results reveal that while both Adam and AdamW with proper weight decay $\u03bb$ converge to poor test error solutions, their mini-batch variants can achieve near-zero test error. We further prove Adam has a strictly smaller effective weight decay bound than AdamW, theoretically explaining why Adam requires more sensitive $\u03bb$ tuning. Extensive experiments validate our findings, demonstrating the critical role of batch size and weight decay in Adam's generalization performance.",
+  "chars": 251077,
   "comment": "71 pages, 12 figures, NeurIPS 2025",
   "families": [
    "token_exposure",
@@ -3543,7 +4064,8 @@
    "optimizer_adam_variants"
   ],
   "score": 18,
-  "status": "screened",
+  "sha256": "0e7b076faea3434e0794dfffb1a3997baef33e5b06c9ae141b9014da73664143",
+  "status": "fetched",
   "title": "Understanding the Generalization of Stochastic Gradient Adam in Learning Neural Networks",
   "why": [
    "+3 learning rate",
@@ -3577,6 +4099,7 @@
  },
  "2510.14717": {
   "abstract": "Increasing the batch size during training -- a ''batch ramp'' -- is a promising strategy to accelerate large language model pretraining. While for SGD, doubling the batch size can be equivalent to halving the learning rate, the optimal strategy for adaptive optimizers like Adam is less clear. As a result, any batch-ramp scheduling, if used at all, is typically tuned heuristically. This work develops a principled framework for batch-size scheduling and introduces Seesaw: whenever a standard scheduler would halve the learning rate, Seesaw instead multiplies it by $1/\\sqrt{2}$ and doubles the batch size, preserving loss dynamics while reducing serial steps. Theoretically, we provide, to our knowledge, the first finite-sample proof of equivalence between learning-rate decay and batch-size ramp-up for SGD on noisy linear regression, and we extend this equivalence to normalized SGD, a tractable proxy for Adam, under a variance-dominated regime observed in practice. Empirically, on 150M/300M/600M-parameter models trained at Chinchilla scale using a constant (critical) batch size, Seesaw matches cosine decay at equal FLOPs while reducing wall-clock time by $\\approx 36\\%$, approaching the theoretical limit implied by our analysis.",
+  "chars": 75002,
   "comment": "",
   "families": [
    "token_exposure",
@@ -3592,7 +4115,8 @@
    "batch_size_law"
   ],
   "score": 20,
-  "status": "screened",
+  "sha256": "e08aa66da31772441450e65ee593bf64bdd568acbcff6fb2c57d296aa07399ee",
+  "status": "fetched",
   "title": "Seesaw: Accelerating Training by Balancing Learning Rate and Batch Size Scheduling",
   "why": [
    "+3 pretrain",
@@ -3603,6 +4127,32 @@
    "+2 normaliz",
    "+4 wall-clock",
    "+2 loss"
+  ]
+ },
+ "2510.16807": {
+  "abstract": "Transformer models have driven breakthroughs across various language tasks by their strong capability to learn rich contextual representations. Scaling them to improve representation, however, often demands substantial memory and compute costs, such as the Key-Value (KV) cache used during auto-regressive decoding. Skip connections offer a promising way to improve representation without bloating resource usage, yet most prior works either improve expressivity while leaving KV costs unchanged, or reduce memory at the cost of weaker representation. In this work, we propose SkipV1Former, a Transformer variant that uses skip connections from the first layer's Value heads to strengthen model representation and reduce KV cache. Specifically, from the second block onward, each layer reuses half of its Value heads from the very first layer, while computing the other half as usual-cutting Value projections and V cache by nearly 50 \\%. Theoretically, we show that routing uncompressed first-layer Values into deeper layers restores information lost to compression and accelerates the model's implicit mesa-optimization-a key pattern of Transformer in auto-regressive tasks. Empirically, across different model scales, SkipV1Former delivers consistent reductions of approximately 25 \\% in KV cache while improving perplexity relative to standard Multi-Head Attention (MHA) Transformers and some advanced variants. Moreover, we propose a recipe for uptraining existing MHA Transformer checkpoints to",
+  "comment": "The code is available at: \\url{https://github.com/Zhoutong-Wu/SkipV1Former}",
+  "families": [
+   "attention",
+   "ve_placement",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2510.16807",
+  "published": "2025-10-19",
+  "queries": [
+   "value_residual"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Improving Model Representation and Reducing KV Cache via Skip Connections with First Value Heads",
+  "why": [
+   "+2 attention",
+   "+3 perplexity",
+   "-2 kv cache",
+   "-2 decoding",
+   "+3 strong-lab signal",
+   "+2 code released"
   ]
  },
  "2510.16981": {
@@ -3667,6 +4217,7 @@
  },
  "2510.19933": {
   "abstract": "The Muon optimizer has rapidly emerged as a powerful, geometry-aware alternative to AdamW, demonstrating strong performance in large-scale training of neural networks. However, a critical theory-practice disconnect exists: Muon's efficiency relies on fast, approximate orthogonalization, yet all prior theoretical work analyzes an idealized, computationally intractable version assuming exact SVD-based updates. This work moves beyond the ideal by providing the first analysis of the inexact orthogonalized update at Muon's core. We develop our analysis within the general framework of Linear Minimization Oracle (LMO)-based optimization, introducing a realistic additive error model to capture the inexactness of practical approximation schemes. Our analysis yields explicit bounds that quantify performance degradation as a function of the LMO inexactness/error. We reveal a fundamental coupling between this inexactness and the optimal step size and momentum: lower oracle precision requires a smaller step size but larger momentum parameter. These findings elevate the approximation procedure (e.g., the number of Newton-Schulz steps) from an implementation detail to a critical parameter that must be co-tuned with the learning schedule. NanoGPT experiments directly confirm the predicted coupling, with optimal learning rates clearly shifting as approximation precision changes.",
+  "chars": 126269,
   "comment": "",
   "families": [
    "schedule",
@@ -3678,7 +4229,8 @@
    "optimizer_orthogonal"
   ],
   "score": 18,
-  "status": "screened",
+  "sha256": "d32438e607c08419f6ca3e07f8f4be241025346cddff5d65cd531c1abbcb2429",
+  "status": "fetched",
   "title": "Beyond the Ideal: Analyzing the Inexact Muon Update",
   "why": [
    "+3 optimizer",
@@ -3686,6 +4238,29 @@
    "+3 learning rate",
    "+2 schedule",
    "+5 nanogpt"
+  ]
+ },
+ "2510.20280": {
+  "abstract": "We propose ContextLM, a framework that implicitly learns multi-token prediction by augmenting standard pretraining with an intrinsic next-context prediction objective. ContextLM builds a language model on top of context embeddings that span multiple tokens, enabling better next-token prediction by predicting the next context. Our model is fully compatible with standard autoregressive, token-by-token evaluation paradigms (e.g., perplexity). Extensive experiments with GPT-2 and Pythia backbones (up to 1.5B parameters and 300B training tokens) reveal that ContextLM shifts the Pareto frontier of scaling laws, exhibiting superior efficiency in parameters, training tokens, and FLOPs. Our results show that ContextLM could already achieve the baseline perplexity using 39\\% fewer parameters and demonstrates robust generalization improvements on extensive downstream tasks under equivalent parameter counts.",
+  "comment": "19pages,6 figures, 13 Tables",
+  "families": [
+   "capacity",
+   "ve_placement",
+   "objective"
+  ],
+  "id": "2510.20280",
+  "published": "2025-10-23",
+  "queries": [
+   "multi_token"
+  ],
+  "score": 12,
+  "status": "screened",
+  "title": "Context-level Language Modeling by Learning Predictive Context Embeddings",
+  "why": [
+   "+3 pretrain",
+   "+3 perplexity",
+   "+3 gpt-2",
+   "+3 multi-token prediction"
   ]
  },
  "2510.20787": {
@@ -3811,6 +4386,30 @@
    "+2 stability",
    "+2 gradient",
    "-2 reasoning",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2510.24448": {
+  "abstract": "Large language models (LLMs) have demonstrated that large-scale pretraining enables systems to adapt rapidly to new problems with little supervision in the language domain. This success, however, has not translated as effectively to the visual domain, where models, including LLMs, continue to struggle with compositional understanding, sample efficiency, and general-purpose problem-solving. We investigate Video Diffusion Models (VDMs) as a promising direction for bridging this gap. Pretraining on spatiotemporal data endows these models with strong inductive biases for structure and dynamics, which we hypothesize can support broad task adaptability. To test this, we design a controlled evaluation in which both a pretrained LLM and a pretrained VDM are equipped with lightweight adapters and presented with tasks in their natural modalities. Across benchmarks including ARC-AGI, ConceptARC, visual games, route planning, and cellular automata, VDMs demonstrate higher data efficiency than their language counterparts. Taken together, our results indicate that video pretraining offers inductive biases that support progress toward visual foundation models.",
+  "comment": "Updated version from preprint arXiv:2506.07280 (Gen2Gen) focused on visual intelligence. This work can be considered as v2",
+  "families": [
+   "token_exposure",
+   "signal_scale",
+   "objective",
+   "systems"
+  ],
+  "id": "2510.24448",
+  "published": "2025-10-28",
+  "queries": [
+   "sample_efficiency"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Rethinking Visual Intelligence: Insights from Video Pretraining",
+  "why": [
+   "+3 pretrain",
+   "+3 sample efficiency",
+   "-3 diffusion",
    "+3 strong-lab signal"
   ]
  },
@@ -3940,6 +4539,32 @@
    "+3 strong-lab signal"
   ]
  },
+ "2511.02302": {
+  "abstract": "Training large Mixture-of-Experts (MoE) models remains computationally prohibitive due to their extreme compute and memory demands. Although low-precision training promises to accelerate computation and reduce memory footprint, existing implementations still rely on BF16-dominated dataflows with frequent quantize-dequantize (Q/DQ) conversions. These redundant casts erode much of FP8's theoretical efficiency. However, naively removing these casts by keeping dataflows entirely in FP8 introduces double quantization error: tensors quantized along different dimensions accumulate inconsistent scaling factors, degrading numerical stability. We propose FP8-Flow-MoE, an FP8 training recipe featuring a quantization-consistent FP8-centric dataflow with a scaling-aware transpose and fused FP8 operators that streamline computation and eliminate explicit cast operations from 12 to 2. Evaluations on a 671B-parameter MoE model demonstrate up to 21\\% higher throughput and 16.5 GB lower memory usage per GPU compared to BF16 and na\u00efve FP8 baselines, while maintaining stable convergence. We provide a plug-and-play FP8 recipe compatible with TransformerEngine and Megatron-LM, which will be open-sourced soon.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2511.02302",
+  "published": "2025-11-04",
+  "queries": [
+   "fp8_training"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "FP8-Flow-MoE: A Casting-Free FP8 Recipe without Double Quantization Error",
+  "why": [
+   "+3 throughput",
+   "+3 fp8",
+   "+2 bf16",
+   "+2 convergence",
+   "+2 stability",
+   "+1 open-source",
+   "-2 quantiz"
+  ]
+ },
  "2511.05560": {
   "abstract": "We study architectural and optimization techniques for sample-efficient language modeling under the constraints of the BabyLM 2025 shared task. Our model, BLaLM, replaces self-attention with a linear-time mLSTM token mixer and explores lightweight enhancements, including short convolutions, sliding window attention with dynamic modulation, and Hedgehog feature maps. To support training in low-resource settings, we curate a high-quality corpus emphasizing readability and pedagogical structure. Experiments across both STRICT and STRICT-SMALL tracks show that (1) linear attention combined with sliding window attention consistently improves zero-shot performance, and (2) the Muon optimizer stabilizes convergence and reduces perplexity over AdamW. These results highlight effective strategies for efficient language modeling without relying on scale.",
   "chars": 49190,
@@ -3966,6 +4591,30 @@
    "+2 convergence",
    "+3 perplexity",
    "+3 sample-efficient"
+  ]
+ },
+ "2511.05811": {
+  "abstract": "Training large language models with FP8 formats offers significant efficiency gains. However, the reduced numerical precision of FP8 poses challenges for stable and accurate training. Current frameworks preserve training performance using mixed-granularity quantization, i.e., applying per-group quantization for activations and per-tensor/block quantization for weights. While effective, per-group quantization requires scaling along the inner dimension of matrix multiplication, introducing additional dequantization overhead. Moreover, these frameworks often rely on just-in-time scaling to dynamically adjust scaling factors based on the current data distribution. However, this online quantization is inefficient for FP8 training, as it involves multiple memory reads and writes that negate the performance benefits of FP8. To overcome these limitations, we propose MOSS, a novel FP8 training framework that ensures both efficiency and numerical stability. MOSS introduces two key innovations: (1) a two-level microscaling strategy for quantizing sensitive activations, which balances precision and dequantization cost by combining a high-precision global scale with compact, power-of-two local scales; and (2) automatic scaling for weights in linear layers, which eliminates the need for costly max-reduction operations by predicting and adjusting scaling factors during training. Leveraging these techniques, MOSS enables efficient FP8 training of a 7B parameter model, achieving performance c",
+  "comment": "",
+  "families": [
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2511.05811",
+  "published": "2025-11-08",
+  "queries": [
+   "fp8_training"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "MOSS: Efficient and Accurate FP8 LLM Training with Microscaling and Automatic Scaling",
+  "why": [
+   "+3 throughput",
+   "+3 fp8",
+   "+2 bf16",
+   "+2 stability",
+   "-2 quantiz",
+   "+3 strong-lab signal"
   ]
  },
  "2511.06086": {
@@ -4069,6 +4718,7 @@
  },
  "2511.14721": {
   "abstract": "Adaptive optimizers with decoupled weight decay, such as AdamW, are the de facto standard for pre-training large transformer-based generative models. Yet the quadratic nature of the $\\ell_2$ penalty embedded in weight decay drives all parameters toward the origin at the same rate, making the update vulnerable to rare but extreme gradient directions and often over-penalizing well-conditioned coordinates. We propose AdamHuberDecay, a drop-in replacement for AdamW that substitutes the $\\ell_2$ penalty with a decoupled smooth Huber regularizer. The resulting update decays parameters quadratically while their magnitude remains below a threshold $\u03b4$, and linearly ($\\ell_1$-like) once they exceed $\u03b4$, yielding (i) bounded regularization gradients, (ii) invariance to per-coordinate second-moment rescaling, and (iii) stronger sparsity pressure on overgrown weights. We derive the closed-form decoupled Huber decay step and show how to integrate it with any Adam-family optimizer at $O(1)$ extra cost. Extensive experiments on GPT-2 and GPT-3 pre-training demonstrate that AdamHuberDecay (a) converges 10-15% faster in wall-clock time, (b) reduces validation perplexity by up to 4 points, (c) delivers performance improvements of 2.5-4.7% across downstream tasks, and (d) yields visibly sparser weight histograms that translate into 20-30% memory savings after magnitude pruning, without tuning the decay coefficient beyond the default grid used for AdamW. Ablations confirm robustness to outlier g",
+  "chars": 28149,
   "comment": "39th Conference on Neural Information Processing Systems (NeurIPS 2025) Workshop: GPU-Accelerated and Scalable Optimization (ScaleOpt)",
   "families": [
    "signal_scale",
@@ -4083,7 +4733,8 @@
    "optimizer_adam_variants"
   ],
   "score": 32,
-  "status": "screened",
+  "sha256": "9f6a5826eb6f1695df191449a29eebbc0e5b5504ab0517b19f6171fe852289cd",
+  "status": "fetched",
   "title": "AdamHD: Decoupled Huber Decay Regularization for Language Model Pre-Training",
   "why": [
    "+3 pre-train",
@@ -4094,6 +4745,49 @@
    "+3 ablation",
    "+3 gpt-2",
    "+2 gradient"
+  ]
+ },
+ "2511.16397": {
+  "abstract": "While web data quality is crucial for large language models, most curation efforts focus on filtering and deduplication,treating HTML-to-text extraction as a fixed pre-processing step. Existing web corpora rely on heuristic-based extractors like Trafilatura, which struggle to preserve document structure and frequently corrupt structured elements such as formulas, codes, and tables. We hypothesize that improving extraction quality can be as impactful as aggressive filtering strategies for downstream performance. We introduce MinerU-HTML, a novel extraction pipeline that reformulates content extraction as a sequence labeling problem solved by a 0.6B-parameter language model. Unlike text-density heuristics, MinerU-HTML leverages semantic understanding and employs a two-stage formatting pipeline that explicitly categorizes semantic elements before converting to Markdown. Crucially, its model-based approach is inherently scalable, whereas heuristic methods offer limited improvement pathways. On MainWebBench, our benchmark of 7,887 annotated web pages, MinerU-HTML achieves 81.8\\% ROUGE-N F1 compared to Trafilatura's 63.6\\%, with exceptional structured element preservation (90.9\\% for code blocks, 94.0\\% for formulas). Using MinerU-HTML, we construct AICC (AI-ready Common Crawl), a 7.3-trillion token multilingual corpus from two Common Crawl snapshots. In controlled pretraining experiments where AICC and Trafilatura-extracted TfCC undergo identical filtering, models trained on AICC ",
+  "comment": "",
+  "families": [
+   "schedule"
+  ],
+  "id": "2511.16397",
+  "published": "2025-11-20",
+  "queries": [
+   "data_quality"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "AICC: Parse HTML Finer, Make Models Better -- A 7.3T AI-Ready Corpus Built by a Model-Based HTML Parser",
+  "why": [
+   "+3 pretrain",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2511.17388": {
+  "abstract": "Position information is essential for language modeling. In softmax transformers, Rotary Position Embeddings (\\textit{RoPE}) encode positions through \\textit{fixed-angle} rotations, while in linear transformers, order is handled via input-dependent (selective) gating that decays past key-value associations. Selectivity has generally been shown to improve language-related tasks. Inspired by this, we introduce \\textit{Selective RoPE}, an \\textit{input-dependent} rotary embedding mechanism, that generalizes \\textit{RoPE}, and enables rotation in \\textit{arbitrary angles} for both linear and softmax transformers. We show that softmax attention already performs a hidden form of these rotations on query-key pairs, uncovering an implicit positional structure. We further show that in state-space models and gated linear transformers, the real part manages forgetting while the imaginary part encodes positions through rotations. We validate our method by equipping gated transformers with \\textit{Selective RoPE}, demonstrating that its input-dependent rotations improve performance in language modeling and on difficult sequence tasks like copying, state tracking, and retrieval.",
+  "comment": "ICLR 2026",
+  "families": [
+   "attention",
+   "ve_placement",
+   "signal_scale",
+   "signal_path",
+   "attention_detail"
+  ],
+  "id": "2511.17388",
+  "published": "2025-11-21",
+  "queries": [
+   "positional"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "Selective Rotary Position Embedding",
+  "why": [
+   "+2 attention",
+   "+5 iclr",
+   "+3 strong-lab signal"
   ]
  },
  "2511.18670": {
@@ -4122,6 +4816,28 @@
    "+2 gradient",
    "-2 alignment",
    "+5 neurips"
+  ]
+ },
+ "2511.18903": {
+  "abstract": "Due to the scarcity of high-quality data, large language models (LLMs) are often trained on mixtures of data with varying quality levels, even after sophisticated data curation. A natural approach to better leverage high-quality data is curriculum-based pretraining, where the model is trained on data sorted in ascending order of quality as determined by a quality metric. However, prior studies have reported limited improvements from such curriculum-based pretraining strategies. This work identifies a critical factor constraining these methods: the incompatibility between the ascending data quality order and the decaying learning rate (LR) schedule. We find that while curriculum-based training substantially outperforms random shuffling when using a constant LR, its advantage diminishes under standard LR decay schedules. Our experiments show this incompatibility can be mitigated by two simple strategies: (1) employing a more moderate LR decay schedule, where the final LR is only moderately smaller than the peak LR, and (2) replacing LR decay with model averaging, i.e., computing a weighted average of the final few checkpoints. By combining these strategies, we improve the average score on a suite of standard benchmarks by 1.64% over random shuffling, without additional data refinement. Validated on 1.5B-parameter models trained over 30B tokens with various data-quality metrics, our findings call for a re-evaluation of curriculum-based LLM pretraining and underscore the potentia",
+  "comment": "",
+  "families": [
+   "schedule"
+  ],
+  "id": "2511.18903",
+  "published": "2025-11-24",
+  "queries": [
+   "data_quality"
+  ],
+  "score": 13,
+  "status": "screened",
+  "title": "How Learning Rate Decay Wastes Your Best Data in Curriculum-Based LLM Pretraining",
+  "why": [
+   "+3 pretrain",
+   "+3 learning rate",
+   "+2 schedule",
+   "+2 curriculum",
+   "+3 strong-lab signal"
   ]
  },
  "2511.19496": {
@@ -4251,6 +4967,31 @@
    "+2 stability",
    "-3 inference",
    "+3 strong-lab signal"
+  ]
+ },
+ "2511.23225": {
+  "abstract": "Native FP8 support in modern hardware is essential for training large Transformers, but is severely hindered by extreme activation outliers. Existing solutions either rely on complex mixed-precision engineering or invasive architectural modifications. This paper fundamentally challenges the conventional wisdom that outliers are data-driven. We demonstrate that extreme outliers are a data-independent, mechanically-produced artifact of training, originating from specific structural properties of the weight matrices (i.e., colinearity). Based on this insight, we propose TWEO (Transformers Without Extreme Outliers), a novel, non-invasive loss function. TWEO effectively prevents extreme outliers via a very simple loss term, which reduces outliers from 10000+ to less than 20. TWEO then enables full-model FP8 pre-training with neither engineering tricks nor architectural changes for both LLM and ViT. When standard FP8 training catastrophically collapses, TWEO achieves performance comparable to the BF16 baseline while delivering a 36% increase in training throughput. Also, TWEO enables a new quantization paradigm. Hardware-friendly W8A8 per-tensor static quantization of LLMs, previously considered completely unusable due to outliers, achieves SOTA performance for the first time on TWEO-trained models.",
+  "comment": "",
+  "families": [
+   "signal_scale",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2511.23225",
+  "published": "2025-11-28",
+  "queries": [
+   "fp8_training"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "TWEO: Transformers Without Extreme Outliers Enables FP8 Training And Quantization For Dummies",
+  "why": [
+   "+3 pre-train",
+   "+3 throughput",
+   "+3 fp8",
+   "+2 bf16",
+   "+2 loss",
+   "-2 quantiz"
   ]
  },
  "2511.23310": {
@@ -4440,6 +5181,7 @@
  },
  "2512.11853": {
   "abstract": "We present a genetic algorithm framework for automatically discovering deep learning optimization algorithms. Our approach encodes optimizers as genomes that specify combinations of primitive update terms (gradient, momentum, RMS normalization, Adam-style adaptive terms, and sign-based updates) along with hyperparameters and scheduling options. Through evolutionary search over 50 generations with a population of 50 individuals, evaluated across multiple vision tasks, we discover an evolved optimizer that outperforms Adam by 2.6% in aggregate fitness and achieves a 7.7% relative improvement on CIFAR-10. The evolved optimizer combines sign-based gradient terms with adaptive moment estimation, uses lower momentum coefficients than Adam ($\u03b2_1$=0.86, $\u03b2_2$=0.94), and notably disables bias correction while enabling learning rate warmup and cosine decay. Our results demonstrate that evolutionary search can discover competitive optimization algorithms and reveal design principles that differ from hand-crafted optimizers. Code is available at https://github.com/mmarfinetz/evo-optimizer.",
+  "chars": 19007,
   "comment": "",
   "families": [
    "signal_scale",
@@ -4452,7 +5194,8 @@
    "lr_warmup"
   ],
   "score": 21,
-  "status": "screened",
+  "sha256": "68c5b0a8d73bc83ae5f6901fc8825c72ac9762d47f26b5ae2c2b5694c908ea90",
+  "status": "fetched",
   "title": "Evolving Deep Learning Optimizers",
   "why": [
    "+3 optimizer",
@@ -4485,6 +5228,25 @@
    "+2 attention",
    "+3 perplexity",
    "+2 stability"
+  ]
+ },
+ "2512.12770": {
+  "abstract": "Continued pretraining extends a language model's capabilities by further exposing it to additional data, often tailored to a specific linguistic or domain context. This strategy has emerged as an efficient alternative to full retraining when adapting general-purpose models to new settings. In this work, we investigate this paradigm through Curi\u00f3 7B, a 7-billion-parameter model derived from LLaMA-2 and trained on 100 billion Portuguese tokens from the ClassiCC-PT corpus - the most extensive Portuguese-specific continued-pretraining effort above the three-billion-parameter scale to date. Beyond scale, we investigate whether quantity alone suffices or whether data quality plays a decisive role in linguistic adaptation. To this end, we introduce Curi\u00f3-Edu 7B, a variant trained exclusively on the educational and STEM-filtered subset of the same corpus, totaling just 10 billion tokens. Despite using only 10% of the data and 20% of the computation, Curi\u00f3-Edu 7B surpasses the full-corpus model in our evaluations, demonstrating that data selection can be fundamental even when adapting models with limited prior exposure to the target language. The developed models are available at https://huggingface.co/collections/ClassiCC-Corpus/curio-edu",
+  "comment": "",
+  "families": [
+   "unassigned"
+  ],
+  "id": "2512.12770",
+  "published": "2025-12-14",
+  "queries": [
+   "data_quality"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Curi\u00f3-Edu 7B: Examining Data Selection Impacts in LLM Continued Pretraining",
+  "why": [
+   "+3 pretrain",
+   "+3 strong-lab signal"
   ]
  },
  "2512.13298": {
@@ -4563,6 +5325,7 @@
  },
  "2512.14585": {
   "abstract": "Nepali, a low-resource language spoken by over 32 million people, continues to face challenges in natural language processing (NLP) due to its complex grammar, agglutinative morphology, and limited availability of high-quality corpora. Most efforts to date have centered on basic encoder architectures; they remain insufficient for Nepali-specific text generation. This study presents a GPT-2-based Nepali language model trained using several training strategies inspired by GPT-3, including optimized learning rate schedules, batch scaling, and architectural refinements. A custom 16k Byte-Pair Encoding (BPE) tokenizer was trained exclusively on Nepali text to ensure more consistent segmentation and improved input representation. The model was pretrained on a combined dataset comprising a 10.75GB cleaned NepBERTa corpus and additional web-scraped Nepali news articles. FlashAttention was integrated to reduce memory usage and stabilize training. After two epochs, the model achieved a training loss of 3.168177, a validation loss of 3.081982, and a final perplexity of 21.80, demonstrating its capability to generate coherent Nepali news-style text.",
+  "chars": 21467,
   "comment": "Work in progress",
   "families": [
    "attention",
@@ -4575,7 +5338,8 @@
    "lr_schedule"
   ],
   "score": 21,
-  "status": "screened",
+  "sha256": "b891f683bdcaf2a0337390c55ec009150fd4e751062fcea96430f0bc4f7289aa",
+  "status": "fetched",
   "title": "Towards Nepali-language LLMs: Efficient GPT training with a Nepali BPE tokenizer",
   "why": [
    "+3 pretrain",
@@ -5017,6 +5781,36 @@
   "why": [
    "+2 attention",
    "+4 sliding window"
+  ]
+ },
+ "2601.18702": {
+  "abstract": "The prevailing scaling paradigm of Large Language Models (LLMs) rests on a substrate of \"Fuzzy\" floating-point arithmetic. To mitigate the inherent instability of this approximate foundation, modern architectures have erected a complex scaffolding of structural and numerical heuristics--Complex Residuals, Pre-RMSNorm, Attention Scaling, and Gradient Clipping--consuming significant compute solely to prevent numerical collapse. We propose a paradigm shift to the \"Exact\". We introduce the Halo Architecture, grounded in the Rational Field (Q) and powered by a custom Exact Inference Unit (EIU). To resolve the exponential bit-width growth of rational arithmetic, Halo employs a Dual-Ring Topology that unifies two complementary control mechanisms: (1) The Micro-Ring (Continuum Maintenance), which strictly bounds memory complexity via Diophantine Approximation; and (2) The Macro-Ring (Symbolic Alignment), which enforces logical consistency via periodic state collapse. This stable dual-ring substrate allows for the \"Great Dismantling\" of numerical scaffolding, reducing the Transformer block to its \"Clean\" algebraic form (Tabula Rasa). Furthermore, we verify the \"Efficiency Paradox\": the elimination of gradient noise (sigma -> 0) allows for Macro-Learning Rates, potentially reducing the Total Time-to-Convergence by orders of magnitude. Halo demonstrates that General Intelligence requires the hybridization of continuous fields and discrete chains under a rigorous mathematical framework.",
+  "comment": "Architecture update: Formalizes the Dual-Ring Topology and the Clean Transformer",
+  "families": [
+   "capacity",
+   "attention",
+   "signal_scale",
+   "schedule",
+   "optimizer_numeric",
+   "signal_path"
+  ],
+  "id": "2601.18702",
+  "published": "2026-01-26",
+  "queries": [
+   "gradient_clip"
+  ],
+  "score": 10,
+  "status": "screened",
+  "title": "From Fuzzy to Exact: The Halo Architecture for Infinite-Depth Reasoning via Rational Arithmetic",
+  "why": [
+   "+3 learning rate",
+   "+3 rmsnorm",
+   "+2 attention",
+   "+2 convergence",
+   "+2 stability",
+   "+2 gradient",
+   "-3 inference",
+   "-2 reasoning"
   ]
  },
  "2601.19400": {
@@ -5476,6 +6270,7 @@
  },
  "2602.04774": {
   "abstract": "Setting the learning rate (LR) for a deep learning model is a critical part of successful training. Choosing LRs is often done empirically with trial and error. In this work, we explore a solvable model of optimal LR schedules for a powerlaw random feature model trained with stochastic gradient descent (SGD). We consider the optimal schedule $\u03b7_T^\\star(t)$ where $t$ is the current iterate and $T$ is the training horizon. This schedule is computed both as a numerical optimization problem and also analytically using optimal control theory. Our analysis reveals two regimes which we term the easy phase and hard phase. In the easy phase the optimal schedule is a polynomial decay $\u03b7_T^\\star(t) \\simeq T^{-\u03be} (1-t/T)^\u03b4$ where $\u03be$ and $\u03b4$ depend on the properties of the features and task. In the hard phase, the optimal schedule resembles warmup-stable-decay with constant initial LR and annealing performed over a vanishing fraction of training steps. We investigate joint optimization of LR and batch size and find batch ramps can improve the wall-clock time in the easy phase. Beyond SGD, we derive optimal schedules for momentum parameter $\u03b2(t)$ and show that it improves the loss-scaling exponent in the hard phase. We compare our optimal schedule to various benchmarks including (1) optimal constant learning rates $\u03b7_T(t) \\sim T^{-\u03be}$ (2) optimal power laws $\u03b7_T(t) \\sim T^{-\u03be} t^{-\u03c7}$, finding that our schedule achieves better rates than either of these. Our theory suggests that LR transf",
+  "chars": 69573,
   "comment": "",
   "families": [
    "capacity",
@@ -5491,7 +6286,8 @@
    "lr_wsd"
   ],
   "score": 24,
-  "status": "screened",
+  "sha256": "eb1644356526b2063401603e3da731c8d0a507104894e20b80d62a73709e2d9e",
+  "status": "fetched",
   "title": "Theory of Optimal Learning Rate Schedules and Scaling Laws for a Random Feature Model",
   "why": [
    "+3 learning rate",
@@ -5506,6 +6302,7 @@
  },
  "2602.05725": {
   "abstract": "Muon updates matrix parameters via the matrix sign of the gradient and has shown strong empirical gains, yet its dynamics and scaling behavior remain unclear in theory. We study Muon in a linear associative memory model with softmax retrieval and a hierarchical frequency spectrum over query-answer pairs, with and without label noise. In this setting, we show that Gradient Descent (GD) learns frequency components at highly imbalanced rates, leading to slow convergence bottlenecked by low-frequency components. In contrast, the Muon optimizer mitigates this imbalance, leading to faster and more uniform progress. Specifically, in the noiseless case, Muon achieves an exponential speedup over GD; in the noisy case with a power-law frequency spectrum, we derive Muon's scaling law and demonstrate its superior scaling efficiency over GD. Furthermore, we show that Muon can be interpreted as an implicit matrix preconditioner arising from adaptive task alignment and block-symmetric gradient structure. In contrast, the preconditioner with coordinate-wise sign operator could match Muon under oracle access to unknown task representations, which is infeasible for SignGD in practice. Experiments on synthetic long-tail classification and LLaMA-style pre-training corroborate the theory.",
+  "chars": 189831,
   "comment": "Published as a conference paper at ICML 2026; 53 pages",
   "families": [
    "capacity",
@@ -5518,7 +6315,8 @@
    "optimizer_muon"
   ],
   "score": 21,
-  "status": "screened",
+  "sha256": "6a4c30c836e9ae0ad38780e5af7a5307bbe48cfb86d4d86f388f6d9e9c2d85e4",
+  "status": "fetched",
   "title": "Muon in Associative Memory Learning: Training Dynamics and Scaling Laws",
   "why": [
    "+3 pre-train",
@@ -5612,6 +6410,7 @@
  },
  "2602.06797": {
   "abstract": "We study optimal learning-rate schedules (LRSs) under the functional scaling law (FSL) framework introduced in Li et al. (2025), which accurately models the loss dynamics of both linear regression and large language model (LLM) pre-training. Within FSL, loss dynamics are governed by two exponents: a source exponent $s>0$ controlling the rate of signal learning, and a capacity exponent $\u03b2>1$ determining the rate of noise forgetting. Focusing on a fixed training horizon $N$, we derive the optimal LRSs and reveal a sharp phase transition. In the easy-task regime $s \\ge 1 - 1/\u03b2$, the optimal schedule follows a power decay to zero, $\u03b7^*(z) = \u03b7_{\\mathrm{peak}}(1 - z/N)^{2\u03b2- 1}$, where the peak learning rate scales as $\u03b7_{\\mathrm{peak}} \\eqsim N^{-\u03bd}$ for an explicit exponent $\u03bd= \u03bd(s,\u03b2)$. In contrast, in the hard-task regime $s < 1 - 1/\u03b2$, the optimal LRS exhibits a warmup-stable-decay (WSD) (Hu et al. (2024)) structure: it maintains the largest admissible learning rate for most of training and decays only near the end, with the decay phase occupying a vanishing fraction of the horizon. We further analyze optimal shape-fixed schedules, where only the peak learning rate is tuned -- a strategy widely adopted in practiceand characterize their strengths and intrinsic limitations. This yields a principled evaluation of commonly used schedules such as cosine and linear decay. Finally, we apply the power-decay LRS to one-pass stochastic gradient descent (SGD) for kernel regression and show",
+  "chars": 117990,
   "comment": "",
   "families": [
    "capacity",
@@ -5626,7 +6425,8 @@
    "lr_wsd"
   ],
   "score": 23,
-  "status": "screened",
+  "sha256": "5edb38e8a0f3aed6cf4f4c8a389bd545073848ef0687cd71939f0320ed62fab7",
+  "status": "fetched",
   "title": "Optimal Learning-Rate Schedules under Functional Scaling Laws: Power Decay and Warmup-Stable-Decay",
   "why": [
    "+3 pre-train",
@@ -5794,6 +6594,49 @@
    "+3 strong-lab signal"
   ]
  },
+ "2602.11832": {
+  "abstract": "Recent vision-language-action (VLA) models built upon pretrained vision-language models (VLMs) have achieved significant improvements in robotic manipulation. However, current VLAs still suffer from low sample efficiency and limited generalization. This paper argues that these limitations are closely tied to an overlooked component, pretrained visual representation, which offers insufficient knowledge on both aspects of environment understanding and policy prior. Through an in-depth analysis, we find that commonly used visual representations in VLAs, whether pretrained via language-image contrastive learning or image-based self-supervised learning, remain inadequate at capturing crucial, task-relevant environment information and at inducing effective policy priors, i.e., anticipatory knowledge of how the environment evolves under successful task execution. In contrast, we discover that predictive embeddings pretrained on videos, in particular V-JEPA 2, are adept at flexibly discarding unpredictable environment factors and encoding task-relevant temporal dynamics, thereby effectively compensating for key shortcomings of existing visual representations in VLAs. Building on these observations, we introduce JEPA-VLA, a simple yet effective approach that adaptively integrates predictive embeddings into existing VLAs. Our experiments demonstrate that JEPA-VLA yields substantial performance gains across a range of benchmarks, including LIBERO, LIBERO-plus, RoboTwin2.0, and real-robo",
+  "comment": "",
+  "families": [
+   "capacity",
+   "token_exposure",
+   "ve_placement",
+   "schedule"
+  ],
+  "id": "2602.11832",
+  "published": "2026-02-12",
+  "queries": [
+   "sample_efficiency"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "JEPA-VLA: Video Predictive Embedding is Needed for VLA Models",
+  "why": [
+   "+3 pretrain",
+   "+3 sample efficiency",
+   "-3 vision-language",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2602.15210": {
+  "abstract": "Multilinguality is a core capability for modern foundation models, yet training high-quality multilingual models remains challenging due to uneven data availability across languages. A further challenge is the performance interference that can arise from joint multilingual training, commonly referred to as the \"curse of multilinguality\". We study multilingual data curation across thirteen languages and find that many reported regressions are not inherent to multilingual scaling but instead stem from correctable deficiencies in data quality and composition rather than fundamental capacity limits. In controlled bilingual experiments, improving data quality for any single language benefits others: curating English improves non-English performance in 12 of 13 languages, while curating non-English yields reciprocal improvements in English. Bespoke per-language curation produces substantially larger within-language improvements. Extending these findings to large-scale general-purpose training mixtures, we show that curated multilingual allocations comprising under 8% of total tokens remain remarkably effective. We operationalize this approach within an effort that produced a 20T-token pretraining corpus derived entirely from public sources. Models with 3B and 8B parameters trained on a 1T-token random subset achieve competitive multilingual accuracy with 4-10x fewer training FLOPs than strong public baselines, establishing a new Pareto frontier in multilingual performance versus co",
+  "comment": "",
+  "families": [
+   "schedule"
+  ],
+  "id": "2602.15210",
+  "published": "2026-02-16",
+  "queries": [
+   "data_quality"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "\u00dcberWeb: Insights from Multilingual Curation for a 20-Trillion-Token Dataset",
+  "why": [
+   "+3 pretrain",
+   "+3 strong-lab signal"
+  ]
+ },
  "2602.16167": {
   "abstract": "Physics-informed neural networks and neural operators often suffer from severe optimization difficulties caused by ill-conditioned gradients, multi-scale spectral behavior, and stiffness induced by physical constraints. Recently, the Muon optimizer has shown promise by performing orthogonalized updates in the singular-vector basis of the gradient, thereby improving geometric conditioning. However, its unit-singular-value updates may lead to overly aggressive steps and lack explicit stability guarantees when applied to physics-informed learning. In this work, we propose SpecMuon, a spectral-aware optimizer that integrates Muon's orthogonalized geometry with a mode-wise relaxed scalar auxiliary variable (RSAV) mechanism. By decomposing matrix-valued gradients into singular modes and applying RSAV updates individually along dominant spectral directions, SpecMuon adaptively regulates step sizes according to the global loss energy while preserving Muon's scale-balancing properties. This formulation interprets optimization as a multi-mode gradient flow and enables principled control of stiff spectral components. We establish rigorous theoretical properties of SpecMuon, including a modified energy dissipation law, positivity and boundedness of auxiliary variables, and global convergence with a linear rate under the Polyak-Lojasiewicz condition. Numerical experiments on physics-informed neural networks, DeepONets, and fractional PINN-DeepONets demonstrate that SpecMuon achieves faste",
   "chars": 66145,
@@ -5824,6 +6667,7 @@
  },
  "2602.16642": {
   "abstract": "Neural Collapse (NC) refers to the emergence of highly symmetric geometric structures in the representations of deep neural networks during the terminal phase of training. Despite its prevalence, the theoretical understanding of NC remains limited. Existing analyses largely ignore the role of the optimizer, thereby suggesting that NC is universal across optimization methods. In this work, we challenge this assumption and demonstrate that the choice of optimizer plays a critical role in the emergence of NC. The phenomenon is typically quantified through NC metrics, which, however, are difficult to track and analyze theoretically. To overcome this limitation, we introduce a novel diagnostic metric, NC0, whose convergence to zero is a necessary condition for NC. Using NC0, we provide theoretical evidence that NC cannot emerge under decoupled weight decay in adaptive optimizers, as implemented in AdamW. Concretely, we prove that SGD, SignGD with coupled weight decay (a special case of Adam), and SignGD with decoupled weight decay (a special case of AdamW) exhibit qualitatively different NC0 dynamics. Also, we show the accelerating effect of momentum on NC (beyond convergence of train loss) when trained with SGD, being the first result concerning momentum in the context of NC. Finally, we conduct extensive empirical experiments consisting of 3,900 training runs across various datasets, architectures, optimizers, and hyperparameters, confirming our theoretical results. This work pr",
+  "chars": 115700,
   "comment": "Published as a conference paper at ICLR 2026",
   "families": [
    "schedule",
@@ -5836,7 +6680,8 @@
    "optimizer_adam_variants"
   ],
   "score": 18,
-  "status": "screened",
+  "sha256": "81d7f8cd90ab2050633950b767d368db1cbad6ba92998e297c9bb25ab307de70",
+  "status": "fetched",
   "title": "Optimizer choice matters for the emergence of Neural Collapse",
   "why": [
    "+3 optimizer",
@@ -5873,6 +6718,32 @@
    "+2 stability",
    "+2 gradient",
    "-4 serving"
+  ]
+ },
+ "2602.17497": {
+  "abstract": "Learning from self-sampled data and sparse environmental feedback remains a fundamental challenge in training self-evolving agents. Temporal credit assignment mitigates this issue by transforming sparse feedback into dense supervision signals. However, previous approaches typically depend on learning task-specific value functions for credit assignment, which suffer from poor sample efficiency and limited generalization. In this work, we propose to leverage pretrained knowledge from large language models (LLMs) to transform sparse rewards into dense training signals (i.e., the advantage function) through retrospective in-context learning (RICL). We further propose an online learning framework, RICOL, which iteratively refines the policy based on the credit assignment results from RICL. We empirically demonstrate that RICL can accurately estimate the advantage function with limited samples and effectively identify critical states in the environment for temporal credit assignment. Extended evaluation on four BabyAI scenarios show that RICOL achieves comparable convergent performance with traditional online RL algorithms with significantly higher sample efficiency. Our findings highlight the potential of leveraging LLMs for temporal credit assignment, paving the way for more sample-efficient and generalizable RL paradigms.",
+  "comment": "Accepted to NeurIPS 2025",
+  "families": [
+   "token_exposure",
+   "schedule",
+   "objective"
+  ],
+  "id": "2602.17497",
+  "published": "2026-02-19",
+  "queries": [
+   "sample_efficiency"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "Retrospective In-Context Learning for Temporal Credit Assignment with Large Language Models",
+  "why": [
+   "+3 pretrain",
+   "+3 sample-efficient",
+   "+3 sample efficiency",
+   "-4 agent",
+   "-2 in-context learning",
+   "+5 neurips",
+   "+3 strong-lab signal"
   ]
  },
  "2602.18109": {
@@ -5963,6 +6834,7 @@
  },
  "2602.22988": {
   "abstract": "Training divergence in transformers wastes compute, yet practitioners discover instability only after expensive runs begin. They therefore need an expected probability of failure for a transformer before training starts. Our study of Residual Koopman Spectral Profiling (RKSP) provides such an estimate. From a single forward pass at initialization, RKSP extracts Koopman spectral features by applying whitened dynamic mode decomposition to layer-wise residual snapshots. Our central diagnostic, the near-unit spectral mass, quantifies the fraction of modes concentrated near the unit circle, which captures instability risk. For predicting divergence across extensive configurations, this estimator achieves an AUROC of 0.995, outperforming the best gradient baseline. We further make this diagnostic actionable through Koopman Spectral Shaping (KSS), which reshapes spectra during training. We empirically validate that our method works in practice: RKSP predicts divergence at initialization, and when RKSP flags high risk, turning on KSS successfully prevents divergence. In the challenging high learning rate regime without normalization layers, KSS reduces the divergence rate from 66.7% to 12.5% and enables learning rates that are 50% to 150% higher. These findings generalize to WikiText-103 language modeling, vision transformers on CIFAR-10, and pretrained language models, including GPT-2 and LLaMA-2 up to 7B, as well as emerging architectures such as MoE, Mamba-style SSMs, and KAN.",
+  "chars": 92582,
   "comment": "23 pages, 7 figures",
   "families": [
    "signal_scale",
@@ -5975,7 +6847,8 @@
    "init_scaling"
   ],
   "score": 21,
-  "status": "screened",
+  "sha256": "eb3e658eb96ed2c18f6c8772457f5b02ca6c9c08aa594773625cb8b161fa76e9",
+  "status": "fetched",
   "title": "Residual Koopman Spectral Profiling for Predicting and Preventing Transformer Training Instability",
   "why": [
    "+3 pretrain",
@@ -6014,6 +6887,32 @@
    "+2 attention",
    "+2 gradient",
    "-2 alignment"
+  ]
+ },
+ "2603.00364": {
+  "abstract": "Large language models such as GPT and Llama are trained with a next-token prediction loss. In this work, we suggest that training language models to predict multiple future tokens at once results in higher sample efficiency. More specifically, at each position in the training corpus, we ask the model to predict the following n tokens using n independent output heads, operating on top of a shared model trunk. Considering multi-token prediction as an auxiliary training task, we measure improved downstream capabilities with no overhead in training time for both code and natural language models. The method is increasingly useful for larger model sizes and keeps its appeal when training for multiple epochs. Gains are especially pronounced on generative benchmarks like coding, where our models consistently outperform strong baselines by several percentage points. Our 13B parameter models solves 12 % more problems on HumanEval and 17 % more on MBPP than comparable next-token models. Experiments on small algorithmic tasks demonstrate that multi-token prediction is favorable for the development of induction heads and algorithmic reasoning capabilities. As an additional benefit, models trained with 4-token prediction are up to 3X times faster at inference, even with large batch sizes.",
+  "comment": "",
+  "families": [
+   "token_exposure",
+   "objective"
+  ],
+  "id": "2603.00364",
+  "published": "2026-02-27",
+  "queries": [
+   "multi_token"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Distribution-Aware Companding Quantization of Large Language Models",
+  "why": [
+   "+2 batch size",
+   "+2 loss",
+   "+3 sample efficiency",
+   "+3 multi-token prediction",
+   "-3 inference",
+   "-2 quantiz",
+   "-2 reasoning",
+   "+3 strong-lab signal"
   ]
  },
  "2603.00416": {
@@ -6138,6 +7037,54 @@
    "+3 optimizer",
    "+2 convergence",
    "+2 stability"
+  ]
+ },
+ "2603.02731": {
+  "abstract": "Training large-scale Mixture-of-Experts (MoE) models is bottlenecked by activation memory and expert-parallel communication, yet FP4 training remains impractical on Hopper-class GPUs without native MXFP4 or NVFP4 support. In this work, we present a training recipe that enables MXFP4 efficiency for MoE models on Hopper architectures without native 4-bit computation support. A central challenge is to integrate FP4 into an existing BF16/FP8 hybrid training pipeline without incurring costly precision round-trips (e.g., FP4 $\\leftrightarrow$ BF16 $\\leftrightarrow$ FP8). We address this challenge by introducing direct FP8-to-FP4 quantization and de-quantization, together with scaling-aware FP4 row-wise to column-wise conversion, enabling FP4 activations and expert-parallel communication with minimal overhead. Core MoE computations are executed in FP8, while activations and expert-parallel communication are compressed using MXFP4, achieving substantial memory and bandwidth savings without degrading convergence. At the 671B parameter scale, our method achieves end-to-end training performance comparable to strong FP8 baselines, while reducing peak activation memory by 14.8\\% (11.8 GB) and improving training throughput by 12.5\\%, from 1157 to 1302 tokens per GPU per second. These results show that FP4 efficiency can be practically realized for large-scale MoE training through careful software-hardware co-design, even without native FP4 Tensor Core support.",
+  "comment": "",
+  "families": [
+   "capacity",
+   "schedule",
+   "signal_path",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2603.02731",
+  "published": "2026-03-03",
+  "queries": [
+   "fp8_training"
+  ],
+  "score": 11,
+  "status": "screened",
+  "title": "Practical FP4 Training for Large-Scale MoE Models on Hopper GPUs",
+  "why": [
+   "+3 throughput",
+   "+3 fp8",
+   "+2 bf16",
+   "+2 convergence",
+   "-2 quantiz",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2603.06861": {
+  "abstract": "Activation functions are fundamental to deep neural networks, governing gradient flow, optimization stability, and representational capacity. Within historic deep architectures, while ReLU has been the dominant choice for the activation function, modern transformer-based models increasingly are adopting smoother alternatives such as GELU and other self-gated alternatives. Despite their empirical success, the mathematical relationships among these functions and the principles underlying their effectiveness remains only partially understood. We introduce IGLU, a parametric activation function derived as a scale mixture of GELU gates under a half-normal mixing distribution. This derivation yields a closed-form expression whose gating component is exactly the Cauchy CDF, providing a principled one-parameter family that continuously interpolates between identity-like and ReLU-like behavior via a single sharpness parameter $\u03c3$. Unlike GELU's Gaussian gate, IGLU's heavy-tailed Cauchy gate decays polynomially in the negative tail, guaranteeing non-zero gradients for all finite inputs and offering greater robustness to vanishing gradients. We further introduce IGLU-Approx, a computationally efficient rational approximation of IGLU expressed entirely in terms of ReLU operations that eliminates transcendental function evaluation. Through evaluations on CIFAR-10, CIFAR-100, and WikiText-103 across ResNet-20, ViT-Tiny, and GPT-2 Small, IGLU achieves competitive or superior performance on ",
+  "comment": "",
+  "families": [
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2603.06861",
+  "published": "2026-03-06",
+  "queries": [
+   "activation"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "IGLU: The Integrated Gaussian Linear Unit Activation Function",
+  "why": [
+   "+3 gpt-2",
+   "+2 stability",
+   "+2 gradient"
   ]
  },
  "2603.08548": {
@@ -6408,6 +7355,7 @@
  },
  "2603.17970": {
   "abstract": "Orthogonalized-momentum optimizers such as Muon improve transformer training by approximately whitening/orthogonalizing matrix-valued momentum updates via a short polar-decomposition iteration. However, polar-factor approximations typically require multiple large matrix multiplications, and the resulting overhead can be substantial and hardware-dependent. We introduce MUD (MomentUm Decorrelation), a complementary whitening approach that replaces Muon's polar update with a triangular (Cholesky-like) whitening surrogate inspired by classical Gram--Schmidt and Gauss-Seidel ideas. We show that row-orthonormal matrices are fixed points of the MUD map, relate the inner step to symmetric Gauss-Seidel preconditioning of the Gram matrix, and prove quadratic local convergence near the fixed point. In terms of time-to-perplexity, MUD yields consistent 10-50\\% wall-clock improvements over tuned AdamW and Muon in time-to-perplexity, typically converging slightly slower per step than Muon but with substantially lower optimizer overhead -- relative to Muon, MUD improves peak tokens/s by roughly $1.3-2.6\\times$ across most settings and up to nearly $3\\times$ on GPT-2 large on an A100. We also demonstrate training a ESM-2 150M protein language model, where MUD matches Muon-level validation perplexity in significantly less wall-clock time.",
+  "chars": 80699,
   "comment": "",
   "families": [
    "schedule",
@@ -6421,7 +7369,8 @@
    "optimizer_orthogonal"
   ],
   "score": 20,
-  "status": "screened",
+  "sha256": "7e5681b4d31daff5e9344bbd27b1d503e1ed8a0a14580c96fb9f1cb06dc15c57",
+  "status": "fetched",
   "title": "Beyond Muon: MUD (MomentUm Decorrelation) for Faster Transformer Training",
   "why": [
    "+3 optimizer",
@@ -6430,6 +7379,28 @@
    "+2 convergence",
    "+3 perplexity",
    "+3 gpt-2"
+  ]
+ },
+ "2603.18328": {
+  "abstract": "Physics-Informed Neural Networks(PINNs) are a powerful and flexible learning framework that has gained significant attention in recent years. It has demonstrated strong performance across a wide range of scientific and engineering problems. In parallel, wavelets have been extensively used as efficient computational tools due to their strong approximation capabilities. Motivated by the common failure modes observed in standard PINNs, this work introduces a novel family of adaptive wavelet-based activation functions. The proposed activation functions significantly improve training stability and expressive power by combining trainable wavelet functions with either trainable or fixed hyperbolic tangent and softplus functions. Five distinct activation functions are developed within the PINN framework and systematically evaluated across four representative classes of partial differential equations (PDEs). Comprehensive comparisons using bar plots demonstrate improved robustness and accuracy compared to traditional activation functions. Furthermore, the proposed approach is validated through direct comparisons with baseline PINNs, transformer-based architectures such as PINNsFormer, and other deep learning models, highlighting its effectiveness and generality.",
+  "comment": "",
+  "families": [
+   "attention",
+   "schedule",
+   "signal_path"
+  ],
+  "id": "2603.18328",
+  "published": "2026-03-18",
+  "queries": [
+   "activation"
+  ],
+  "score": 7,
+  "status": "screened",
+  "title": "A Family of Adaptive Activation Functions for Mitigating Failure Modes in Physics-Informed Neural Networks",
+  "why": [
+   "+2 attention",
+   "+2 stability",
+   "+3 strong-lab signal"
   ]
  },
  "2603.19149": {
@@ -6608,6 +7579,7 @@
  },
  "2604.00733": {
   "abstract": "The memory wall remains the primary bottleneck for training large language models on consumer hardware. We introduce Spectral Compact Training (SCT), a method that replaces dense weight matrices with permanent truncated SVD factors W = U diag(s) V^T, where the full dense matrix is never materialized during training or inference. Gradients flow through the compact spectral factors via standard backpropagation, and U, V are retracted to the Stiefel manifold via QR decomposition after each optimizer step. SCT achieves up to 199x memory reduction per MLP layer at rank 32, enabling full training steps of 70B-parameter architectures on a Steam Deck handheld (7.2 GB peak memory vs. 1,245 GB for dense FP32 training with Adam). Rank-sweep experiments on SmolLM2-1.7B (ranks 32-256, 2000 steps, NVIDIA A100) show that all tested ranks converge to the same loss floor (~4.2-4.5), identifying the learning rate schedule -- not MLP rank -- as the primary bottleneck. Rank 128 emerges as the efficiency sweet spot at 11.7x MLP compression with the lowest perplexity. GPU memory drops 46% at rank 32 while training throughput doubles.",
+  "chars": 21914,
   "comment": "8 pages, 3 figures, 4 tables. Patent pending: Irish Application PTIE20260000000219. Code at https://github.com/EctoSpace/SCT",
   "families": [
    "schedule",
@@ -6622,7 +7594,8 @@
    "lr_schedule"
   ],
   "score": 20,
-  "status": "screened",
+  "sha256": "5f7d49c1651a59e058215c52f666d46fe9fa65bd35beb4d8ddddb655e6f72edd",
+  "status": "fetched",
   "title": "Spectral Compact Training: Pre-Training Large Language Models via Permanent Truncated SVD and Stiefel QR Retraction",
   "why": [
    "+3 pre-train",
@@ -6794,6 +7767,29 @@
    "-3 diffusion"
   ]
  },
+ "2604.10791": {
+  "abstract": "We propose two complementary modifications to transformer attention blocks. First, a non-linear pre-projection MLP is inserted between layer norm and Q/K/V projections, constructing richer features in a position-agnostic manner before any positional encoding is applied. Second, a content skip connection routes the pre-projection's features around the attention mechanism, allowing content information to bypass position-aware attention where beneficial. In frozen-probe experiments on Pythia-160M and 410M, the combined approach achieves the strongest results across methods: +40.6% LAMBADA accuracy and -39% perplexity at 160M scale. Learned skip connection weights reveal a consistent pattern across model sizes: later transformer layers activate the content bypass more strongly than earlier layers, suggesting that deeper layers benefit from content information that does not pass through positional attention. All modifications add no K/V cache overhead.",
+  "comment": "7 pages, 2 figures, 5 tables. Code: https://github.com/cs-cmyk/preprojection",
+  "families": [
+   "attention",
+   "ve_placement",
+   "signal_scale",
+   "signal_path"
+  ],
+  "id": "2604.10791",
+  "published": "2026-04-12",
+  "queries": [
+   "value_residual"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Position-Agnostic Pre-Projection for Transformer Attention: Nonlinear Feature Construction and Content Skip Before Q/K/V",
+  "why": [
+   "+2 attention",
+   "+3 perplexity",
+   "+3 strong-lab signal"
+  ]
+ },
  "2604.11890": {
   "abstract": "We study signal propagation at initialization in transformers through the averaged partial Jacobian norm (APJN), a measure of gradient amplification across layers. We extend APJN analysis to transformers with bidirectional attention and permutation-symmetric input token configurations by deriving recurrence relations for activation statistics and APJNs across layers. Our theory predicts how attention modifies the asymptotic behavior of the APJN at large depth and matches APJNs measured in deep vision transformers. The criticality picture known from residual networks carries over to transformers: the pre-LayerNorm architecture exhibits power-law APJN growth, whereas transformers with LayerNorm replaced by elementwise $\\tanh$-like nonlinearities have stretched-exponential APJN growth, indicating that the latter are subcritical. Applied to Dynamic Tanh (DyT) and Dynamic erf (Derf) transformers, the theory explains why these architectures can be more sensitive to initialization and optimization choices and require careful tuning for stable training.",
   "comment": "Minor text edits; 10 pages of main text; 34 pages total; 5 figures in the main text, 25 figures total; preprint",
@@ -6903,6 +7899,7 @@
  },
  "2604.26687": {
   "abstract": "Training large language models requires jointly configuring two interdependent aspects of the system: the global batch size, which governs statistical efficiency, and the 3D parallelism strategy, which governs hardware throughput. Existing approaches make these decisions independently: optimization work adapts the batch size to track the evolving critical batch size while keeping parallelism fixed, and systems work selects the fastest parallelism for a given fixed batch size without anticipating that the optimal batch size could change. We show that these decisions are tightly coupled: the throughput-optimal parallelism strategy may shift as the global batch size changes, so any method that fixes one while adapting the other operates with a suboptimal configuration for part of the training run. We present COPUS, a system that adaptively tunes the global batch size, parallelism strategy, and micro-batch size as training evolves. COPUS is guided by Goodput, the product of throughput and statistical efficiency, which models both hardware and statistical effects jointly and directly measures useful convergence per unit of wall-clock time. The system combines online gradient noise scale estimation under 3D parallelism with throughput-aware evaluation of candidate configurations, and supports efficient reconfiguration of both batch size and parallelism during training. We evaluate COPUS on LLM pre-training workloads across 1-4 nodes of 8xH100 and 8xMI210 GPUs and model sizes from 3",
+  "chars": 96320,
   "comment": "22 pages, 13 figures, 2 tables",
   "families": [
    "token_exposure",
@@ -6916,7 +7913,8 @@
    "batch_size_law"
   ],
   "score": 22,
-  "status": "screened",
+  "sha256": "d99a6bf94129fceb5a6d1b7145dc0036ce9e93818e8bd97b827f3187b1f5b1c1",
+  "status": "fetched",
   "title": "COPUS: Co-adaptive Parallelism and Batch Size Selection in Large Language Model Training",
   "why": [
    "+3 pre-train",
@@ -7120,6 +8118,7 @@
  },
  "2605.07815": {
   "abstract": "Muon improves neural-network training by orthogonalizing matrix-valued updates, but it leaves each layer's update magnitude controlled mostly by a global learning rate. We introduce OrScale, a trust-ratio extension of Muon built on a simple rule: the denominator of a layer-wise ratio should measure the Frobenius norm of the actual parameter-space direction that will be applied. This yields OrScale for general matrix layers and OrScale-LM for language models, where Moonlight shape scaling is combined with one-time per-layer calibration so every trust ratio starts at one. We analyze why three natural Muon-LAMB hybrids fail through shape-degenerate denominators, raw-momentum clip saturation, and decoupled weight-decay runaway, and show that the real-update-direction denominator with coupled weight decay avoids these failures. Theoretically, OrScale admits an O(1/sqrt(T)) nonconvex convergence guarantee in a nuclear-norm criterion, a strict layer-adaptive descent gain under measurable layer heterogeneity, and calibration properties that preserve muP-style learning-rate transfer at initialization. Empirically, OrScale ranks first on CIFAR-10/DavidNet across three seeds, improving Muon from 93.70% to 94.05% validation top-1, and OrScale-LM improves FineWeb-Edu pre-training versus Muon+Moonlight at three of four scales from 125M to 1.1B parameters while outperforming AdamW at every scale.",
+  "chars": 64564,
   "comment": "",
   "families": [
    "signal_scale",
@@ -7132,7 +8131,8 @@
    "mup"
   ],
   "score": 25,
-  "status": "screened",
+  "sha256": "76f1b85a3b5ae67a3356406d121326fc1a98ccc2afad2fbba0e8013cdc98d737",
+  "status": "fetched",
   "title": "OrScale: Orthogonalised Optimization with Layer-Wise Trust-Ratio Scaling",
   "why": [
    "+3 pre-train",
@@ -7460,6 +8460,7 @@
  },
  "2605.10797": {
   "abstract": "Muon has emerged as a strong competitor to AdamW for language model pre-training, yet its behavior at scale is sensitive to weight decay. Recent work has observed that, for Muon without decoupled weight decay, the spectral norm of weight matrices drifts upward over training. Through a decomposition of the spectral norm into a row-magnitude factor and a row-coherence factor, we identify the former as the empirical driver of this drift under Muon, while the latter remains well-behaved along the trajectory. Motivated by this diagnosis, we introduce Muown, a drop-in replacement for Muon that treats the row-magnitude vector as an explicit optimizer variable, updating it under the $\\ell_\\infty$ geometry induced by the decomposition, while applying Muon unchanged to the remaining direction component. We prove that Muown attains the optimal non-convex rates in both deterministic and stochastic regimes under a dual norm aligned with the underlying geometries and with a stochastic noise coefficient that empirically remains below that of Muon throughout training. Across GPT-style pre-training on FineWeb-Edu with model sizes from 124M up to 2.7B parameters, Muown improves perplexity over Muon, SOAP, AdamW, and Lion. It also widens the plateau of near-optimal learning rates across model scales, reduces sensitivity to weight decay, and avoids the spectral norm drift at negligible step-time overhead when appropriately sharded.",
+  "chars": 96525,
   "comment": "",
   "families": [
    "schedule",
@@ -7471,7 +8472,8 @@
    "optimizer_muon"
   ],
   "score": 24,
-  "status": "screened",
+  "sha256": "97515dc080955a46050858ecc72cd82fb4b9cdfe25a5b16ba74d56cf2a327e49",
+  "status": "fetched",
   "title": "Muown: Row-Norm Control for Muon Optimization",
   "why": [
    "+3 pre-train",
@@ -7481,6 +8483,31 @@
    "+3 weight decay",
    "+3 perplexity",
    "+4 124m"
+  ]
+ },
+ "2605.10886": {
+  "abstract": "Recent GPU generations deliver significantly higher FLOPs using lower-precision arithmetic, such as FP8. While successfully applied to large language models (LLMs), its adoption in large recommendation models (LRMs) has been limited. This is because LRMs are numerically sensitive, dominated by small matrix multiplications (GEMMs) followed by normalization, and trained in communication-intensive environments. Applying FP8 directly to LRMs often degrades model quality and prolongs training time. These challenges are inherent to LRM workloads and cannot be resolved merely by introducing better FP8 kernels. Instead, a system-model co-design approach is needed to successfully integrate FP8. We present LoKA (Low-precision Kernel Applications), a framework that makes FP8 practical for LRMs through three principles: profile under realistic distributions to know where low precision is safe, co-design model components with hardware to expand where it is safe, and orchestrate across kernel libraries to maximize the gains. Concretely, LoKA Probe is a statistically grounded, online benchmarking method that learns activation and weight statistics, and quantifies per-layer errors. This process pinpoints safe and unsafe, fast and slow sites for FP8 adoption. LoKA Mods is a set of reusable model adaptations that improve both numerical stability and execution efficiency with FP8. LoKA Dispatch is a runtime that leverages the statistical insights from LoKA Probe to select the fastest FP8 kernel",
+  "comment": "Accepted to ISCA'26",
+  "families": [
+   "signal_scale",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2605.10886",
+  "published": "2026-05-11",
+  "queries": [
+   "fp8_training"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "LoKA: Low-precision Kernel Applications for Recommendation Models At Scale",
+  "why": [
+   "+2 normaliz",
+   "+3 fp8",
+   "+2 kernel",
+   "+2 stability",
+   "-4 recommendation",
+   "+3 strong-lab signal"
   ]
  },
  "2605.13179": {
@@ -7638,6 +8665,33 @@
    "+3 strong-lab signal"
   ]
  },
+ "2605.19008": {
+  "abstract": "Modern language-model training is increasingly exposed to instability, degraded runs, and wasted compute, especially under aggressive learning-rate, scale, and runtime-stress conditions. This paper introduces Learn-by-Wire Guard (LBW-Guard), a bounded autonomous training-control governance layer that operates above AdamW. Rather than replacing the optimizer update rule, LBW-Guard observes training telemetry, interprets instability-sensitive regimes, and applies bounded control to optimizer execution while preserving fixed training objectives. We evaluate LBW-Guard in a Qwen2.5-centered stress-and-robustness suite using WikiText-103, with Qwen2.5-7B as the empirical anchor, model-size comparisons against Qwen2.5-3B and Qwen2.5-14B, learning-rate stress tests, gradient-clipping baselines, and a no-LoRA TinyLlama-1B full-parameter sanity check. In the 7B reference setting, LBW-Guard reduces final perplexity from 13.21 to 10.74, an 18.7% improvement, while reducing end-to-end time from 392.54s to 357.02s, a 1.10x speedup. Under stronger learning-rate stress, AdamW degrades to 1885.24 final perplexity at LR=3e-3 and 659.76 at LR=1e-3, whereas LBW-Guard remains trainable at 11.57 and 10.33, respectively. Gradient-clipping baselines do not reproduce this effect. These results support a scoped systems conclusion that stability-sensitive LLM training can benefit from a governance plane above the optimizer. LBW-Guard provides evidence that bounded runtime control can preserve productiv",
+  "comment": "",
+  "families": [
+   "schedule",
+   "optimizer_numeric",
+   "objective"
+  ],
+  "id": "2605.19008",
+  "published": "2026-05-18",
+  "queries": [
+   "gradient_clip"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Learn-by-Wire Training Control Governance: Bounded Autonomous Training Under Stress for Stability and Efficiency",
+  "why": [
+   "+3 optimizer",
+   "+3 perplexity",
+   "+2 stability",
+   "+2 gradient",
+   "+2 reproduc",
+   "-4 serving",
+   "-3 lora",
+   "+3 strong-lab signal"
+  ]
+ },
  "2605.19095": {
   "abstract": "Schedule-Free Learning has shown promise as a practical anytime training method for machine learning, showing success across dozens of standard benchmark problems. However, strong performance for LLM training has only been demonstrated at small scales. We identify a number of fixes necessary to scale up Schedule-Free Learning to larger batch sizes and model sizes, and present a learning-rate-free and schedule-free method (ScheduleFree+) for training large language models which greatly outperforms Warmup-Stable-Decay (WSD) schedules. We also demonstrate that Schedule-Free Learning is most effective for long duration training, and at 1000 tokens per parameter, it outperforms SOTA schedules by 31%. Schedule-Free Learning provides a theoretical foundation for the use of model averaging and checkpoint merging during pretraining.",
   "chars": 69475,
@@ -7696,6 +8750,7 @@
  },
  "2605.19811": {
   "abstract": "In large-scale optimization, the cheapness and effectiveness of update steps are the most crucial factors for a successful optimizer. Sign-based optimizers like Lion or Signum produce cheap per-step updates, whereas Muon's spectral matrix-sign update gives a much stronger direction at a substantially higher per-step cost. In this work, we propose LionMuon, which retains the effectiveness of Muon steps while considerably cutting the averaged iteration cost, similar to sign-based methods. It alternates between Lion's and Muon's updates on a fixed period P, sharing a single dual-EMA momentum buffer between them. The optimizer state memory therefore matches Lion and is exactly half of AdamW's. A simpler single-EMA variant, SignMuon, by itself already outperforms pure Muon. At P = 2, LionMuon Pareto-dominates Muon, Lion, Signum, and AdamW on every dataset and architecture we tested at 124M model size, reaching lower validation loss at lower compute, and the same advantage persists at 355M and 720M scale. On the theory side, we prove sharp complexity bounds under heavy-tailed noise which are governed by period-averaged smoothness and noise that interpolate between Muon's and Lion's constants. These bounds predict the compute-optimal period and the conditions under which LionMuon outruns Muon and Lion. Code: https://github.com/brain-lab-research/lion-muon",
+  "chars": 114190,
   "comment": "38 pages, 13 figures, 4 tables",
   "families": [
    "capacity",
@@ -7709,7 +8764,8 @@
    "optimizer_muon"
   ],
   "score": 19,
-  "status": "screened",
+  "sha256": "1d27ff8eb5f7bcbcf08bf664193cccb3411e4089a1ebef08fa171daa14e892a5",
+  "status": "fetched",
   "title": "LionMuon: Alternating Spectral and Sign Descent for Efficient Training",
   "why": [
    "+3 optimizer",
@@ -7767,6 +8823,32 @@
    "+3 mup",
    "+3 hyperparameter transfer",
    "+2 code released"
+  ]
+ },
+ "2605.20613": {
+  "abstract": "The current pretraining paradigm for large language models relies on massive compute and internet-scale raw text, creating a significant barrier to foundational research. In contrast, biological systems demonstrate highly sample-efficient learning through multi-timescale processing, such as the functional organization of the frontoparietal loop. Taking this as inspiration, we introduce HRM-Text, which replaces standard Transformers with a Hierarchical Recurrent Model (HRM) that decouples computation into slow-evolving strategic and fast-evolving execution layers. To stabilize this deep recurrence for language modeling, we introduce MagicNorm and warmup deep credit assignment. Furthermore, instead of standard raw-text pretraining, we train exclusively on instruction-response pairs using a task-completion objective and PrefixLM masking. Serving as an empirical existence proof of efficient pretraining, a 1B-parameter HRM-Text model trained from scratch on only 40 billion unique tokens and $1,500 budget achieves 60.7% on MMLU, 81.9% on ARC-C, 82.2% on DROP, 84.5% on GSM8K, and 56.2% on MATH. Despite utilizing roughly 100-900x fewer training tokens and 96-432x less estimated compute than standard baselines, HRM-Text performs competitively with 2-7B parameter open models. These results demonstrate that co-designing architectures and objectives can radically reduce the compute-to-performance ratio, making pretraining from scratch accessible to the broader research community.",
+  "comment": "",
+  "families": [
+   "schedule",
+   "objective",
+   "signal_path"
+  ],
+  "id": "2605.20613",
+  "published": "2026-05-20",
+  "queries": [
+   "sample_efficiency"
+  ],
+  "score": 9,
+  "status": "screened",
+  "title": "HRM-Text: Efficient Pretraining Beyond Scaling",
+  "why": [
+   "+3 pretrain",
+   "+4 from scratch",
+   "+3 warmup",
+   "+3 sample-efficient",
+   "+3 mup",
+   "-4 serving",
+   "-3 instruction"
   ]
  },
  "2605.20948": {
@@ -7975,6 +9057,31 @@
    "+5 muon",
    "+2 attention",
    "+2 gradient"
+  ]
+ },
+ "2605.24879": {
+  "abstract": "Large language models (LLMs) are trained on vast datasets that may contain sensitive information. Differential privacy (DP), the de facto standard for formal privacy guarantees, provides a principled framework for training LLMs with provable privacy protection. However, state-of-the-art DP training implementations rely on fast gradient clipping techniques with memory overhead $O(B \\min\\{T^2, d^2\\})$, where $B$ is the batch size, $T$ is the sequence length, and $d$ is the model width. This becomes prohibitive as both model size and context length grow. We propose DP-SGD-RC, a novel variant of DP-SGD with randomized clipping that reduces memory and compute complexity. DP-SGD-RC leverages stochastic trace estimation methods, specifically Hutchinson's estimator[Hutchinson, 1989] and its improved variant, Hutch++[Meyer et al., 2021], to reduce the memory footprint of per-sample gradient norm estimation. We provide a tight privacy analysis showing that DP-SGD-RC achieves noise multipliers competitive with deterministic clipping. Experiments fine-tuning Llama~3.2-1B on long-context benchmarks spanning classification, question answering, and summarization tasks demonstrate that DP-SGD-RC matches baseline utility while significantly reducing memory and compute requirements.",
+  "comment": "Accepted at ICML 2026",
+  "families": [
+   "capacity",
+   "token_exposure",
+   "optimizer_numeric"
+  ],
+  "id": "2605.24879",
+  "published": "2026-05-24",
+  "queries": [
+   "gradient_clip"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "Efficient DP-SGD for LLMs with Randomized Clipping",
+  "why": [
+   "+2 batch size",
+   "+2 gradient",
+   "-3 fine-tun",
+   "-1 long-context",
+   "+5 icml",
+   "+3 strong-lab signal"
   ]
  },
  "2605.25698": {
@@ -8196,6 +9303,7 @@
  },
  "2605.29157": {
   "abstract": "Large Language Models (LLMs) have become the central paradigm in artificial intelligence, yet the core computational primitive of attention has remained structurally unchanged. Local Linear Attention (LLA) is an attention mechanism derived from nonparametric statistics in the test-time regression framework. In contrast to prior research on efficient attention variants, LLA upgrades the local constant estimate in softmax attention to a local linear estimate, yielding provably superior bias-variance tradeoffs for associative memory. However, LLA has not been scaled in LLM pretraining due to computational and numerical stability concerns. We introduce Parallax, a parameterized Local Linear Attention that is scalable for LLMs. Parallax eliminates the numerical solver in LLA and learns an extra query-like projector that probes the KV covariance. We place Parallax within a family of attention mechanisms connected by the bandwidth, the probe construction and the affine structure. We propose a hardware-aware algorithm that increases the arithmetic intensity over FlashAttention, shifting attention into a more compute bound regime. Our prototype decode kernel matches or outperforms FlashAttention 2/3 across diverse batch sizes and context lengths. We pretrain Parallax at 0.6B and 1.7B scales and find consistent perplexity improvements throughout pretraining with gains that transfer to downstream benchmarks. The advantage persists under both parameter-matched and compute-matched control",
+  "chars": 102369,
   "comment": "",
   "families": [
    "capacity",
@@ -8214,7 +9322,8 @@
    "optimizer_benchmark"
   ],
   "score": 28,
-  "status": "screened",
+  "sha256": "b3293cc5452753ddaf78358b506bf4831ddd890f2d3e7060b79e6a3b3a2796e4",
+  "status": "fetched",
   "title": "Parallax: Parameterized Local Linear Attention for Language Modeling",
   "why": [
    "+3 pretrain",
@@ -8283,6 +9392,7 @@
  },
  "2605.31371": {
   "abstract": "Sign-based and LMO-inspired optimizers have recently attracted substantial attention in deep learning due to their strong performance and low memory footprint. However, their fixed-magnitude updates can hurt terminal convergence: they decouple update mechanisms from gradient magnitudes and fail to account for parameter heterogeneity, often leading to oscillation rather than convergence. We propose SoftSignum, a smooth relaxation of sign-based optimization that replaces the hard sign map with a temperature-controlled soft-sign transformation, enabling a parameter-wise transition from sign-like updates to magnitude-sensitive SGD-like steps. We complement it with an adaptive quantile-based temperature schedule and extend the same principle to matrix-valued optimizers, obtaining SoftMuon. We also develop a generalized geometry-relaxation framework based on strongly convex regularizers and Fenchel conjugates, proving convergence in stochastic non-convex setting. Experiments on diverse deep learning tasks, including LLM pretraining, show that SoftSignum and SoftMuon consistently improve over their hard sign-based counterparts and standard AdamW.",
+  "chars": 108561,
   "comment": "9 pages, 3 tables, 4 Figures",
   "families": [
    "attention",
@@ -8295,7 +9405,8 @@
    "optimizer_adam_variants"
   ],
   "score": 19,
-  "status": "screened",
+  "sha256": "46cba9617949b278137bec281272f40a9c64ef2f7d3c0f6b518655919dfa0951",
+  "status": "fetched",
   "title": "Softsign: Smooth Sign in Your Optimizer For Better Parameter Heterogeneity Handling",
   "why": [
    "+3 pretrain",
@@ -8985,6 +10096,7 @@
  },
  "2606.21514": {
   "abstract": "Recently, Muon has gained substantial attention as an appealing alternative to Adam-like optimizers, with many works highlighting its advantages through spectral normalization and improved conditioning. Yet this positive theoretical narrative contrasts with its empirical performance in large language model (LLM) training, where Muon's gains over Adam/AdamW are often mixed, schedule-sensitive, and not uniformly superior. To address this gap, we develop a trajectory-level theory characterizing both the strengths and limitations of Muon. We introduce a mixed-spiked matrix sensing model whose sensing operator decomposes into signal, spike, and bulk components, capturing a mixture of anisotropic structure and long-tail information reminiscent of LLM training. On top of it, we adopted a river-valley perspective in which we view the landscape as composed of a river direction flowing to the desired solution and hill directions encoding nuisance or task-irrelevant information. In the momentum-free setting, we show that Muon moves faster along the information-bearing river direction during early optimization, but can converge much more slowly near the river bottom than gradient descent. We then extend the river-valley perspective to general nonconvex objectives with momentum by studying points on the spectral river. There, while Muon converges faster early on, its orthogonalized update removes residual scale information, making it prone to overshooting and oscillation near the target s",
+  "chars": 181465,
   "comment": "44 pages, 13 figures, 2 tables",
   "families": [
    "attention",
@@ -9000,7 +10112,8 @@
    "lr_schedule"
   ],
   "score": 19,
-  "status": "screened",
+  "sha256": "2100ee67ac9c3d1aa025970e838d8fc2309bcf6683fb5b19cc1999c1357ce5af",
+  "status": "fetched",
   "title": "Towards Understanding the Power and Limits of the Muon Optimizer: A River-Valley Perspective",
   "why": [
    "+3 optimizer",
@@ -9084,6 +10197,36 @@
    "+2 gradient"
   ]
  },
+ "2606.24447": {
+  "abstract": "Vision-Language Models (VLMs) have revolutionized document parsing by enabling end-to-end mapping from images to structured text, imposing a significant latency bottleneck, particularly for token-dense documents. While Multi-Token Prediction (MTP) has emerged as a promising approach for accelerating inference, its potential is constrained by optimization instability when scaling to deeper look-ahead depth. In this paper, we propose \\textbf{P-MTP}, a framework that leverages \\textbf{Progressive Multi-Token Prediction} with a lightweight MTP module to scale the look-ahead depth for high-throughput document parsing. Specifically, we introduce Progressive Curriculum Loss that adaptively re-weights different look-ahead depths using cumulative path reliability and retrospective target consistency. By effectively suppressing gradient noise in long-range predictions, P-MTP, facilitates an automated easy-to-hard optimization transition, enabling the model to master increasingly distant look-ahead depths. Furthermore, we propose Confidence-Gated Dynamic Drafting to maximize the effective look-ahead depth and acceptance rate by adaptively calibrating speculative length during inference, thereby minimizing computational waste and further pushing the boundaries of inference speedup. Experimental results across multiple benchmarks and architectures demonstrate that P-MTP, achieves up to a $5\\times$ speedup with negligible loss in accuracy, providing the first successful validation of exten",
+  "comment": "",
+  "families": [
+   "capacity",
+   "optimizer_numeric",
+   "objective",
+   "signal_path",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2606.24447",
+  "published": "2026-06-23",
+  "queries": [
+   "multi_token"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "P-MTP: Efficient Document Parsing via Multi-Token Prediction with Progressive Depth Scaling",
+  "why": [
+   "+3 throughput",
+   "+2 loss",
+   "+2 stability",
+   "+2 gradient",
+   "+3 multi-token prediction",
+   "+2 curriculum",
+   "-3 inference",
+   "-3 vision-language"
+  ]
+ },
  "2606.24898": {
   "abstract": "Looped language models turn hidden states into runtime state: each state is decoded for prediction and fed back into future computation. This creates a basic supervision question: which state variables does cross-entropy actually control? We show that dense per-loop cross-entropy controls the variables exposed by the readout, not every variable active in the recurrent transition. Hidden-state scale gives a concrete failure mode. Scale-invariant readouts such as RMSNorm and LayerNorm hide radial scale from the immediate cross-entropy loss, while pre-norm residual recurrence continues to carry and update that same scale. Thus per-loop loss can make early exits usable without controlling recurrent scale. In 44M and 129M looped transformers without inter-loop normalization, per-loop cross-entropy through RMSNorm readouts still drives final hidden-state norms into the thousands or tens of thousands. Scale-visible readouts and explicit norm penalties keep norms in the tens, and scale-removing recurrence is the complementary architectural fix. The resulting design rule is simple: dense supervision trains exits; recurrent scale control requires either making scale visible to a loss or removing it from the loop. Consistent with this rule, scale-controlled variants achieve lower perplexity at matched inference-depth operating points in our variable-depth benchmarks.",
   "comment": "",
@@ -9160,6 +10303,7 @@
  },
  "2606.25971": {
   "abstract": "Modern neural network training relies on optimizers such as Adam and Muon which act on each weight matrix as a single object. Yet every weight matrix carries two distinct quantities -- a \\emph{magnitude} and a \\emph{direction} -- and all optimizers stepping in the matrix as a whole couple their dynamics: the directional change from an update depends on the current magnitude, while the magnitude drifts as a byproduct of learning the direction. Then, neither is directly governed by the learning rate. Typical training therefore leans on surrounding recipes such as weight decay and warmup to keep learning stable at scale, though these regulate the coupling only indirectly. Other recent methods instead constrain the weight to a fixed-norm sphere, but add no learnable magnitude, leaving scale control to normalization layers alone. We propose \\emph{Magnitude--Direction (MD) Decoupling}, an optimizer modification that factorizes each weight into a fixed-norm direction on a hypersphere and learnable per-row and per-column magnitude gains, updated at separate learning rates, all while the model still sees a single fused weight tensor. The method is agnostic to the base optimizer and removes the need for weight decay and warmup. Across both Adam and Muon, MD Decoupling improves on well-tuned baselines, transfers the optimal LR across model width without retuning, and continues to help at scale on large Mixture-of-Experts (MoE) models. Treating magnitude and direction as separately contr",
+  "chars": 117655,
   "comment": "Typos & writing; downstream evaluations",
   "families": [
    "capacity",
@@ -9173,7 +10317,8 @@
    "lr_warmup"
   ],
   "score": 25,
-  "status": "screened",
+  "sha256": "a8ae5b0cf858fe502682e7684157e781a2d2b7eac262261be9ad033e52ead716",
+  "status": "fetched",
   "title": "Improving Neural Network Training by Decoupling the Magnitude and Direction of Weight Vectors",
   "why": [
    "+3 optimizer",
@@ -9183,6 +10328,60 @@
    "+3 weight decay",
    "+2 normaliz",
    "+3 mup",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2606.26797": {
+  "abstract": "Supervised fine-tuning (SFT) on a small, high-quality set of long reasoning traces is an effective approach for eliciting strong reasoning capabilities in Large Language Models (LLMs). However, existing methods for curating high-quality SFT data rely heavily on strong reasoning models to filter examples based on diversity and difficulty, making the curation process costly while often yielding suboptimal data quality. In this work, we show that diverse and challenging reasoning examples can be identified using only the initial reasoning tokens. Specifically, we demonstrate that difficult problems can be reliably detected based on the loss of the first 100 reasoning tokens evaluated at a randomly perturbed checkpoint of the pretrained model. We further show that examples exhibiting similar loss patterns over their first 1k reasoning tokens across a small number of perturbed checkpoints extrapolating along the fine-tuning trajectory provably induce similar gradients. We validate our approach through extensive experiments on fine-tuning Qwen2.5-7B and Llama3.1-8B models on the M23K medical reasoning and OpenThoughts-Math datasets. Our method outperforms existing baselines by up to 1.7% while being 91% more token efficient.",
+  "comment": "Accepted by ICML 2026 (Poster)",
+  "families": [
+   "unassigned"
+  ],
+  "id": "2606.26797",
+  "published": "2026-06-25",
+  "queries": [
+   "data_quality"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Reasoning Quality Emerges Early: Data Curation for Reasoning Models",
+  "why": [
+   "+3 pretrain",
+   "+2 loss",
+   "+2 gradient",
+   "-3 fine-tun",
+   "-2 reasoning",
+   "-4 medical",
+   "+5 icml",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2606.27550": {
+  "abstract": "Multi-token prediction has been shown to increase data density during training, improve downstream text-generation quality, and serves as the defacto approach for self-speculative decoding. Existing foundation and open source models that use MTP heads commit to a static tree-based attention topology throughout the entire generation sequence, meaning the speculation depth, and thus the compute required during verification, stays constant regardless of the context. This is fundamentally misaligned with the entropy patterns of natural language where low-entropy regions often support reliable multi-step drafting, while high-entropy regions require more conservative speculation. To address this, we propose Entropy-guided Multi-Token Prediction (EntMTP), a training-free scheduler that toggles between tree-based attention topologies from a set of task-specific pareto-optimal trees conditioned on a running estimate of local generation entropy. By matching speculation depth to context predictability, EntMTP maximizes expected accepted-token throughput across the full distribution of generated text without sacrificing generation quality. When evaluated across Humaneval, ShareGPT, GSM8k, and Litbench benchmarks, EntMTP consistently achieves a 1.15x speedup against Hydra and peak speedup of 1.36x against Medusa baselines respectively.",
+  "comment": "7 pages, 5 figures",
+  "families": [
+   "capacity",
+   "attention",
+   "schedule",
+   "objective",
+   "input_pipeline",
+   "systems"
+  ],
+  "id": "2606.27550",
+  "published": "2026-06-25",
+  "queries": [
+   "multi_token"
+  ],
+  "score": 8,
+  "status": "screened",
+  "title": "EntMTP: Accelerating LLM Inference with Entropy Guided Multi Token Prediction",
+  "why": [
+   "+2 schedule",
+   "+2 attention",
+   "+3 throughput",
+   "+3 multi-token prediction",
+   "-3 inference",
+   "-2 decoding",
    "+3 strong-lab signal"
   ]
  },
@@ -10086,8 +11285,30 @@
    "+3 strong-lab signal"
   ]
  },
+ "2608.08145": {
+  "abstract": "We model in intuitionistic implicational logic the key enabler of today's GenerativeAI: the next-token prediction in autoregressive causal neural networks. In our framework, next-token prediction corresponds to modus ponens, and sequence processing becomes constructive proof extension under the Curry-Howard correspondence. Our Prolog-based specialized theorem provers validate fundamental properties of the neural models, among which relations between commutative vs. non-commutative sequencing and single-token vs. multi-token prediction choices. We derive a neural architecture equivalent to multiplicative RNNs that arises naturally from a proof-theoretic interpretation of next-token prediction as nested intuitionistic implication and position the model relative to transformers, state-space models and recursive LLMs.",
+  "comment": "In Proceedings ICLP 2026, arXiv:2607.17707. Dedicated to the memory of Paul Tarau - he sadly passed away about one month after having submitting this paper",
+  "families": [
+   "signal_scale",
+   "objective",
+   "signal_path"
+  ],
+  "id": "2608.08145",
+  "published": "2026-08-08",
+  "queries": [
+   "multi_token"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "On the (Intuitionistic) Logic of Next-Token Prediction",
+  "why": [
+   "+3 multi-token prediction",
+   "+3 strong-lab signal"
+  ]
+ },
  "2608.09417": {
   "abstract": "Deep decoder-only Transformers often replace the original Post-Norm architecture with Pre-Norm variants because Post-Norm training is highly sensitive to warmup and learning rate under conventional initialization schemes. Although prior work has identified rank collapse and gradient vanishing as related symptoms, it remains poorly understood how causal attention creates high-similarity representations and why training dynamics fail to repair them. We give a two-stage analysis of Post-Norm rank collapse using token similarity as a scalar state variable. First, at initialization, causal attention acts approximately as a prefix-averaging operator that increases token similarity across depth, while the SwiGLU branch contributes only a smaller damping effect. Second, once training enters a high-similarity regime, growth of pre-normalization residual norms makes the RMSNorm backward factor contractive; under mild conditions, gradients to earlier layers decay geometrically. As a complementary result, we characterize the properties of a collapsed network: its best predictor is frequency distribution with relatively high loss floor, and gradients in collapsed layers vanish at frequency distribution. Experiments on 48-layer decoder-only Transformers trained on C4 dataset match the predicted initialization-time similarity growth and collapse-time gradient contraction, and show that collapsed runs stay near the predicted frequency loss. Together, these results distinguish the forward sim",
+  "chars": 162261,
   "comment": "",
   "families": [
    "capacity",
@@ -10102,7 +11323,8 @@
    "init_scaling"
   ],
   "score": 26,
-  "status": "screened",
+  "sha256": "73e901d55ebbf586780291a17839a20daaf0303e963bd0915497a644c16e0d76",
+  "status": "fetched",
   "title": "Why Post-Norm Transformers Collapse: Attention Amplification and Gradient Repair Failure",
   "why": [
    "+3 learning rate",
@@ -10166,6 +11388,30 @@
    "+5 muon",
    "+2 kernel",
    "+2 loss",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2608.11909": {
+  "abstract": "Two accounts recur in explanations of the success of rotary position embeddings (RoPE). Expressivity studies associate periodic position information with modular predicates, whereas mechanistic and long-context studies emphasize positional anchors and local offsets. We formalize both accounts for fully uniform, finite-precision soft-attention transformers. We find that, if every rotary component is periodic, RoPE transformers recognize exactly the languages definable in past temporal logic with modular predicates. Conventional RoPE is different: The rotations it computes never repeat. This yields a precision-dependent bounded simulation of fixed-offset look-back operators, rather than an all-length modular characterization. Controlled experiments match this separation: Constructed periodic schedules length-generalize on modular languages, while conventional RoPE behaves more like a bounded locality bias and can impair tasks requiring position-invariant access to distant context. Altogether, our findings shed light on RoPE transformers, bringing theoretical expressivity characterizations closer to models used in practice.",
+  "comment": "",
+  "families": [
+   "attention",
+   "ve_placement",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2608.11909",
+  "published": "2026-08-12",
+  "queries": [
+   "positional"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Disentangling the Expressivity of RoPE",
+  "why": [
+   "+2 schedule",
+   "+2 attention",
+   "-1 long-context",
    "+3 strong-lab signal"
   ]
  },
@@ -10242,6 +11488,55 @@
    "+2 loss",
    "+3 mup",
    "-3 deployment",
+   "+3 strong-lab signal"
+  ]
+ },
+ "2608.17567": {
+  "abstract": "Pretrained molecular language models are increasingly used as molecular encoders for learning structure-property relationships. However, their practical suitability for molecular discovery within and beyond their pretraining domain remains unclear. Herein, we systematically benchmark four molecular language models across six virtual molecular libraries spanning drug discovery, organic materials, and catalysis. Native molecular language model embeddings show substantial variation in discovery performance across libraries, whereas molecular fingerprints provide a consistently strong and robust baseline. Consistent with a potential domain-representation mismatch, we show that explicit domain adaptation substantially improves representation performance. Fine-tuning molecular language model encoders on structures from the target virtual library consistently improves sample efficiency, with several adapted encoders emerging as the top-performing representations across the benchmark tasks. These results show that molecular representation quality depends strongly on the target domain and that explicit adaptation can improve the practical utility of molecular foundation models. More broadly, our findings establish domain-adapted molecular representations as a promising strategy for sample-efficient adaptive decision making in virtual screening and self-driving laboratories.",
+  "comment": "",
+  "families": [
+   "token_exposure",
+   "ve_placement",
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2608.17567",
+  "published": "2026-08-18",
+  "queries": [
+   "sample_efficiency"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "Domain-Adapted Molecular Language Models for Efficient Search of Make-on-Demand Libraries",
+  "why": [
+   "+3 pretrain",
+   "+3 sample-efficient",
+   "+3 sample efficiency",
+   "-3 fine-tun"
+  ]
+ },
+ "2608.18062": {
+  "abstract": "Language model tokenizers are typically selected with minimal evaluation, despite the fact that their design choices directly impact model capabilities. This can be partly attributed to a limited understanding of which tokenizer properties affect which aspects of downstream performance. We introduce TokEval, a framework of tokenizer evaluation metrics that goes beyond standard measures like fertility and compression rate to capture linguistically and structurally meaningful properties, e.g., UTF-8 character boundary integrity and digit place-value boundary alignment for mathematics. To validate whether these metrics are predictive of downstream model performance, we conduct controlled language model pretraining experiments, varying solely the tokenizers' training data mixture, pretokenization strategy, and training algorithm. We evaluate the resulting models on bits-per-byte (a tokenizer-agnostic version of perplexity) and several benchmarks, spanning linguistic understanding, mathematical reasoning, and code generation. Our experiments suggest that different intrinsic properties have different impacts on model abilities: information-theoretic metrics predict language modeling abilities (Spearman rho up to 0.80), while structure-sensitive metrics, such as those measuring digit and line-break handling, correlate with task accuracy. We hope TokEval enables more principled tokenizer evaluation, replacing pretraining sweeps with intrinsic measurement wherever the two agree.",
+  "comment": "Published as a conference paper at COLM 2026; Library hosted at https://github.com/cimeister/tokenizer-intrinsic-evals",
+  "families": [
+   "signal_scale",
+   "schedule"
+  ],
+  "id": "2608.18062",
+  "published": "2026-08-18",
+  "queries": [
+   "tokenizer_effect"
+  ],
+  "score": 6,
+  "status": "screened",
+  "title": "TokEval: A Tokenizer Evaluation Suite",
+  "why": [
+   "+3 pretrain",
+   "+3 perplexity",
+   "-2 reasoning",
+   "-2 alignment",
+   "-2 code generation",
+   "+3 colm",
    "+3 strong-lab signal"
   ]
  }

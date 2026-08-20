@@ -86,7 +86,13 @@ def main():
                                        f"{les['severity']}): {k}={v} satisfies the "
                                        f"forbidden rule {rule}. {les['mitigation'][:160]}"))
             continue
-        hit = sorted(set(cfg) & set(blocked_by_lesson))
+        # Only a CHANGED key engages a key-level block. Intersecting the whole cfg means
+        # the PLATFORM's own keys trip it: once L076 blocked `mlp`, the platform's mlp=4
+        # refused every entry, including ones that do not touch mlp. Same defect as the
+        # other door; fixed in both, because a second entrance with a different lock is
+        # the way in.
+        _delta = {k for k, v in cfg.items() if direction.PLATFORM.get(k) != v}
+        hit = sorted(_delta & set(blocked_by_lesson))
         if hit:
             les = blocked_by_lesson[hit[0]]
             skipped.append((e["name"], f"blocked by lesson {les['id']} (severity "

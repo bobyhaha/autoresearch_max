@@ -77,7 +77,13 @@ def main() -> int:
               f"  {les['mitigation'][:300]}")
         return 1
     blocked = claims.blocking_keys()
-    hit = sorted(set(T) & set(blocked))
+    # Only a key being CHANGED from the platform counts as engaging the lesson. This
+    # intersected the whole cfg, and every cfg carries the PLATFORM's own keys -- so once
+    # L076 blocked `mlp`, the platform's own mlp=4 tripped it and the door refused
+    # EVERYTHING, including experiments that touch mlp not at all. A block on a key means
+    # "do not run experiments on this key again", not "never queue anything".
+    _delta = {k for k, v in T.items() if direction.PLATFORM.get(k) != v}
+    hit = sorted(_delta & set(blocked))
     if hit:
         les = blocked[hit[0]]
         print(f"refusing: key '{hit[0]}' is blocked by lesson {les['id']} (severity "

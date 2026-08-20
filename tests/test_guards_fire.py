@@ -40,8 +40,25 @@ import council     # noqa: E402
 import direction   # noqa: E402
 
 
+def _needs_corpus(pred, why):
+    """Skip an integration check when the corpus lacks the runs it reads.
+
+    L069 recorded a test that expired when the campaign PRODUCED data. These are the
+    mirror: they expire when a tree does not HAVE it. A fresh clone of this project must
+    come up green, or the first thing a newcomer learns is that the suite lies.
+    """
+    if not pred():
+        pytest.skip(f"integration check needs campaign data: {why}")
+
+
 def test_activation_precheck_refuses_a_vacuous_diagnostic():
     """The control must not satisfy a diagnostic that is supposed to prove engagement."""
+    import analyze
+    _needs_corpus(lambda: any(direction.is_platform(r.get("cfg") or {})
+                              and "num_steps" in (r.get("metrics") or {})
+                              for r in analyze.load()),
+                  "the pre-check needs CONTROL runs to compare against; a fresh tree "
+                  "has none, so it correctly answers 'cannot pre-check' instead of refusing")
     bad, msg = claims.diagnostic_would_discriminate("num_steps", {"op": "gt", "value": 0.0})
     assert not bad, f"a rule every control passes was accepted: {msg}"
     good, msg = claims.diagnostic_would_discriminate("n_ve_layers", {"op": "gt", "value": 4.0})
@@ -58,6 +75,9 @@ def test_activation_precheck_is_actually_wired_into_the_queue_doors():
 
 
 def test_lesson_blocks_refuse_a_known_bad_value():
+    _needs_corpus(lambda: any(l.get("blocks_values") or l.get("blocks_keys")
+                              for l in claims.lessons()),
+                  "needs a registered blocking lesson; a fresh tree has none")
     hits = claims.blocked_values({**direction.PLATFORM, "tbs": 20})
     assert hits, "tbs=20 measured +0.022545 and is blocked by L040; the block did not fire"
     assert not claims.blocked_values({**direction.PLATFORM, "tbs": 18}), (
@@ -66,12 +86,20 @@ def test_lesson_blocks_refuse_a_known_bad_value():
 
 def test_e5_refuses_a_fabricated_number_in_a_paper():
     """The numeric audit guards the one artifact that makes public claims."""
+    _needs_corpus(lambda: (REPO / "papers").is_dir() and bool(coe.registry()),
+                  "E5 needs a papers/ directory and a non-empty numeric registry")
     doc = REPO / "papers" / "_guardtest.md"
     try:
         doc.write_text("We measured a val_bpb of 0.123456 today.\n")
         assert any("_guardtest" in p for p in coe.e5_numeric()), (
             "a number no run produced was accepted into papers/")
-        doc.write_text("0.993970 - 0.989520 = 0.004450\n")
+        # Build the derivation from values the registry ACTUALLY holds. Hard-coding two
+        # of this campaign's own val_bpb figures made the test pass here and fail in any
+        # other tree, because those numbers are not in a fresh corpus -- the same
+        # corpus-coupling L069 was written about, in its other direction.
+        vals = sorted(v for v in coe.registry() if isinstance(v, float) and v > 0.5)
+        a, b = vals[-1], vals[0]
+        doc.write_text(f"{a:.6f} - {b:.6f} = {a - b:.6f}\n")
         assert not [p for p in coe.e5_numeric() if "_guardtest" in p], (
             "a correct, fully shown derivation was refused")
     finally:
@@ -79,6 +107,8 @@ def test_e5_refuses_a_fabricated_number_in_a_paper():
 
 
 def test_e5_refuses_a_sign_flipped_derivation():
+    _needs_corpus(lambda: (REPO / "papers").is_dir() and bool(coe.registry()),
+                  "E5 needs a papers/ directory and a non-empty numeric registry")
     doc = REPO / "papers" / "_guardtest.md"
     try:
         doc.write_text("0.989520 - 0.993970 = +0.004450\n")
@@ -100,6 +130,9 @@ def test_round_validator_refuses_a_round_that_proposes_nothing_runnable():
 def test_selector_refuses_a_blocked_config():
     import analyze
     import selector
+    _needs_corpus(lambda: "tbs" in claims.blocking_keys()
+                  or any(l.get("blocks_keys") for l in claims.lessons()),
+                  "needs a registered blocking lesson to refuse against")
     rows = analyze.load()
     state = direction.axis_state(rows)
     fx = selector.family_effects(rows)
@@ -175,6 +208,8 @@ def test_multi_axis_arms_do_not_contribute_to_single_factor_estimates():
     import balance
     import selector
     rows = analyze.load()
+    _needs_corpus(lambda: len(rows) > 50,
+                  "multi-axis attribution needs the swdiv and stack arms on disk")
 
     # No single-factor family may carry a multi-family arm's delta.
     fx = selector.family_effects(rows)
@@ -339,6 +374,10 @@ def test_activation_precheck_refuses_a_rule_no_treatment_can_satisfy():
     1.0. Both were two-sided departures encoded one-sided, and the door passed both.
     """
     cfg = {**direction.PLATFORM, "ve": 1, "swdiv": 4, "precond": "pre"}
+    _needs_corpus(
+        lambda: any("secmom_ortho_ratio" in (r.get("metrics") or {})
+                    for r in __import__("analyze").load()),
+        "needs precond runs that emitted secmom_ortho_ratio")
     bad, msg = claims.diagnostic_would_discriminate(
         "secmom_ortho_ratio", {"op": "lt", "value": 0.1}, cfg)
     assert not bad, f"a rule no run of this arm can satisfy was accepted: {msg}"
@@ -359,6 +398,10 @@ def test_activation_precheck_says_unverified_rather_than_ok():
     # campaign produced the very data it was waiting for. A test whose truth expires when
     # an experiment lands is a broken test, not a broken guard.
     cfg = {**direction.PLATFORM, "swdiv": 4096}       # never queued, never will be
+    _needs_corpus(
+        lambda: any("qk_q_rms_final" in (r.get("metrics") or {})
+                    for r in __import__("analyze").load()),
+        "needs any run that emitted qk_q_rms_final")
     ok, msg = claims.diagnostic_would_discriminate(
         "qk_q_rms_final", {"op": "gt", "value": 1.0}, cfg)
     assert ok and "UNVERIFIED" in msg, (
@@ -516,3 +559,25 @@ def test_a_registered_mechanism_becomes_buildable_and_visible_without_editing_a_
         f"{name} built byte-identical to the control -- the edit did not apply")
     ok, msg = make_variant.emits_diagnostic(cfg, spec["diagnostic"])
     assert ok, f"{name} does not emit its declared diagnostic {spec['diagnostic']}: {msg}"
+
+
+def test_a_registered_mechanism_is_never_mistaken_for_a_control():
+    """Opening one gate without its sibling is worse than leaving both shut.
+
+    known_keys() learned to accept registered mechanisms before mechanisms_touched() did,
+    so a cfg carrying one satisfied BOTH "moves no known axis" and "carries no unknown
+    key" -- and is_platform() called it a CONTROL. Such a run would bypass the decision
+    cutoff and every budget, and be pooled into the block that measures the noise band.
+    """
+    import make_variant
+    for name in make_variant.MECHANISM_REGISTRY:
+        cfg = {**direction.PLATFORM, name: 32768 if name == "ngram" else 1}
+        assert direction.mechanisms_touched(cfg) == {name}, (
+            f"{name} is registered but mechanisms_touched() cannot see it")
+        assert not direction.is_platform(cfg), (
+            f"a cfg engaging {name} was classified as a CONTROL; it would corrupt the "
+            f"noise band it was pooled into")
+        assert direction.label(cfg).startswith("mech:"), (
+            f"{name} is not labelled as a mechanism: {direction.label(cfg)}")
+    assert direction.is_platform(dict(direction.PLATFORM)), (
+        "the platform itself stopped being recognised as a control")

@@ -333,7 +333,19 @@ def axes_touched(cfg: dict) -> set:
 
 
 def mechanisms_touched(cfg: dict) -> set:
-    return {m for m in MECHANISMS if cfg.get(m) is not None}
+    """Every mechanism the cfg engages, INCLUDING ones implemented in the registry.
+
+    This read the hard-coded MECHANISMS tuple. The moment known_keys() learned to accept
+    registered mechanisms, a cfg carrying one satisfied BOTH "moves no known axis" and
+    "carries no unrecognised key" -- so is_platform() called it a CONTROL. An ngram run
+    would have been labelled a control, bypassed the decision cutoff and every budget,
+    and been pooled into the very block that measures the noise band.
+    
+    That is the exact control-corrupting class is_platform's docstring was written about,
+    reintroduced by the change that opened the mechanism set. Opening one gate without
+    opening its sibling is worse than leaving both shut.
+    """
+    return {m for m in all_mechanisms() if cfg.get(m) is not None}
 
 
 def is_platform(cfg: dict) -> bool:
