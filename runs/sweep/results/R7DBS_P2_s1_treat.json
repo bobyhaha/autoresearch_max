@@ -12,7 +12,7 @@
  },
  "gpu": 6,
  "wave_group": "R7DBS_P2",
- "hypothesis_id": "hyp_dbs64_alone_r5_p18",
+ "hypothesis_id": "hyp_dbs64_alone_r5_p18_v2",
  "started": 1787185567.6131282,
  "ended": 1787186054.5843842,
  "returncode": 0,

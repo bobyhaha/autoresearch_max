@@ -4578,7 +4578,7 @@
   "created_at": 1787170391.17857,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
-  "hypothesis_id": "hyp_dbs64_alone_r5_p18"
+  "hypothesis_id": "hyp_dbs64_alone_r5_p18_v2"
  },
  {
   "name": "R7DBS_P1_s1_ctrl",
@@ -4645,7 +4645,7 @@
   "created_at": 1787170391.17857,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
-  "hypothesis_id": "hyp_dbs64_alone_r5_p18"
+  "hypothesis_id": "hyp_dbs64_alone_r5_p18_v2"
  },
  {
   "name": "R7DBS_P3_s0_ctrl",
@@ -4690,7 +4690,7 @@
   "created_at": 1787170391.17857,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
-  "hypothesis_id": "hyp_dbs64_alone_r5_p18"
+  "hypothesis_id": "hyp_dbs64_alone_r5_p18_v2"
  },
  {
   "name": "R7DBS_P4_s0_treat",
@@ -4713,7 +4713,7 @@
   "created_at": 1787170391.17857,
   "source_round": "quad-counterbalanced",
   "vram_est": 50,
-  "hypothesis_id": "hyp_dbs64_alone_r5_p18"
+  "hypothesis_id": "hyp_dbs64_alone_r5_p18_v2"
  },
  {
   "name": "R7DBS_P4_s1_ctrl",
