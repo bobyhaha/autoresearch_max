@@ -47,7 +47,16 @@ def main() -> int:
     ap.add_argument("--rationale", required=True)
     ap.add_argument("--falsifier", required=True)
     ap.add_argument("--expected", required=True)
-    ap.add_argument("--width", type=int, default=4, choices=(2, 4),
+    # DEFAULT 2, ON MEASURED CAPACITY. 124 owner-filtered samples of runs/gpu_watch.log
+    # over 2026-08-18T12:21Z..2026-08-20T03:29Z: a width-4 wave could have assembled in
+    # 12.9% of them, a width-2 wave in 66.1% -- 5.1x as often -- and mean claimable
+    # capacity (min(4, free+ours)) is 1.81 GPUs, not 4. A quad is the better DESIGN, since
+    # the treatment occupies every slot within two waves and the slot profile cancels
+    # exactly; but a held quad measures nothing at all, and this box holds quads roughly
+    # seven times out of eight. Four 2-wide waves cancel the same offset across waves
+    # rather than within one, which costs the host drift between them and buys a design
+    # that actually runs. Pass --width 4 deliberately when the box is quiet.
+    ap.add_argument("--width", type=int, default=2, choices=(2, 4),
                     help="GPUs per wave. 4 = two quads, treatment on every slot within a "
                          "wave. 2 = FOUR yoked pairs, treatment on each of the two devices "
                          "twice. Use 2 when the box will not free four GPUs at once: a "
