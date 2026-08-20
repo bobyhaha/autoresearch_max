@@ -349,6 +349,12 @@ def e4_method_code() -> list[str]:
     ctl_src = None
     for q in queue:
         if direction.is_platform(q.get("cfg") or {}):
+            # .get, not []. One hand-written entry without a variant key raises KeyError
+            # here, audit() collapses that into a single "check crashed" line, and every
+            # OTHER E4 problem in the queue goes unreported behind it -- a malformed
+            # entry would blind the check rather than be caught by it.
+            if not q.get("variant"):
+                continue
             v = VARIANTS / q["variant"]
             if v.exists():
                 ctl_src = v.read_text()

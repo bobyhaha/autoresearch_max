@@ -487,6 +487,30 @@ def main():
             print(f"  {'QUAD-COUNTERBALANCED' if full else 'SAME-GPU PAIRED (INCOMPLETE QUAD)'}"
                   f" over {len(arms)} pairings: mean delta {mean:+.6f} vs resolution {res_n:.6f} "
                   f"(2*SE at n={n_eff}, control-derived) -> {verdict}")
+            # THE PRE-REGISTERED THRESHOLD, ACTUALLY APPLIED. validate_hyp requires every
+            # hypothesis to declare prediction.minimum_effect -- the smallest effect that
+            # would count as support -- and until now NOTHING read it: an audit found the
+            # field had no consumer anywhere in the tree. A threshold nobody checks is a
+            # threshold that cannot disappoint, which is the whole failure the requirement
+            # was added to prevent, surviving one level up.
+            #
+            # Reported separately from the resolution verdict, never merged with it. The
+            # resolution asks "can the instrument see this"; the prediction asks "is it as
+            # big as the hypothesis said". An arm can clear the first and fail the second,
+            # and that is the interesting case: a real but smaller-than-claimed effect.
+            _hid = next((m.get("hypothesis_id") for m in members
+                         if m.get("hypothesis_id")), None)
+            if _hid:
+                _h = next((x for x in C.hypotheses() if x["id"] == _hid), None)
+                _pred = (_h or {}).get("prediction") or {}
+                _min = _pred.get("minimum_effect")
+                _dir = _pred.get("direction")
+                if _min and _dir:
+                    _signed = -mean if _dir == "decrease" else mean
+                    _met = _signed >= _min
+                    print(f"    PRE-REGISTERED: {_hid} predicted {_dir} of at least "
+                          f"{_min:.6f}; observed {_signed:+.6f} -> "
+                          f"{'MEETS' if _met else 'FAILS'} its own prediction")
             if res_paired:
                 agree = (abs(mean) > res_paired) == (abs(mean) > res_n)
                 print(f"    paired-variance check: 2*SE from the observed deltas is "
