@@ -489,3 +489,30 @@ def test_systematic_regime_shift_requires_a_real_device_swap():
         "device, so it can claim a swap that did not happen")
     assert "len(_treat_devs) >= 2" in window, (
         "the device-swap condition is present but not part of the predicate")
+
+
+def test_a_registered_mechanism_becomes_buildable_and_visible_without_editing_a_list():
+    """Upstream: "Everything is fair game: architecture, hyperparameters, optimizer...".
+
+    This file used to carry a CLOSED set of five hand-wired mechanisms, and every policy
+    tool computed coverage over it -- so "what should we try next" could only return an
+    answer from inside the menu, and an unimplemented idea produced a refusal that read
+    as a verdict about the world. Registering a mechanism must now be the single act
+    that makes it real.
+    """
+    import make_variant
+    reg = make_variant.MECHANISM_REGISTRY
+    assert reg, "the mechanism registry is empty; new mechanisms cannot be added as code"
+    name = next(iter(reg))
+    assert name in direction.all_mechanisms(), (
+        f"{name} is implemented but the policy cannot see it -- the registry is not "
+        f"feeding direction.all_mechanisms()")
+    assert not direction.unknown_keys({**direction.PLATFORM, name: 1}), (
+        f"a cfg using the registered mechanism {name} is still rejected as an unknown key")
+    spec = reg[name]
+    cfg = {**direction.PLATFORM, name: 32768 if name == "ngram" else 1}
+    src = make_variant.build(cfg)
+    assert src != make_variant.build(dict(direction.PLATFORM)), (
+        f"{name} built byte-identical to the control -- the edit did not apply")
+    ok, msg = make_variant.emits_diagnostic(cfg, spec["diagnostic"])
+    assert ok, f"{name} does not emit its declared diagnostic {spec['diagnostic']}: {msg}"

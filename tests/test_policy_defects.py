@@ -25,7 +25,11 @@ print("   control block that measures the noise band, destroying the instrument.
 import re
 src = (REPO / "tools" / "make_variant.py").read_text()
 keys = set(re.findall(r'cfg\.get\("([a-z_0-9]+)"', src)) | set(re.findall(r"cfg\['([a-z_0-9]+)'\]", src))
-orphan = sorted(keys - d.KNOWN_KEYS)
+# known_keys() is COMPUTED, not the frozen KNOWN_KEYS constant this line used to read.
+# A mechanism registered in make_variant.py teaches the policy its name and its companion
+# parameters, so a snapshot taken at import would report an orphan for every mechanism
+# added after that moment -- which is the closed-set behaviour this project removed.
+orphan = sorted(keys - d.known_keys())
 ok(not orphan, f"every expressible knob is known to the policy (orphans: {orphan})")
 for k in ("batch_ramp", "compile_mode", "qk_suppress"):
     ok(not d.is_platform({**P, k: 0.5}), f"'{k}' config is not mistaken for a control")

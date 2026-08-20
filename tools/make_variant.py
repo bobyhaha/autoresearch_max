@@ -46,9 +46,58 @@ def variant_id(src: str) -> str:
     return hashlib.sha256(src.encode()).hexdigest()[:12] + ".py"
 
 
-# Mechanisms that actually have a branch in build(). Kept next to the code so the
-# guard below cannot drift from reality the way direction.MECHANISMS did.
-_IMPLEMENTED = {"mtp", "unet", "zloss", "noqknorm", "precond"}
+# ---------------------------------------------------------------------------
+# THE MECHANISM REGISTRY
+#
+# Upstream's instructions are explicit about what this project is: "Everything is fair
+# game: architecture, hyperparameters, optimizer, batch size, etc.", and the loop is
+# "modifies the code, trains for 5 minutes, checks if the result improved, keeps or
+# discards, and repeats."
+#
+# This file had a CLOSED set of five hand-wired mechanisms, and every policy tool --
+# direction.KNOB_AXES, MECHANISMS, selector, balance, decide -- computed coverage over
+# that set. The effect was that "what should we try next?" could only ever return an
+# answer from inside the menu, and an unimplemented idea produced a refusal that read
+# like a verdict about the world rather than a task. A whole campaign day went into
+# turning knobs that were already wired, while the literature corpus sat holding read
+# papers on mechanisms nobody could run.
+#
+# Registering a mechanism here makes it buildable, gives the policy its family, and
+# declares the diagnostic that proves it engaged. Writing a new mechanism is one
+# function -- which is what it should always have been.
+MECHANISM_REGISTRY: dict = {}
+
+
+def mechanism(name, *, family, diagnostic, doc, params=()):
+    """Register a train.py edit as a first-class mechanism.
+
+    `fn(src, cfg, sub)` receives the source, the config, and the asserting substitution
+    helper, and returns the edited source. It may also append observable print lines by
+    returning a (src, [lines]) pair.
+    """
+    def deco(fn):
+        MECHANISM_REGISTRY[name] = {"apply": fn, "family": family,
+                                    "diagnostic": diagnostic, "doc": doc,
+                                    # Companion settings the mechanism reads -- a gate
+                                    # strength, a table width. Declared HERE so the policy
+                                    # learns them from the code rather than from a
+                                    # hand-maintained list, which is the same closed-set
+                                    # mistake one level down.
+                                    "params": tuple(params)}
+        return fn
+    return deco
+
+
+# Legacy inline branches, still implemented further down in build(). New work should use
+# the registry above rather than adding to this set.
+_LEGACY_IMPLEMENTED = {"mtp", "unet", "zloss", "noqknorm", "precond"}
+
+
+def implemented():
+    """Computed at CALL time. Registry entries are defined BELOW this point, so a
+    module-level constant would have frozen the set before any of them existed -- the
+    same closed-set bug one level down."""
+    return _LEGACY_IMPLEMENTED | set(MECHANISM_REGISTRY)
 
 
 def build(cfg: dict) -> str:
@@ -59,7 +108,7 @@ def build(cfg: dict) -> str:
     # rejected it only after a round had already spent a proposal on it. Fail at build
     # time, next to the code that is missing, rather than at the queue door.
     import direction as _d
-    _unimplemented = {m for m in _d.MECHANISMS if cfg.get(m) is not None} - _IMPLEMENTED
+    _unimplemented = {m for m in _d.MECHANISMS if cfg.get(m) is not None} - implemented()
     if _unimplemented:
         raise VariantEditError(
             f"mechanism(s) {sorted(_unimplemented)} are registered in "
@@ -658,6 +707,21 @@ print(f"step_ms_med:      {_sd[len(_sd)//2]*1000:.2f}")
 print(f"vram_reserved_mb: {torch.cuda.max_memory_reserved()/1024/1024:.1f}")
 print(f"final_epoch:      {epoch}")''')
     s = sub(s, "HEAD_DIM = 128", f"HEAD_DIM = 128\ncfg_mlp_ratio = {cfg.get('mlp',4)}")
+
+    # REGISTRY DISPATCH. Anything registered with @mechanism is applied here, after the
+    # legacy inline branches. A registered mechanism may return either the edited source
+    # or a (source, [observable lines]) pair, so a new mechanism arrives complete: the
+    # edit AND the print that proves it engaged, in one place.
+    for _name, _spec in MECHANISM_REGISTRY.items():
+        if cfg.get(_name) in (None, 0, False):
+            continue
+        _out = _spec["apply"](s, cfg, sub)
+        if isinstance(_out, tuple):
+            s, _lines = _out
+            obs.extend(_lines)
+        else:
+            s = _out
+
     if obs:
         s = s + "\n# --- activation observables (mechanism-specific) ---\n" + "\n".join(obs) + "\n"
     return s
@@ -698,3 +762,73 @@ def emits_diagnostic(cfg, field):
     return False, (f"the generated variant never prints {field!r}; it emits {printed}. "
                    f"The hypothesis would be untestable by construction and every run "
                    f"would return a non-activation.")
+
+
+@mechanism(
+    "ngram",
+    family="ve_placement",
+    diagnostic="ngram_emb_rms_final",
+    params=("ngram_gate", "ngram_dim"),
+    doc="""Hashed n-gram memory, Engram-style: a table indexed by a hash of the previous
+    n token ids, read once per position and added into the residual stream through a
+    small CONSTANT gate.
+
+    Why this shape, from the corpus rather than from taste:
+      - r23_engram_small_constant_gate_beats_learned_gate -- clamping the fusion gate to
+        a small constant matched or beat the learned token-dependent gate, and removing
+        the pathway entirely was catastrophic. So the gate is a constant, not a learned
+        parameter: cheaper, and what the evidence supports.
+      - r23_engram_is_prior_not_retrieval -- swapping the hash inputs for adversarial or
+        random exemplars barely moved the next-token distribution, so this is a learned
+        PRIOR over local context, not retrieval. It is therefore expected to help where
+        local n-gram statistics are predictive, and the diagnostic below measures whether
+        the table learned anything at all.
+      - r24_memory_table_capacity_flat_on_perplexity -- scaling such a table left
+        PERPLEXITY essentially unchanged while raising zero-shot accuracy. val_bpb is a
+        perplexity-like metric, so the corpus is a genuine prior AGAINST this helping
+        here. Recorded before running rather than after.
+
+    The cost profile is the reason to try it anyway: an embedding lookup is excluded from
+    flops_per_token, so this is a ZERO-FLOP capacity lever -- the one family that has
+    consistently paid on this benchmark (ve_placement), unlike every FLOP-adding
+    mechanism tested, all of which lost.
+
+    cfg: ngram = number of hash slots (0/absent = off); ngram_gate = constant gate,
+    default 0.10; ngram_dim = table width, default n_embd.""")
+def _ngram(s, cfg, sub):
+    slots = int(cfg["ngram"])
+    gate = float(cfg.get("ngram_gate", 0.10))
+    s = sub(s, "HEAD_DIM = 128",
+            f"HEAD_DIM = 128\nNGRAM_SLOTS = {slots}\nNGRAM_GATE = {gate}")
+    # The table. Mirrors how value_embeds are constructed so it inherits their dtype
+    # cast and optimizer group treatment.
+    s = sub(s, """        self.value_embeds = nn.ModuleDict({""",
+            """        self.ngram_table = nn.Embedding(NGRAM_SLOTS, config.n_embd)
+        self.value_embeds = nn.ModuleDict({""")
+    s = sub(s, """        for ve in self.value_embeds.values():
+            torch.nn.init.uniform_(ve.weight, -s, s)""",
+            """        torch.nn.init.uniform_(self.ngram_table.weight, -s, s)
+        for ve in self.value_embeds.values():
+            torch.nn.init.uniform_(ve.weight, -s, s)""")
+    s = sub(s, """        for ve in self.value_embeds.values():
+            ve.to(dtype=torch.bfloat16)""",
+            """        self.ngram_table.to(dtype=torch.bfloat16)
+        for ve in self.value_embeds.values():
+            ve.to(dtype=torch.bfloat16)""")
+    # Optimizer: the table is an embedding, so it belongs with the embedding group, and
+    # the parameter-count assertion below must be told about it or it fires.
+    s = sub(s, "        value_embeds_params = list(self.value_embeds.parameters())",
+            "        value_embeds_params = (list(self.value_embeds.parameters())\n"
+            "                               + list(self.ngram_table.parameters()))")
+    # The forward edit: bigram hash of (t-1, t), position 0 falls back to the unigram.
+    s = sub(s, """        x = self.transformer.wte(idx)
+        x = norm(x)""",
+            """        x = self.transformer.wte(idx)
+        _prev = torch.cat([idx[:, :1], idx[:, :-1]], dim=1)
+        _h = (idx.to(torch.int64) * 1000003 + _prev.to(torch.int64) * 31) % NGRAM_SLOTS
+        x = x + NGRAM_GATE * self.ngram_table(_h)
+        x = norm(x)""")
+    obs = ["""_ngt = (model._orig_mod if hasattr(model,'_orig_mod') else model).ngram_table.weight.detach()
+print(f"ngram_emb_rms_final: {_ngt.float().pow(2).mean().sqrt().item():.8f}")
+print(f"ngram_slots:         {NGRAM_SLOTS}")"""]
+    return s, obs

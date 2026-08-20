@@ -73,12 +73,57 @@ DRY_STREAK = 4          # consecutive non-improving runs on an axis before it cl
 EXPLORE_FLOOR = 0.35    # >=35% of launches must go to zero-coverage axes or mechanisms
 
 
+def _registered_mechanisms():
+    """Mechanisms implemented in tools/make_variant.py's registry.
+
+    The policy used to carry a hard-coded MECHANISMS tuple, so a mechanism someone
+    actually wrote was invisible here until the tuple was edited too -- and a mechanism
+    listed here with no implementation (prefetch) was worse, because the policy ranked
+    something that could not be built. Reading the registry makes writing the code the
+    single act that creates a mechanism, which is what upstream's "everything is fair
+    game" requires.
+    """
+    try:
+        import make_variant
+        return tuple(make_variant.MECHANISM_REGISTRY)
+    except Exception:
+        return ()
+
+
+def all_mechanisms():
+    return tuple(dict.fromkeys(MECHANISMS + _registered_mechanisms()))
+
+
+def known_keys():
+    """Computed, not frozen: a mechanism registered after import still counts."""
+    return (frozenset(KNOB_AXES) | frozenset(all_mechanisms())
+            | frozenset(PLATFORM) | frozenset(EXTRA_KEYS) | _registered_params())
+
+
+def _registered_params():
+    """Companion settings declared by registered mechanisms (a gate strength, a table
+    width). Read from the registry so implementing a mechanism teaches the policy about
+    its parameters too -- a hand-maintained list here would reintroduce the closed set
+    this whole change exists to remove."""
+    try:
+        import make_variant
+        out = set()
+        for spec in make_variant.MECHANISM_REGISTRY.values():
+            out |= set(spec.get("params") or ())
+        return frozenset(out)
+    except Exception:
+        return frozenset()
+
+
+# Companions of LEGACY inline mechanisms, which predate the registry and declare nothing.
+EXTRA_KEYS = frozenset({"ema_start"})
+
 KNOWN_KEYS = frozenset(KNOB_AXES) | frozenset(MECHANISMS) | frozenset(PLATFORM)
 
 
 def unknown_keys(cfg: dict) -> set:
     """Config keys no policy rule covers. Never silently ignored."""
-    return {k for k in (cfg or {}) if k not in KNOWN_KEYS}
+    return {k for k in (cfg or {}) if k not in known_keys()}
 
 
 def device_means(results: list[dict]) -> dict:
