@@ -802,3 +802,43 @@ def test_the_queue_door_records_the_role_it_assigns():
         for e in new:
             assert e.get("role") in ("treat", "ctrl"), f"{e['name']} has no recorded role"
             assert e["role"] == ("treat" if e["name"].endswith("_treat") else "ctrl")
+
+
+def test_every_blocking_lesson_actually_refuses_at_the_door():
+    """The enforcement hooks were never exercised in production. Exercise them here.
+
+    An audit observed that of the active lessons only a handful carry an enforceable
+    hook, and that NO refusal has ever fired on a real queue attempt -- so the door had
+    never been probed. "It would refuse" was an untested claim about the most important
+    safety property in the policy: that a failure the campaign already paid for cannot be
+    re-bought. This drives every active blocks_values rule through the real
+    claims.blocked_values(), rather than asserting the rules exist.
+    """
+    import claims, direction
+    rules = [(l["id"], l["blocks_values"]) for l in claims.lessons()
+             if l.get("blocks_values") and not l.get("superseded_by")]
+    assert rules, "no active lesson carries a value hook; the door protects nothing"
+    for lid, spec in rules:
+        for key, r in (spec or {}).items():
+            op, val = r.get("op"), r.get("value")
+            hit = {"ge": val, "gt": val + 1, "le": val, "lt": val - 1, "eq": val}.get(op)
+            assert hit is not None, f"{lid}: unhandled op {op!r}"
+            fired = claims.blocked_values({**direction.PLATFORM, key: hit})
+            assert fired, (
+                f"{lid} claims to block {key} {op} {val}, but the door ALLOWED "
+                f"{key}={hit}. A lesson whose hook does not fire is prose.")
+
+
+def test_the_ns_axis_is_closed_in_both_directions_by_evidence():
+    """Two complementary valid-negatives can close an axis completely, and that is legal.
+
+    L007 blocks ns >= 5 as a no-op; L011 blocks ns < 5 as a valid negative. Between them
+    NO value of ns can be queued. That is not a defect -- it is what an axis measured to
+    be optimal at its default looks like once both directions have been paid for. It is
+    asserted here so that a future edit which reopens the axis has to face the evidence
+    rather than discover the block by accident.
+    """
+    import claims, direction
+    for probe in (2, 3, 4, 5, 6, 8):
+        assert claims.blocked_values({**direction.PLATFORM, "ns": probe}), \
+            f"ns={probe} is not blocked; the ns axis was closed in both directions"
