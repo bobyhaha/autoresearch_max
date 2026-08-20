@@ -430,9 +430,14 @@ def e4_method_code() -> list[str]:
             continue
         if not (r.get("ok") and (r.get("metrics") or {}).get("val_bpb")):
             continue
-        bad.append(f"result '{nm}' contributes a citable val_bpb but has NO queue entry: "
-                   f"its variant hash is gone, so the code that produced the number "
-                   f"cannot be recovered.")
+        # A result that records its OWN variant is self-describing and needs no queue row.
+        # dispatch.py records it now; older records do not have it, which is why the
+        # queue was the only source and why cutting a row erased a run's provenance.
+        if r.get("variant"):
+            continue
+        bad.append(f"result '{nm}' contributes a citable val_bpb but has NO queue entry "
+                   f"and records no variant of its own, so the code that produced the "
+                   f"number cannot be recovered.")
     return bad
 
 

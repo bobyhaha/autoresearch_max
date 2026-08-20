@@ -297,6 +297,16 @@ def diagnostic_would_discriminate(diag: str, rule: dict, cfg: dict | None = None
     """
     import direction
     from analyze import load as _load
+    # KNOWN LIMITATION, stated rather than hidden. This pools control readings of `diag`
+    # across the campaign's whole history, and a diagnostic's IMPLEMENTATION can change --
+    # ve_emb_rms_final was computed from a positional param-group index that a mechanism
+    # could shift, and is now computed from the model. Readings from before and after such
+    # a fix are different quantities sharing a name, and pooling them can make a
+    # discriminating diagnostic look non-discriminating or the reverse. It is not
+    # repairable for runs already on disk: no result record carries the variant id that
+    # would date it. host/dispatch.py now records `variant`, so a future version of this
+    # check can restrict to readings produced by the current generator; until enough such
+    # runs exist, the pooled answer is the only one available and is used deliberately.
     vals = [r["metrics"][diag] for r in _load()
             if direction.is_platform(r.get("cfg") or {}) and diag in (r.get("metrics") or {})]
     if not vals:

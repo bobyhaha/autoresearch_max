@@ -729,6 +729,18 @@ def main():
                    # the baseline that judges treatments. The queue knew the role with
                    # certainty; nothing downstream should have to infer it.
                    "role": job["item"].get("role"),
+                   # THE VARIANT ID, so the result is self-describing. No result record
+                   # on disk carries one, which costs twice. First, provenance: a result
+                   # whose queue row is later cut has no way to name the code that
+                   # produced it, and rebuilding from its cfg answers with TODAY's
+                   # generator rather than the one that ran. Second, diagnostics:
+                   # claims.diagnostic_would_discriminate pools control readings of a
+                   # named diagnostic across all history, so readings produced by
+                   # different generator versions -- including one before and one after a
+                   # diagnostic's own implementation was fixed -- are treated as the same
+                   # quantity. Neither is repairable for runs already on disk; recording
+                   # it here is what makes it repairable from now on.
+                   "variant": job["item"].get("variant"),
                    "hypothesis_id": job["item"].get("hypothesis_id"),
                    "started": job["started"], "ended": time.time(),
                    "returncode": job["proc"].returncode, "metrics": met,
