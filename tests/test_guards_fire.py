@@ -647,7 +647,7 @@ def _probe_cfg(name):
     import make_variant
     probe = {"mtp": 4, "unet": 1, "zloss": 1e-4, "noqknorm": 1, "precond": "pre",
              "ngram": 32768, "ngram_gate": 0.1, "prefetch": 2, "vefreeze": 1,
-             "embwd": 0.01, "periln": 1, "vnorm": 1, "ffnpost": 1, "ropefrac": 0.1,
+             "embwd": 0.0005, "periln": 1, "vnorm": 1, "ffnpost": 1, "ropefrac": 0.1,
              "winsched": 128}
     assert name in probe, (
         f"mechanism {name!r} has no probe value here, so it is untested. Add one: every "
@@ -684,3 +684,54 @@ def test_a_result_using_any_mechanism_flows_through_the_reading_loop(name):
     assert name in st, f"mechanism_state has no counter for {name}"
     assert st[name]["n"] == 1, f"{name} result was not counted: {st[name]}"
     direction.report(res)          # the DIRECTION SPACE table a council reads first
+
+
+@pytest.mark.parametrize("name", _all_mech_names())
+def test_every_registered_mechanism_reaches_the_rotation_table(name):
+    """`family=` was written and never read, so rotation could not see 8 of 9 mechanisms.
+
+    agenda.py decides DRY / STALE / HARD CAP from direction.mechanism_families(). While
+    that table was hand-maintained, signal_path reported "all closed" with periln, vnorm
+    and ffnpost sitting in it, and attention listed no mechanisms at all though winsched
+    and ropefrac were registered there. Their families kept accruing staleness toward
+    rotation as if nothing had been added, and their exploration gap stayed at 0.00.
+    A declaration no consumer reads is a comment.
+    """
+    import direction, make_variant
+    spec = make_variant.MECHANISM_REGISTRY.get(name)
+    if spec is None:
+        pytest.skip(f"{name} is a legacy inline branch, already in the hand-written table")
+    fam = spec["family"]
+    fams = direction.mechanism_families()
+    assert fam in fams, f"{name} declares family {fam!r} which the rotation table lacks"
+    assert name in fams[fam]["mechs"], f"{name} is missing from family {fam!r}"
+
+
+def test_a_companion_param_without_its_mechanism_is_not_a_control():
+    """`ngram_gate` alone is a typo, not an experiment -- and it read as a control.
+
+    build() ignores a companion whose mechanism is absent, so the generated source equals
+    the control's while the cfg looks like a treatment. is_platform() returned True and
+    label() returned "control", which is the one classification that must never be wrong:
+    it exempts the entry from the decision cutoff and pools it into the control block
+    that measures the noise band.
+    """
+    import direction
+    for orphan in ("ngram_gate", "winsched_frac"):
+        cfg = {**direction.PLATFORM, orphan: 0.9}
+        assert direction.orphan_params(cfg) == {orphan}
+        assert not direction.is_platform(cfg), f"{orphan} alone classified as a CONTROL"
+        assert direction.label(cfg).startswith("INVALID:"), direction.label(cfg)
+    assert direction.is_platform(dict(direction.PLATFORM))
+
+
+def test_build_refuses_the_crosses_its_own_docs_call_unsafe():
+    """Prose is not a guard: the forbidden cross built cleanly until it was coded."""
+    import make_variant, direction
+    from make_variant import VariantEditError
+    with pytest.raises(VariantEditError):
+        make_variant.build({**direction.PLATFORM, "ropefrac": 0.1, "noqknorm": 1})
+    with pytest.raises(VariantEditError):      # a schedule that starts at its own target
+        make_variant.build({**direction.PLATFORM, "swdiv": 16, "winsched": 128})
+    with pytest.raises(VariantEditError):      # decay that erases the tables it decays
+        make_variant.build({**direction.PLATFORM, "embwd": 0.01})
