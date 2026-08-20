@@ -842,3 +842,48 @@ def test_the_ns_axis_is_closed_in_both_directions_by_evidence():
     for probe in (2, 3, 4, 5, 6, 8):
         assert claims.blocked_values({**direction.PLATFORM, "ns": probe}), \
             f"ns={probe} is not blocked; the ns axis was closed in both directions"
+
+
+def test_selector_apply_reorders_without_editing_anything():
+    """Ordering is the decision when capacity is short; editing is not the selector's job.
+
+    The dispatcher reads the queue top-down, so with 48 entries pending and room for
+    perhaps two waves, the entry that sits first decides what the campaign learns. That
+    position came from INSERTION order -- the order an operator happened to queue things
+    in -- while tools/selector.py computed a ranking that nothing consumed, and tick.sh
+    propagated queue ORDER to the host with no step that ever set it.
+
+    `--apply` closes that, and must change ONLY order: admission belongs to the queue
+    doors. Wave members must also stay contiguous and keep their within-wave order,
+    because member order decides which device a role lands on and queue_quad's
+    counterbalancing depends on it.
+    """
+    import json, subprocess, sys, pathlib, tempfile, shutil, hashlib
+    repo = pathlib.Path(__file__).resolve().parent.parent
+    with tempfile.TemporaryDirectory() as tmp:
+        t = pathlib.Path(tmp) / "tree"
+        shutil.copytree(repo, t, ignore=shutil.ignore_patterns(
+            ".git", "__pycache__", ".pytest_cache"))
+        qf = t / "runs/sweep/queue.json"
+        before = json.loads(qf.read_text())
+        if not before:
+            pytest.skip("needs campaign data: an empty queue has no order to check")
+        r = subprocess.run([sys.executable, "tools/selector.py", "--apply"],
+                           cwd=t, capture_output=True, text=True)
+        assert r.returncode == 0, r.stdout + r.stderr
+        after = json.loads(qf.read_text())
+        digest = lambda es: {e["name"]: hashlib.md5(
+            json.dumps(e, sort_keys=True).encode()).hexdigest() for e in es}
+        assert len(after) == len(before), "reorder changed the entry count"
+        assert digest(after) == digest(before), "reorder EDITED an entry, not just order"
+        # wave members contiguous, and in their original within-wave order
+        seen, run = set(), None
+        for e in after:
+            g = e.get("wave_group")
+            if g != run:
+                assert g not in seen, f"wave {g} is split across the queue"
+                seen.add(g); run = g
+        for g in {e.get("wave_group") for e in before if e.get("wave_group")}:
+            b = [e["name"] for e in before if e.get("wave_group") == g]
+            a = [e["name"] for e in after if e.get("wave_group") == g]
+            assert a == b, f"within-wave member order changed for {g}: {b} -> {a}"

@@ -273,6 +273,9 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--cfg", help="score a single cfg (JSON of non-platform keys)")
     ap.add_argument("--batch", type=int, default=0)
+    ap.add_argument("--apply", action="store_true", help=
+                    "Reorder UNLAUNCHED queue entries by score, highest first. Changes "
+                    "order only -- never admits, drops or edits an entry.")
     a = ap.parse_args()
 
     rows = analyze.load()
@@ -317,6 +320,58 @@ def main() -> int:
             print(f"  REFUSED  {lbl:22s} {delta}  {t.get('BLOCKED','')[:60]}")
         else:
             print(f"  {s:+7.2f}  {lbl:22s} {delta}")
+
+    if a.apply:
+        # ORDERING IS THE DECISION, and it was being made by accident. The dispatcher
+        # reads the queue top-down, so with 48 entries pending and capacity for perhaps
+        # two waves, WHICH wave sits first decides what the campaign learns tonight --
+        # and that position came from insertion order, i.e. the order an operator
+        # happened to queue things in. This tool computed a ranking all along and
+        # nothing ever consumed it; tick.sh even propagates queue ORDER to the host for
+        # exactly this purpose, with no step that sets it.
+        #
+        # Rewrites only the ORDER of unlaunched entries. It never adds, drops or edits
+        # one -- admission stays with the queue doors, which is where refusal belongs.
+        # Wave members are kept contiguous and in their original within-wave order,
+        # because member order decides which device a role lands on (queue_quad's
+        # counterbalancing depends on it).
+        qf = REPO / "runs" / "sweep" / "queue.json"
+        entries = json.loads(qf.read_text())
+        done, pending = [], []
+        for e in entries:
+            if (REPO / "runs" / "sweep" / "results" / f"{e['name']}.json").exists():
+                done.append(e)
+            else:
+                pending.append(e)
+        rank = {}
+        for e in pending:
+            g = e.get("wave_group") or e["name"]
+            cfg = e.get("cfg") or {}
+            if direction.is_platform(cfg):
+                continue                      # a wave is ranked by its TREATMENT
+            sc = score(cfg, rows, state, fx)[0]
+            rank[g] = max(rank.get(g, -math.inf), sc)
+        groups, order = {}, []
+        for e in pending:
+            g = e.get("wave_group") or e["name"]
+            if g not in groups:
+                groups[g] = []; order.append(g)
+        for e in pending:
+            groups[e.get("wave_group") or e["name"]].append(e)
+        # Capture the original position BEFORE sorting: order.index(g) inside the key
+        # looks up a list that the sort is mutating, which raises. The tiebreak must be
+        # a fixed snapshot so equal scores keep their queued order deterministically.
+        _pos = {g: i for i, g in enumerate(order)}
+        order.sort(key=lambda g: (-rank.get(g, -math.inf), _pos[g]))
+        newq = done + [e for g in order for e in groups[g]]
+        assert len(newq) == len(entries), "reorder changed the entry count"
+        assert {e["name"] for e in newq} == {e["name"] for e in entries}
+        qf.write_text(json.dumps(newq, indent=1))
+        print(f"\nreordered {len(pending)} pending entries in {len(order)} wave(s); "
+              f"launched entries left in place")
+        for g in order[:8]:
+            print(f"  {rank.get(g, float('-inf')):+7.2f}  {g}")
+        return 0
 
     if a.batch:
         print(f"\nDIVERSE BATCH OF {a.batch} (family-penalised greedy):")
