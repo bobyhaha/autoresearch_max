@@ -1,0 +1,43 @@
+{
+ "name": "C05_control",
+ "cfg": {
+  "dbs": 128,
+  "tbs": 19,
+  "depth": 8,
+  "dim": 512,
+  "mlp": 4,
+  "ve": 2,
+  "win": "SSSL",
+  "swdiv": 2
+ },
+ "gpu": 1,
+ "started": 1787057935.2345495,
+ "ended": 1787058443.5586872,
+ "returncode": 0,
+ "metrics": {
+  "val_bpb": 1.016505,
+  "training_seconds": 300.0,
+  "total_seconds": 501.4,
+  "peak_vram_mb": 45060.2,
+  "mfu_percent": 29.17,
+  "num_steps": 701.0,
+  "depth": 8.0,
+  "seed": 42.0,
+  "n_embd": 512.0,
+  "mlp_ratio": 4.0,
+  "n_ve_layers": 4.0,
+  "tokens_per_step": 524288.0,
+  "grad_accum": 2.0,
+  "loader_frac": 0.932583,
+  "fwdbwd_frac": 0.055038,
+  "step_ms_p10": 335.23,
+  "step_ms_med": 435.81,
+  "vram_reserved_mb": 48858.0,
+  "final_epoch": 1.0
+ },
+ "cotenant_detected": false,
+ "cores": "96-107",
+ "ok": true,
+ "invalid_reason": "",
+ "error": ""
+}

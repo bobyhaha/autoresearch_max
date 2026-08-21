@@ -1,0 +1,18 @@
+{
+  "name": "replace_with_short_mechanism_name",
+
+  "_comment": "A mechanism is a causal story with a MEDIATOR, not a restatement of an intervention. 'Bigger MLP helps' is not a mechanism. 'Widening the FFN raises arithmetic intensity, so the step spends more of its time in compute the hardware is good at, converting idle wall clock into gradient steps' is one -- and it predicts something measurable that the bare claim does not.",
+
+  "mediator": "the quantity the intervention actually changes, which sits causally between the change and val_bpb",
+
+  "families": ["replace_with_direction_family"],
+
+  "_comment_claims": "E2 LINK: every key must already be registered. A mechanism citing no claims is an assertion wearing a diagram.",
+  "claim_keys": ["replace_with_registered_belief_key"],
+
+  "activation_observable": "the numeric value a run must emit to prove the mediator moved",
+
+  "falsifier": "the observation that would kill this mechanism -- not 'it didn't help', which is consistent with many explanations",
+
+  "competing_explanation": "the cheaper story that predicts the same outcome, plus the discriminator that separates them"
+}

@@ -1,0 +1,23 @@
+{
+  "active_adapter": {
+    "adapter_changes": [
+      "prepare.py is byte-identical to karpathy/autoresearch at commit 228791fb499afffb54b46200aca536f79142f117 and is immutable. Its evaluator, tokenizer preparation, data loading, and 300-second budget are upstream bytes.",
+      "train.py starts from the same upstream commit and differs only by a sealed protocol adapter: read AUTORESEARCH_SEED (default 42), start total timing before the torch import, and print the executed seed in the upstream key:value summary.",
+      "The protocol adapter does not change the model, optimizer, hyperparameters, schedules, training loop, dataloader calls, evaluator, or charged training-time calculation. All scientific candidates may modify train.py only."
+    ],
+    "prepare_py_sha256": "4f2ba9cbb8ba8c4a3d35be405a913e2f3be3af9aea103ed52ef7b2a662058150",
+    "train_py_sha256": "1f6c3a2e332a82af04552b87bd0b2f6bbec1192c25e1453c75b4a7d180598322"
+  },
+  "adapter_id": "karpathy-228791f-upstream-prepare-seed-telemetry-v1",
+  "upstream": {
+    "commit": "228791fb499afffb54b46200aca536f79142f117",
+    "commit_date": "2026-03-25T17:07:37-07:00",
+    "prepare_py_git_blob": "06bea9165abd3ae94ea82dd733997aec7928f40c",
+    "prepare_py_sha256": "4f2ba9cbb8ba8c4a3d35be405a913e2f3be3af9aea103ed52ef7b2a662058150",
+    "pyproject_toml_sha256": "675c150a9e0769f0e39a43eb7d836934266fa348d6e2403521f1ff99f9b9f1af",
+    "repository": "https://github.com/karpathy/autoresearch.git",
+    "train_py_git_blob": "2e743974c7f06b54311643b314712303fbb26e65",
+    "train_py_sha256": "2954175f4ac42ad65164aef40910ef953789abcd05a5cc886ac9ba5a00814414",
+    "uv_lock_sha256": "03174c5cce6387418c5b6cc9bbe8f71ad0ae1e1d6fedeaecae5cdcf7321da0a3"
+  }
+}

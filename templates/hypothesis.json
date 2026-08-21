@@ -1,0 +1,44 @@
+{
+  "id": "hyp_replace_with_short_stable_id",
+
+  "statement": "ONE fixed-scope falsifiable prediction about val_bpb in 300 charged seconds. Not a topic, not a direction -- a sentence that a single run can contradict.",
+
+  "families": ["replace_with_a_direction_family"],
+
+  "_comment_provenance": "E2 LINK: both lists must name records that already exist. claims.py refuses a hypothesis that cites a mechanism or claim you have not registered, because an unregistered citation is indistinguishable from an invented one.",
+  "mechanism_names": ["replace_with_registered_mechanism"],
+  "claim_keys": ["replace_with_registered_belief_key"],
+
+  "rationale": "Derive the prediction FROM the cited claims. State explicitly why it should transfer to 124M parameters, a few hundred steps, Muon, and a fixed wall clock -- the settings where most published effects were never measured.",
+
+  "intervention": {
+    "summary": "one minimal train.py change, stated so a reader could implement it",
+    "cfg": {"_comment": "the exact config tools/make_variant.py will build. E4 compares this against the queue entry; a mismatch means the run would not test what was declared."}
+  },
+
+  "prediction": {
+    "metric": "val_bpb",
+    "direction": "decrease",
+    "minimum_effect": 0.001,
+    "reasoning": "Where this number comes from. If it is below the measured noise band from tools/direction.py, this hypothesis is not testable at n=1 and needs a yoked pair or a bigger lever."
+  },
+
+  "_comment_activation": "ScientistOne's decisive contribution, and the rule that stops good ideas being retired for free. ACTIVATION IS NOT SUCCESS: it asks only whether the intervention engaged the mediator it was designed to engage. `diagnostic` MUST be a snake_case metric the run actually prints -- verify the variant emits it before queuing, because a print that was never injected looks exactly like a mechanism that did nothing.",
+  "activation": {
+    "predicate": "what must measurably change for the intervention to have engaged at all",
+    "diagnostic": "replace_with_emitted_snake_case_metric",
+    "rule": {"op": "gt", "value": 0.0},
+    "failure_status": "inconclusive"
+  },
+
+  "falsifiers": [
+    "the observation that would kill this hypothesis outright",
+    "the result depends on lost step count rather than on the mediator",
+    "the effect does not exceed the measured control band"
+  ],
+
+  "competing_explanation": "The cheaper explanation for the same outcome, and the observation that discriminates between it and the mechanism. If you cannot name one, you have not finished thinking.",
+
+  "_comment_control": "yoked_pair = treatment and an exact control launched in the same wave on different GPUs. Prefer it: cross-wave comparison of byte-identical code moves more than most effects worth chasing.",
+  "control_design": "yoked_pair"
+}

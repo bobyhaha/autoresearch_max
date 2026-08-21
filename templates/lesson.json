@@ -1,0 +1,26 @@
+{
+  "id": "lesson_replace_with_short_id",
+
+  "_comment_type": "Failure is typed because different failures have different consequences. Collapsing them into 'it didn't work' discards what the run actually bought. runtime | integrity | non_activation | valid_negative | degenerate | resource | scope | overclaim",
+  "type": "valid_negative",
+
+  "observation": "what was actually seen, with the result names it came from",
+  "diagnosis": "the best current explanation, and what remains uncertain",
+
+  "_comment_action": "proceed = evidence is usable under stated conditions. refine = the direction is sound, the design was not; write a NEW hypothesis. pivot = the approach is flawed; change mechanism. block = do not repeat while applies_when holds.",
+  "action": "refine",
+
+  "_comment_applicability": "Lessons do NOT decay on a timer. A scientific negative stays relevant until contradicted; an operational lesson stays active while its condition holds. State the condition so the lesson can be retired by evidence rather than by age.",
+  "applies_when": "the explicit condition under which this lesson still binds",
+
+  "severity": 0.5,
+  "families": ["replace_with_direction_family"],
+  "evidence": ["result_name_1", "hyp_id_or_claim_key"],
+  "mitigation": "the concrete change that prevents a recurrence -- in code where possible, because a rule that lives only in prose is a rule that will be forgotten",
+
+  "_comment_blocks_keys": "OPTIONAL, and the field that turns a lesson into enforcement. Any config key listed here is REFUSED by tools/queue_from_round.py while this lesson is active, so the campaign cannot re-buy a failure it already paid for. A 'block' lesson with neither blocks_keys nor applies_when is rejected at registration: nothing could ever enforce it.",
+  "blocks_keys": ["mtp"],
+
+  "_comment_superseded_by": "OPTIONAL. The id of a NEWER lesson that replaces this one; THIS lesson then retires. Lessons do not expire on a timer -- a scientific negative stays true until contradicted, and an operational lesson holds while applies_when holds. Retirement is by evidence, never by age.",
+  "superseded_by": null
+}

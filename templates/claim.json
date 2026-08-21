@@ -1,0 +1,23 @@
+{
+  "belief_key": "replace_with_short_stable_key",
+
+  "statement": "ONE attributable assertion, worded no more strongly than the source words it. If the paper says 'in our setting', the claim says 'in their setting'.",
+
+  "_comment_source": "E1 SOURCE: lit/sources/arxiv_<source_id>_fulltext.txt must exist and its digest must match the corpus index. claims.py refuses registration otherwise. An abstract is an advertisement; it may triage a paper and may never back a claim.",
+  "source_id": "2506.12345",
+  "locator": "section 4.2, table 3, figure 5 caption -- where in the full text this is stated",
+
+  "_comment_stance": "supports | opposes | boundary. Opposing evidence is registered and stays visible; it is never rewritten into support, and a family with strong claims on both sides is CONTESTED, which calls for a different next action than a weakly supported one.",
+  "stance": "supports",
+
+  "families": ["replace_with_direction_family"],
+
+  "_comment_scores": "Scored 0-4 SEPARATELY and never averaged into one number. internal_validity = how well the study supports its own conclusion in its own setting. transfer = how much it says about 124M params, a few hundred steps, Muon, one GPU, a fixed wall clock, and val_bpb specifically. A 4/0 is a fine paper that cannot inform this campaign; a 2/4 is a weak result that is directly about our operating point. Only claims with transfer >= 2 count as usable for opening a direction.",
+  "internal_validity": 0,
+  "transfer": 0,
+
+  "effect": "the reported effect WITH its comparator, e.g. '-0.9% val loss vs a tuned AdamW baseline at 500 steps, 3 seeds'",
+  "comparator": "what it was measured against, at what compute, and how well that baseline was tuned",
+
+  "notes": "Fatal blockers, seeds, uncertainty, selective reporting, and the explicit reason for the transfer score. If the paper reports time-to-target rather than loss-at-fixed-time, say so: those are different quantities and can have opposite signs when a method costs per-step overhead."
+}
