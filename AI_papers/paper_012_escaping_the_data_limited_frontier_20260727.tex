@@ -1,0 +1,74 @@
+%% Paper 012 -- ICML-conference-style block hypothesis paper.
+%% Requires icml2024.sty (in this directory). Compile: tectonic paper_012_...tex
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+\icmltitlerunning{Escaping the Data-Limited Frontier}
+\begin{document}
+\twocolumn[
+\icmltitle{Escaping the Data-Limited Frontier: Convergence-Bias, Fused-Kernel, and \\ Memorizer-Regularization Levers for the 5-Minute H200 Frame}
+\begin{icmlauthorlist}\icmlauthor{Fable 5 (hypothesis author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Fable 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, n-gram memory, kernel fusion, data-constrained, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+Block hypothesis paper for rounds 70+ of the \texttt{walltime\_5min\_h200} challenge (minimize $\valbpb$ after 300\,s on one H200; reference baseline $1.0301$, current SOTA $0.9506$ mean / $0.9483$ best, single-seed $\sigma\approx0.0015$, 2$\sigma$ gate $\approx0.003$). The prior 69-round campaign did not merely exhaust cheap levers; it \emph{diagnosed why the frontier is walled}: the floor is \textbf{data-limited}. A data-scaling ablation shows a $-0.118\ \valbpb$ swing from 5$\to$10 training shards --- larger than the entire $+0.082$ from 64 rounds of architecture search --- at constant step count; the model trains on 10 of 6543 shards ($\sim$2 epochs) on the overfitting boundary. The n-gram hash memory is a \emph{memorizer} and the \emph{sole} carrier of that data-sensitivity (off: range $0.004$; on: $0.118$; helps $-0.029$ at 10 shards, harms $+0.086$ at 5), and every structural subtraction lever (FFN, span) \emph{inverts with data}. We run a protocol-compliant multi-agent idea round (three proposers + an adversarial critic) and select levers on three axes: \textbf{(a)} fixed-inductive-bias convergence levers with $\sim$zero memorizing capacity (should not invert with data); \textbf{(b)} the never-written fused n-gram-VE kernel and an FA3$\to$FA4 / fp8-attention upgrade to raise the step budget; \textbf{(c)} regularizing the memorizer to generalize at $\sim$2 epochs. Every lever carries a \textbf{data-invariance falsifier} (run at 8 \emph{and} 10 shards) and, for architectural levers, a \textbf{kernel-maturity rule} (judge per-update quality first; a slow first kernel is a refinement task, not a rejection).
+\end{abstract}
+
+\section{Introduction}
+The 5-minute frame rewards quality-per-step and steps-per-300s at once, so most levers fail --- and here they did, but the informative result is structural: profiling plus a late data-scaling ablation showed the frontier is walled by \emph{data}, not architecture. The disciplined response is to stop turning capacity knobs (whose verdicts invert with data) and attack the three things that can move a data-limited, memorization-driven, underfit-per-step model. Candidates were generated with the protocol's multi-agent procedure: Proposer~A (convergence/architecture), B (throughput/kernel), C (memorizer-regularization), and a Critic that adversarially ranks the pooled slate; the coordinator verifies every claim against the SOTA code.
+
+\section{Related Work}
+\textbf{Canon layers} \cite{allenzhu2025canon}: zero-init causal depthwise convolutions summing neighbor hidden states improve loss at negligible params (motivates \texttt{canon\_conv}, orthogonal to the discrete memorizer). \textbf{Differential Transformer} \cite{ye2024diff}: dual-softmax subtraction cancels common-mode attention noise. \textbf{MSWA} \cite{mswa2025}: diverse window sizes beat uniform SWA. \textbf{FlashAttention} \cite{dao2022flash} and \textbf{FA4} (2025, confirmed in Recursive's reported results): attention-kernel/precision upgrades; Recursive's big lever is \emph{fp8 attention projections}. \textbf{Data Movement Is All You Need} \cite{ivanov2021data}: fusing index/elementwise ops removes launch overhead (motivates the fused n-gram kernel). \textbf{Muon NS acceleration} \cite{muon_ns2026}: comparable orthogonalization in $\sim$10 vs 15 matmuls. \textbf{Scaling Data-Constrained LMs} \cite{muennighoff2023data}: $\sim$4 epochs of repeat $\approx$ fresh (scope tension: we overfit at 3). \textbf{Tensorizing Engram} \cite{engram2606}: shared latents across n-gram tables (motivates factorized codes).
+
+\section{Candidate levers and five-dimension scoring}
+Scores 1--10 on novelty/validity/impact/reliability/provenance. Table~\ref{tab:cand} summarizes the slate. Every quality lever carries a data-invariance falsifier: a 10-shard win that shrinks/inverts at 8 shards is an epoch-trade and is rejected.
+
+\begin{table*}[t]\caption{Multi-agent candidate slate. C = critic verdict (KEEP/CUT + final rank).}\label{tab:cand}\vskip 0.1in\begin{center}\begin{small}\begin{tabular}{llll}
+\toprule
+Lever & Mechanism (1-line) & n/v/i/r/p & Critic \\
+\midrule
+A1 canon\_conv & zero-init causal depthwise conv; orthogonal to memorizer, no-op at init & 6/8/6/8/9 & KEEP \#3 \\
+A2 diff\_attention & dual-softmax common-mode cancel; attn only 5\% of step & 7/7/6/5/8 & CUT (attn not bottleneck) \\
+A3 mswa & graded multi-scale windows & 5/6/4/5/7 & CUT (span-inversion adjacent) \\
+B1 fused-compile & @torch.compile-fuse hash+gather, byte-identical & 5/9/7/8/9 & KEEP \#1 \\
+B2 fused-triton & hand Triton hash$\to$gather$\to$sum / offline idx & 7/9/8/6/9 & KEEP \#5 (cond.\ on B1) \\
+B3 muon\_ns\_reduce & fewer NS matmuls; not byte-identical & 6/5/4/6/6 & CUT (optimizer not bottleneck) \\
+FA4/fp8-attn & FA4 upgrade + fp8 attention projections & 6/7/7/6/8 & operator-elevated \#4b \\
+C1 table-only WD & decoupled WD on n-gram table alone & 5/8/6/8/7 & KEEP \#6 (sparse-grad gated) \\
+C2 factorized codes & product-code n-gram (Tensorizing Engram) & 8/7/8/5/8 & KEEP \#4 (highest value) \\
+C3 backoff gate & $ng\!\cdot\!f(\mathrm{count})$ neural Good-Turing & 7/8/7/5/8 & KEEP \#2 (premise test) \\
+\bottomrule
+\end{tabular}\end{small}\end{center}\vskip -0.1in\end{table*}
+
+\paragraph{Convergence/architecture (A).} \texttt{canon\_conv} adds $x\mathrel{+}= \mathrm{DWConv}(\mathrm{norm}(x))$ per block (zero-init $\Rightarrow$ no-op at step 0), a differentiable local-composition prior orthogonal to the lookup memorizer, so its verdict should not invert with data. \texttt{diff\_attention} and \texttt{mswa} tune attention, which is $\sim$5\% of step time.
+
+\paragraph{Throughput/kernel (B) + FA4/fp8 (operator-elevated).} The measured $\sim$194k tiny fill kernels sit on the n-gram-VE path; indices are a pure function of tokens+primes, so the path is fusible byte-identically (B1 compile-fuse; B2 Triton/offline). Attention is only $\sim$5\% of step time \emph{now}, so an attention-kernel win (FA4, or fp8-attention which we previously retracted, possibly prematurely) is \textbf{masked until B1/B2 fuse the n-gram sink}; it is therefore sequenced after a fresh re-profile that unmasks it.
+
+\paragraph{Memorizer-regularization (C) --- the on-thesis track.} All three assume the harm is concentrated in low-count/high-magnitude rare keys; the shared deliverable is the $\{5,8,10\}$-shard \emph{slope}. \texttt{C1} decoupled WD on the n-gram table alone (continuous count-adaptive backoff). \texttt{C2} product-code/factorized n-gram (Tensorizing Engram): $\sim$256$\times$ fewer params, coverage preserved --- the one lever that could raise the scored 10-shard operating point. \texttt{C3} frequency-confidence gate $ng\cdot f(c)$ (neural Good-Turing), intrinsically data-adaptive and the cheapest premise-test.
+
+\section{Experimental setup and three rigor protocols}
+Frame \texttt{walltime\_5min\_h200}, 300\,s, one H200, \texttt{fa3}$\to$fa4 under test, max-autotune. GPU-controlled paired same-seed A/B (an fp8 ``win'' was once a placement artifact). \textbf{(1) Data-invariance} (quality levers): re-run adopted levers at 8 shards; a shrinking/inverting win is an epoch-trade $\Rightarrow$ reject. \textbf{(2) Two-run throughput} (kernel levers): fixed-step byte-identity, then fixed-300s conversion; if steps rise but $\valbpb$ is flat at the 2-epoch boundary, redirect the reclaimed compute into quality, not epochs. \textbf{(3) Kernel-maturity} (architectural levers): judge \emph{per-update} quality first --- a new component's naive kernel may regress step-time without the mechanism being bad; if fixed-step quality clears the gate, a slow kernel is a \emph{refinement task}, not a rejection (only a null per-update quality kills the mechanism).
+
+\section{Results to date and first cycle}
+Prior campaign: architecture floor certified ($+7.9\%$) then exhausted; floor is data-limited; n-gram memory is the memorizer; kernel bottleneck measured but never fixed. \textbf{Cycle 1 (B1, this block):} the pad-based byte-identical n-gram hash is throughput-\emph{null} (1938 vs 1948 steps, neutral), so the $\sim$194k fill-kernels are not the hash \texttt{torch.zeros} (Inductor already fuses them); \textbf{B2 is downgraded pending a fresh re-profile} to locate the real sink. B1's cheap null is exactly its purpose: settle the throughput question before investing in B2.
+
+\section{Execution plan (critic-finalized)}
+Rotation avoids same-direction back-to-back; explore:refine $\approx$3:2. Order: (1) B1 fused-compile [done, null]; (2) C3 backoff-gate (premise test, $\{5,8,10\}$ slope); (3) A1 canon\_conv (fixed-step quality first + 8-shard invariance); (4) \textbf{C2 factorized codes --- highest value} (neutral-or-better @10sh AND clears 2$\sigma$ @5sh); (4b) re-profile + FA4/fp8-attention (after B1/B2 unmask it); (5) B2 (only if a re-profiled sink converts); (6) C1 (sparse-grad-gated). Each cycle runs the full registry chain: mechanism$\to$hypothesis$\to$gated experiment$\to$run$\to$evidence$\to$belief$\to$decision$\to$chart, snapshot on SOTA. A deep-analysis paper is written every five rounds.
+
+\bibliographystyle{icml2024}
+\begin{thebibliography}{9}
+\bibitem[Allen-Zhu(2025)]{allenzhu2025canon} Allen-Zhu, Z. et al. Physics of Language Models Part 4.1: Canon Layers. 2025.
+\bibitem[Ye(2024)]{ye2024diff} Ye, T. et al. Differential Transformer. 2024.
+\bibitem[MSWA(2025)]{mswa2025} MSWA: Multi-Scale Window Attention. arXiv:2501.01039, 2025.
+\bibitem[Dao(2022)]{dao2022flash} Dao, T. et al. FlashAttention. 2022.
+\bibitem[Ivanov(2021)]{ivanov2021data} Ivanov, A., Ben-Nun, T. et al. Data Movement Is All You Need. 2021.
+\bibitem[Muon-NS(2026)]{muon_ns2026} Turbo/Chebyshev Newton-Schulz for Muon. arXiv:2506.10935; 2606.00371, 2026.
+\bibitem[Muennighoff(2023)]{muennighoff2023data} Muennighoff, N. et al. Scaling Data-Constrained Language Models. arXiv:2305.16264, 2023.
+\bibitem[Engram(2026)]{engram2606} Tensorizing Engram. arXiv:2606.08347, 2026.
+\end{thebibliography}
+\end{document}

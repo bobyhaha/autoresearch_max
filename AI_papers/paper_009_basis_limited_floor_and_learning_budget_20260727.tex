@@ -1,0 +1,190 @@
+%% Paper 009 -- ICML-conference-style LaTeX version.
+%% NOTE: Requires the ICML 2024 style file (icml2024.sty) from the ICML author kit
+%% (https://icml.cc/ -> Author Instructions) to be placed alongside this file to compile.
+%% Compile with: pdflatex paper_009_basis_limited_floor_and_learning_budget_20260727.tex
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\usepackage[accepted]{icml2024}
+
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+
+\icmltitlerunning{The Basis-Limited Floor and a Learning-Budget Constraint on New Mechanisms}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{The Basis-Limited Floor and a Learning-Budget Constraint on \\ Which New Mechanisms Can Help Under a Fixed Wall-Clock Budget}
+
+\begin{icmlauthorlist}
+\icmlauthor{Autonomous Research Agent (OPHIS)}{ophis}
+\end{icmlauthorlist}
+
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+
+\icmlcorrespondingauthor{Autonomous Research Agent (OPHIS)}{baiyuzhu@mit.edu}
+
+\icmlkeywords{negative results, autonomous research, associative memory, n-gram, wall-clock training, convergence, Machine Learning}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+Paper 008 introduced Hypothesis H8 --- that at a coordinate-descent fixed point, further gains require a lever outside the current basis, so a new-mechanism sweep is dual-purpose: an all-null sweep certifies a basis-limited floor, a hit expands the basis --- and reported one hit (short-window attention span, $\valbpb\,0.9507\to0.9500$). This paper reports the \emph{next} new-mechanism sweep (rounds 54--58 of the campaign; nanochat-style GPT, $\sim$50M parameters, single H200 of a shared node, fixed 5-minute budget, metric $\valbpb$, $\sigma\approx0.0015$) and finds it all-null, certifying the floor. Six axes outside the tuned basis were probed and each returned an explained non-improvement: the sliding-window \emph{pattern} (fraction of short layers) is optimal at \texttt{SSSL}; grouped-query attention and head count regress because the n-gram value-embedding dimension is load-bearing; \emph{skip-grams} $(t,t{-}2)$ regress because a gapped context discards the adjacent token, the strongest local predictor, at the cost of a third hash table; a six-lever scattershot (RoPE base, initialization scales, Muon momentum, embedding LR) is uniformly worse; and a direct n-gram$\to$logit interpolation head is \emph{catastrophic} ($+0.061\ \valbpb$). The last two results motivate the paper's positive contribution, Hypothesis H9: under a fixed update-limited budget, a new mechanism can help only if it is usable \emph{without learning its addressing from scratch}. The n-gram memory --- the campaign's single largest lever --- works because it is O(1) hash-addressed and requires no learned lookup; the n-gram$\to$logit head, which must learn a $128\times2^{16}$ mapping in five minutes, either fails to learn (neutral cost) or, as observed, learns a miscalibrated context-independent prior that corrupts the exact-cross-entropy metric. H9 predicts that learned-retrieval memories will share this fate at this budget and reframes the campaign's floor as a property of the budget, not only the architecture: the sweep admits O(1)-addressed levers and rejects learn-from-scratch ones. We give the full mechanism map of the 24-round-old converged campaign (six adopted levers, seven exhausted axes) and argue that a mechanistically-attributed all-null sweep is the responsible terminal act of an autonomous loop.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Automated research loops are engineered to find improvements; they are rarely engineered to \emph{stop}. Yet on a shared cluster, continuing to test levers after a campaign has genuinely converged wastes compute that other jobs need, and --- worse --- an undisciplined loop near its noise floor adopts phantom levers (paper 007 \cite{ophis2026staleness}). Paper 008 \cite{ophis2026convergence} gave a stopping criterion, Hypothesis H8: iterated re-optimization converges to a stack-level fixed point, and a \emph{new-mechanism sweep} then decides between two branches --- an all-null sweep (each null mechanistically attributed) certifies a basis-limited floor and licenses stopping; a hit expands the basis and triggers one more re-optimization. Paper 008 observed the hit branch (short-window span). This paper observes the null branch.
+
+We report rounds 54--58: six axes probed outside the tuned knob basis, all null, each with an identified mechanism (Section~\ref{sec:sweep}). Two of the nulls are more than bookkeeping. Skip-grams and a direct n-gram$\to$logit head were designed to extend the campaign's dominant lever --- the O(1) n-gram hash value-embedding --- and both failed, the latter catastrophically. Their failure modes coincide on a single cause and yield the paper's positive contribution:
+
+\begin{quote}
+\textbf{Hypothesis H9 (learning-budget constraint on new mechanisms).} Under a fixed, update-limited wall-clock budget, a candidate mechanism can improve the metric only if it is usable \emph{without learning its addressing or parameters from scratch within the budget}. O(1)/lookup-addressed mechanisms (a hash memory) qualify; mechanisms that must learn a new mapping in the budget do not --- they either fail to learn (paying only cost) or learn a miscalibrated mapping (paying cost and harm).
+\end{quote}
+
+H9 explains why the O(1) n-gram hash was the largest single lever while a learnable n-gram$\to$logit head is catastrophic, predicts the same fate for learned-retrieval memories at this budget, and reframes the campaign's floor as budget-imposed rather than purely architectural. We close with the full mechanism map of the converged campaign (Section~\ref{sec:map}) and the argument that a mechanistically-attributed all-null sweep is a loop's responsible terminal act.
+
+\section{Setup}
+\label{sec:setup}
+
+Identical frame to papers 001--008: nanochat-style GPT \cite{karpathy2025nanochat} ($\sim$50M parameters, depth 8, \texttt{SSSL} sliding-window attention), Muon \cite{jordan2024muon} for matrices and AdamW elsewhere, fixed 5-minute wall-clock budget on one H200 of a shared $8\times$H200 node, metric $\valbpb$ (lower better), $\sigma\approx0.0015$. All confirmations are GPU-controlled (interleaved/swapped paired seeds) per the paper-006 contention retraction \cite{ophis2026retraction}. The incumbent at round 54 is the paper-008 basis-expanded fixed point: n-gram$(2,3)$@$2^{21}$ + FFN$4\times$ + \texttt{matrix\_lr}\,$0.03$ + batch\,$2^{18}$ + max-autotune + short-window span\,$2^{9}$, $\valbpb\approx0.9500$ (best single $0.9488$). The regime is update-limited, $\valbpb\approx q\cdot U$ (papers 001, 004): a lever helps only by lowering per-update loss $q$ without proportionally lowering the update count $U$, or by raising $U$ at fixed $q$.
+
+\section{A Second New-Mechanism Sweep, All Null (Rounds 54--58)}
+\label{sec:sweep}
+
+\paragraph{Attention pattern (round 54): SSSL optimal.} Having found that halving the short-window \emph{span} helps (paper 008), we varied the short/long \emph{pattern}. More short layers (\texttt{SSSSSSSS}, $0.9497$) lose necessary long-range capacity; fewer (\texttt{SSLL}, $0.9494$) lose the cheap-local benefit; \texttt{SSSSL} ($0.94867$) ties within noise ($0.07\sigma$). The attention-structure gain localizes to span, not layer fraction --- confirming paper 008's Direction-1 falsifier.
+
+\paragraph{Attention heads (round 55): the VE dimension is load-bearing.} Grouped-query attention (\texttt{n\_kv\_head} $6\to3\to2$) and doubled head count ($6\to12$) all regress by $\approx+0.0005$. Fewer KV heads cheapen attention (a favorable $U$ move, by the span logic) but shrink $\mathrm{kv\_dim}=\mathrm{n\_kv\_head}\times\mathrm{head\_dim}$, and the n-gram value-embedding lives in $\mathrm{kv\_dim}$; the lost memory capacity outweighs the throughput. Unlike span, cheapening attention via heads does not pay because it is coupled to the dominant lever.
+
+\paragraph{Skip-grams (round 56): consecutive beats gappy.} To attack the round-50 finding that dense 4-grams are too sparse, we added skip-bigram hash tables $(t,t{-}2)$ and $(t,t{-}3)$ --- longer reach at bigram density. Both regress ($+0.0018$, $+0.0039$). A gapped context conditions on $t{-}2$ while discarding $t{-}1$, the strongest local predictor already captured by the consecutive bigram, so the added signal is weak and partly redundant, while each extra $2^{21}$ table costs $U$ ($1885/1834$ vs.\ $1900$ steps). The context-hash memory is optimal not merely in order set but in \emph{addressing}: consecutive $(2,3)$.
+
+\paragraph{Scattershot (round 57): every knob at its optimum.} Six cheap levers on the span stack: RoPE base $\{5000,20000\}$ both worse (base $10000$ optimal --- the shorter windows did \emph{not} shift the positional optimum), value-residual init $0.1\to0.05$ catastrophic ($+0.031$), \texttt{wte} init $1.0\to0.5$ worse, Muon momentum $0.95\to0.90$ worse, embedding LR $0.2\to0.25$ worse. Uniformly null.
+
+\paragraph{n-gram$\to$logit head (round 58): catastrophic, and diagnostic.} We added a zero-initialized $\mathrm{kv\_dim}\to$vocab linear head mapping the n-gram embedding directly onto the logits (classic neural$+$n-gram interpolation), a genuinely new \emph{injection point}. It is catastrophic on both seeds: $1.0097/1.0111$ vs.\ references $0.9488/0.9514$, $+0.061\ \valbpb$. Despite the zero init (a no-op at step 0), the head rapidly learns a rank-$\mathrm{kv\_dim}$, context-\emph{independent} n-gram logit bias --- effectively a crude, hash-collided bigram LM added to the well-calibrated neural logits, which the exact-cross-entropy metric punishes severely. The contrast with the current mechanism is the lesson: n-gram value-embeddings inject the same hashed signal as attention \emph{values}, which the network contextualizes before the logits; the direct head cannot be recalibrated by any downstream computation. \textbf{N-gram information must be injected where it can be contextualized, not as a raw output prior.}
+
+\section{The Learning-Budget Constraint (Hypothesis H9)}
+\label{sec:h9}
+
+Rounds 56 and 58 rhyme. Both extend the n-gram lever; both fail; and both fail for a reason absent from the successful O(1) hash memory: they require the model to \emph{learn} something new within five minutes. The skip-gram tables must learn useful embeddings for gappy contexts that recur rarely (like 4-grams); the logit head must learn a $128\times2^{16}$ projection. The n-gram value-embedding, by contrast, needs no learned \emph{addressing} --- the hash is fixed, and only a per-row value is learned, seeded by frequent contexts from step one.
+
+We generalize this into a constraint on admissible mechanisms:
+
+\begin{quote}
+\textbf{H9.} In a fixed update-limited budget, a new mechanism improves the metric only if usable without learning its addressing/parameters from scratch in the budget. \emph{Corollary:} O(1) lookup memories (hash-addressed) are admissible; learn-to-address memories (learned retrieval, product-key, or a learned projection of a memory to logits) are not, at this budget --- they pay cost for a mapping they cannot yet compute, and if the untrained mapping is placed on a sensitive output (the logits) the cost becomes active harm.
+
+\textbf{Confidence: 0.6.}
+\end{quote}
+
+The evidence is three points on a curve: the O(1) hash memory is the largest single lever (paper 003 \cite{ophis2026ngram}); a learned logit projection of it is catastrophic; and learned skip-gram tables are neutral-to-harmful. Confidence is held at $0.6$ --- below H8's $0.75$ --- because we have not directly run a learned-retrieval memory (the cleanest test of the corollary), the budget dependence is asserted from one budget, and ``from scratch'' is not sharply operationalized (a warm-started or distilled memory might qualify). H9 is nonetheless immediately useful: it tells an autonomous loop \emph{which} new mechanisms are worth proposing at a given budget --- prefer parameter-free or lookup-addressed structure over anything that adds a from-scratch learnable map --- and it predicts, falsifiably, that a learned k-NN/product-key memory will not clear the gate at 5 minutes but may at a $2$--$4\times$ budget.
+
+\section{The Mechanism Map of a Converged Campaign}
+\label{sec:map}
+
+Table~\ref{tab:map} is the campaign's terminal state: six adopted levers and seven exhausted axes, each with its mechanism. The adopted levers share a signature consistent with H9 and the update-limited regime: they are parameter-free (compile, batch), capacity-\emph{removing} (FFN$6\to4$, short span), or O(1)-addressed (n-gram hash). The exhausted axes fail for identified reasons, not for want of trying.
+
+\begin{table*}[t]
+\caption{Terminal mechanism map (rounds 1--58, \texttt{campaign\_log.jsonl}, 335 runs). Adopted levers all confirmed with GPU-controlled paired seeds. Metric $\valbpb$; naive warm-compile baseline $1.0301$; converged SOTA $\approx0.9500$ (best $0.9488$), $+8.1\%$.}
+\label{tab:map}
+\vskip 0.15in
+\begin{center}
+\begin{scriptsize}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lll}
+\toprule
+Axis & Outcome & Mechanism \\
+\midrule
+\multicolumn{3}{l}{\textbf{Adopted (6 levers, $1.0301\to0.9488$)}} \\
+Warm compile cache & keep & removes cold-compile artifact; free \\
+Batch $2^{18}$ & keep & critical batch; maximizes $U$ at good $q$ \\
+FFN $6\times\to4\times$ & keep & n-gram substitutes top FFN slice; $+16\%$ $U$ \\
+n-gram$(2,3)$@$2^{21}$ & keep & O(1) hash memory; largest single lever \\
+\texttt{matrix\_lr}\,$0.03$ & keep & re-optimum after n-gram+FFN (paper 007) \\
+short-window span\,$2^{9}$ & keep & n-gram covers local recall; $-$attn FLOPs \\
+\midrule
+\multicolumn{3}{l}{\textbf{Exhausted (7 axes)}} \\
+n-gram table size & $2^{21}$ opt & saturates; $2^{22}$ neutral, costs $U$ \\
+n-gram order/skip & $(2,3)$ opt & long/gappy too sparse; adjacent dominates \\
+n-gram$\to$logit head & harmful & uncontextualizable prior (H9) \\
+Attention heads/GQA & $6/6$ opt & VE dim (kv\_dim) load-bearing \\
+Attention pattern & \texttt{SSSL} opt & span was the gain, not fraction \\
+Positional / init / opt & at optimum & RoPE $10^4$, x0 $0.1$, mom $0.95$ \\
+fp8 / sparse-grad / LS & harmful/void & contention artifact / slower / miscal.\ \\
+\bottomrule
+\end{tabular}
+\end{scriptsize}
+\end{center}
+\vskip -0.1in
+\end{table*}
+
+\section{Discussion and Next Directions}
+\label{sec:discussion}
+
+The campaign has spent 58 rounds and 335 runs to move a fixed-budget nanochat GPT from $1.0301$ to $0.9488\ \valbpb$ ($+8.1\%$), and both branches of H8's stopping rule have now been exhibited within a single session: a new-mechanism sweep that hit (short-window span, paper 008) and one that is all-null (this paper). Under H8 the latter certifies a basis-limited floor. Under H9 that floor is budget-imposed: the admissible-mechanism set at five minutes is dominated by parameter-free, capacity-removing, and O(1)-addressed levers, all of which we have found and adopted.
+
+\begin{enumerate}
+    \item \textbf{Directly test H9's corollary.} \emph{Mechanism:} a learned k-NN or product-key memory \cite{lample2019pkm} is the canonical learn-to-address mechanism. \emph{Prediction:} it does not clear the paired gate at 5 minutes (fails to learn its keys) but does at $2$--$4\times$ budget. \emph{Falsifier:} a gate-clearing win at 5 minutes, refuting H9.
+    \item \textbf{Budget-scaling the whole map.} \emph{Mechanism:} if the floor is budget-imposed, doubling the budget should re-admit currently-stale capacity levers (FFN$6\times$, table $2^{22}$) as $U$ ceases to bind. \emph{Prediction:} at 10 minutes at least one exhausted capacity axis flips back. \emph{Falsifier:} the same map at double budget, implying a data-limited floor.
+    \item \textbf{A parameter-free longer-range memory.} \emph{Mechanism:} H9 says the next memory win must be lookup-addressed; a \emph{hashed} longer-range feature that preserves bigram density (e.g., hashing $(t,\text{position-bucket})$ or $(t,\text{document-id})$) adds range without a from-scratch map. \emph{Prediction:} it helps where skip-grams failed, because its rows are dense. \emph{Falsifier:} it regresses like skip-grams, localizing the failure to range rather than density.
+    \item \textbf{Warm-started learned memory.} \emph{Mechanism:} H9's ``from scratch'' clause suggests initializing a learned memory from the O(1) hash memory (distillation) sidesteps the learning cost. \emph{Prediction:} a warm-started learned memory clears the gate where the cold one (round 58) failed. \emph{Falsifier:} still catastrophic, implicating the injection point rather than the learning cost.
+    \item \textbf{Automate H8$+$H9 as a proposal filter.} \emph{Mechanism:} an autonomous loop can pre-screen candidate mechanisms by the H9 admissibility test (does it add a from-scratch map on a sensitive output?) before spending a GPU-hour. \emph{Prediction:} the filter would have rejected the n-gram$\to$logit head a priori and saved the two catastrophic runs. \emph{Falsifier:} it rejects a mechanism that later clears the gate.
+\end{enumerate}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Paper 008 predicted that a new-mechanism sweep is dual-purpose; having seen its hit branch, we here report its null branch. Six axes outside the tuned basis --- attention pattern, heads/GQA, skip-grams, a six-lever scattershot, and a direct n-gram$\to$logit head --- each returned an explained non-improvement, certifying a basis-limited floor at $\valbpb\approx0.9500$ (best $0.9488$, $+8.1\%$ over naive). The two designed extensions of the campaign's dominant lever both failed, and their coincident failure mode yields H9 (confidence $0.6$): under a fixed update-limited budget, only mechanisms usable without learning their addressing from scratch can help, which is why an O(1) hash memory is the largest lever and a learnable logit projection of it is catastrophic. The floor is thus a property of the budget as much as the architecture, and the responsible terminal act of an autonomous loop is not to keep firing levers but to map, mechanistically, why the ones outside its basis do not pay --- and to say so.
+
+\bibliographystyle{icml2024}
+
+\begin{thebibliography}{9}
+
+\bibitem[Jordan et~al.(2024)]{jordan2024muon}
+Jordan, K., Jin, Y., Boza, V., You, J., Cesista, F., Newhouse, L., and Bernstein, J.
+\newblock Muon: An optimizer for hidden layers in neural networks.
+\newblock 2024.
+\newblock URL \url{https://kellerjordan.github.io/posts/muon/}.
+
+\bibitem[Karpathy(2025)]{karpathy2025nanochat}
+Karpathy, A.
+\newblock nanochat: The best ChatGPT that \$100 can buy.
+\newblock 2025.
+\newblock URL \url{https://github.com/karpathy/nanochat}.
+
+\bibitem[Lample et~al.(2019)]{lample2019pkm}
+Lample, G., Sablayrolles, A., Ranzato, M., Denoyer, L., and J\'egou, H.
+\newblock Large memory layers with product keys.
+\newblock \emph{NeurIPS}, 2019.
+
+\bibitem[OPHIS(2026{\natexlab{a}})]{ophis2026ngram}
+OPHIS Autonomous Research Agent.
+\newblock N-gram hash value-embeddings and a hash-table scaling law in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 003, \texttt{AI\_papers/}, 2026{\natexlab{a}}.
+
+\bibitem[OPHIS(2026{\natexlab{b}})]{ophis2026retraction}
+OPHIS Autonomous Research Agent.
+\newblock Throughput levers and a retracted false positive: GPU-contention confounds in shared-cluster A/B testing.
+\newblock Campaign paper 006, \texttt{AI\_papers/}, 2026{\natexlab{b}}.
+
+\bibitem[OPHIS(2026{\natexlab{c}})]{ophis2026staleness}
+OPHIS Autonomous Research Agent.
+\newblock Lever staleness under greedy sequential adoption.
+\newblock Campaign paper 007, \texttt{AI\_papers/}, 2026{\natexlab{c}}.
+
+\bibitem[OPHIS(2026{\natexlab{d}})]{ophis2026convergence}
+OPHIS Autonomous Research Agent.
+\newblock Convergence of iterated re-optimization and a mechanism-exhaustion map.
+\newblock Campaign paper 008, \texttt{AI\_papers/}, 2026{\natexlab{d}}.
+
+\end{thebibliography}
+
+\end{document}

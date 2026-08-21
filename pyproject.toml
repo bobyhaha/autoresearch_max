@@ -1,0 +1,49 @@
+[project]
+name = "autoresearch"
+version = "0.1.0"
+description = "Structured automated research for language-model training"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# The distributable is the ledger ENGINE only. train.py, tools/, research/ and
+# docs/ are the application surface and data, not importable library code, so
+# they are deliberately excluded from the wheel. Without this, the flat layout
+# has no discoverable package and `uv build` / `python -m build` both fail.
+[tool.hatch.build.targets.wheel]
+packages = ["vibeautoresearch"]
+
+[tool.hatch.build.targets.sdist]
+include = ["vibeautoresearch", "pyproject.toml", "README.md"]
+
+[project.optional-dependencies]
+training = [
+    "kernels>=0.11.7; sys_platform == 'linux'",
+    "matplotlib>=3.10.8",
+    "numpy>=2.2.6",
+    "pandas>=2.3.3",
+    "pyarrow>=21.0.0",
+    "requests>=2.32.0",
+    "rustbpe>=0.1.0",
+    "tiktoken>=0.11.0",
+    "torch==2.9.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff==0.15.22",
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu128", marker = "sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true

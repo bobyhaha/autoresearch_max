@@ -1,0 +1,4 @@
+{"name":"sota_reoptimized_ffn4_mlr03","val_bpb_mean":0.9532,"val_bpb_best":0.9504,"vs_naive":"+0.077 (~7.5%)",
+ "levers":["warm torch.compile","batch 2^18","n-gram(2,3)@2^20","FFN 4x (re-optimized from 6x under n-gram)","matrix_lr 0.03 (re-optimized from 0.04)","max-autotune"],
+ "insight":"levers adopted sequentially go STALE under later structural levers; FFN6 (pre-n-gram) and mlr0.04 both improved by re-sweeping on the n-gram stack; FFN4 also simpler+faster",
+ "rejected_reopt":"FFN3/2, batch2^17, mlr0.025, embedding_lr, weight_decay0.1, warmdown, scalar_lr (all null under GPU-controlled A/B)","frame":"walltime_5min_h200","date":"2026-07-27"}

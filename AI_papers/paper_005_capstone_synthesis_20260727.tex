@@ -1,0 +1,310 @@
+%% Paper 005 (CAPSTONE) -- ICML-conference-style LaTeX version.
+%% NOTE: Requires the ICML 2024 style file (icml2024.sty) from the ICML author kit
+%% (https://icml.cc/ -> Author Instructions) to be placed alongside this file to compile.
+%% Compile with: tectonic paper_005_capstone_synthesis_20260727.tex
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% Use the accepted (camera-ready) option so author names and affiliations render.
+\usepackage[accepted]{icml2024}
+
+% Convenience macro for validation bits-per-byte.
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+
+\icmltitlerunning{What an Autonomous Agent Learned Pretraining a 50M GPT for Five Minutes at a Time}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{From a Pristine Baseline to a Mapped Floor: A Capstone Synthesis of an \\ Autonomous Fixed-Wall-Clock LLM Pretraining Campaign}
+
+\begin{icmlauthorlist}
+\icmlauthor{Autonomous Research Agent (OPHIS)}{ophis}
+\end{icmlauthorlist}
+
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+
+\icmlcorrespondingauthor{Autonomous Research Agent (OPHIS)}{baiyuzhu@mit.edu}
+
+\icmlkeywords{autonomous research, wall-clock training, n-gram memory, critical batch size, saturation, mixture of experts, kernel profiling, Machine Learning}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+This capstone synthesizes a 25-round autonomous pretraining campaign (exp000--exp174) on a fresh Karpathy \texttt{autoresearch} baseline: a $\sim$50M-parameter nanochat-style GPT (depth 8, Muon+AdamW) trained for a fixed 5-minute wall-clock budget on one H200, scored by validation bits per byte ($\valbpb$), with single-seed $\sigma \approx 0.0015$ and a 3-seed/$2\sigma$ adoption gate. Starting from a naive first run of $\valbpb = 1.0301$, the agent rediscovered a small set of orthogonal levers --- warm \texttt{torch.compile} caching, a critical-batch-size optimum at \texttt{TOTAL\_BATCH} $= 2^{18}$, an FFN-capacity optimum at $6\times$, an n-gram (2,3) hash value-embedding memory scaled to table size $2^{20}$, and \texttt{max-autotune} compilation --- reaching a final 13-seed reference mean of $\valbpb = 0.9548$ (best single seed 0.9526), an improvement of $\approx 0.076$ ($\approx 7.4\%$ relative). It then spent rounds 16--25 mapping a hard \emph{saturation frontier}: larger tables, higher table learning rates, 4- and 5-gram orders, document-masked attention (paired 3-seed $\Delta = -0.0003$), depth 9/10/12, an output-side n-gram logit head, fused chunked cross-entropy, sparse n-gram gradients, and a dense-expert MoE (catastrophic, 1.14--1.31) are all null or worse, each for a specific mechanistic reason under the update-limited $q \cdot U$ decomposition. A kernel-level audit of the 177\,ms step (43\% MFU, GPU-compute-bound) locates the remaining wall-clock: MLP GEMMs 36\%, a memory-bound non-GEMM tail $\sim$29\%, attention 16.6\%, Muon Newton--Schulz 13.9\%, n-gram gather 2.2\%. We close with Hypothesis H5 --- at this scale, token count, and budget, $\valbpb$ is jointly floored by per-token associative-memory capacity and by data exposure --- and a ranked, falsifiable program: true sparse-dispatch MoE, fp8 GEMMs, parameter EMA, a fused sparse n-gram backward, and a longer-budget frame.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+An autonomous research agent was handed a pristine, well-tuned small-GPT pretraining codebase \cite{karpathy2025nanochat} and a single, unforgiving objective: minimize validation bits per byte after exactly five minutes of training on one H200. Over 25 rounds and 175 logged runs it did two things that we argue are equally scientific. First, it \emph{rediscovered} a compact set of orthogonal levers --- one systems artifact, one optimization-statistical optimum, one capacity optimum, one architectural memory mechanism, and one compiler flag --- that together move $\valbpb$ from 1.0301 to a 13-seed mean of 0.9548. Second, and less conventionally, it \emph{mapped the boundary of its own success}: rounds 16--25 produced roughly forty configurations spanning memory scaling, attention connectivity, depth, output heads, loss kernels, gradient sparsity, and mixture-of-experts, of which exactly zero cleared the adoption gate --- and for each null the campaign can state \emph{why}, mechanistically, it had to be null.
+
+This paper is the capstone synthesis of the campaign documented incrementally in papers 001--004 \cite{ophis2026paper001,ophis2026paper002,ophis2026paper003,ophis2026paper004}. Its thesis is that the two halves are one story. The levers that worked and the levers that failed are explained by the same object: the update-limited decomposition
+\begin{equation}
+\label{eq:qu}
+d(\valbpb) \approx -\left( dq \cdot U + q \cdot dU \right),
+\end{equation}
+where $U$ is the number of optimizer updates completed in 300 seconds and $q$ is the useful loss reduction per update. At $\sim$50M parameters and $\sim$440M tokens per run the model is far from convergence when the clock stops, so a lever wins if and only if it raises the product $q \cdot U$. The adopted levers each raised one factor without materially taxing the other (Section~\ref{sec:levers}); the frontier nulls each either added a quantity that was no longer the binding constraint ($dq \approx 0$) or bought $q$ at a price in $U$ the budget cannot amortize (Section~\ref{sec:frontier}). The kernel audit (Section~\ref{sec:kernel}) then prices what remains of $U$, and the closing hypothesis (Section~\ref{sec:discussion}) names the joint constraint --- memory capacity and data exposure --- that we believe now floors the frame.
+
+Beyond its object-level findings, the campaign is an existence proof of a methodological loop: pre-registered mechanisms with predictions and falsifiers, single-seed screening against a measured noise floor, 3-seed paired confirmation with concurrent controls, and adoption only on gate-clearing evidence. Several of the campaign's most valuable results are gate-certified \emph{absences} --- the document-masking null and the table-scaling turnover among them --- which only a disciplined protocol can distinguish from noise.
+
+\section{Experimental Setup}
+\label{sec:setup}
+
+\paragraph{Frame.} Each run trains for a fixed 5-minute (300\,s) wall-clock budget on one H200 of a shared $8\times$H200 node (frame \texttt{walltime\_5min\_h200}). Steps completed are an \emph{outcome}, not a control: any throughput change moves both the step count and the final metric, which is the origin of Eq.~\ref{eq:qu}. Each run consumes $\sim$440M training tokens at the final reference configuration.
+
+\paragraph{Model and optimizer.} A nanochat-style GPT \cite{karpathy2025nanochat} of $\sim$50M base parameters: depth 8, sliding-window attention, 2048-token context, ReLU$^2$ MLPs; Muon \cite{jordan2024muon} for matrix parameters and AdamW elsewhere.
+
+\paragraph{Metric and statistics.} Validation bits per byte ($\valbpb$) at budget expiry; lower is better. The single-seed noise floor is $\sigma \approx 0.0015$ (3-seed warm baseline, exp008--010). Single-seed runs are screening pilots only; adoption requires 3-seed paired comparison against concurrent controls clearing $2\sigma$. The cold first run is excluded as a control everywhere (F1, below).
+
+\paragraph{Provenance.} All numbers in this paper are taken directly from \texttt{campaign\_log.jsonl} (exp000--exp174) and the campaign's mechanistic analysis; papers 001--004 cover rounds 1--20 in primary detail, and Section~\ref{sec:frontier} of this paper covers rounds 21--25 (exp141--exp174) at the same depth.
+
+\section{The Adopted Levers and Their Mechanisms}
+\label{sec:levers}
+
+Five changes were adopted across 25 rounds. Each is stated with its causal account under Eq.~\ref{eq:qu}; together they define the arc from 1.0301 to 0.9548 summarized in Table~\ref{tab:results}.
+
+\paragraph{L1: Warm \texttt{torch.compile} cache ($1.0301 \rightarrow 0.98768$; pure $U$, and a lesson about controls).}
+The naive first run pays cold Inductor compilation inside the timed window ($\sim$650\,ms/step, 671 steps); identical code with a warm cache runs at $\sim$230\,ms/step and completes $\sim$1017 steps, reaching a 3-seed mean of 0.98768. The $-0.042$ ``gain'' is throughput, not modeling --- and its deeper content is that in any wall-clock-budgeted pipeline with persistent caches, \emph{the first run is a biased control}. All subsequent comparisons used fresh concurrent controls.
+
+\paragraph{L2: \texttt{TOTAL\_BATCH} $2^{19} \rightarrow 2^{18}$ ($0.9877 \rightarrow 0.9797$; the critical batch size).}
+Halving tokens per update doubles $U$ to $\sim$2020 at fixed token throughput. Because the model is update-limited, the extra updates lower loss more than the increased per-update gradient noise costs --- until they do not: $2^{17}$ recovers only part of the gain (0.9863, 3-seed) and $2^{16}$ regresses past baseline (1.0007), while $2^{20}$ (506 updates) costs $+0.025$. The batch-size curve is the textbook non-monotone signature of a critical batch size \cite{mccandlish2018empirical}, with the argmax of $q \cdot U$ at $2^{18}$. Confirmed at 3 seeds, $-0.008$, $\approx 4$--$5\sigma$.
+
+\paragraph{L3: FFN ratio $4\times \rightarrow 6\times$ ($0.980 \rightarrow 0.977$; a capacity optimum, correctly attributed).}
+The MLP is the model's per-token feature and associative capacity --- transformer FFN layers act as key--value memories \cite{geva2021kv} --- and at 50M parameters the stock $4\times$ FFN is under-provisioned for this data: widening to $6\times$ raises $q$ more than the $\sim$14\% of steps it costs ($\sim$2020 $\rightarrow$ $\sim$1720). The attribution matters: widening the embedding/attention side instead (aspect ratio 96) was much \emph{worse} (1.0338), so the lever is FFN capacity specifically, not ``more parameters.'' The optimum is bracketed ($5\times$/$7\times$ comparable, $8\times$/$10\times$ worse) and, presciently, the $8\times$ retest \emph{after} the n-gram memory was installed regressed (0.9594) --- the first hint that FFN width and explicit n-gram memory store overlapping function.
+
+\paragraph{L4: N-gram (2,3) hash value-embeddings at $T = 2^{20}$ ($0.977 \rightarrow 0.9555$; the dominant lever).}
+Without it, the model must reconstruct local n-gram statistics --- which bigram or trigram predicts the next byte --- from scratch through attention and MLP, spending early-layer capacity on static reconstruction. A hash-embedding table \cite{svenstrup2017hash,engram2026} keyed on the last 2--3 tokens gives $O(1)$ direct access to a learned per-n-gram value vector injected into the value stream: a static associative memory that (a) offloads local statistics from compute to lookup, freeing the transformer for longer-range structure, and (b) costs essentially zero FLOPs (a gather, not a matmul), so $U$ is preserved --- MFU actually \emph{rose} from 28\% to 43\% as the tables gave the GPU more parallelizable work. It is the rare lever with $dq \gg 0$ at $dU \approx 0$, and it delivered accordingly: $-0.007$ at the initial $T = 2^{16}$ (3-seed 0.9700) and a log-linear table-scaling law of $\approx -0.004$ per doubling through $T = 2^{20}$ (3-seed 0.9555, best 0.954428), driven by collision reduction: larger tables mean fewer distinct n-grams sharing a slot, hence less destructive interference in the memory.
+
+\paragraph{L5: \texttt{max-autotune-no-cudagraphs} ($0.9536$ single seed, 1700 steps, MFU 43.2\%; free $U$).}
+Inductor's autotuner finds better GEMM tilings at mathematically identical $q$; adoption is throughput-mechanical, like L1 but without the confound.
+
+\paragraph{The composite.} All five levers stacked define the final reference: 13-seed mean $\valbpb = 0.954826$ (best single seed 0.952605), i.e.\ $-0.0753$ on the mean ($7.3\%$ relative) and $-0.0775$ on the best seed ($7.5\%$) versus the naive 1.0301 --- $\approx 0.076$, $\approx 7.4\%$, as the campaign's headline. The levers are orthogonal in mechanism --- cache state, gradient-noise statistics, per-token capacity, associative memory, kernel selection --- which is precisely why they compose.
+
+\section{The Saturation Frontier: a Catalogue of Principled Nulls}
+\label{sec:frontier}
+
+Rounds 16--25 are the paper's core scientific contribution: not a changelog of failures but a mechanistic map of \emph{why the model is floored}. Every axis adjacent to the reference configuration was probed, and every probe returned null-or-worse for a reason that can be stated in advance of the data or diagnosed decisively from it. We catalogue the frontier by mechanism; rounds 16--20 are treated in full in paper 004 \cite{ophis2026paper004} and summarized here, rounds 21--25 (exp141--exp174) are primary to this paper.
+
+\paragraph{N1: Table scaling past $2^{20}$ --- slot-sparsity undertraining.}
+$T = 2^{21}$ gives a 3-seed mean of 0.9544, statistically indistinguishable from $2^{20}$; $T = 2^{22}$ gives 0.954024/0.954634 at rising VRAM and falling step count. The scaling law's turnover was a pre-registered prediction: once collisions are rare, additional slots are visited too rarely in $\sim$440M tokens for their rows to train. The binding constraint moved from collision noise (a capacity limit) to data exposure per slot (a data limit) --- and no table size can fix a data-side limit.
+
+\paragraph{N2: \texttt{NGRAM\_LR} --- undertrained by sparsity, not by step size.}
+If the tables are undertrained, train them harder? A dedicated sweep (0.3--4.0) is flat in the default band and sharply worse at $\geq 2.0$ (0.9615 at 3.0). A rare slot's problem is that it receives a handful of gradient updates per run; multiplying those few by four cannot substitute for the missing hundreds, while the same multiplier destabilizes the frequently-hit, already-converged slots. A learning rate cannot redistribute data. This null discriminates cleanly between two readings of ``undertrained'' and closes the entire memory-optimizer axis.
+
+\paragraph{N3: Higher-order memory (rounds 21) --- data starvation at order 4.}
+The natural continuation of L4 is upward in order, and round 21 attacked it from every angle: 4-gram at $T = 2^{22}$ (0.958026/0.958702, paired seeds, clearly worse), big-trigram-plus-4-gram (0.957582), trigram alone at $2^{22}$ (0.954681, $\approx$ reference), bigram+trigram both at $2^{22}$ (0.9565, worse, at 1468 steps), order-scaled table allocation (0.961466), and the full (2,3,4,5) ladder (0.965202, worst of the family). The mechanism is counting: distinct 4-grams vastly outnumber distinct trigrams, so at $\sim$440M tokens per run almost every 4-gram slot is data-starved --- undertrained rows that inject noise into the value stream instead of memory. The order ladder terminates at 3 \emph{for this token budget}; this is a statement about data, not about the mechanism, and it is the sharpest single piece of evidence for the data half of H5.
+
+\paragraph{N4: Document-masked attention --- nothing to mask, and second-order anyway.}
+The campaign's highest-priority structural proposal, implemented via FlexAttention block masks \cite{dong2024flex} and tested at full rigor (3 seeds vs.\ 3 matched concurrent controls): paired $\Delta = -0.0003$ (0.9566 vs.\ 0.9569), a certified null excluding effects beyond $\pm 0.002$. Two mechanisms explain it. First, the training documents typically exceed the 2048-token context, so most blocks contain at most one boundary --- there is little cross-document attention to mask. Second, with the n-gram memory serving local statistics by lookup, attention's exact connectivity is a second-order concern; the hypothesis had been formed before L4 and was implicitly conditioned on attention carrying a local load it no longer carries. Nulls, like wins, are conditional on the configuration they are tested in.
+
+\paragraph{N5: Depth and width --- priced in the frame's only scarce currency.}
+With the memory installed, depth 9/10/12 give 0.9571/0.9625/0.9766, monotonically worse, with depth 12 collapsing to 673 steps at $\sim$124\,GB. Depth's benefit (deeper composition) is worth little when 300\,s cannot train even 8 layers to convergence, while its cost is paid directly in $U$. Wider aspect (0.9581), head\_dim 256 (0.9605), and the earlier aspect-96 result agree: the model is depth- and width-saturated \emph{at this frame} \cite{hoffmann2022chinchilla}.
+
+\paragraph{N6: Output-side n-gram logit head (round 23) --- redundant with value-side memory.}
+If n-gram memory helps in the value stream, why not also at the output --- a learned per-n-gram logit bias? Tested at interpolation gates 0/0.5/1.0: 0.961196/0.962939/0.965267 --- worse everywhere, and monotonically worse as the head is gated \emph{on}. The value-side tables already deliver the local-statistics signal where the transformer can integrate it contextually; a direct logit bias duplicates that signal in a form the model cannot modulate, injecting noisy probability mass at the output. The head also costs steps (1413--1491 vs.\ $\sim$1660). Redundant $dq \leq 0$ plus $dU < 0$: unambiguously discard.
+
+\paragraph{N7: Fused chunked cross-entropy (round 22) --- the baseline was already fused.}
+Motivated by the kernel audit's softmax share, a chunked-CE kernel in the style of \citet{hsu2024liger} was implemented --- and was \emph{slower} (0.958285 at 1557 steps; chunk-1 control 0.954721 at 1676 steps): eight chunked GEMMs lose to the single fused CE kernel Inductor already emits under max-autotune. A throughput lever must beat the compiler's own fusion, not the naive eager baseline.
+
+\paragraph{N8: Sparse n-gram gradients (round 24) --- a predicted regression.}
+\texttt{NGRAM\_SPARSE\_GRAD} (sparse embedding backward for the tables) was screened and discarded as a throughput regression on torch 2.9, exactly as its pre-registered prediction warned: the framework's sparse-gradient path serializes work the fused dense path amortizes. The idea survives only as a bespoke-kernel direction (Section~\ref{sec:future}).
+
+\paragraph{N9: Dense-expert MoE (round 24) --- the frontier's one catastrophe.}
+A mixture-of-experts FFN implemented by computing \emph{all} experts densely and combining by router weights: E8 top-2 collapses to $\valbpb = 1.313286$ (741 steps) and E4 to 1.135635 (1434 steps) --- worse than the naive baseline. The failure is double: dense-all-experts computation multiplies FFN cost without multiplying capacity-per-FLOP (destroying $U$), and router training at 50M scale in $\sim$1400 steps is unstable (destroying $q$). This null does \emph{not} condemn sparse capacity --- it condemns this implementation, and it sharpens the requirement for the real thing: grouped-GEMM sparse dispatch \cite{fedus2022switch}, where only routed tokens pay each expert's FLOPs.
+
+\paragraph{N10: The long tail.}
+Value-embeddings on all layers (0.9555, null, alone and with n-gram); windows SSSS (worse, context truncation); Muon \texttt{ns\_steps} 4/3 (0.9561/0.9624; coarser orthogonalization damages the update direction for a small $U$ return); Muon momentum 0.98, constant weight decay (0.9626; the rampdown matters), GELU and plain ReLU (ReLU$^2$ matters, 0.9941--0.9960 at pre-n-gram reference), logit softcap variants, rotary-base changes (neutral, 3-seed), ve-gate channels, GQA (0.9834; quality loss) --- all null or worse, each consistent with a flat scalar-knob surface around a well-tuned recipe and with capacity levers being redundant once L4 is installed.
+
+\paragraph{The frontier, stated.} Every axis is closed by a specific mechanism: table size (data-starved slots), table LR (sparsity, not step size), memory order (data-starved 4-grams), FFN width (redundant with the memory), attention connectivity (little to mask; second-order given the memory), depth/width (priced in $U$), output-side memory (redundant and unmodulatable), loss kernels (already fused), sparse gradients (framework overhead), dense MoE (dense cost without sparse benefit), and the scalar-knob surface (flat within $\sigma$). Rounds 21--25 added thirteen reference-configuration seeds (s46--s57) purely to certify the endpoint: mean 0.954826, $\sigma$ consistent with the campaign floor, best 0.952605.
+
+\section{A Kernel-Level Account of the 43\% MFU}
+\label{sec:kernel}
+
+With modeling levers saturated, the remaining currency is time. A \texttt{torch.profiler} audit of the production configuration measured 177\,ms per optimizer step at MFU 43.2\%, and its headline is structural: the step is \emph{GPU-compute-bound}, not launch-bound --- kernels run back-to-back with negligible gaps, so the missing $\sim$57\% of peak is inside the kernels, not between them. The decomposition:
+
+\begin{itemize}
+    \item \textbf{MLP GEMMs: 36\%.} The irreducible core --- the $6\times$ FFN matmuls are the model. Healthy at tensor-core-bound sizes; the only way to shrink this share at fixed math is lower precision (Section~\ref{sec:future}).
+    \item \textbf{Non-GEMM memory-bound tail: $\sim$29\%.} Norms, activations, rotary application, softmax-family kernels ($\sim$4.5\%), and bf16$\leftrightarrow$fp32 casts ($\sim$11\%): bandwidth-bound residue that advances the model far less per byte moved than a GEMM.
+    \item \textbf{Attention: 16.6\%.} Proportionate to its FLOP share at 2048 context; not the bottleneck.
+    \item \textbf{Muon Newton--Schulz bmm: 13.9\%.} Optimizer-side FLOPs the model never sees --- but round 18 established they are load-bearing: truncating the iteration (ns 4/3) costs more $q$ than it returns in $U$.
+    \item \textbf{N-gram gather: 2.2\%.} The entire memory mechanism is nearly free at runtime.
+\end{itemize}
+
+The last line retired a campaign belief: an earlier \texttt{nsys} reading had blamed the step's inefficiency on the n-gram pathway (small GEMMs, a swarm of tiny fill kernels). Direct measurement overturned it --- at 2.2\%, no optimization of the memory can return more than 2.2\%. The audit's strategic content, under Eq.~\ref{eq:qu}: every percent of step time reclaimed is a percent more updates, and the reclaimable candidates are now priced --- the GEMM shares (52.6\% jointly, addressable by fp8), the cast tail ($\sim$11\%), and the guarded Muon share (13.9\%).
+
+\section{Results}
+\label{sec:results}
+
+Table~\ref{tab:results} summarizes the full campaign: the adopted arc from naive to SOTA, and the key frontier nulls with their mechanisms. Data: \texttt{campaign\_log.jsonl}, exp000--exp174.
+
+\begin{table*}[t]
+\caption{Campaign summary: the adopted arc (top) and the saturation frontier's key nulls (bottom). Adopted-arc $\Delta$ is versus the preceding reference; frontier $\Delta$ is versus the final reference (13-seed mean 0.9548). Single-seed rows are screening pilots; adoptions cleared the 3-seed/$2\sigma$ gate (L5 adopted on its deterministic throughput mechanism). Negative $\Delta$ is better.}
+\label{tab:results}
+\vskip 0.15in
+\begin{center}
+\begin{scriptsize}
+\setlength{\tabcolsep}{2pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccl}
+\toprule
+Lever / configuration & $\valbpb$ & $\Delta$ & Seeds & Verdict / mechanism \\
+\midrule
+\multicolumn{5}{l}{\emph{The adopted arc (rounds 1--18)}} \\
+Naive baseline (cold compile, 671 steps) & 1.0301 & --- & 1 & invalid control; cold-cache artifact \\
+L1: \texttt{torch.compile} warm cache ($\sim$1017 steps) & 0.98768 & $-0.0424$ & 3 & adopt; pure $U$ (systems, not modeling) \\
+L2: \texttt{TOTAL\_BATCH} $2^{18}$ ($\sim$2020 steps) & 0.9797 & $-0.0080$ & 3 & adopt; critical batch size ($4$--$5\sigma$) \\
+L3: FFN $4\times \rightarrow 6\times$ ($\sim$1720 steps) & 0.9770 & $-0.0027$ & 3 & adopt; per-token FFN capacity \\
+L4a: n-gram (2,3) value-embeds, $T = 2^{16}$ & 0.9700 & $-0.0070$ & 3 & adopt; offloaded associative memory \\
+L4b: table scaling $T \rightarrow 2^{20}$ & 0.9555 & $-0.0145$ & 3 & adopt; $-0.004$/doubling (collisions) \\
+L5: \texttt{max-autotune} compile (1700 steps) & 0.9536 & $-0.0019$ & 1 & adopt; free $U$ (MFU 43.2\%) \\
+\textbf{Final reference (all levers)} & \textbf{0.9548} (best 0.9526) & $-0.0753$ & \textbf{13} & \textbf{SOTA; $\approx 7.4\%$ vs.\ naive} \\
+\midrule
+\multicolumn{5}{l}{\emph{The saturation frontier (rounds 16--25); $\Delta$ vs.\ final reference}} \\
+n-gram $T = 2^{21}$ / $2^{22}$ & 0.9544 / 0.9543 & $\sim 0$ & 3 / 2 & null; slot-sparsity undertraining (N1) \\
+\texttt{NGRAM\_LR} 0.3--4.0 sweep & 0.9548--0.9615 & $0$ to $+0.007$ & 1 & null then worse; sparsity, not LR (N2) \\
+4-gram @ $2^{22}$ / (2,3,4,5) ladder & 0.9580--0.9587/0.9652 & $+0.003$ / $+0.010$ & 2 / 1 & worse; data-starved orders $\geq 4$ (N3) \\
+Doc-masked attention (FlexAttention) & 0.9566 vs.\ ctrl 0.9569 & paired $-0.0003$ & 3 v 3 & certified null; little to mask (N4) \\
+Depth 9 / 10 / 12 & 0.9571/0.9625/0.9766 & $+0.002$ to $+0.022$ & 1 & worse; depth priced in $U$ (N5) \\
+Output n-gram logit head, gate 0/0.5/1 & 0.9612/0.9629/0.9653 & $+0.006$ to $+0.010$ & 1 & worse; redundant with value-side (N6) \\
+Fused chunked CE (chunk 8, 1557 steps) & 0.9583 & $+0.0035$ & 1 & worse; Inductor's fused CE wins (N7) \\
+\texttt{NGRAM\_SPARSE\_GRAD} & --- & throughput regression & --- & discard; predicted torch-2.9 overhead (N8) \\
+MoE dense-experts E4 / E8 & 1.1356 / 1.3133 & $+0.18$ / $+0.36$ & 1 & catastrophic; dense cost, unstable (N9) \\
+FFN $8\times$+n-gram / VE-all / GQA / ns3 & 0.9594/0.9555/0.9834/0.9624 & $0$ to $+0.029$ & 1 & redundancy, $q$ damage (N10) \\
+\bottomrule
+\end{tabular}%
+}
+\end{scriptsize}
+\end{center}
+\vskip -0.1in
+\end{table*}
+
+Three features merit emphasis. First, the adopted arc is short: five levers, of which two are pure systems ($U$) effects, and one --- the n-gram memory --- accounts for $0.0215$ of the $0.0753$, the single largest modeling contribution. Second, the frontier is broad and \emph{graded exactly as Eq.~\ref{eq:qu} predicts}: levers that merely fail to add $q$ land within noise (doc-mask, rope, knobs, $T > 2^{20}$); levers that also pay $U$ (depth, 4-gram, output head, chunked CE) land $+0.002$ to $+0.010$ out; levers that damage $q$ directly (high NGRAM\_LR, ns3, GQA) land further; and the one lever that destroyed both factors (dense MoE) is catastrophic. Third, the highest-powered tests of the campaign's second half are its most decisive \emph{nulls} --- the gate discipline resolving absence as crisply as presence.
+
+\section{Discussion: What Floors the Frame}
+\label{sec:discussion}
+
+The frontier's nulls are individually local, but they triangulate. The memory axis saturated on \emph{data} (N1, N3: slots and orders starve at $\sim$440M tokens); the capacity axes saturated on \emph{redundancy and price} (N5, N10, and FFN $8\times$: parameters beyond the current configuration either duplicate the memory or cost updates the budget cannot amortize); the connectivity and output axes saturated on \emph{second-orderness} (N4, N6: once local statistics are served by lookup, rearranging how the transformer routes or emits them moves little). We condense this into the campaign's terminal hypothesis:
+
+\begin{quote}
+\textbf{Hypothesis H5} \emph{(jointly memory- and data-floored regime).} At $\sim$50M parameters, $\sim$440M tokens per run, and the 5-minute/1-H200 budget, $\valbpb$ is jointly floored by \textbf{per-token associative-memory capacity} --- saturated by the $2^{20}$ n-gram tables --- and by \textbf{data}: higher-order n-grams and additional parameters are undertrained at this token count. Further confirmed gains require more tokens or budget, a different tokenizer or higher data density, or a \emph{true} sparse-compute capacity increase --- not more of the same.
+
+\textbf{Confidence: 0.70.}
+\end{quote}
+
+The score decomposes as follows. \emph{For:} both halves rest on gate-certified evidence --- the table turnover and the order-4 starvation are each confirmed at $n \geq 2$--3, the redundancy results (FFN $8\times$, output head, VE-all) are mutually consistent, and the $q \cdot U$ account retrodicts the graded severity of every null in Table~\ref{tab:results} without a free parameter. \emph{Against:} (a) the ``jointly floored'' claim is an inference from the union of nulls, not a direct measurement --- an untried mechanism (e.g.\ learned retrieval over a compressed memory, or an EMA-style trajectory effect) could in principle add $q$ without touching either named constraint; (b) most individual frontier entries are single-seed, so sub-$0.003$ effects could hide in any one of them, though not plausibly in all; and (c) the dense-MoE catastrophe leaves the sparse-capacity limb of the hypothesis untested rather than supported --- H5 predicts true sparse dispatch helps, and that prediction is exposed, not banked. The hypothesis is falsifiable on each limb, and Section~\ref{sec:future} orders its tests.
+
+A broader remark on the campaign as method. The agent's trajectory --- fast lever discovery, then a long, expensive certification that the surface is flat --- mirrors what a careful human team does, but with the accounting made explicit: a measured noise floor, pre-registered predictions with falsifiers (the table turnover, the sparse-grad regression, and the batch-size U-shape were all called in advance), and a decomposition (Eq.~\ref{eq:qu}) sharp enough that the \emph{severity ordering} of failures becomes a prediction. The nulls are the payload: they convert ``we tried things and they didn't work'' into a map of which constraint binds where.
+
+\section{Ranked Future Directions}
+\label{sec:future}
+
+Each direction is stated with mechanism, prediction, and falsifier, ranked by expected $\Delta\valbpb$ per GPU-hour weighted by risk; the first and fifth test H5's limbs directly.
+
+\begin{enumerate}
+    \item \textbf{True sparse-dispatch MoE (grouped-GEMM).} \emph{Mechanism:} N9 failed because dense-all-experts pays every expert's FLOPs for every token; a grouped-GEMM top-$k$ dispatch \cite{fedus2022switch} adds parameters at (nearly) fixed per-token FLOPs --- the only capacity increase whose price is not paid in $U$, and the direct test of H5's sparse-compute limb. \emph{Prediction:} with load-balanced routing, a confirmed gain over the dense $6\times$ FFN at matched step time, because per-token capacity (H5's first constraint) rises for free. \emph{Falsifier:} expert undertraining --- the same data limit that starved 4-gram slots starving expert parameters at $\sim$440M tokens --- or router instability reproducing N9's collapse at any dispatch efficiency; either would confine H5's escape routes to the data side.
+    \item \textbf{fp8 GEMMs for the MLP (36\%) and attention (16.6\%).} \emph{Mechanism:} the two GEMM families are 52.6\% of the step; fp8 tensor-core arithmetic \cite{micikevicius2022fp8} roughly doubles their throughput on H200, a pure-$U$ lever worth up to $\sim$20\% more steps end-to-end. \emph{Prediction:} step count rises accordingly and $\valbpb$ falls at the established updates-to-bpb exchange rate, with $q$ unchanged. \emph{Falsifier:} loss-curve degradation from reduced precision (a $q$ cost), or the $\sim$11\% cast tail growing to consume the gain --- the audit makes both measurable in one profiled run.
+    \item \textbf{Parameter EMA / weight averaging.} \emph{Mechanism:} evaluating an exponential moving average of the weights centers the estimate over the noisy final-phase trajectory \cite{izmailov2018swa} --- a $q$-side lever at essentially zero $U$ cost, orthogonal to everything adopted; currently under test in the campaign. \emph{Prediction:} a small gain, plausibly at the noise-band scale, requiring the full 3-seed gate. \emph{Falsifier:} a null at this short horizon, where the schedule's warmdown already anneals the trajectory --- which would itself localize when EMA pays.
+    \item \textbf{Bespoke fused n-gram sparse-backward kernel.} \emph{Mechanism:} N8 showed the \emph{framework's} sparse path regresses, but the underlying waste is real --- dense gradients and optimizer updates over $2^{20}$-row tables of which a small fraction is touched per step; a fused scatter-update kernel could reclaim that bandwidth without torch's sparse overhead. \emph{Prediction:} a low-single-digit percent step-time reduction. \emph{Falsifier:} reclaimed time below the updates-to-bpb exchange rate's resolution --- plausible, since the forward gather is only 2.2\%; strictly a throughput play, attempted after (2).
+    \item \textbf{A longer frame (e.g.\ the 2000-step/longer-token budget).} \emph{Mechanism:} H5's data limb predicts that the levers which starved at $\sim$440M tokens --- 4-gram tables (N3), $T > 2^{20}$ slots (N1), and potentially learned retrieval over the memory --- flip from null to win when tokens per run rise, because slot and expert exposure is the binding constraint, not the mechanisms themselves. \emph{Prediction:} at a materially larger token budget the order ladder extends past 3 and table scaling resumes. \emph{Falsifier:} the ladder still terminating at order 3 with ample data --- which would relocate the floor to the tokenizer/data-density limb of H5 and make a byte-level-vs-BPE study the successor campaign's first experiment.
+\end{enumerate}
+
+Net campaign state after 25 rounds: 13-seed reference mean $\valbpb = 0.9548$ (best 0.9526), $\approx 0.076$ ($\approx 7.4\%$ relative) below the naive baseline; five adopted levers, each with a mechanism; a frontier of roughly forty nulls, each with a diagnosis; a priced kernel budget; and one scored hypothesis whose every limb carries a test. The frame gave the agent five minutes at a time, and the agent's answer is not only a lower number but an account of why the number now resists lowering.
+
+\bibliographystyle{icml2024}
+
+\begin{thebibliography}{16}
+
+\bibitem[Dong et~al.(2024)]{dong2024flex}
+Dong, J., Feng, B., Guessous, D., Liang, Y., and He, H.
+\newblock Flex Attention: A programming model for generating optimized attention kernels.
+\newblock \emph{arXiv preprint arXiv:2412.05496}, 2024.
+
+\bibitem[Engram(2026)]{engram2026}
+Engram: Conditional memory via scalable lookup.
+\newblock \emph{arXiv preprint arXiv:2601.07372}, 2026.
+
+\bibitem[Fedus et~al.(2022)]{fedus2022switch}
+Fedus, W., Zoph, B., and Shazeer, N.
+\newblock Switch Transformers: Scaling to trillion parameter models with simple and efficient sparsity.
+\newblock \emph{Journal of Machine Learning Research}, 23(120):1--39, 2022.
+
+\bibitem[Geva et~al.(2021)]{geva2021kv}
+Geva, M., Schuster, R., Berant, J., and Levy, O.
+\newblock Transformer feed-forward layers are key-value memories.
+\newblock In \emph{Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (EMNLP)}, pp.\ 5484--5495, 2021.
+
+\bibitem[Hoffmann et~al.(2022)]{hoffmann2022chinchilla}
+Hoffmann, J., Borgeaud, S., Mensch, A., Buchatskaya, E., Cai, T., Rutherford, E., et~al.
+\newblock Training compute-optimal large language models.
+\newblock In \emph{Advances in Neural Information Processing Systems 35 (NeurIPS)}, 2022.
+
+\bibitem[Hsu et~al.(2024)]{hsu2024liger}
+Hsu, P.-L., Dai, Y., Kothapalli, V., Song, Q., Tang, S., Zhu, S., Shimizu, S., Sahni, S., Ning, H., and Chen, Y.
+\newblock Liger Kernel: Efficient Triton kernels for LLM training.
+\newblock \emph{arXiv preprint arXiv:2410.10989}, 2024.
+
+\bibitem[Izmailov et~al.(2018)]{izmailov2018swa}
+Izmailov, P., Podoprikhin, D., Garipov, T., Vetrov, D., and Wilson, A.~G.
+\newblock Averaging weights leads to wider optima and better generalization.
+\newblock In \emph{Proceedings of the 34th Conference on Uncertainty in Artificial Intelligence (UAI)}, 2018.
+
+\bibitem[Jordan et~al.(2024)]{jordan2024muon}
+Jordan, K., Jin, Y., Boza, V., You, J., Cesista, F., Newhouse, L., and Bernstein, J.
+\newblock Muon: An optimizer for hidden layers in neural networks.
+\newblock 2024.
+\newblock URL \url{https://kellerjordan.github.io/posts/muon/}.
+
+\bibitem[Karpathy(2025)]{karpathy2025nanochat}
+Karpathy, A.
+\newblock nanochat: The best ChatGPT that \$100 can buy.
+\newblock 2025.
+\newblock URL \url{https://github.com/karpathy/nanochat}.
+
+\bibitem[McCandlish et~al.(2018)]{mccandlish2018empirical}
+McCandlish, S., Kaplan, J., Amodei, D., and the OpenAI Dota Team.
+\newblock An empirical model of large-batch training.
+\newblock \emph{arXiv preprint arXiv:1812.06162}, 2018.
+
+\bibitem[Micikevicius et~al.(2022)]{micikevicius2022fp8}
+Micikevicius, P., Stosic, D., Burgess, N., Cornea, M., Dubey, P., Grisenthwaite, R., et~al.
+\newblock FP8 formats for deep learning.
+\newblock \emph{arXiv preprint arXiv:2209.05433}, 2022.
+
+\bibitem[OPHIS(2026{\natexlab{a}})]{ophis2026paper001}
+Autonomous Research Agent (OPHIS).
+\newblock Compile-cache confounds and an update-count-limited batch-size optimum in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 001, autoresearch reimplementation campaign, 2026{\natexlab{a}}.
+
+\bibitem[OPHIS(2026{\natexlab{b}})]{ophis2026paper002}
+Autonomous Research Agent (OPHIS).
+\newblock The single-seed noise-floor trap and an FFN-capacity optimum in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 002, autoresearch reimplementation campaign, 2026{\natexlab{b}}.
+
+\bibitem[OPHIS(2026{\natexlab{c}})]{ophis2026paper003}
+Autonomous Research Agent (OPHIS).
+\newblock N-gram hash value-embeddings and a hash-table scaling law in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 003, autoresearch reimplementation campaign, 2026{\natexlab{c}}.
+
+\bibitem[OPHIS(2026{\natexlab{d}})]{ophis2026paper004}
+Autonomous Research Agent (OPHIS).
+\newblock A saturation frontier and a kernel-level account of the 43\%-MFU step in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 004, autoresearch reimplementation campaign, 2026{\natexlab{d}}.
+
+\bibitem[Svenstrup et~al.(2017)]{svenstrup2017hash}
+Svenstrup, D.~T., Hansen, J.~M., and Winther, O.
+\newblock Hash embeddings for efficient word representations.
+\newblock In \emph{Advances in Neural Information Processing Systems 30 (NeurIPS)}, 2017.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "classification": "external_sota_reference",
+  "paper_id": "pap_recursive_nanochat_autoresearch",
+  "captured_at": "2026-07-29T10:06:00Z",
+  "repository": "https://github.com/recursive-org/first-steps-toward-automated-ai-research",
+  "commit": "a962ec43e2e3d7c018e59a2ece623fe6e232fdfb",
+  "artifacts": [
+    {
+      "path": "recursive-a962ec43.bundle",
+      "bytes": 532933,
+      "sha256": "432438abbcbcc22fabacf60294aefb2257e1c356d61536c7ad9b81224834b0d8",
+      "role": "git_bundle"
+    },
+    {
+      "path": "recursive-a962ec43.tar.zst",
+      "bytes": 226273,
+      "sha256": "4465847c4b9c12a2d51bbbe9349c4a17444255347b8c9a1de245920729281d48",
+      "role": "normalized_source_archive"
+    }
+  ],
+  "verified_files": [
+    {
+      "path": "nanochat_autoresearch/solutions/optimized_from_karpathy.py",
+      "sha256": "f92ecc814039ff177b3bfd23c7967918bc44e88765572923277bfa40b7fb597d"
+    },
+    {
+      "path": "nanochat_autoresearch/solutions/lib.py",
+      "sha256": "c24d4fd123dfeb8a0226667458969220a9ccc1f8f11f76cf5670907a8f5ef071"
+    },
+    {
+      "path": "nanochat_autoresearch/results/val_bpb.csv",
+      "sha256": "564e0d9b351df3a021c1451f4f7c26668ab8f0e5373927035cd3c9d5304f2f3f"
+    },
+    {
+      "path": "nanochat_autoresearch/README.md",
+      "sha256": "d078ca07d371002e27561ab145914200f5f75cb93bc86eae39a06f916999329c"
+    }
+  ],
+  "verification": {
+    "bundle_commit_present": true,
+    "resolved_bundle_ref": "refs/remotes/origin/archive-a962ec43",
+    "local_sota_adoption_claimed": false
+  },
+  "notes": [
+    "This is an external published SOTA reference, not a governed local OPHIS SOTA.",
+    "The provenance-quarantined local 0.927183 run is intentionally not snapshotted as adopted.",
+    "GitHub-generated archive byte hashes may change; the commit is the canonical source identity."
+  ]
+}

@@ -1,0 +1,183 @@
+%% Paper 010 -- ICML-conference-style LaTeX version (final campaign capstone).
+%% NOTE: Requires the ICML 2024 style file (icml2024.sty) from the ICML author kit.
+%% Compile with: pdflatex paper_010_campaign_capstone_20260727.tex
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\usepackage[accepted]{icml2024}
+
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+
+\icmltitlerunning{A 61-Round Autonomous Pretraining Campaign: Capstone}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Finding a Floor and Proving It: A 61-Round Autonomous LLM-Pretraining \\ Campaign Under a Fixed Wall-Clock Budget}
+
+\begin{icmlauthorlist}
+\icmlauthor{Autonomous Research Agent (OPHIS)}{ophis}
+\end{icmlauthorlist}
+
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+
+\icmlcorrespondingauthor{Autonomous Research Agent (OPHIS)}{baiyuzhu@mit.edu}
+
+\icmlkeywords{autonomous research, LLM pretraining, wall-clock training, n-gram memory, ablation, convergence, negative results, Machine Learning}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report the full arc of an autonomous LLM-pretraining research campaign: 61 rounds, 340 logged runs, and ten papers, conducted by a single agent optimizing a nanochat-style GPT ($\sim$50M parameters) under a fixed 5-minute wall-clock budget on one H200 of a shared node, metric validation bits-per-byte ($\valbpb$, $\sigma\approx0.0015$). The campaign improved $\valbpb$ from a naive warm-compile baseline of $1.0301$ to a confirmed $0.9488$ ($+8.1\%$) using six levers, and then spent the majority of its effort establishing --- rather than merely asserting --- that this is a floor for the budget and architecture family. The trajectory has three phases. (i) \emph{Ascent}: parameter-free and capacity levers (warm compile, critical batch $2^{18}$, an O(1) n-gram hash value-embedding, and \texttt{torch.compile} max-autotune) reach $\approx0.9546$. (ii) \emph{Re-optimization}: recognizing that a dominant structural lever (the n-gram memory) staled earlier verdicts, three iterated GPU-controlled coordinate passes both improved and \emph{simplified} the model (FFN $6\times\to4\times$, \texttt{matrix\_lr}\,$0.04\to0.03$, table $2^{20}\to2^{21}$), reaching a fixed point at $\approx0.9507$. (iii) \emph{Basis expansion and floor}: a new-mechanism sweep found one lever outside the tuned basis --- halving the sliding-window attention span, confirmed $3/3$ paired seeds, $\to0.9488$ --- after which a second, all-null sweep across seven axes (n-gram order/skip/bag, attention heads, injection point, positional, optimizer) certified a basis-limited floor, each null mechanistically attributed. We distill the campaign into a lever taxonomy, an update-limited-that-is-really-epoch-limited account of the budget (the 5-minute frame sits at the $\sim$2-epoch overfitting boundary of the fixed dataset), and a ladder of nine falsifiable hypotheses (H1--H9) on autonomous search, culminating in a stopping rule: a zero-flip re-optimization pass conjoined with a mechanistically-attributed all-null new-mechanism sweep. The campaign's central methodological result is negative and procedural: on a shared cluster near a noise floor, only GPU-controlled paired designs are admissible (one false positive, an fp8 ``win,'' was caught and retracted), and knowing when to stop --- and proving it --- is as much the work as knowing what to try.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+This paper is the capstone of an autonomous research campaign whose individual results appear in papers 001--009; it synthesizes the whole and states what an outside reader should take away. The task was fixed and adversarial to over-claiming: minimize validation bits-per-byte of a $\sim$50M-parameter nanochat-style GPT \cite{karpathy2025nanochat} trained for exactly five minutes of wall-clock on one H200 of a shared $8\times$H200 node. Every run costs the same five minutes; the seed noise floor is $\sigma\approx0.0015$; and the shared cluster injects up to $0.0014$ of $\valbpb$ spread from GPU placement alone --- comparable to the effect sizes that separate a good lever from a null one.
+
+Two things make the campaign worth reporting as a whole rather than as nine separate levers. First, the \emph{shape} of the trajectory: a short ascent to a plausible plateau, a long and productive re-optimization that both improved and simplified the model, a late basis-expanding discovery that reopened the search after it appeared converged, and finally a rigorous, all-null certification of the floor. Second, the \emph{discipline}: near a noise floor on a contended cluster, the campaign's dominant failure mode was not missing a lever but adopting a phantom one, and the machinery built to prevent that (GPU-controlled paired designs, a leave-one-out audit, a mechanistically-attributed stopping rule) is more transferable than any single hyperparameter.
+
+We contribute: (1) the consolidated result and lever taxonomy (Section~\ref{sec:result}); (2) the three-phase trajectory and why re-optimization and basis-expansion were each necessary (Section~\ref{sec:trajectory}); (3) the update-limited-that-is-epoch-limited account of the budget (Section~\ref{sec:regime}); (4) the H1--H9 hypothesis ladder and the stopping rule (Section~\ref{sec:hypotheses}); and (5) the methodological lessons for autonomous research loops (Section~\ref{sec:methods}).
+
+\section{The Consolidated Result}
+\label{sec:result}
+
+Table~\ref{tab:levers} is the campaign's terminal ledger: six adopted levers moving $\valbpb$ from $1.0301$ to $0.9488$ ($+8.1\%$), and seven axes exhausted with identified mechanisms. The adopted levers share a signature: none adds a from-scratch-learned mapping. They are parameter-free (warm compile, max-autotune), throughput-critical (batch $2^{18}$), capacity-\emph{removing} (FFN $6\times\to4\times$, short-window span $2^{10}\to2^{9}$), or O(1)-lookup-addressed (the n-gram hash memory). Two of the six \emph{remove} parameters while improving the metric --- the update-limited regime rewards subtraction.
+
+\begin{table}[t]
+\caption{Terminal lever ledger (rounds 1--61, 340 runs). Adopted levers confirmed with GPU-controlled paired seeds. Baseline $1.0301$; SOTA $0.9488$ best single, $\approx0.9500$ pooled, $+8.1\%$.}
+\label{tab:levers}
+\vskip 0.1in
+\begin{center}
+\begin{scriptsize}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lll}
+\toprule
+Lever / axis & Status & Why \\
+\midrule
+Warm compile cache & +keep & kills cold-compile artifact \\
+Batch $2^{18}$ & +keep & critical batch; max $U$ \\
+n-gram$(2,3)$@$2^{21}$ & +keep & O(1) memory; largest lever \\
+FFN $6\times\!\to\!4\times$ & +keep & n-gram substitutes top slice \\
+\texttt{matrix\_lr}\,$0.03$ & +keep & re-optimum post-n-gram \\
+short-window $2^{9}$ & +keep & n-gram covers local recall \\
+\midrule
+table $>2^{21}$ / order $>3$ & exhausted & saturated / too sparse \\
+skip- \& bag-grams & exhausted & lose adjacency / lose order \\
+n-gram$\to$logit head & harmful & uncontextualizable prior \\
+heads / GQA & exhausted & VE dim load-bearing \\
+window pattern & exhausted & span was the gain \\
+RoPE/init/momentum/ns & exhausted & already at optimum \\
+fp8 / sparse-grad / LS & retracted/void & artifact / slow / miscal.\ \\
+\bottomrule
+\end{tabular}
+\end{scriptsize}
+\end{center}
+\vskip -0.15in
+\end{table}
+
+\section{The Three-Phase Trajectory}
+\label{sec:trajectory}
+
+\paragraph{Phase I --- Ascent (rounds 1--30).} Standard levers, adopted greedily, reach $\approx0.9546$: warm compile (a $0.04$ correction of a cold-cache measurement artifact, paper 001), batch $2^{18}$ (the critical batch, paper 001), FFN widening (paper 002), the n-gram hash value-embedding (the single largest lever and a hash-table scaling law, paper 003 \cite{ophis2026ngram}), and max-autotune compilation (paper 004). Along the way, the campaign learned its central statistical lesson the hard way: single-seed screens near $\sigma\approx0.0015$ have a high false-flash rate, and many ``wins'' died under multi-seed confirmation (paper 002).
+
+\paragraph{Phase II --- Re-optimization (rounds 31--48).} The plateau at $0.9546$ was not the floor of the \emph{levers} but of the \emph{search order}. The n-gram memory, a dominant structural lever adopted late, had silently staled earlier verdicts: a leave-one-out audit showed FFN$6\times$ now bought nothing while still costing $16\%$ of steps, because the n-gram memory had taken over the local-statistics work the extra width supplied (paper 007 \cite{ophis2026staleness}). Reverting to FFN$4\times$ (a \emph{simplifying} win) and re-sweeping flipped a second verdict (\texttt{matrix\_lr}\,$0.03$, previously rejected) and a third (table $2^{20}\to2^{21}$, previously ``saturated''). Three iterated GPU-controlled coordinate passes reached a fixed point at $\approx0.9507$ on a strictly smaller model (paper 008 \cite{ophis2026convergence}).
+
+\paragraph{Phase III --- Basis expansion and the floor (rounds 49--61).} A fixed point of coordinate descent is a floor only \emph{within the tuned basis}. A new-mechanism sweep tested that: three axes nulled (label smoothing, n-gram order set, sparse-grad) but a fourth hit --- halving the short-attention-window span, confirmed $3/3$ paired seeds ($\Delta=-0.00152$), reaching the campaign best $0.9488$ (paper 008). The lever is the same subtraction motif: the n-gram memory supplies local recall by table lookup, so the short layers need less span, and removing it raises $U$ at neutral $q$. A fifth pass re-converged zero-flip, and a \emph{second} new-mechanism sweep --- window pattern, GQA/heads, skip-grams, bag-grams, a six-lever scattershot, and a direct n-gram$\to$logit head --- returned all-null, each with an identified mechanism, certifying a basis-limited floor and yielding the learning-budget constraint H9 (paper 009 \cite{ophis2026floor}).
+
+\section{Update-Limited, Really Epoch-Limited}
+\label{sec:regime}
+
+Every phase is organized by one relation: $\valbpb\approx q\cdot U$, the product of per-update loss $q$ and update count $U$ (papers 001, 004). A lever helps only by lowering $q$ without proportionally lowering $U$, or raising $U$ at fixed $q$; this is why capacity-removing and O(1) levers dominate and why throughput matters as much as modeling.
+
+A late meta-experiment (round 61) sharpened ``update-limited'' into ``epoch-limited.'' Doubling the budget to ten minutes did \emph{not} lower $\valbpb$; it \emph{raised} it ($0.9488\to0.987$), because the fixed training set is small enough that five minutes is already $\approx2$ epochs and ten minutes is three --- the model overfits on repeated data. The 5-minute frame therefore sits at the $\sim$2-epoch overfitting boundary, which is precisely why $U$ cannot be freely increased and why the regime is update-limited at all. It also makes cross-budget lever comparison confounded on fixed data --- at ten minutes a slower configuration (FFN$6\times$) ``wins'' only by completing fewer epochs and overfitting less --- so H9's budget-dependence clause is untestable here without a larger corpus. We report this as a confound honestly rather than as a budget-scaling result.
+
+\section{The Hypothesis Ladder (H1--H9)}
+\label{sec:hypotheses}
+
+The campaign's papers each posed a falsifiable hypothesis; together they form a ladder from measurement hygiene to a stopping rule.
+
+\begin{itemize}
+    \item \textbf{H1--H4 (papers 001--004):} measurement artifacts (cold-compile cache) masquerade as levers; single-seed screens near the floor are mostly false; the n-gram hash-table follows a scaling law that saturates; the step is bounded by small-GEMM/fill throughput, not attention.
+    \item \textbf{H5--H6 (papers 005--006):} the campaign is update-limited ($q\cdot U$); and on a shared cluster, unpaired A/B is confounded by GPU contention --- an fp8 ``win'' was a placement artifact and was retracted.
+    \item \textbf{H7 (paper 007):} greedy sequential adoption leaves levers \emph{stale}; a dominant structural adoption is a trigger to re-optimize, which typically improves \emph{and} simplifies.
+    \item \textbf{H8 (paper 008):} iterated re-optimization converges to a stack-level fixed point; a new-mechanism sweep is then dual-purpose --- an all-null sweep certifies a basis-limited floor, a hit expands the basis and triggers one more pass.
+    \item \textbf{H9 (paper 009):} under a fixed update-limited budget, a new mechanism helps only if usable without learning its addressing from scratch --- O(1) lookup memories qualify, learn-to-address memories do not (an O(1) n-gram hash is the largest lever; a learnable n-gram$\to$logit head is catastrophic).
+\end{itemize}
+
+The operational distillate is a \textbf{stopping rule}: declare a basis-limited floor when a full re-optimization pass is zero-flip \emph{and} a new-mechanism sweep returns only nulls, each attributable to an identified cause rather than to noise. Both conjuncts are necessary --- without the sweep, a zero-flip pass may reflect an impoverished proposal set; without the fixed point, a null sweep may be swamped by an un-re-optimized stack.
+
+\section{Methodological Lessons for Autonomous Loops}
+\label{sec:methods}
+
+\paragraph{Paired designs are not optional.} The retracted fp8 result (paper 006 \cite{ophis2026retraction}) is the campaign's most important negative: a $+0.001$ ``win'' that was GPU-placement noise. Thereafter every comparison interleaved and GPU-swapped arms; a same-config control spread of $0.0014$ makes unpaired comparison uninterpretable at this resolution. An autonomous loop on shared hardware must build contention control in, not bolt it on.
+
+\paragraph{Verdicts are conditional; re-optimize after structural change.} Half the campaign's late gains came not from new levers but from re-testing old verdicts after a structural adoption moved their optima (H7). A cheap leave-one-out audit ($k{+}1$ runs) measures each lever's \emph{current} marginal value and directly exposes stale ones.
+
+\paragraph{Stopping is a result.} The campaign spent Phase III proving a floor, not chasing it. A mechanistically-attributed all-null sweep is the responsible terminal act of a loop on a shared cluster: it distinguishes ``converged'' from ``out of ideas,'' and it tells the operator that further gains need a new budget, corpus, or architecture family --- not more within-basis search.
+
+\paragraph{Prefer subtraction and lookup.} Four of the campaign's wins remove parameters or are parameter-free; the largest modeling lever is a fixed hash lookup; the clearest failure (round 58) added a from-scratch-learned map on the logits. Under a tight budget, the admissible-mechanism set is dominated by parameter-free, capacity-removing, and O(1)-addressed structure (H9).
+
+\section{Limitations and Next Directions}
+\label{sec:limits}
+
+The floor is certified for one budget, one $\sim$50M architecture family, and one fixed corpus; H9's budget clause is untestable here (Section~\ref{sec:regime}) and is the first thing a larger-corpus follow-up should settle. The most promising untried directions, ranked: (1) test H9 directly with a learned k-NN/product-key memory \cite{lample2019pkm}, predicted to fail at 5 minutes but clear the gate at $2$--$4\times$ budget \emph{with fresh data}; (2) a parameter-free longer-range \emph{ordered} hash feature (bag-grams failed by discarding order, round 59) that stays dense without losing sequence; (3) order-independence of the fixed point (H7 Direction 3), adopting the same levers in a different sequence and checking the terminal stack is invariant; (4) automating the H8$+$H9 stopping rule as a proposal pre-filter, which would have rejected the catastrophic logit head a priori. Each is stated with a falsifier in the source papers.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Over 61 rounds an autonomous agent took a fixed-budget nanochat GPT from $1.0301$ to $0.9488\ \valbpb$ ($+8.1\%$) with six levers --- most of them subtractive or lookup-based --- and then did the harder thing: it proved, mechanism by mechanism, that this is a floor for the budget and architecture, retracting one false positive and stopping on a certified all-null sweep rather than churning the shared cluster. The transferable content is not the levers but the loop: control for contention with paired designs, re-optimize after every structural change because verdicts are conditional, prefer mechanisms that need no from-scratch learning under a tight budget, and treat a mechanistically-attributed stopping rule as a first-class result. An autonomous research loop earns its keep not only by finding improvements but by knowing --- and proving --- when it has found the floor.
+
+\bibliographystyle{icml2024}
+
+\begin{thebibliography}{9}
+
+\bibitem[Karpathy(2025)]{karpathy2025nanochat}
+Karpathy, A.
+\newblock nanochat: The best ChatGPT that \$100 can buy.
+\newblock 2025.
+\newblock URL \url{https://github.com/karpathy/nanochat}.
+
+\bibitem[Lample et~al.(2019)]{lample2019pkm}
+Lample, G., Sablayrolles, A., Ranzato, M., Denoyer, L., and J\'egou, H.
+\newblock Large memory layers with product keys.
+\newblock \emph{NeurIPS}, 2019.
+
+\bibitem[OPHIS(2026{\natexlab{a}})]{ophis2026ngram}
+OPHIS Autonomous Research Agent.
+\newblock N-gram hash value-embeddings and a hash-table scaling law in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 003, \texttt{AI\_papers/}, 2026{\natexlab{a}}.
+
+\bibitem[OPHIS(2026{\natexlab{b}})]{ophis2026retraction}
+OPHIS Autonomous Research Agent.
+\newblock Throughput levers and a retracted false positive: GPU-contention confounds in shared-cluster A/B testing.
+\newblock Campaign paper 006, \texttt{AI\_papers/}, 2026{\natexlab{b}}.
+
+\bibitem[OPHIS(2026{\natexlab{c}})]{ophis2026staleness}
+OPHIS Autonomous Research Agent.
+\newblock Lever staleness under greedy sequential adoption.
+\newblock Campaign paper 007, \texttt{AI\_papers/}, 2026{\natexlab{c}}.
+
+\bibitem[OPHIS(2026{\natexlab{d}})]{ophis2026convergence}
+OPHIS Autonomous Research Agent.
+\newblock Convergence of iterated re-optimization and a mechanism-exhaustion map.
+\newblock Campaign paper 008, \texttt{AI\_papers/}, 2026{\natexlab{d}}.
+
+\bibitem[OPHIS(2026{\natexlab{e}})]{ophis2026floor}
+OPHIS Autonomous Research Agent.
+\newblock The basis-limited floor and a learning-budget constraint on new mechanisms.
+\newblock Campaign paper 009, \texttt{AI\_papers/}, 2026{\natexlab{e}}.
+
+\end{thebibliography}
+
+\end{document}

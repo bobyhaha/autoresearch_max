@@ -1,0 +1,287 @@
+{
+  "frame": "walltime_5min_h200",
+  "frame_note": "5-MINUTE WALL-CLOCK CHALLENGE (STOP_MODE=time TIME_BUDGET=300, H200). NOT comparable to the 2000-step frame and never to be quoted against it.",
+  "baseline": {
+    "mean": 0.933073,
+    "sigma_seed": 0.001375,
+    "gate_2sigma": 0.00275,
+    "n_seeds": 10,
+    "config": "Recursive frozen settings + ATTN_BACKEND=fa3 (COMPILE_MODE=max-autotune-no-cudagraphs)",
+    "code": "train.py aa2cbbc7",
+    "scope": "walltime_5min_h200",
+    "status": "passed (v14)",
+    "note": "THE canonical baseline. Agrees with research/setup/reconciliation.json v14."
+  },
+  "external_reference": {
+    "source": "Recursive, first-steps-toward-automated-ai-research",
+    "their_bpb": 0.9109,
+    "their_prior_sota": 0.9372,
+    "caveat": "NOT comparable: they ran H100/B200 with working flash-attn on the full no-repeat corpus; we run H200 with ~10 repeating shards. A target, not a control."
+  },
+  "experiments": [
+    {
+      "id": "exp1_segflex",
+      "lever": "seg mask + flex block-sparse kernel",
+      "n_pairs": 10,
+      "treat_mean": 0.935379,
+      "ctrl_mean": 0.945093,
+      "mean_delta": -0.009715,
+      "sd_delta": 0.001345,
+      "paired_t": -22.83,
+      "all_same_sign": true,
+      "verdict": "adopt_in_frame",
+      "pairs": [
+        {
+          "seed": 42,
+          "treat": 0.934989,
+          "ctrl": 0.944004,
+          "delta": -0.009015,
+          "treat_steps": 1810,
+          "ctrl_steps": 1636
+        },
+        {
+          "seed": 43,
+          "treat": 0.936024,
+          "ctrl": 0.947698,
+          "delta": -0.011674,
+          "treat_steps": 1826,
+          "ctrl_steps": 1604
+        },
+        {
+          "seed": 44,
+          "treat": 0.937972,
+          "ctrl": 0.947158,
+          "delta": -0.009186,
+          "treat_steps": 1762,
+          "ctrl_steps": 1598
+        },
+        {
+          "seed": 45,
+          "treat": 0.935843,
+          "ctrl": 0.944968,
+          "delta": -0.009125,
+          "treat_steps": 1812,
+          "ctrl_steps": 1637
+        },
+        {
+          "seed": 46,
+          "treat": 0.934602,
+          "ctrl": 0.944807,
+          "delta": -0.010205,
+          "treat_steps": 1830,
+          "ctrl_steps": 1605
+        },
+        {
+          "seed": 47,
+          "treat": 0.935158,
+          "ctrl": 0.944101,
+          "delta": -0.008943,
+          "treat_steps": 1765,
+          "ctrl_steps": 1604
+        },
+        {
+          "seed": 48,
+          "treat": 0.934499,
+          "ctrl": 0.943172,
+          "delta": -0.008673,
+          "treat_steps": 1813,
+          "ctrl_steps": 1637
+        },
+        {
+          "seed": 49,
+          "treat": 0.933971,
+          "ctrl": 0.946509,
+          "delta": -0.012538,
+          "treat_steps": 1825,
+          "ctrl_steps": 1602
+        },
+        {
+          "seed": 50,
+          "treat": 0.936931,
+          "ctrl": 0.94604,
+          "delta": -0.009109,
+          "treat_steps": 1762,
+          "ctrl_steps": 1601
+        },
+        {
+          "seed": 51,
+          "treat": 0.933797,
+          "ctrl": 0.942475,
+          "delta": -0.008678,
+          "treat_steps": 1814,
+          "ctrl_steps": 1640
+        }
+      ],
+      "baseline_scope": "sdpa_handicapped",
+      "caution": "Measured against the SDPA baseline, which had TTTL windowing disabled. fa3 alone reaches 0.9331, BETTER than this arm's 0.9354 -- both were compensating for the same defect. Re-tested honestly as f1_segflex."
+    },
+    {
+      "id": "exp2_seg_dense",
+      "lever": "seg mask + DENSE kernel (decomposition)",
+      "n_pairs": 3,
+      "treat_mean": 0.991636,
+      "ctrl_mean": 0.946455,
+      "mean_delta": 0.045182,
+      "sd_delta": 0.00026,
+      "paired_t": 300.6,
+      "all_same_sign": false,
+      "verdict": "screening",
+      "pairs": [
+        {
+          "seed": 42,
+          "treat": 0.990177,
+          "ctrl": 0.94498,
+          "delta": 0.045197,
+          "treat_steps": 905,
+          "ctrl_steps": 1635
+        },
+        {
+          "seed": 43,
+          "treat": 0.992358,
+          "ctrl": 0.947444,
+          "delta": 0.044914,
+          "treat_steps": 909,
+          "ctrl_steps": 1605
+        },
+        {
+          "seed": 44,
+          "treat": 0.992374,
+          "ctrl": 0.94694,
+          "delta": 0.045434,
+          "treat_steps": 900,
+          "ctrl_steps": 1602
+        }
+      ],
+      "baseline_scope": "sdpa_handicapped",
+      "caution": "Measured against the SDPA baseline, which had TTTL windowing disabled. fa3 alone reaches 0.9331, BETTER than this arm's 0.9354 -- both were compensating for the same defect. Re-tested honestly as f1_segflex."
+    }
+  ],
+  "provenance_caveat": "Runs were launched by run_paired.sh, NOT tools/run_gated.py. No RunRecords, no authorize-run gate, no spec fingerprints. Measurements are real and paired-concurrent, but this is NOT ledger-grade provenance; re-run a winner through the gated launcher before minting a belief.",
+  "baseline_fair_fa3": {
+    "mean": 0.933073,
+    "sigma_seed": 0.001375,
+    "gate_2sigma": 0.00275,
+    "n_seeds": 10,
+    "config": "Recursive frozen settings + ATTN_BACKEND=fa3 + COMPILE_MODE=max-autotune-no-cudagraphs",
+    "note": "THE FAIR BASELINE. All 8 hyperparameters verified identical to Recursive's optimized_from_karpathy.py; the only prior difference was the attention kernel. Every experiment from f1_ onward is measured against THIS."
+  },
+  "superseded_baseline_sdpa": {
+    "mean": 0.945018,
+    "why": "ATTN_BACKEND=sdpa ran full-causal attention, ignoring the model's TTTL windows. Handicapped. exp1/exp2 are scoped to this and are NOT evidence about the fair (fa3) model."
+  },
+  "fair_experiments": [
+    {
+      "i": 1,
+      "id": "f2_ngram256",
+      "lever": "n-gram capacity 256x",
+      "n": 7,
+      "val_bpb": 0.943567,
+      "ctrl": 0.933089,
+      "delta": 0.010478,
+      "paired_t": 22.4,
+      "verdict": "reject",
+      "running_best": 0.933073
+    },
+    {
+      "i": 2,
+      "id": "f3_warmdown075",
+      "lever": "warmdown 0.75",
+      "n": 10,
+      "val_bpb": 0.932769,
+      "ctrl": 0.933145,
+      "delta": -0.000375,
+      "paired_t": -1.0,
+      "verdict": "sub_floor",
+      "running_best": 0.933073
+    },
+    {
+      "i": 3,
+      "id": "f4_fourgram256",
+      "lever": "256x + 4-gram",
+      "n": 10,
+      "val_bpb": 0.950971,
+      "ctrl": 0.933155,
+      "delta": 0.017816,
+      "paired_t": 42.8,
+      "verdict": "reject",
+      "running_best": 0.933073
+    },
+    {
+      "i": 4,
+      "id": "f5_rowwise",
+      "lever": "rowwise state",
+      "n": 10,
+      "val_bpb": 0.933866,
+      "ctrl": 0.933099,
+      "delta": 0.000767,
+      "paired_t": 2.5,
+      "verdict": "sub_floor",
+      "running_best": 0.933073
+    },
+    {
+      "i": 5,
+      "id": "f6_velr150",
+      "lever": "VE-LR 1.5x",
+      "n": 10,
+      "val_bpb": 0.933374,
+      "ctrl": 0.932999,
+      "delta": 0.000375,
+      "paired_t": 1.2,
+      "verdict": "sub_floor",
+      "running_best": 0.933073
+    },
+    {
+      "i": 6,
+      "id": "f7_wd015",
+      "lever": "weight decay 0.15",
+      "n": 10,
+      "val_bpb": 0.932626,
+      "ctrl": 0.933094,
+      "delta": -0.000468,
+      "paired_t": -1.3,
+      "verdict": "sub_floor",
+      "running_best": 0.933073
+    },
+    {
+      "i": 7,
+      "id": "f8_matrixlr045",
+      "lever": "matrix LR 0.045",
+      "n": 10,
+      "val_bpb": 0.933705,
+      "ctrl": 0.933141,
+      "delta": 0.000563,
+      "paired_t": 1.2,
+      "verdict": "sub_floor",
+      "running_best": 0.933073
+    },
+    {
+      "i": 8,
+      "id": "f9_warmdown085",
+      "lever": "warmdown 0.85",
+      "n": 10,
+      "val_bpb": 0.932625,
+      "ctrl": 0.933115,
+      "delta": -0.000491,
+      "paired_t": -1.5,
+      "verdict": "sub_floor",
+      "running_best": 0.933073
+    },
+    {
+      "i": 9,
+      "id": "f10_ngram128",
+      "lever": "n-gram capacity 128x",
+      "n": 10,
+      "val_bpb": 0.935911,
+      "ctrl": 0.933125,
+      "delta": 0.002786,
+      "paired_t": 6.1,
+      "verdict": "reject",
+      "running_best": 0.933073
+    }
+  ],
+  "sota_in_frame": 0.933073,
+  "summary": "9 experiments vs the fair fa3 baseline; 0 cleared the 0.00275 gate. SOTA remains the fa3 baseline itself. The one real win of the session was the fa3 kernel fix (0.945->0.933); every model/optimizer/throughput lever tried on top is sub-floor or regresses, because the Recursive config is already near throughput-optimal for this frame.",
+  "provenance": "SHADOW CAMPAIGN: run_paired.sh, not tools/run_gated.py. No RunRecords / gates / fingerprints. Real measurements, not ledger-grade. See reconciliation.json v14 limitations.",
+  "contention_quarantine": "f2_ngram256 control seeds 42/43/44 dropped (daemon-collision, ~1340 steps vs ~1900). All other controls reproduced baseline within sigma.",
+  "sota_note": "The fa3 baseline itself. 0 of 9 fair experiments cleared the 0.002750 gate; the only real win of the campaign was the fa3 kernel fix (0.945 -> 0.933)."
+}

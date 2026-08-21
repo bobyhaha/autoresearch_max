@@ -1,0 +1,213 @@
+%% Paper 003 -- ICML-conference-style LaTeX version.
+%% NOTE: Requires the ICML 2024 style file (icml2024.sty) from the ICML author kit
+%% (https://icml.cc/ -> Author Instructions) to be placed alongside this file to compile.
+%% Compile with: pdflatex paper_003_ngram_memory_scaling_20260727.tex
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% Use the accepted (camera-ready) option so author names and affiliations render.
+\usepackage[accepted]{icml2024}
+
+% Convenience macro for validation bits-per-byte.
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+
+\icmltitlerunning{N-gram Hash Value-Embeddings and a Hash-Table Scaling Law}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{N-gram Hash Value-Embeddings and a Hash-Table Scaling Law \\ in Fixed-Wall-Clock LLM Pretraining}
+
+\begin{icmlauthorlist}
+\icmlauthor{Autonomous Research Agent (OPHIS)}{ophis}
+\end{icmlauthorlist}
+
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+
+\icmlcorrespondingauthor{Autonomous Research Agent (OPHIS)}{baiyuzhu@mit.edu}
+
+\icmlkeywords{n-gram memory, hash embeddings, value embeddings, conditional memory, wall-clock training, scaling laws, autonomous research, Machine Learning}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report rounds 11--15 (exp078--exp098) of an autonomous campaign on a fresh Karpathy \texttt{autoresearch} baseline (nanochat-style GPT, $\sim$50M base parameters, depth 8, sliding-window attention, Muon+AdamW) under a fixed 5-minute wall-clock budget on a single H200, continuing from the \texttt{TOTAL\_BATCH\_SIZE} $=2^{18}$ $+$ FFN $6\times$ reference of papers 001--002 (3-seed mean $\valbpb = 0.97696$, single-seed $\sigma \approx 0.0015$). The rounds' contribution is a qualitatively new lever: an ``Engram''-style \emph{n-gram hash value-embedding memory}, in which a causal rolling polynomial hash of the last $n$ tokens ($n \in \{2,3\}$) indexes a size-$T$ trainable hash table whose summed lookup is added to the value stream on the value-embedding layers. Two findings survive. First (F5), the mechanism works at essentially zero wall-clock cost: at $T = 2^{16}$ it improves $\valbpb$ to a 3-seed mean of $0.9700$ (best $0.969069$; paired $\Delta \approx -0.007$, $\approx 4.6\sigma$) while retaining $\sim$1680 steps, with measured MFU \emph{rising} from $\sim$28\% to $\sim$43\% because the tables add nominal FLOPs at negligible time cost. Second (F6), table size obeys a clean scaling law: $\valbpb$ decreases approximately log-linearly in $T$ from $2^{15}$ ($0.97345$) through $2^{20}$ ($0.95443$), $\approx -0.004$ per doubling, with a 3-seed anchor at $2^{18}$ (mean $0.9621$). The order mix interacts with $T$ exactly as a collision account predicts: at small $T$ bigram-only is marginally better ($0.96798$ at $2^{16}$) and adding 4-grams hurts ($0.97318$), while at large $T$ the (2,3) mix beats bigram-only ($0.95443$ vs.\ $0.95752$ at $2^{20}$). We adopt $(2,3)$ at $T = 2^{20}$ as the new reference. Net campaign state: best $\valbpb = 0.9544$, $-0.0757$ ($\approx$7.3\% relative) versus the naive first-run baseline of $1.0301$.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Papers 001--002 of this campaign \cite{ophis2026paper001,ophis2026paper002} established the current reference under a fixed 5-minute wall-clock budget: \texttt{TOTAL\_BATCH\_SIZE} $=2^{18}$ tokens (F2) and FFN ratio $6\times$ (F4), for a 3-seed mean of $\valbpb = 0.97696$, together with two methodological guardrails --- the compile-cache confound (F1) and the single-seed noise-floor trap (F3), the latter fixing the adoption rule at 3-seed paired confirmation clearing $2\sigma$ against concurrent controls ($\sigma \approx 0.0015$). Paper 002 closed by ranking ``n-gram/Engram-style memory modules'' as the top follow-up, on the argument that FFN width had shown the frame to be capacity-limited (Hypothesis H2) and that memory added through a \emph{different channel} than dense matmul capacity would test whether that picture generalizes.
+
+Rounds 11--15 executed that plan. Round 11's remaining dense probes were flat or rejected --- value embeddings on all layers looked promising at $n{=}1$ ($0.973933$) but fell to a 3-seed mean of $0.9764$ and was discarded, another instance of F3 --- which sharpened the motivation: the value-embedding \emph{pathway} seemed worth feeding, but with content conditioned on more than the current token. Following the conditional-memory-via-lookup design of Engram \cite{engram2026}, we augmented the per-layer value embeddings with bigram and trigram \emph{hash} embeddings: a causal rolling hash of the last $n$ tokens indexes a large trainable table, turning local n-gram statistics --- the oldest object in language modeling \cite{bengio2003neural} --- into a static memory the transformer can consult for free.
+
+This paper documents two findings:
+
+\begin{enumerate}
+    \item \textbf{F5 (Section~\ref{sec:lever}):} the n-gram value-embedding memory is the campaign's third confirmed lever, worth $-0.007$ $\valbpb$ at table size $2^{16}$ (3-seed, $\approx 4.6\sigma$ paired) at \emph{no} throughput cost --- step count is retained and measured MFU rises from $\sim$28\% to $\sim$43\%.
+    \item \textbf{F6 (Section~\ref{sec:scaling}):} the table size $T$ is itself a scaling axis. $\valbpb$ falls approximately log-linearly in $T$ over $2^{15} \rightarrow 2^{20}$ ($\approx -0.004$ per doubling, cumulative $-0.019$), governed by a collision-vs-undertraining trade-off that also explains why the best order mix flips from bigram-only at small $T$ to (2,3) at large $T$, and why 4-grams do not pay at the sizes probed.
+\end{enumerate}
+
+Together the findings open a static-memory-via-lookup axis that is qualitatively unlike every previous lever: it adds parameters without adding wall-clock cost, so under this frame it is, to first order, free capacity.
+
+\section{Method: N-gram Hash Value-Embeddings}
+\label{sec:method}
+
+\paragraph{Base mechanism.} The baseline architecture already routes a per-layer \emph{value embedding} --- a learned per-token vector of dimension $d_{kv}$ --- into the attention value stream on designated value-embedding layers. This pathway conditions values on the identity of the current token only.
+
+\paragraph{N-gram lookup.} For each order $n \in \{2, 3\}$ we allocate a hash table $E_n \in \mathbb{R}^{T \times d_{kv}}$. At position $t$, a causal rolling polynomial hash of the last $n$ token ids,
+\[
+h_n(t) \;=\; \Big( \textstyle\sum_{j=0}^{n-1} c_j \, x_{t-j} \Big) \bmod T,
+\]
+with fixed odd multipliers $c_j$, produces an index into $E_n$; the retrieved rows are summed over orders and added to the existing value embedding on the value-embedding layers. The hash is \emph{causal} (only tokens $\leq t$ enter $h_n(t)$), \emph{rolling} (computed for all positions in one vectorized pass over the shifted token tensor), and \emph{deterministic} --- the same n-gram always maps to the same slot, so the table is a static conditional memory in the sense of \citet{engram2026}: content addressed by local context, retrieved in $O(1)$, with collisions resolved only implicitly by training.
+
+\paragraph{Implementation.} The hash is computed with compile-safe integer tensor ops (shifts, multiplies, modulo), so the mechanism fuses into the existing \texttt{torch.compile} graph without graph breaks --- critical under a wall-clock frame where recompilation or eager fallback would eat the budget (cf.\ F1 \cite{ophis2026paper001}). Lookup is a standard embedding gather. The tables are registered in the AdamW \emph{embedding} parameter group, inheriting the embedding learning rate and schedule; Muon never sees them. Memory cost is the tables themselves ($\sum_n T \cdot d_{kv}$ parameters); at $T = 2^{20}$ observed VRAM grows from 50.8\,GB (reference) to 57.9\,GB. This is the hash-embedding trick of \citet{svenstrup2017hash} applied not to input words but to n-gram context keys feeding the value stream.
+
+\paragraph{Frame and gate.} Unchanged from papers 001--002: 5-minute wall-clock on one H200, metric $\valbpb$ (lower is better), steps completed an outcome rather than a control, single-seed runs screening-only, adoption requiring 3-seed paired confirmation at $2\sigma$ against concurrent controls ($\sigma \approx 0.0015$). All comparisons in this paper are against the paper-002 reference (3-seed mean $0.97696$).
+
+\section{The Memory Lever (Finding F5)}
+\label{sec:lever}
+
+Round 12's pilot ran (2,3)-gram tables at $T = 2^{16}$: $\valbpb = 0.969687$, a single-seed $-0.0073$ against the reference --- the largest screening delta of the campaign, nearly $5\sigma$, far past the F3 pilot bar. Round 13 confirmed it: seeds gave $0.969687 / 0.971339 / 0.969069$, mean $\mathbf{0.9700}$, improving on all three concurrent reference pairs with mean paired $\Delta \approx -0.0069$ ($\approx 4.6\sigma$). \textbf{Adopted} --- the campaign's third confirmed lever and third milestone.
+
+The systems profile is the notable part. Every previous capacity lever paid wall-clock: FFN $6\times$ surrendered $\sim$14\% of its steps to win \cite{ophis2026paper002}. The n-gram memory pays nothing measurable: runs retain $\sim$1680 steps (1699/1695/1721 across the confirmation seeds, versus $\sim$1720 for the reference), and measured MFU \emph{rises} from $\sim$28\% to $\sim$43\% --- the tables add nominal model FLOPs while the added step time (an integer hash and an embedding gather) is negligible, so utilization accounting improves. Under a wall-clock frame this is the best kind of lever: capacity whose throughput price is $\approx 0$, sidestepping the capacity$\times$update trade-off (H2) entirely rather than optimizing along it.
+
+\section{A Hash-Table Scaling Law (Finding F6)}
+\label{sec:scaling}
+
+With the mechanism confirmed, rounds 13--15 swept its design space: hash-table size $T$, and which orders to include. We state the governing hypothesis:
+
+\begin{quote}
+\textbf{Hypothesis H3} \emph{(memory-capacity-limited regime).} In the 5-minute frame the model is \textbf{memory-capacity-limited on local n-gram statistics}: adding a large-table n-gram lookup monotonically lowers $\valbpb$ as $T$ grows --- collisions fall, so more distinct n-grams get dedicated, uncorrupted slots --- until the hash table is \textbf{undertrained}, i.e.\ until slots are visited too rarely within the budget for their rows to learn useful content.
+
+\textbf{Confidence: 0.80.}
+\end{quote}
+
+\paragraph{The table-size axis.} Single-seed screening at fixed order mix (2,3) gives a strikingly clean ladder: $T = 2^{15}$: $0.97345$; $2^{16}$: $0.96969$; $2^{17}$: $0.96705$; $2^{18}$: $0.96129$; $2^{19}$: $0.95802$; $2^{20}$: $\mathbf{0.95443}$. Every doubling helps, by $\approx 0.004$ $\valbpb$ on average (range $0.0026$--$0.0058$), with no flattening through $2^{20}$. Two rungs are multi-seed: $2^{16}$ (mean $0.9700$, Section~\ref{sec:lever}) and $2^{18}$ (seeds $0.961288 / 0.961945 / 0.963115$, mean $\mathbf{0.9621}$), and the $2^{16} \rightarrow 2^{18}$ gap of $-0.0079$ between 3-seed means is itself $> 5\sigma$ --- the ladder is not a chain of noise draws. Round 15 (in progress) is pushing $2^{21}$/$2^{22}$ to find the undertraining turnover H3 predicts; $(2,3)$ at $T = 2^{20}$ is adopted as the new reference.
+
+\paragraph{Order mix interacts with $T$ as collisions predict.} At $T = 2^{16}$, bigram-only is marginally \emph{better} than (2,3) ($0.96798$ vs.\ $0.96969$), and adding 4-grams is clearly worse ($0.97318$): the trigram/4-gram key spaces are so much larger than $2^{16}$ that their lookups are mostly collision noise, contaminating the shared slot budget. At $T = 2^{20}$ the ranking flips: (2,3) beats bigram-only ($0.95443$ vs.\ $0.95752$), because with collisions rare the trigram table finally stores usable conditional content, and bigram-only saturates ($0.96441 \rightarrow 0.96018 \rightarrow 0.95752$ over $2^{18} \rightarrow 2^{20}$, a visibly flattening curve versus (2,3)'s $0.96129 \rightarrow 0.95802 \rightarrow 0.95443$). Higher orders are worth including exactly when the table is large enough to disambiguate them --- a collision-vs-capacity account consistent with the hash-embedding analysis of \citet{svenstrup2017hash} and with Engram's finding that lookup memory value scales with table capacity \cite{engram2026}. The 4-gram flank ($0.97318$ at $2^{16}$) remains untested at large $T$; H3 predicts it too would eventually pay, at still larger tables than trigrams require.
+
+\section{Results}
+\label{sec:results}
+
+Table~\ref{tab:results} summarizes rounds 11--15. $\Delta\valbpb$ is reported against the paper-002 reference mean $0.97696$ (\texttt{TOTAL\_BATCH} $2^{18}$, FFN $6\times$, 3-seed); negative is better. Data: \texttt{campaign\_log.jsonl}, exp078--exp098.
+
+\begin{table*}[t]
+\caption{All n-gram-memory configurations, rounds 11--15. $\Delta\valbpb$ is versus the FFN $6\times$ 3-seed reference mean $0.97696$ (negative $=$ better). Single-seed rows are screening pilots; only $n \geq 3$ rows are eligible for the $2\sigma$ keep gate. All n-gram runs retain $\sim$1650--1720 steps.}
+\label{tab:results}
+\vskip 0.15in
+\begin{center}
+\begin{small}
+\begin{tabular}{lcccl}
+\toprule
+Config & $\valbpb$ & $\Delta$ vs.\ reference & Seeds & Verdict \\
+\midrule
+Reference: \texttt{TOTAL\_BATCH} $2^{18}$, FFN $6\times$ & 0.97696 & --- & 3 & reference (papers 001--002) \\
+VE on all layers (round 11) & 0.9764 (best 0.973933) & $-0.0006$ & 3 & reject --- pilot was noise (F3) \\
+\midrule
+n-gram (2,3), $T = 2^{16}$ (pilot, exp078) & 0.969687 & $-0.0073$ & 1 & big win; confirm \\
+\textbf{n-gram (2,3), $T = 2^{16}$ (confirmation)} & \textbf{0.9700} (best 0.969069) & $-0.0069$ ($\approx 4.6\sigma$ paired) & \textbf{3} & \textbf{keep --- adopted (F5)} \\
+n-gram bigram-only, $T = 2^{16}$ & 0.967981 & $-0.0090$ & 1 & $\approx$ (2,3); slightly better at small $T$ \\
+n-gram (2,3,4), $T = 2^{16}$ & 0.973176 & $-0.0038$ & 1 & 4-gram over-sparse, discard \\
+\midrule
+n-gram (2,3), $T = 2^{15}$ & 0.973448 & $-0.0035$ & 1 & smaller table worse, discard \\
+n-gram (2,3), $T = 2^{17}$ & 0.967048 & $-0.0099$ & 1 & scaling rung (F6) \\
+n-gram (2,3), $T = 2^{18}$ & \textbf{0.9621} (best 0.961288) & $-0.0148$ & \textbf{3} & \textbf{keep --- scaling anchor (F6)} \\
+n-gram (2,3), $T = 2^{19}$ & 0.958016 & $-0.0189$ & 1 & scaling rung (F6) \\
+\textbf{n-gram (2,3), $T = 2^{20}$} & \textbf{0.954428} & $-0.0225$ & 1 & \textbf{best --- adopted as reference} \\
+\midrule
+n-gram bigram-only, $T = 2^{18}$ & 0.964408 & $-0.0126$ & 1 & worse than (2,3) at large $T$ \\
+n-gram bigram-only, $T = 2^{19}$ & 0.960181 & $-0.0168$ & 1 & worse than (2,3) \\
+n-gram bigram-only, $T = 2^{20}$ & 0.957518 & $-0.0194$ & 1 & worse than (2,3); flattening \\
+\bottomrule
+\end{tabular}
+\end{small}
+\end{center}
+\vskip -0.1in
+\end{table*}
+
+Three features stand out. First, \emph{every} n-gram row in the table beats the reference --- the first time in the campaign a whole mechanism family, rather than a single point in a sweep, has been uniformly positive. Second, the (2,3) table-size column is monotone across six sizes spanning $32\times$ in $T$, with 3-seed anchors at $2^{16}$ and $2^{18}$ whose gap alone clears the gate several times over. Third, the bigram-only and (2,3) columns cross between $2^{16}$ and $2^{18}$, exactly the signature the collision account of Section~\ref{sec:scaling} requires --- a qualitative prediction, not a fitted one.
+
+\section{Threats to Validity}
+\label{sec:threats}
+
+\begin{enumerate}
+    \item \textbf{Single-seed rungs on the scaling ladder.} Of the six (2,3) table sizes, only $2^{16}$ and $2^{18}$ are 3-seed; $2^{15}$, $2^{17}$, $2^{19}$, and $2^{20}$ rest on one seed each against $\sigma \approx 0.0015$. The \emph{law} is supported by monotonicity across six points and two multi-seed anchors, but any individual rung --- including the adopted $2^{20}$ value $0.95443$ --- could shift by $\pm 0.003$. Per the campaign's own F3 discipline, the $2^{20}$ adoption is provisional pending 3-seed confirmation in round 15.
+    \item \textbf{The order-mix crossover is $n{=}1$ on both sides.} Bigram-only vs.\ (2,3) differ by $0.0017$ at $2^{16}$ and $0.0031$ at $2^{20}$ --- the latter is $\sim 2\sigma$, the former within noise. The crossover's \emph{direction} matches the collision account, but its location is not pinned down.
+    \item \textbf{Parameter and memory growth.} The tables add $\sum_n T \cdot d_{kv}$ parameters; at $T = 2^{20}$ they rival the $\sim$50M dense base model, and VRAM grows from 50.8 to 57.9\,GB. The campaign metric is wall-clock-fair but not parameter-fair: the headline gains partly reflect that this frame prices FLOPs and seconds, not bytes. Scaling to $2^{21}$/$2^{22}$ will meet VRAM limits on shared hardware before it meets the metric's limits.
+    \item \textbf{MFU as evidence.} The $\sim$28\% $\rightarrow$ $\sim$43\% MFU rise is an accounting consequence of added nominal FLOPs at flat step time; the load-bearing throughput fact is the retained $\sim$1680 steps, and MFU should not be read as a kernel-efficiency improvement.
+    \item \textbf{Undertraining flank unobserved.} H3 predicts a turnover where table slots become too rarely visited to train, but through $2^{20}$ no flattening is visible in (2,3). Until the flank is observed, ``until undertrained'' is a prediction, not a measurement, and the $0.80$ confidence reflects this.
+    \item \textbf{Shared hardware.} As in papers 001--002, co-tenant load can shift step counts between waves; concurrent controls mitigate but do not eliminate this.
+\end{enumerate}
+
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+Rounds 11--15 opened and then scaled a new axis. F5: an Engram-style n-gram hash value-embedding memory --- a causal rolling polynomial hash of the last 2--3 tokens indexing trainable tables added to the value stream --- improves $\valbpb$ by a confirmed paired $-0.007$ at $T = 2^{16}$ ($\approx 4.6\sigma$, 3-seed mean $0.9700$) at zero wall-clock cost, with $\sim$1680 steps retained and MFU rising from $\sim$28\% to $\sim$43\%. F6: table size is a scaling law, $\approx -0.004$ $\valbpb$ per doubling from $2^{15}$ to $2^{20}$ with 3-seed anchors at $2^{16}$ ($0.9700$) and $2^{18}$ ($0.9621$), a collision-governed order-mix crossover (bigram-only best at small $T$; (2,3) best at large $T$; 4-grams over-sparse at the sizes probed), and no turnover yet at $2^{20}$ ($0.95443$, adopted as reference). Confidence in H3 is $0.80$: the monotone six-point ladder with two multi-seed anchors makes the memory-capacity-limited reading hard to dismiss, but four rungs are single-seed and the predicted undertraining flank has not yet been observed.
+
+Net campaign state after fifteen rounds: best $\valbpb = 0.9544$, an improvement of $-0.0757$ ($\approx$7.3\% relative) versus the naive first-run baseline of $1.0301$, with three adopted levers (\texttt{TOTAL\_BATCH} $2^{18}$; FFN $6\times$; n-gram (2,3) memory at $T = 2^{20}$) and the noise-floor discipline of F3 enforcing every adoption.
+
+Ranked next experiments: (1) continue table scaling to $2^{21}$/$2^{22}$ until the law saturates or VRAM binds, with 3-seed confirmation of the terminal size (round 15, in progress); (2) per-order table sizing --- the crossover analysis implies bigrams need fewer slots than trigrams, so splitting the parameter budget unevenly ($T_2 < T_3$) should dominate the shared-size design; (3) revisit 4-grams at $T \geq 2^{20}$, where H3 predicts they begin to pay; (4) re-check the FFN-ratio and batch-size optima under the new reference, since a large static memory may relieve the FFN of n-gram storage duty \cite{geva2021kv} and shift the capacity$\times$update balance of H2.
+
+\bibliographystyle{icml2024}
+
+\begin{thebibliography}{9}
+
+\bibitem[Bengio et~al.(2003)]{bengio2003neural}
+Bengio, Y., Ducharme, R., Vincent, P., and Jauvin, C.
+\newblock A neural probabilistic language model.
+\newblock \emph{Journal of Machine Learning Research}, 3:1137--1155, 2003.
+
+\bibitem[Engram(2026)]{engram2026}
+Engram: Conditional memory via scalable lookup.
+\newblock \emph{arXiv preprint arXiv:2601.07372}, 2026.
+
+\bibitem[Geva et~al.(2021)]{geva2021kv}
+Geva, M., Schuster, R., Berant, J., and Levy, O.
+\newblock Transformer feed-forward layers are key-value memories.
+\newblock In \emph{Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (EMNLP)}, pp.\ 5484--5495, 2021.
+
+\bibitem[Jordan et~al.(2024)]{jordan2024muon}
+Jordan, K., Jin, Y., Boza, V., You, J., Cesista, F., Newhouse, L., and Bernstein, J.
+\newblock Muon: An optimizer for hidden layers in neural networks.
+\newblock 2024.
+\newblock URL \url{https://kellerjordan.github.io/posts/muon/}.
+
+\bibitem[Karpathy(2025)]{karpathy2025nanochat}
+Karpathy, A.
+\newblock nanochat: The best ChatGPT that \$100 can buy.
+\newblock 2025.
+\newblock URL \url{https://github.com/karpathy/nanochat}.
+
+\bibitem[McCandlish et~al.(2018)]{mccandlish2018empirical}
+McCandlish, S., Kaplan, J., Amodei, D., and the OpenAI Dota Team.
+\newblock An empirical model of large-batch training.
+\newblock \emph{arXiv preprint arXiv:1812.06162}, 2018.
+
+\bibitem[OPHIS(2026{\natexlab{a}})]{ophis2026paper001}
+Autonomous Research Agent (OPHIS).
+\newblock Compile-cache confounds and an update-count-limited batch-size optimum in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 001, autoresearch reimplementation campaign, 2026{\natexlab{a}}.
+
+\bibitem[OPHIS(2026{\natexlab{b}})]{ophis2026paper002}
+Autonomous Research Agent (OPHIS).
+\newblock The single-seed noise-floor trap and an FFN-capacity optimum in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 002, autoresearch reimplementation campaign, 2026{\natexlab{b}}.
+
+\bibitem[Svenstrup et~al.(2017)]{svenstrup2017hash}
+Svenstrup, D.~T., Hansen, J.~M., and Winther, O.
+\newblock Hash embeddings for efficient word representations.
+\newblock In \emph{Advances in Neural Information Processing Systems 30 (NeurIPS)}, 2017.
+
+\end{thebibliography}
+
+\end{document}

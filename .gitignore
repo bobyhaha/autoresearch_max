@@ -1,0 +1,49 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+worktrees/
+results/
+queue/
+
+# Agent prompt files (generated per-session by launchers)
+CLAUDE.md
+AGENTS.md
+
+# Experimental code/artifacts
+dev/
+
+# Results file
+results.tsv
+run.log
+remote_training_runs/
+progress.png
+
+# Large/raw research artifacts stay in the tracker or artifact store. The
+# structured RunRecord keeps only stable references and hashes.
+research/experiments/artifacts/*
+!research/experiments/artifacts/.gitkeep
+!research/experiments/artifacts/paper019_round2_canonical_key_assay/
+!research/experiments/artifacts/paper019_round2_canonical_key_assay/**
+research/experiments/artifacts/paper019_round2_canonical_key_assay/__pycache__/
+research/experiments/artifacts/paper019_round2_canonical_key_assay/*.py[oc]
+!research/experiments/artifacts/external_code/
+!research/experiments/artifacts/external_code/pap_flash_attention_3_neurips2024/
+!research/experiments/artifacts/external_code/pap_flash_attention_3_neurips2024/**
+
+# Session temp/output dirs
+tmp/
+output/
+AI_papers/.build_*/
+AI_papers/.icml_style/__MACOSX/
+AI_papers/.icml_style/*.zip
+
+# Host/SSH target for the H200 box. Kept out of git, matching how the v3 lineage
+# treats .env and .ophis_host: infrastructure identifiers are machine-local.
+h200_remote_config.json

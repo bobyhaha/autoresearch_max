@@ -1,0 +1,126 @@
+%% Paper 026 -- ICML-style. Strategic synthesis: literature + internal registry
+%% + new step accounting. Next Experiments leads.
+%% Compile: tectonic paper_026_the_plateau_has_a_structural_cause_20260730.tex
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\vb}{\mathrm{val\_bpb}}
+\icmltitlerunning{The Plateau Has a Structural Cause}
+\begin{document}
+\twocolumn[
+\icmltitle{The Plateau Has a Structural Cause: 123 Claims, 6 Bound, and a \\ Step Budget Half of Which Was Never Profiled}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, research strategy, profiling, literature grounding, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+This is a strategy paper, written after five consecutive blocks produced zero adoptions. It combines three independent analyses --- a 2025--2026 literature scan, an audit of our own registry, and a new production-shape step decomposition --- and they converge on a single diagnosis. \textbf{(1) The campaign has been searching a space disjoint from its own evidence base.} Of 123 registered atomic claims, \textbf{only 6 have ever been bound to a mechanism or hypothesis}; conversely \emph{every} lever on the refuted list (\texttt{NGRAM\_STATE\_ROWWISE}, \texttt{MUON\_NS\_STEPS}, \texttt{NGRAM\_VE\_LR\_SCALE}, batch size, \ldots) appears nowhere in \texttt{claims.jsonl}. We have been knob-tuning in a region our literature never pointed at. \textbf{(2) Half the step was never profiled.} A new decomposition at production shapes shows the 8 transformer blocks cost 69.6\,ms of a 138.7\,ms forward+backward --- \textbf{50.2\%}. The other 49.8\% (embeddings, n-gram gather/scatter, attention scores, lm\_head, loss) has never been decomposed. This corrects papers 024 and 025 for the third time: block GEMMs reach \textbf{90\% MFU} and full blocks 72.8\%, so the 40\% whole-step figure is not a matmul problem at all --- it is dilution by the unprofiled half. \textbf{(3) The corpus is mis-aimed at the bottleneck}: not one of 123 claims concerns launch overhead, occupancy, or kernel gaps. \textbf{(4) The externally-validated escape is zero-cost structural change.} Because a mechanism costing $>$1.5\% step time cannot break even, the only claims that survive our arithmetic are those with \emph{no} step-time cost --- initialization, normalization placement, weight-decay masking, data ordering --- and these are precisely the ones inductor cannot capture, since they are semantics rather than scheduling. We rank six such candidates, three of which have adequate scope-match and one of which (GPAS) has the nearest-scale evidence in the entire corpus at 71M parameters. We also document eight registry contradictions found by the audit, including two claims carrying mutually inconsistent assessments.
+\end{abstract}
+
+\section{Diagnosis 1: A Search Disjoint From Its Own Evidence}
+The registry audit produced a finding that reframes five blocks of failure. Of \textbf{123 registered claims, 6} are bound to any mechanism or hypothesis: \texttt{clm\_canon\_1}, \texttt{clm\_attnres\_mechanism}, \texttt{clm\_engram\_tensorizing}, \texttt{clm\_hc\_identity\_mapping\_instability}, \texttt{clm\_mhc\_manifold\_projection\_fix}, \texttt{clm\_fa3\_varlen\_external\_cuseqlens\_contract}. The remaining 117 exist only in ingest logs.
+
+The mirror image is sharper still. Every lever the campaign has refuted --- \texttt{NGRAM\_STATE\_ROWWISE}, \texttt{MUON\_NS\_STEPS}, \texttt{NGRAM\_VE\_LR\_SCALE}, \texttt{NGRAM\_SPARSE\_GRAD}, batch size --- appears \emph{only} in \texttt{interventions.jsonl}, never in \texttt{claims.jsonl} or \texttt{decisions.jsonl}. \textbf{The campaign has been tuning an env-flag surface that its literature registry never recommended.} That is a structural explanation for the plateau, and it is more economical than any per-lever account.
+
+\section{Diagnosis 2: Half the Step Was Never Profiled}
+A block-level decomposition at true production shapes ($B{\cdot}T = 147456$, separate \texttt{c\_q}/\texttt{c\_k}/\texttt{c\_v} as in the real model, all compiled):
+
+\begin{center}\begin{small}
+\begin{tabular}{lrr}
+\toprule
+ & ms & MFU \\
+\midrule
+full block & 8.700 & 72.8\% \\
+\quad no norms & 8.485 & \\
+\quad no sqrelu nonlinearity & 7.954 & \\
+\quad GEMMs only & 7.035 & \textbf{90.0\%} \\
+\midrule
+non-GEMM within block & 1.665 & (19.1\% of block) \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+\textbf{Block GEMMs achieve 90\% of H200 peak.} There is nothing to win inside them. Yet:
+\[
+8 \times 8.700 = 69.6\,\mathrm{ms} \quad\text{of a measured}\quad 138.7\,\mathrm{ms}.
+\]
+\textbf{49.8\% of forward+backward is not in the transformer blocks at all}, and has never been decomposed. It contains the embeddings, the n-gram gather/scatter ($\approx$5.9\,ms by ablation), attention score computation, \texttt{lm\_head}, and the loss.
+
+This is the third correction to our own profiling story. Paper 024 called the step ``a 40\%-MFU matmul problem''; paper 025 corrected that to ``GEMMs at 65\%, 35 points lost between.'' Both were wrong: the 65\% came from an \emph{isolated single GEMM}, and in a real block the GEMMs hit 90\%. The whole-step 40\% is dilution by an unprofiled half, not inefficiency in the matmuls.
+
+\section{Diagnosis 3: The Corpus Is Aimed Elsewhere}
+The audit found that \textbf{not one of 123 claims concerns launch overhead, kernel gaps, occupancy, or stream overlap} --- the measured cost centre. The nearest are FA4 tile scheduling (aimed at a 1.6\% slice) and an embedding-bag speedup. The literature scan independently reached the same place from outside, and supplied the one exception worth acting on: PyTorch issue \#142315 documents that \texttt{index\_select} and \texttt{index\_add} are \textbf{not fusible into matmul/Triton templates}. Our hashed n-gram value embeddings are exactly \texttt{index\_select} forward and \texttt{index\_add} backward. \textbf{This is the only identified lever where the question ``has inductor already done this?'' has a cited answer of \emph{no}} --- the question that killed five proposals.
+
+\section{The Escape: Zero-Cost Structural Change}
+Our own arithmetic is the filter. Intrinsic quality effects measure $\approx$1e-3, throughput effects $\approx$1e-2, the gate is 0.002396, and a mechanism costing more than $\approx$1.5\% of step time cannot break even. \textbf{Therefore the only broadly viable class is change with zero step-time cost}, for which the break-even is vacuous --- and that class is also, not coincidentally, the class inductor cannot capture, because it alters semantics rather than scheduling.
+
+The throughput ceiling is separately bounded by the data wall. At $\approx$2 epochs now and collapse at epoch 3 ($\vb = 0.987$, exp347), throughput is spendable only to $\approx$1.45$\times$, capping \emph{all} throughput work at $-0.06\ln(1.45) = -0.022$. We also record a self-correction: we had intended to propose regularization to unlock epoch 3, but \texttt{exp350\_drop005} already tested dropout 0.05 in-frame and it was \emph{worse} --- the model is not overfitting-limited at 2 epochs.
+
+\section{Next Experiments}
+Ranked by (expected effect $\times$ scope-match) / cost. All are MECHANISM-class under the plateau rule. Scores are 1--5 on novelty / provenance / validity / impact / reliability / feasibility / falsifiability.
+
+\textbf{E1 --- Conditioned attention initialization.} Semi-orthogonal per-head Q/K init plus rectangular-identity V init. Claim \texttt{clm\_conditioned\_init\_tinystories\_472m}: perplexity $2.39 \to 2.20$ at 472M on TinyStories, scope-match judged \textbf{adequate}. \emph{Cost: exactly zero} --- it is an initialization, so the break-even is vacuous and inductor is irrelevant. \emph{Falsifier:} paired $n{=}3$, no improvement $\ge$0.002. \emph{Caveat from our own evidence record:} local \texttt{c\_proj} zero-init weakens transfer, and a faithful arm must change Q, K \emph{and} V together. Scores: 4/5/4/4/5/5/5. \textbf{The single cleanest untested bet in the corpus.}
+
+\textbf{E2 --- Peri-LN, attention post-\texttt{c\_proj} arm only.} \texttt{clm\_peri\_ln\_loss\_400m\_30b}: $3.43 \to 3.34$ at 400M/30B, scope adequate. Our assessment already localises the gap precisely: we have the MLP-side form, and only the attention post-projection norm is missing. One RMSNorm per attention sublayer. \emph{Cost:} one norm per sublayer $\approx$ within the 19\% non-GEMM budget; must be measured, not assumed. Scores: 3/5/4/4/4/5/5.
+
+\textbf{E3 --- GPAS.} $h - \mathrm{SiLU}(\alpha_l)\cdot\mathrm{sg}(h)$, identity Jacobian. \texttt{clm\_gpas\_gradient\_preserving\_scaling\_contract} improved perplexity at \emph{every} scale including \textbf{71M ($33.98 \to 33.38$)} --- the nearest-scale evidence in the entire corpus. Two elementwise ops per layer. Built-in falsifier: removing the stop-gradient kills the effect entirely (20.35 vs 21.34), so an ablation arm distinguishes mechanism from noise. \textbf{Blocked}, and not by science: \texttt{dec\_paper020\_runtime\_authority\_retired} records that the monolithic \texttt{train.py} cannot expose a training-only worker. Scores: 4/4/4/4/4/2/5.
+
+\textbf{E4 --- Fuse the n-gram gather/scatter.} The documented inductor gap (\#142315) aimed at our measured hot spot. \emph{Ceiling caveat:} the n-gram system totals $\approx$7\% of step, so a complete fix caps near there --- but our nsys trace attributes many tiny fill kernels to this path, some of which may be charged to the unprofiled 49.8\% rather than the 7\%. \emph{Prerequisite:} decompose that 49.8\% first (E0 below). Scores: 3/5/4/3/4/3/5.
+
+\textbf{E0 --- Decompose the unprofiled 49.8\% (PREREQUISITE).} Before any of E1--E4 is sized, measure where the other 69.1\,ms goes: embeddings, n-gram gather/scatter, attention scores, \texttt{lm\_head}, loss. This is the single highest-information measurement available and it gates E4 entirely. It costs minutes. Scores: 1/5/5/5/5/5/5. \textbf{Run this first.}
+
+\textbf{Deferred with reasons.} Cautious Weight Decay (\href{https://arxiv.org/abs/2510.12402}{arXiv:2510.12402}) is near-zero-cost and doubly corroborated, but our tree already exposes \texttt{CAUTIOUS\_UPDATE}/\texttt{CAUTIOUS\_MUON}, making it a KNOB under the plateau rule. nGPT (\texttt{clm\_ngpt\_step\_reduction}, 4--20$\times$ step reduction) has the highest ceiling in the registry and our own evidence record calls it ``the highest-upside untested lever'' --- but its implementation cost is large and its baseline is stock GPT, not a tuned speedrun recipe. Curriculum ordering (\texttt{clm\_curriculum\_shuffled\_prefix\_control}) is free at runtime and is the only lever that engages the 2-epoch boundary.
+
+\textbf{Closed without a run}, on registry evidence already sufficient: FA4 (aimed at a 1.6\% slice), Cut-Cross-Entropy (vocab 8192, and torch.compile already gives 2.63$\times$/5.39$\times$ on our loss path), NSA, RoPE-NoPE, Differential Transformer (6--12\% throughput penalty $=$ 4--8$\times$ over our ceiling), MTA (54.3K$\to$5.7K tok/s, self-refuting), BLT (its own crossover estimate is $\approx$150B bytes), MuToR, and generic MTP.
+
+\section{E0 Executed, and What It Killed}
+\label{sec:e0done}
+E0 was run immediately after this paper's first draft. It sized the unprofiled half and, in doing so, closed the direction the sizing initially appeared to open --- a sequence worth recording in full because the intermediate number was wrong.
+
+\textbf{First measurement (inflated).} A compiled probe at production shapes returned \texttt{lm\_head}$+$softcap$+$CE $= 25.56$\,ms, token embedding $0.59$\,ms. At 17\% of the step the loss path looked like the largest single item outside the blocks, with a causal chain that made sense: the logits tensor is $147456\times8192$ bf16 $=2.25$\,GiB, the largest in the model; softcap reads and rewrites it; \texttt{.float()} casts to 4.5\,GiB; softmax reads that again; backward repeats --- roughly 27\,GiB of traffic for a 5.6\,TFLOP GEMM.
+
+\textbf{The trap-check refuted it.} Before implementing anything we compared a chunked softcap$+$CE against the \emph{compiled current} implementation at production shape:
+\begin{center}\begin{small}
+\begin{tabular}{lrr}
+\toprule
+ & ms & peak GiB \\
+\midrule
+current (compiled) & \textbf{12.00} & 2.76 \\
+chunked $\times$4 & 25.82 & 2.60 \\
+chunked $\times$8 & 26.46 & 2.58 \\
+chunked $\times$16 & 28.24 & 2.56 \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+Chunking is \textbf{2$\times$ worse}, because it serialises the GEMM into small pieces and defeats the epilogue fusion inductor was already performing. The registered falsifier ($\ge$6\,ms improvement) fired in the wrong direction, and the direction closed with no code written.
+
+\textbf{And it corrected our own measurement.} The same run measured the current path at $12.00$\,ms, not $25.56$. The earlier probe was $\approx$2$\times$ inflated by insufficient warmup. Against a $5.63$\,ms GEMM floor, the non-GEMM portion of the loss path is therefore $6.37$\,ms $=$ \textbf{4.2\% of step}, ceiling $-0.0026$ --- $1.1\times$ the gate, not the $3.6\times$ the inflated figure implied. \emph{The loss path was already near memory-bound optimal.} This is the sixth proposal killed by the compiled-baseline rule, and the first killed \emph{prospectively} rather than after implementation.
+
+\textbf{A second self-correction, and then a correction of that correction.} We first discarded E0's n-gram figure on the grounds that the probe's 524{,}288-row tables exceeded the model's entire \texttt{value\_embeds} (25{,}165{,}824 parameters). \textbf{That reasoning was wrong}, and re-deriving it produced a finding the campaign has never recorded.
+
+\texttt{value\_embeds} counts a \emph{different module}: the per-layer \emph{token} value embeddings, $4 \times 8192 \times 768 = 25{,}165{,}824$ exactly. The n-gram \emph{hash} tables are \texttt{bigram\_ves}, sized $\texttt{vocab}\times\texttt{mult} = 8192\times64 = 524{,}288$ rows by $\texttt{half\_kv\_dim}=384$ --- so the probe was correctly sized all along. Only the table \emph{count} was wrong: \texttt{has\_ve} selects layers $\{1,3,5,7\}$, giving $4\times2 = \mathbf{8}$ tables, not the 14 assumed.
+
+Corrected: $8 \times 1.319 = \mathbf{10.55}$\,ms. This matches the independent real-loop ablation (\texttt{NGRAM\_TABLE\_MULT} $64\!\to\!1$, $10.7$\,ms) to within 1.5\%. \textbf{Two independent methods agreeing is the first clean cross-validation of a component cost in this campaign}, and it fixes the n-gram system at $\approx$7.1\% of step.
+
+\textbf{The finding underneath.} Those 8 tables are $8 \times 524288 \times 384 = \mathbf{1.61\times10^{9}}$ parameters --- and they appear in \emph{no} reported parameter count, because \texttt{estimate\_flops}'s accounting sums only \texttt{wte}, \texttt{value\_embeds}, \texttt{lm\_head}, \texttt{transformer\_matrices} and \texttt{scalars} to reach its headline 94{,}375{,}507. The model this campaign calls ``94M'' carries $\approx$1.7B parameters, \textbf{95\% of them n-gram hash tables} (3.0\,GiB bf16 weights plus 3.0\,GiB of RMSProp state). The exclusion is defensible for a FLOPs estimate --- a token gathers only two rows per table, so the rows are capacity rather than dense compute, and the code says so --- but it means every ``parameters'' figure in this campaign's history describes 5\% of the model. E4's ceiling is therefore $\approx$7.1\% of step, and unchanged by this.
+
+\textbf{Net effect on this paper's rankings.} E4 is unsized pending a correct measurement. The zero-cost structural candidates (E1--E3) are unaffected, since none of them was justified by the loss-path number. E1 has since been implemented and verified at step 0: per-head Q/K rows orthonormal to $1.3\!\times\!10^{-6}$, V an exact rectangular identity, and the QK logit-map condition number improved from $3.4$ to $1.0$ --- the mechanism's first causal link, confirmed before any GPU time was spent on outcomes.
+
+\section{Registry Contradictions Found}
+The audit surfaced eight; the four that matter most:
+\begin{itemize}\itemsep2pt
+\item \textbf{FA4 contradicts itself.} One record is \texttt{relation=opposes, strength=strong} against FA4 as a near-term lever; a later record on the same claim is \texttt{mixed} and spawned H200 sub-claims; and the open capability gap's \texttt{recommended\_solution} is ``Evaluate FlashAttention-4.'' Resolution: FA4 is wanted for an \emph{API feature} (\texttt{num\_seqs}), not for speed. This must be written down.
+\item \textbf{\texttt{LITERATURE\_SYNTHESIS.md} is stale on sliding windows}, listing them under do-not-spend --- contradicted by our own confirmed short-span SOTA lever.
+\item \textbf{\texttt{clm\_engram\_tensorizing} and \texttt{clm\_ngram\_regularizer\_reduces\_memorization} each carry two mutually inconsistent assessments.} For the former the upside is moot regardless: its own endpoints ($1.209\to1.208$; $1.070\to1.071$, \emph{worse}) are below our gate.
+\item \textbf{A stale 1.6\%-vs-5\% attention figure} is embedded in live assessments; conclusions are unaffected but future reuse would mis-size.
+\end{itemize}
+
+\section{External Confirmation of the Plateau}
+Prime Intellect's auto-nanogpt spent $\approx$14{,}000 H200-hours over $\approx$10{,}000 configurations and moved 124M nanoGPT by \textbf{2\%} via optimizer and hyperparameter changes --- and under a novelty-gated condition requiring genuinely new ideas, \emph{neither agent beat the baseline}. This is independent confirmation of this campaign's own ``knobs are saturated'' conclusion, and a warning that agentic mechanism-hunting has a documented failure mode.
+
+\section{Conclusion}
+Five blocks of zero adoptions have a cause that is structural rather than scientific: the search ran over an env-flag surface disjoint from the campaign's own 123-claim evidence base, aimed at a throughput story that the compiler had already collected, while half the step budget went unprofiled and the literature corpus pointed nowhere near the actual bottleneck. The escape indicated by all three analyses is the same: \emph{zero-cost structural change}, where our break-even arithmetic is vacuous and the compiler is not a competitor. The immediate action is E0 --- decompose the unprofiled 49.8\% --- because it costs minutes and it sizes everything else.
+\end{document}

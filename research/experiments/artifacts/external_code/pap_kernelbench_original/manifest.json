@@ -1,0 +1,95 @@
+{
+  "schema_version": 2,
+  "classification": "external_evaluation_reference_superseded_risk",
+  "paper_id": "pap_kernelbench_original",
+  "external_role": "original_kernelbench_historical_baseline",
+  "authority": "historical_comparison_only",
+  "superseded_risk": true,
+  "preferred_evaluation_control_reference": "pap_kernelbench_verified",
+  "captured_at": "2026-07-29T10:21:11Z",
+  "repository": {
+    "url": "https://github.com/ScalingIntelligence/KernelBench",
+    "default_branch": "main",
+    "head_resolution_method": "git ls-remote --symref <url>.git HEAD",
+    "commit": "423217d9fda91e0c2d67e4a43bf62f96f6d104f1",
+    "tree": "c4de9ae283314a272a8bd08bec3b246dd8605086",
+    "commit_time": "2026-03-05T00:38:15-08:00",
+    "commit_subject": "update all legacy python commands to UV + document integration (#143)",
+    "fetch_depth": 1,
+    "tracked_paths": 358,
+    "gitlinks": []
+  },
+  "artifacts": [
+    {
+      "path": "kernelbench-423217d9.tar.zst",
+      "role": "normalized_commit_source_archive",
+      "bytes": 1578780,
+      "sha256": "a7fa556288a7cce83c04986bb0e65faecae3551c4ba39ec7da9cfdf19f8ad041",
+      "uncompressed_tar_bytes": 3205120,
+      "archive_root": "kernelbench-423217d9/",
+      "regular_files": 358,
+      "symlinks": 0
+    }
+  ],
+  "normalization": {
+    "recipe": "git archive --format=tar --prefix=kernelbench-423217d9/ 423217d9fda91e0c2d67e4a43bf62f96f6d104f1 | zstd -19 -T1",
+    "git_version": "2.39.5 (Apple Git-154)",
+    "zstd_version": "1.5.7",
+    "deterministic_rebuild_byte_identical": true
+  },
+  "license": {
+    "path": "LICENSE",
+    "declared_family": "MIT",
+    "sha256": "fb5917dd8e4476fa75e89ef6f03dccf07d4859636bc23c7db50e6c0413887b9e"
+  },
+  "verified_files": [
+    {
+      "path": "README.md",
+      "sha256": "5428d91bcdebbfb09fbe97608177d485a3babfe0ea6dac7ab3c0dee809fa4196"
+    },
+    {
+      "path": "EVAL.md",
+      "sha256": "ad7d15ae20b07db7e325e26a5239ccd3e3f9242912e7a58a15e16734dcfbc3a8"
+    },
+    {
+      "path": "src/kernelbench/eval.py",
+      "sha256": "b42ce1268ec64ee7274db307ab98945c1e868792b54689554014b28c41787ee6"
+    },
+    {
+      "path": "src/kernelbench/kernel_static_checker.py",
+      "sha256": "2fcfd82082d36d49ce00e26d78d43847f090d699eb5ddc8db7afe1acb9646565"
+    },
+    {
+      "path": "src/kernelbench/score.py",
+      "sha256": "1154098fad9bee20cd3de6a946e61feb3f08dc3f56356358f57e24678edf8a84"
+    },
+    {
+      "path": "src/kernelbench/unit_tests/test_eval_adversarial.py",
+      "sha256": "c9a5264174047dfe1329e912229f54c983ccb0b394cbe6f53fbe4ef1a495a5fd"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "fb5917dd8e4476fa75e89ef6f03dccf07d4859636bc23c7db50e6c0413887b9e"
+    }
+  ],
+  "verification": {
+    "zstd_integrity_test": true,
+    "archive_embedded_commit": "423217d9fda91e0c2d67e4a43bf62f96f6d104f1",
+    "archive_embedded_commit_matches_resolved_head": true,
+    "archive_path_accounting_matches_git_tree": true,
+    "git_lfs_pointers_detected": 0,
+    "local_sota_adoption_claimed": false
+  },
+  "scope_and_adoption_caveats": [
+    "This original KernelBench snapshot is retained only for historical and compatibility comparison; it is not a governed local OPHIS SOTA.",
+    "It is explicitly marked superseded-risk for authoritative evaluation because standard benchmark correctness and timing can miss adversarial or distribution-specific failures. Prefer the separately captured KernelBench-Verified controls for new claims.",
+    "The captured upstream commit includes some later static adversarial checks, but this does not erase the protocol-level risk or substitute for hidden multi-distribution validation.",
+    "Any kernel result must still be reproduced on the exact target hardware with frozen inputs, numerical tolerances, warmups, timing, process-isolation, and memory accounting."
+  ],
+  "risk_flags": [
+    "superseded_evaluation_risk",
+    "standard_input_overfitting_risk",
+    "reward_hacking_surface",
+    "hardware_transfer_risk"
+  ]
+}

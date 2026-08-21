@@ -1,0 +1,2 @@
+# Versioned ContextRecord objects.
+{"availability":{"available_before_action":true},"context_id":"ctx_five_minute_h200","fingerprint":"e734eb957b15433d","implementation":{"entrypoint":"lib.py:TIME_BUDGET,train.py:_SEED","test":"tests/test_baseline_training_spec.py:BaselineTrainingSpecTest.test_time_budget_is_five_minutes"},"name":"Five-minute single-H200 run","source":{"type":"runtime_and_hardware"},"status":"unit_tested","tags":["baseline","h200"],"value":{"accelerator":"NVIDIA H200","seed":42,"time_budget_seconds":300,"type":"structured"},"version":1}

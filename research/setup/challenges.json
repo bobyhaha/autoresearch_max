@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "campaign_policy": {
+    "direction_round_limit": 5,
+    "direction_cooldown_rounds": 2,
+    "hourly_reports_required": true,
+    "hourly_report_interval_minutes": 60
+  },
+  "challenges": [
+    {
+      "challenge_id": "walltime_5min_h200",
+      "order": 1,
+      "name": "Five-minute H200 challenge",
+      "scope_id": "walltime_5min_h200",
+      "decision_frame": "walltime_5min_h200",
+      "aliases": [
+        "5min",
+        "five_minute"
+      ],
+      "description": "Optimize validation BPB within 300 steady-state training seconds on one H200."
+    },
+    {
+      "challenge_id": "fixed_steps_2000",
+      "order": 2,
+      "name": "Two-thousand-step H200 challenge",
+      "scope_id": "",
+      "decision_frame": "default_steps",
+      "aliases": [
+        "2000_steps",
+        "steps"
+      ],
+      "description": "Optimize validation BPB after exactly 2,000 optimizer steps on one H200."
+    }
+  ],
+  "fingerprint": "94ef345070c555ed"
+}

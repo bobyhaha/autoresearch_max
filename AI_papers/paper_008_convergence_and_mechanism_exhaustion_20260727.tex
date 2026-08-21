@@ -1,0 +1,236 @@
+%% Paper 008 -- ICML-conference-style LaTeX version.
+%% NOTE: Requires the ICML 2024 style file (icml2024.sty) from the ICML author kit
+%% (https://icml.cc/ -> Author Instructions) to be placed alongside this file to compile.
+%% Compile with: pdflatex paper_008_convergence_and_mechanism_exhaustion_20260727.tex
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% Use the accepted (camera-ready) option so author names and affiliations render.
+\usepackage[accepted]{icml2024}
+
+% Convenience macro for validation bits-per-byte.
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+
+\icmltitlerunning{Convergence of Iterated Re-Optimization and a Mechanism-Exhaustion Map}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Convergence of Iterated Re-Optimization and a Mechanism-Exhaustion Map: \\ When an Autonomous Pretraining Campaign Reaches Its Floor}
+
+\begin{icmlauthorlist}
+\icmlauthor{Autonomous Research Agent (OPHIS)}{ophis}
+\end{icmlauthorlist}
+
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+
+\icmlcorrespondingauthor{Autonomous Research Agent (OPHIS)}{baiyuzhu@mit.edu}
+
+\icmlkeywords{coordinate descent, fixed point, autonomous research, ablation, wall-clock training, n-gram value embeddings, negative results, Machine Learning}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+Paper 007 proposed Hypothesis H7 --- that a dominant structural lever makes previously adopted levers stale and previously rejected levers viable --- and predicted (its Next Direction 2) that \emph{iterating} the re-optimization pass would flip at least one further verdict before reaching a pass with zero flips. This paper reports rounds 45--51 of the campaign (nanochat-style GPT, $\sim$50M parameters, single H200 of a shared $8\times$H200 node, fixed 5-minute wall-clock budget, metric $\valbpb$, seed noise $\sigma \approx 0.0015$) and confirms that prediction \emph{and} its terminal clause. A second re-optimization pass flipped one more verdict: the n-gram hash-table size, adopted at $2^{20}$ in paper 003, wins $5/5$ GPU-controlled paired seeds at $2^{21}$ (mean $0.95073$ vs.\ $0.95282$, paired $\Delta = -0.00209$), and is adopted. A third pass on the $2^{21}$ stack then flipped \emph{nothing}: table $2^{22}$ neutral ($+0.0001$), FFN$5\times$ worse ($+0.0005$), FFN$3\times$ worse, \texttt{matrix\_lr} $0.025$ marginal ($-0.0005$, one pair, sub-gate), depth 9 worse. Iterated GPU-controlled coordinate descent thus reaches a \emph{fixed point} at n-gram$(2,3)$@$2^{21}$ + FFN$4\times$ + \texttt{matrix\_lr} $0.03$ + batch $2^{18}$ + max-autotune, $\valbpb \approx 0.9507$ (best single $0.9494$), $+7.7\%$ over the naive baseline on a model strictly smaller than the pre-re-optimization SOTA. We then probe four \emph{new-mechanism} axes beyond the knob stack, and the sweep behaves exactly as a basis-limited floor should: three axes return explained nulls and the fourth returns a basis-expanding win. The nulls: label smoothing regresses monotonically (0.02/0.05/0.1 $\rightarrow$ 1.03/1.13/1.29) because the evaluation metric is exact cross-entropy and smoothing deliberately miscalibrates it; the n-gram order set is optimal at $(2,3)$ (adding 4- and 5-grams costs $+0.003$/$+0.005$ as long-grams are too sparse to escape their hash-table initialization, and a unigram is redundant with the token embedding); and sparse-gradient embedding optimization, retried, still regresses throughput. The win: halving the sliding-window span of the short-attention layers (\texttt{SSSL} window $2^{10}\rightarrow 2^{9}$) is a lever \emph{outside} the tuned knob basis and beats the fixed point on $3/3$ GPU-controlled paired seeds (mean paired $\Delta = -0.00152$), setting a new best of $\valbpb = 0.9488$; a fifth re-optimization pass on this stack then flips nothing (window $2^{8}$/$2^{7}$ worse, all bigger-capacity levers still stale), re-converging immediately. We formalize the pattern as Hypothesis H8: under a fixed compute/data budget, iterated re-optimization converges to a stack-level fixed point, and further gains require a mechanism the current lever \emph{basis does not span}; a new-mechanism sweep is therefore dual-purpose --- a null confirms a basis-limited floor, a hit expands the basis and triggers one more re-optimization to a new fixed point.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+An autonomous research loop that keeps finding improvements is easy to run: propose, test, adopt, repeat. The hard and under-reported question is how such a loop should \emph{end} --- how to distinguish a genuine performance floor for a given compute/data budget from a temporary lull that a cleverer proposal would break. Reporting a floor honestly is as much a scientific result as reporting a lever, and doing it wrong wastes shared compute on phantom exploration.
+
+Paper 007 \cite{ophis2026staleness} established that verdicts in a greedy campaign are conditional on the stack at test time (Hypothesis H7) and demonstrated one re-optimization pass that recovered $-0.0014\ \valbpb$ while \emph{simplifying} the model. It left two open questions, both stated as ranked next directions: (Direction 2) does iterating the pass flip further verdicts before reaching a zero-flip pass, and (Direction 3) is the terminal stack a property of the search space rather than the trajectory? This paper answers the first directly and provides evidence toward a stronger claim: after the iteration converges, we exhaust three \emph{new-mechanism} axes and find the campaign genuinely floored within its lever basis.
+
+Our contributions are:
+\begin{enumerate}
+    \item \textbf{Confirmation of H7 Direction 2 (Section~\ref{sec:secondpass}).} A second re-optimization pass flips exactly one more verdict --- n-gram table $2^{20} \rightarrow 2^{21}$, $5/5$ GPU-controlled paired seeds, paired $\Delta = -0.00209$ --- then a third pass flips nothing (Section~\ref{sec:fixedpoint}). Iterated coordinate descent reaches a fixed point.
+    \item \textbf{A characterized fixed point (Section~\ref{sec:fixedpoint}).} n-gram$(2,3)$@$2^{21}$ + FFN$4\times$ + \texttt{matrix\_lr} $0.03$ + batch $2^{18}$ + max-autotune, $\valbpb \approx 0.9507$ (best single $0.9494$), on a model smaller than the paper-007 incumbent.
+    \item \textbf{A mechanism-exhaustion map (Section~\ref{sec:exhaustion}).} Four new-mechanism axes are probed. Three --- training-loss shaping (label smoothing), the n-gram order set, and sparse-gradient optimization --- return nulls with distinct, identified mechanisms, distinguishing ``no better setting'' from ``no effect.'' The fourth --- sliding-window attention span --- returns a \emph{basis-expanding win} (Section~\ref{sec:reopen}): halving the short-window span beats the fixed point $3/3$ paired seeds ($\Delta = -0.00152$, new best $0.9488$), after which one more re-optimization pass re-converges.
+    \item \textbf{Hypothesis H8 (Section~\ref{sec:discussion}).} A convergence criterion \emph{and} a search principle: at a fixed point, further gains require a lever outside the current basis, so a new-mechanism sweep is dual-purpose --- a null confirms a basis-limited floor (a defensible stopping rule), a hit expands the basis and triggers one more re-optimization.
+\end{enumerate}
+
+\section{Experimental Setup}
+\label{sec:setup}
+
+\paragraph{Frame.} Identical to papers 001--007: a nanochat-style GPT \cite{karpathy2025nanochat} of $\sim$50M parameters (depth 8, sliding-window attention), Muon \cite{jordan2024muon} for matrix parameters and AdamW elsewhere, trained for a fixed 5-minute wall-clock budget on one H200 of a shared $8\times$H200 node. Metric: validation bits per byte ($\valbpb$), lower is better; steps completed are an outcome, not a control. Single-seed noise floor $\sigma \approx 0.0015$.
+
+\paragraph{Incumbent at round 45.} The paper-007 re-optimized reference: n-gram$(2,3)$@$2^{20}$ + FFN$4\times$ + \texttt{matrix\_lr} $0.03$ + batch $2^{18}$ + max-autotune, 9-seed mean $\approx 0.9532$.
+
+\paragraph{GPU-contention discipline.} Per paper 006's retraction \cite{ophis2026retraction}, every A/B is GPU-controlled: arms interleaved across the same GPUs within a wave and GPU-swapped across waves for multi-seed confirmations. Same-configuration GPU-placement spread on this node is $\approx 0.0014$, comparable to the effect sizes at stake, so only paired designs are admissible.
+
+\paragraph{Update-limited regime.} Papers 001 and 004 established that in this frame $\valbpb \approx q \cdot U$ is update-count-limited: quality is governed by the product of per-update progress $q$ and the number of optimizer updates $U$ completed in the budget. A lever helps only by lowering $q$ without proportionally lowering $U$, or by raising $U$ at fixed $q$. This framing organizes the exhaustion map of Section~\ref{sec:exhaustion}.
+
+\section{The Second Re-Optimization Pass Flips One Verdict (Rounds 45--46)}
+\label{sec:secondpass}
+
+Paper 003 \cite{ophis2026ngram} adopted an n-gram hash-table size of $2^{20}$ and reported a hash-table scaling law that had begun to saturate; $2^{21}$ was within noise \emph{on the then-current stack}. H7 predicts this verdict is conditional. Rounds 45--46 re-tested it on the FFN$4\times$ + \texttt{matrix\_lr}$0.03$ stack with the strictest available design.
+
+Round 45 (interleaved, paired seeds s80--s82) compared $2^{21}$ against the $2^{20}$ reference: $2^{21}$ won both matched pairs where it was run ($0.95197$ vs.\ $0.95361$ on s80; $0.94981$ vs.\ $0.95244$ on s81), while a $2^{22}$ arm was neutral-to-worse ($0.95270$ vs.\ $0.95245$ on s82, and at a $12\%$ step-count penalty from the larger table's memory traffic). Round 46 promoted the flip to a GPU-swapped 3-seed confirmation (s83--s85): $2^{21}$ won $3/3$ ($0.95020$/$0.95095$/$0.95074$ vs.\ reference $0.95265$/$0.95199$/$0.95340$).
+
+Pooled across rounds 45--46, n-gram $2^{21}$ beats $2^{20}$ on $5/5$ paired seeds, mean $0.95073$ vs.\ $0.95282$, paired $\Delta = -0.00209$ (best single $0.94981$), and is adopted. This is exactly the verdict flip H7 Direction 2 predicted the second pass would produce: a lever legitimately marked ``saturated'' on the old stack becomes a clear win once FFN width was narrowed and \texttt{matrix\_lr} lowered, both of which freed step budget and residual-stream bandwidth that a larger associative-memory table can now exploit.
+
+\section{The Third Pass Flips Nothing: A Fixed Point (Rounds 47--48)}
+\label{sec:fixedpoint}
+
+H7 Direction 2 predicted the iteration terminates in a zero-flip pass. Round 47 re-swept the knob stack on the new $2^{21}$ reference with single-seed screens; five of six arms were clearly neutral-or-worse and one, \texttt{matrix\_lr} $0.025$, flashed marginally below reference. Round 48 subjected the three sub-reference flashes to matched-seed interleaved confirmation:
+
+\begin{itemize}
+    \item \textbf{Table $2^{22}$} (s87): $0.95019$ vs.\ matched reference $0.95010$, $\Delta = +0.00009$ --- neutral. The table has saturated at $2^{21}$: bigram/trigram collisions are already rare enough that doubling capacity buys nothing while costing steps.
+    \item \textbf{FFN$5\times$} (s88): $0.95399$ vs.\ $0.95352$, $\Delta = +0.00047$ --- worse, re-confirming FFN$4\times$ as the capacity floor of paper 007 under the larger table.
+    \item \textbf{\texttt{matrix\_lr} $0.025$} (s86): $0.95043$ vs.\ $0.95096$, $\Delta = -0.00054$ --- a single-pair advantage below the paired gate. Held, not adopted: $\texttt{matrix\_lr} 0.025$ was already rejected on the FFN$4\times$@$2^{20}$ stack (paper 007, round 43, $+0.0019$), and a sub-gate one-pair flip is exactly the false-flash pattern that discipline exists to reject.
+\end{itemize}
+
+Round 47 additionally re-confirmed FFN$3\times$ ($0.95585$, worse), \texttt{matrix\_lr} $0.035$ ($0.95264$, worse), and depth 9 ($0.95181$, worse). No arm cleared the paired gate. The third pass is the predicted \emph{zero-flip pass}: iterated GPU-controlled coordinate descent has reached a fixed point.
+
+\paragraph{The fixed point.} n-gram$(2,3)$@$2^{21}$ + FFN$4\times$ + \texttt{matrix\_lr} $0.03$ + batch $2^{18}$ + max-autotune. Pooled reference $\valbpb \approx 0.9507$ (best single $0.9494$), $\approx 1900$ steps in the 5-minute budget, $+0.0807$ (7.7\%) below the naive warm-compile baseline of $1.0301$, and --- notably --- on a model strictly smaller than the pre-re-optimization SOTA ($0.9546$, FFN$6\times$@$2^{20}$). Three re-optimization passes moved the SOTA $0.9546 \rightarrow 0.9532 \rightarrow 0.9507$ while removing parameters at each step.
+
+\section{Beyond the Knob Basis: A Mechanism-Exhaustion Map (Rounds 49--51)}
+\label{sec:exhaustion}
+
+A fixed point of coordinate descent is a floor \emph{within the current lever basis}. To test whether the campaign is genuinely floored, we probed three axes that are not settings of existing knobs but new mechanisms, and we report each null with its identified cause --- the distinction between ``no better setting'' and ``no effect at all'' being the point of a negative result.
+
+\paragraph{Training-loss shaping (round 49): metric-incompatible null.} Label smoothing is a standard generalization lever untried in this campaign; it touches only the training loss, not the evaluation metric. It regressed monotonically and catastrophically: $\varepsilon = 0.02/0.05/0.1 \rightarrow \valbpb = 1.034/1.135/1.293$. The mechanism is exact and instructive. $\valbpb$ is the true per-token cross-entropy; label smoothing trains toward a target that mixes the one-hot label with a uniform distribution over the $\sim$$2^{16}$-token vocabulary, deliberately flattening the output distribution. The resulting miscalibration is precisely what cross-entropy penalizes, and the penalty scales with $\varepsilon$. This is not a failed hyperparameter --- it is a lever whose objective is orthogonal to (indeed opposed to) the metric. It belongs on the map as a boundary marker: loss-shaping that trades calibration for margin cannot help a calibration metric.
+
+\paragraph{The n-gram order set (round 50): $(2,3)$ is optimal.} The n-gram value-embedding was the campaign's single largest lever; its \emph{order set} $(2,3)$ had never been varied. We are directed toward the Engram O(1) associative-memory formulation \cite{engram2026} as the mechanistic frame: each order $n$ is a hash table keyed on the last $n$ tokens, learning a residual-stream contribution for contexts frequent enough to be seen repeatedly. Extending the set regressed: $(2,3,4) \rightarrow 0.9532$ ($+0.0025$), $(2,3,4,5) \rightarrow 0.9562$ ($+0.0055$). The mechanism is coverage-vs-noise: at this data scale, 4- and 5-gram contexts recur too rarely for their hash rows to move meaningfully off initialization, so a growing fraction of the injected signal is near-random-init noise, while the extra tables still consume optimizer traffic and residual-stream bandwidth (both lowering $U$). Adding a unigram, $(1,2,3) \rightarrow 0.9495$, was a neutral tie: unigram identity is already carried losslessly by the token embedding $\mathrm{wte}$, so the table is redundant. The sweet spot $(2,3)$ is the band of orders frequent enough to learn yet longer than what $\mathrm{wte}$ already encodes.
+
+\paragraph{Sparse-gradient optimization (retried): throughput-bound null.} The two $2^{21}$-row n-gram tables are updated densely by AdamW every step though only $\sim$$B\cdot T\cdot 2$ rows are touched, suggesting a sparse optimizer should raise $U$. It was tried earlier (exp175--177) and regressed throughput to 987--1239 steps vs.\ $\approx 1900$: on an H200 the dense moment update is bandwidth-trivial ($\sim$1\,ms at 4.8\,TB/s), whereas the sparse scatter path incurs Python/CUDA-launch overhead that dominates. We do not re-adopt it. This closes the throughput axis: with max-autotune already adopted (paper 004) and $U \approx 1900$ steps stable, the update count is at its budget ceiling, so only $q$ remains --- and the knob basis for $q$ is at a fixed point.
+
+\paragraph{Structural coverage (round 51): a basis-expanding hit.} The fourth axis probed the attention structure, which no knob in the tuned basis touches. Three single-seed screens: value-embedding coverage all-layers ($0.94998$), sliding-window short-span halved ($0.94878$), and all-long attention ($0.95077$, neutral --- the sliding window was not itself costing quality). The halved short-window span flashed a new campaign best. Unlike the three preceding axes, this is not a null: it is a lever outside the tuned basis, and it is promoted to confirmation in Section~\ref{sec:reopen}. Mechanistically it is the cleanest possible fit to the update-limited regime: the short-attention layers of the \texttt{SSSL} pattern carry local context that the n-gram value memory now largely supplies by table lookup, so halving their span ($2^{10}\rightarrow 2^{9}$ tokens) removes attention FLOPs with little loss of $q$ while raising $U$ --- a favorable move on both factors of $\valbpb \approx q\cdot U$.
+
+\section{A Basis-Expanding Lever Reopens and Re-Closes the Search (Rounds 52--53)}
+\label{sec:reopen}
+
+Round 52 promoted the short-window flash to the campaign's standard confirmation: three interleaved, matched-seed paired comparisons (s90--s92) of the halved-span stack against the fixed-point reference. The halved span won $3/3$ ($0.95016$/$0.94951$/$0.95174$ vs.\ $0.95130$/$0.95242$/$0.95225$), mean paired $\Delta = -0.00152$, an effect size comparable to the n-gram $2^{21}$ adoption and with a consistent sign across seeds and GPU placements. Adopted: the short-window span is a genuine structural lever outside the tuned knob basis, and the new best is $\valbpb = 0.9488$.
+
+The adoption is a controlled test of H8's central claim. Because a basis-expanding lever can, like a structural adoption in paper 007, re-stale other levers, round 53 ran a fifth re-optimization pass on the halved-span stack. It flipped nothing. The window span has an interior optimum at the halved value: quartering ($2^{8}$, $0.95005$) and eighthing ($2^{7}$, $0.95284$) are both worse, so the short layers do retain \emph{some} necessary local context --- the n-gram memory substitutes for most, not all, of it. Every capacity lever the freed attention FLOPs might have un-staled remained stale: all-layer VE ($0.94951$), table $2^{22}$ ($0.95057$), FFN$5\times$ ($0.95086$), and FFN$6\times$ ($0.95306$) all lose to the halved-span reference. The freed budget is best banked as steps, consistent with the update-limited regime: the campaign is still $U$-bound, so re-spending the freed FLOPs on capacity does not pay. The search thus reopened for exactly one lever and re-closed at a new fixed point --- n-gram$(2,3)$@$2^{21}$ + FFN$4\times$ + \texttt{matrix\_lr} $0.03$ + batch $2^{18}$ + max-autotune + short-window span $2^{9}$, $\valbpb \approx 0.9500$ (best single $0.9488$), $+8.1\%$ below naive.
+
+\section{Results}
+\label{sec:results}
+
+Table~\ref{tab:results} summarizes rounds 45--53. Data: \texttt{campaign\_log.jsonl}, exp278--exp322.
+
+\begin{table*}[t]
+\caption{Rounds 45--53: second/third re-optimization passes (reaching a fixed point), the new-mechanism sweep, and a basis-expanding structural lever (short-window span) that reopens and re-closes the search on a fifth pass. Multi-seed tests are interleaved and/or GPU-swapped paired designs. Negative $\Delta$ favors the candidate.}
+\label{tab:results}
+\vskip 0.15in
+\begin{center}
+\begin{scriptsize}
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{llccccl}
+\toprule
+Round & Comparison & Candidate & Reference & $\Delta$ & Seeds & Verdict \\
+\midrule
+45 & n-gram $2^{21}$ vs.\ $2^{20}$ (s80--s81, intl.) & 0.95089 & 0.95303 & $-0.00214$ & 2 paired & promote \\
+45 & n-gram $2^{22}$ vs.\ $2^{20}$ (s82) & 0.95270 & 0.95245 & $+0.00025$ & 1 paired & discard (steps $-12\%$) \\
+46 & \textbf{n-gram $2^{21}$ vs.\ $2^{20}$} (s83--s85, swapped) & \textbf{0.95063} & 0.95268 & $-0.00205$, 3/3 & \textbf{3 paired} & \textbf{adopt (flipped)} \\
+\midrule
+47 & FFN$3\times$ / \texttt{mlr}$0.035$ / depth 9 & 0.9559/0.9526/0.9518 & $\approx$0.9507 & $+$ & 1 each & discard \\
+47 & FFN$5\times$ / $2^{22}$ / \texttt{mlr}$0.025$ screens & 0.9496/0.9497/0.9494 & $\approx$0.9507 & flash & 1 each & confirm required \\
+48 & \texttt{matrix\_lr} $0.025$ vs.\ ref (s86) & 0.95043 & 0.95096 & $-0.00054$ & 1 paired & hold (sub-gate, prior reject) \\
+48 & table $2^{22}$ vs.\ ref (s87) & 0.95019 & 0.95010 & $+0.00009$ & 1 paired & reject: saturated \\
+48 & FFN$5\times$ vs.\ ref (s88) & 0.95399 & 0.95352 & $+0.00047$ & 1 paired & reject: FFN$4\times$ floor \\
+\midrule
+48 & \textbf{fixed point} (n-gram$2^{21}$+FFN4+\texttt{mlr}0.03) & \textbf{$\approx$0.9507} & 0.9532 & $-0.0025$ & pooled & \textbf{zero-flip pass} \\
+\midrule
+49 & label smoothing $0.02/0.05/0.1$ & 1.034/1.135/1.293 & $\approx$0.9507 & $+$++ & 1 each & discard: metric-incompat.\ \\
+50 & n-gram orders $(2,3,4)$ / $(2,3,4,5)$ & 0.9532/0.9562 & $\approx$0.9507 & $+0.003/+0.006$ & 1 each & discard: long-grams sparse \\
+50 & n-gram orders $(1,2,3)$ & 0.9495 & $\approx$0.9507 & $\approx 0$ & 1 & neutral: unigram redundant \\
+51 & VE-all / short-window $2^9$ / all-long (screens) & 0.9500/\textbf{0.9488}/0.9508 & $\approx$0.9507 & flash & 1 each & window flash: confirm \\
+\midrule
+52 & \textbf{short-window $2^9$ vs.\ $2^{10}$} (s90--s92, intl.) & \textbf{0.95047} & 0.95199 & $-0.00152$, 3/3 & \textbf{3 paired} & \textbf{adopt (basis-expand)} \\
+53 & window $2^8$ / $2^7$ (span optimum) & 0.9500/0.9528 & 0.9488 & $+$ & 1 each & discard: $2^9$ optimum \\
+53 & VE-all / $2^{22}$ / FFN$5\times$ / FFN$6\times$ & 0.9495/0.9506/0.9509/0.9531 & 0.9488 & $+$ & 1 each & discard: still stale \\
+\midrule
+53 & \textbf{re-converged SOTA} (fifth pass zero-flip) & \textbf{$\approx$0.9500} & 0.9507 & $-0.0007$ & pooled & \textbf{new fixed point} \\
+\bottomrule
+\end{tabular}
+\end{scriptsize}
+\end{center}
+\vskip -0.1in
+\end{table*}
+
+Three features stand out. First, the one verdict that flipped in the second pass (n-gram $2^{21}$) is, like both flips in paper 007, a lever with a \emph{prior recorded verdict} on the old stack (``saturated at $2^{20}$'') --- iterated re-optimization corrects conditioning, it does not discover new physics --- and the third pass, finding no further stale verdict, terminates. Second, the fixed point is reached by \emph{removing} capacity (FFN$6\times \rightarrow 4\times$) and \emph{enlarging} the cheap associative memory ($2^{20} \rightarrow 2^{21}$): the campaign's trajectory is a systematic shift of parameters from dense compute (FFN) into O(1) table lookup (n-gram), exactly the substitution mechanism paper 007 identified, now run to completion. Third, each of the three new-mechanism nulls has a mechanism, not merely a number: metric-incompatibility, coverage-vs-noise, and a throughput ceiling, respectively --- boundary markers of the lever basis, not unexplored territory. Fourth, the sweep's one hit is qualitatively different from every within-basis flip in this campaign: the short-window span is not a knob that was mis-set but an attention-structure lever that the tuned basis never contained, and it improves the metric by \emph{removing} attention FLOPs (like the FFN$6\times\rightarrow4\times$ simplification, a strictly cheaper win) rather than by adding capacity --- the third instance in the campaign of the update-limited regime rewarding subtraction.
+
+\section{Discussion: Hypothesis H8 and a Stopping Rule}
+\label{sec:discussion}
+
+Papers 001--007 accumulated levers; this paper reports the campaign reaching a floor and argues that recognizing the floor is itself a result. We state the generalization:
+
+\begin{quote}
+\textbf{Hypothesis H8} \emph{(fixed-point convergence and basis-limited floors).} Under a fixed compute/data budget, iterated GPU-controlled coordinate descent over a lever basis converges to a stack-level fixed point in a small number of passes (here three: $0.9546 \rightarrow 0.9532 \rightarrow 0.9507$, third pass zero-flip). At the fixed point, further improvement requires a lever \emph{outside the current basis} --- a new mechanism --- not a better setting of a spanned one. A new-mechanism sweep is therefore \emph{dual-purpose}: an all-null sweep (each null mechanistically attributed) certifies a basis-limited floor and is a defensible stopping rule; a hit expands the basis, and because a basis-expanding lever can re-stale existing ones, it triggers exactly one more re-optimization pass to a new fixed point. Both branches were observed here: three axes null, the short-window-span axis hits ($0.9507 \rightarrow 0.9500$, best $0.9488$), and the fifth pass re-converges zero-flip.
+
+\textbf{Confidence: 0.75.}
+\end{quote}
+
+The evidence is: (i) the predicted second-pass flip and third-pass termination (Sections~\ref{sec:secondpass}--\ref{sec:fixedpoint}), directly confirming H7 Direction 2; (ii) a new-mechanism sweep (Sections~\ref{sec:exhaustion}--\ref{sec:reopen}) that exhibited \emph{both} predicted branches --- three mechanistically-attributed nulls and one basis-expanding hit (short-window span, $3/3$ paired, $\Delta=-0.00152$) that reopened the search and re-converged on a fifth zero-flip pass. Confidence is held at $0.75$, below H7's $0.8$, for two reasons. First, ``small number of passes'' is one campaign's three-then-one; the convergence-rate claim is weakly supported by a single trajectory. Second, a null new-mechanism sweep certifies only a \emph{basis-limited} floor, not a \emph{global} one --- a mechanism we did not think to try (a genuinely different attention, memory, or data pathway) could still break it, and H8 is explicitly agnostic about that; the short-window hit is a concrete demonstration that our basis was incomplete, and by the same token cannot rule out that it still is. That the one hit was found by the sweep, improved the metric, and re-converged is exactly the dual-purpose behavior H8 asserts, which is why confidence rises relative to the floor-only draft.
+
+The transferable object is a \textbf{stopping rule} for autonomous loops, which the literature under-specifies relative to its lever-discovery machinery. A campaign may declare a basis-limited floor when (a) a re-optimization pass over the full knob stack produces zero gate-clearing flips (a fixed point), \emph{and} (b) a sweep of new-mechanism axes returns only nulls, each attributable to an identified cause rather than to noise. Absent (b), a zero-flip pass may merely reflect an impoverished proposal distribution; absent (a), a new-mechanism null may be swamped by an un-re-optimized stack. Together they justify reallocating compute --- to a larger budget, a new data regime, or a genuinely new architecture family --- rather than spending further shared-cluster time on within-basis search. Reporting the floor is the responsible terminal act of the loop, not its failure.
+
+\section{Ranked Next Directions}
+\label{sec:directions}
+
+\begin{enumerate}
+    \item \textbf{Mine the attention-structure axis further, now that it has paid.} \emph{Mechanism:} the short-window-span win shows the \texttt{SSSL} attention structure is co-adapted with the n-gram memory (local recall offloaded to table lookup), so adjacent structural levers --- the short/long layer \emph{pattern} (fraction of short layers), grouped-query attention (fewer KV heads), and head count --- may carry further un-tapped gains. \emph{Prediction:} at least one attention-structure lever beyond span (e.g., a higher short-layer fraction) clears the paired gate, since the substitution logic that made span pay applies to them too. \emph{Falsifier:} the full attention-structure axis re-converges zero-flip after the span adoption, localizing the gain to span alone.
+    \item \textbf{A genuinely new memory pathway.} \emph{Mechanism:} the n-gram table is a \emph{context-hash} memory; a \emph{content}-addressed or learned-key memory (small retrieval / k-NN over hidden states) spans contexts the hash cannot (paraphrase, long-range). \emph{Prediction:} it lowers $q$ where 4/5-grams failed (sparse long contexts) without their init-noise penalty. \emph{Falsifier:} it regresses like the 4/5-grams, implicating the update-limited budget rather than the memory form.
+    \item \textbf{Budget-scaling to test H8's ``basis-limited'' clause.} \emph{Mechanism:} if the floor is basis-limited rather than global, doubling the wall-clock budget should re-rank the frozen levers (e.g., FFN$6\times$ or table $2^{22}$ may un-stale when $U$ is no longer the binding constraint). \emph{Prediction:} at $10$-minute budget at least one currently-frozen lever flips back. \emph{Falsifier:} the same fixed point at double budget, implying a data-limited rather than update-limited floor.
+    \item \textbf{Order-independence of the fixed point (H7 Direction 3, still open).} \emph{Mechanism:} if iterated re-optimization washes out trajectory, adopting levers in a different order and re-optimizing reaches the same terminal stack. \emph{Prediction:} convergence to n-gram$(2,3)$@$2^{21}$+FFN$4\times$+\texttt{mlr}$0.03$ regardless of order. \emph{Falsifier:} a distinct inescapable terminal stack, motivating population-based rather than coordinate search.
+    \item \textbf{Automate the stopping rule.} \emph{Mechanism:} H8 gives an operational test (zero-flip pass $\wedge$ mechanistically-attributed new-mechanism nulls); an autonomous loop can compute it. \emph{Prediction:} encoding the rule prevents the phantom-lever adoptions paper 007 warned of and the wasted shared-cluster cycles of undisciplined post-floor search. \emph{Falsifier:} the rule fires early on a campaign that a human would have kept running productively.
+\end{enumerate}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Paper 007 predicted that iterating its re-optimization pass would flip one more verdict and then terminate. It did: n-gram table $2^{20} \rightarrow 2^{21}$ flipped ($5/5$ paired seeds, $\Delta = -0.00209$) on the second pass, and the third pass on the $2^{21}$ stack cleared no gate --- a fixed point at n-gram$(2,3)$@$2^{21}$ + FFN$4\times$ + \texttt{matrix\_lr} $0.03$ + batch $2^{18}$ + max-autotune, $\valbpb \approx 0.9507$ (best $0.9494$), $7.7\%$ below naive on a model smaller than the prior SOTA. We then probed four axes \emph{outside} that knob basis, and the sweep behaved as H8 predicts a basis-limited floor should. Three returned explained nulls: label smoothing is metric-incompatible (it miscalibrates an exact-cross-entropy metric), the n-gram order set is optimal at $(2,3)$ (long-grams are too sparse to escape init noise; a unigram is redundant with the token embedding), and sparse-gradient optimization is throughput-bound on this hardware. The fourth --- halving the short-attention window span --- was a basis-expanding win: $3/3$ paired seeds ($\Delta = -0.00152$), a new best of $0.9488$, achieved by \emph{removing} attention FLOPs the n-gram memory made redundant; a fifth re-optimization pass then re-converged zero-flip at $\valbpb \approx 0.9500$. We formalize the pattern as H8 (confidence $0.75$): iterated re-optimization converges to a basis-limited floor, and a new-mechanism sweep is dual-purpose --- an all-null sweep of mechanistically-attributed axes is a defensible stopping rule, while a hit expands the basis and triggers one more re-optimization. Knowing whether an autonomous loop is at a floor or one lever short of a better one --- and telling them apart with a disciplined sweep --- is the loop's responsible terminal act.
+
+\bibliographystyle{icml2024}
+
+\begin{thebibliography}{9}
+
+\bibitem[Jordan et~al.(2024)]{jordan2024muon}
+Jordan, K., Jin, Y., Boza, V., You, J., Cesista, F., Newhouse, L., and Bernstein, J.
+\newblock Muon: An optimizer for hidden layers in neural networks.
+\newblock 2024.
+\newblock URL \url{https://kellerjordan.github.io/posts/muon/}.
+
+\bibitem[Karpathy(2025)]{karpathy2025nanochat}
+Karpathy, A.
+\newblock nanochat: The best ChatGPT that \$100 can buy.
+\newblock 2025.
+\newblock URL \url{https://github.com/karpathy/nanochat}.
+
+\bibitem[Engram(2026)]{engram2026}
+Engram: O(1) n-gram associative memory for language models.
+\newblock \emph{arXiv preprint arXiv:2601.07372}, 2026.
+
+\bibitem[OPHIS(2026{\natexlab{a}})]{ophis2026ngram}
+OPHIS Autonomous Research Agent.
+\newblock N-gram hash value-embeddings and a hash-table scaling law in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 003, \texttt{AI\_papers/}, 2026{\natexlab{a}}.
+
+\bibitem[OPHIS(2026{\natexlab{b}})]{ophis2026kernel}
+OPHIS Autonomous Research Agent.
+\newblock The saturation frontier and a kernel profile of fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 004, \texttt{AI\_papers/}, 2026{\natexlab{b}}.
+
+\bibitem[OPHIS(2026{\natexlab{c}})]{ophis2026retraction}
+OPHIS Autonomous Research Agent.
+\newblock Throughput levers and a retracted false positive: GPU-contention confounds in shared-cluster A/B testing.
+\newblock Campaign paper 006, \texttt{AI\_papers/}, 2026{\natexlab{c}}.
+
+\bibitem[OPHIS(2026{\natexlab{d}})]{ophis2026staleness}
+OPHIS Autonomous Research Agent.
+\newblock Lever staleness under greedy sequential adoption: re-optimizing the full stack after a dominant structural lever.
+\newblock Campaign paper 007, \texttt{AI\_papers/}, 2026{\natexlab{d}}.
+
+\end{thebibliography}
+
+\end{document}

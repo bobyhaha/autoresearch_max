@@ -1,0 +1,1428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;padding:0}*{box-sizing:border-box}</style>
+</head>
+<body>
+<title>OPHIS — The Automated Research Ledger</title>
+
+<style>
+:root{
+  --bg:#F5F6F9; --panel:#FFFFFF; --panel-2:#FAFBFD;
+  --ink:#12141C; --ink-soft:#565C6B; --ink-faint:#858B9A;
+  --line:#DFE2EA; --line-soft:#EBEDF3;
+  --accent:#2A4BD8; --accent-ink:#1D37A8; --accent-wash:#EDF0FE;
+  --amber:#9C5B00; --amber-wash:#FBF1E2;
+  --pass:#136A48; --pass-wash:#E6F3ED;
+  --fail:#A83226; --fail-wash:#FBEBE9;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --rail:286px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0A0C12; --panel:#11141D; --panel-2:#151925;
+    --ink:#E6E8F0; --ink-soft:#989EAE; --ink-faint:#6B7285;
+    --line:#222738; --line-soft:#1A1E2B;
+    --accent:#7E97FF; --accent-ink:#A3B4FF; --accent-wash:#161B33;
+    --amber:#E0A040; --amber-wash:#2A2114;
+    --pass:#43C594; --pass-wash:#0F2620;
+    --fail:#F2796A; --fail-wash:#2B1512;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A0C12; --panel:#11141D; --panel-2:#151925;
+  --ink:#E6E8F0; --ink-soft:#989EAE; --ink-faint:#6B7285;
+  --line:#222738; --line-soft:#1A1E2B;
+  --accent:#7E97FF; --accent-ink:#A3B4FF; --accent-wash:#161B33;
+  --amber:#E0A040; --amber-wash:#2A2114;
+  --pass:#43C594; --pass-wash:#0F2620;
+  --fail:#F2796A; --fail-wash:#2B1512;
+}
+:root[data-theme="light"]{
+  --bg:#F5F6F9; --panel:#FFFFFF; --panel-2:#FAFBFD;
+  --ink:#12141C; --ink-soft:#565C6B; --ink-faint:#858B9A;
+  --line:#DFE2EA; --line-soft:#EBEDF3;
+  --accent:#2A4BD8; --accent-ink:#1D37A8; --accent-wash:#EDF0FE;
+  --amber:#9C5B00; --amber-wash:#FBF1E2;
+  --pass:#136A48; --pass-wash:#E6F3ED;
+  --fail:#A83226; --fail-wash:#FBEBE9;
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.64;-webkit-font-smoothing:antialiased}
+
+.shell{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);max-width:1500px;margin:0 auto}
+.rail{position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--line);
+  padding:26px 16px 60px 24px;background:var(--panel);display:flex;flex-direction:column;gap:2px}
+.main{min-width:0;padding:0 48px 120px}
+
+.brandmark{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent);font-weight:600}
+.brandname{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:2px 0}
+.brandsub{font-size:12px;color:var(--ink-faint);line-height:1.45;margin-bottom:14px}
+
+.navgroup{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-faint);margin:16px 0 5px;font-weight:600}
+.rail a{display:block;color:var(--ink-soft);text-decoration:none;font-size:13px;padding:4px 9px;
+  border-radius:5px;border-left:2px solid transparent;line-height:1.4}
+.rail a:hover{color:var(--ink);background:var(--panel-2)}
+.rail a.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-wash);font-weight:600}
+.rail a .n{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);margin-right:6px}
+.rail a.on .n{color:var(--accent)}
+
+.hero{padding:60px 0 38px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent);font-weight:600;margin-bottom:15px}
+h1{font-size:clamp(33px,4.8vw,50px);line-height:1.06;letter-spacing:-.033em;margin:0 0 18px;
+  font-weight:750;text-wrap:balance;max-width:20ch}
+.lede{font-size:18px;line-height:1.6;color:var(--ink-soft);max-width:66ch;margin:0 0 26px}
+.lede strong{color:var(--ink);font-weight:650}
+
+.statrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(152px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:30px 0 6px}
+.stat{background:var(--panel);padding:14px 16px}
+.stat .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:6px}
+.stat .v{font-family:var(--mono);font-size:21px;font-weight:600;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .m{font-size:11px;color:var(--ink-faint);margin-top:4px;line-height:1.35}
+.v.good{color:var(--pass)} .v.acc{color:var(--accent)} .v.warn{color:var(--amber)} .v.bad{color:var(--fail)}
+
+section{padding:54px 0 6px;border-bottom:1px solid var(--line-soft);scroll-margin-top:20px}
+section:last-of-type{border-bottom:0}
+.sectnum{font-family:var(--mono);font-size:10.5px;letter-spacing:.15em;color:var(--accent);
+  font-weight:600;margin-bottom:9px}
+h2{font-size:30px;line-height:1.16;letter-spacing:-.025em;margin:0 0 13px;font-weight:700;
+  text-wrap:balance;max-width:26ch}
+h3{font-size:19px;line-height:1.3;letter-spacing:-.014em;margin:36px 0 11px;font-weight:660;text-wrap:balance}
+h4{font-size:14.8px;margin:24px 0 8px;font-weight:660;letter-spacing:-.005em}
+p{margin:0 0 14px;max-width:70ch}
+ul,ol{max-width:70ch;padding-left:21px;margin:0 0 14px}
+li{margin-bottom:6px}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.865em;background:var(--panel-2);border:1px solid var(--line-soft);
+  padding:1px 5px;border-radius:4px;white-space:nowrap}
+strong{font-weight:660;color:var(--ink)}
+em{font-style:italic}
+
+.tw{overflow-x:auto;margin:18px 0;border:1px solid var(--line);border-radius:9px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13.3px;min-width:460px}
+th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:600;padding:10px 14px;border-bottom:1px solid var(--line);
+  background:var(--panel-2);white-space:nowrap}
+td{padding:9px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.mono{font-family:var(--mono);font-size:12.2px}
+td.nw{white-space:nowrap}
+
+.pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  padding:2px 7px;border-radius:20px;font-weight:600;white-space:nowrap;border:1px solid transparent}
+.pill.ap{background:var(--accent-wash);color:var(--accent-ink);border-color:var(--accent)}
+.pill.ok{background:var(--pass-wash);color:var(--pass);border-color:var(--pass)}
+.pill.no{background:var(--fail-wash);color:var(--fail);border-color:var(--fail)}
+.pill.wa{background:var(--amber-wash);color:var(--amber);border-color:var(--amber)}
+.pill.nu{background:var(--panel-2);color:var(--ink-faint);border-color:var(--line)}
+
+.note{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--panel);
+  padding:14px 18px;border-radius:0 8px 8px 0;margin:20px 0}
+.note.warn{border-left-color:var(--amber);background:var(--amber-wash)}
+.note.bad{border-left-color:var(--fail);background:var(--fail-wash)}
+.note.good{border-left-color:var(--pass);background:var(--pass-wash)}
+.note p{margin:0 0 9px}.note p:last-child{margin:0}
+.note ul{margin:0}
+.note .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  font-weight:700;color:var(--accent);display:block;margin-bottom:6px}
+.note.warn .tag{color:var(--amber)}.note.bad .tag{color:var(--fail)}.note.good .tag{color:var(--pass)}
+
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:24px 0;padding:20px;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow-x:auto}
+.node{flex:1 1 124px;min-width:120px;background:var(--panel-2);border:1px solid var(--line);
+  border-radius:7px;padding:11px 12px}
+.node .nn{font-family:var(--mono);font-size:9.5px;color:var(--accent);letter-spacing:.1em;font-weight:600}
+.node .nt{font-size:13px;font-weight:650;margin:4px 0 3px;letter-spacing:-.01em}
+.node .nd{font-size:11px;color:var(--ink-faint);line-height:1.4}
+.arrow{display:flex;align-items:center;color:var(--ink-faint);font-family:var(--mono);font-size:14px;flex:0 0 auto}
+
+.spec{background:var(--panel);border:1px solid var(--line);border-radius:9px;margin:18px 0;overflow:hidden}
+.spec .sh{padding:11px 16px;border-bottom:1px solid var(--line);background:var(--panel-2);
+  display:flex;flex-wrap:wrap;gap:9px;align-items:baseline}
+.spec .sh .nm{font-family:var(--mono);font-size:13px;font-weight:650;color:var(--accent-ink)}
+.spec .sh .fp{font-size:11.5px;color:var(--ink-faint)}
+.spec .sb{padding:13px 16px;font-size:14.2px}
+.spec .sb p{margin:0 0 9px}.spec .sb p:last-child{margin:0}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:13px;margin:18px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:15px 17px}
+.card h4{margin:0 0 6px;font-size:14.2px}
+.card p{font-size:13.2px;color:var(--ink-soft);margin:0;line-height:1.52}
+
+.kv{font-family:var(--mono);font-size:12.2px;background:var(--panel);border:1px solid var(--line);
+  border-radius:8px;padding:14px 16px;margin:16px 0;overflow-x:auto;line-height:1.75}
+.kv .k{color:var(--ink-faint)} .kv .v{color:var(--accent-ink)} .kv .c{color:var(--ink-faint);font-style:italic}
+
+blockquote{margin:18px 0;padding:3px 0 3px 18px;border-left:2px solid var(--accent);
+  font-size:15.8px;color:var(--ink-soft);max-width:64ch;font-style:italic}
+blockquote strong{font-style:normal;color:var(--ink)}
+
+/* ---------- registry explorer ---------- */
+.explorer{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:22px 0;background:var(--panel)}
+.exgroup{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:700;padding:9px 16px;background:var(--panel-2);
+  border-bottom:1px solid var(--line);border-top:1px solid var(--line)}
+.exgroup:first-child{border-top:0}
+.exrow{display:grid;grid-template-columns:1fr auto auto auto;gap:12px;align-items:center;
+  width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line-soft);
+  padding:10px 16px;cursor:pointer;color:var(--ink);font-family:inherit;font-size:13.4px}
+.exrow:hover{background:var(--panel-2)}
+.exrow[aria-expanded="true"]{background:var(--accent-wash)}
+.exrow .rn{font-family:var(--mono);font-size:12.6px;font-weight:600;color:var(--accent-ink)}
+.exrow .rc{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12.6px;color:var(--ink-soft)}
+.exrow .rx{font-family:var(--mono);font-size:14px;color:var(--ink-faint);width:14px;text-align:center}
+.exrow[aria-expanded="true"] .rx{color:var(--accent)}
+.expanel{display:none;padding:16px 18px 20px;border-bottom:1px solid var(--line-soft);background:var(--panel-2)}
+.expanel.open{display:block}
+.expanel p{font-size:13.8px;margin:0 0 11px;max-width:74ch}
+.expanel h5{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:700;margin:16px 0 7px}
+.expanel h5:first-child{margin-top:0}
+.fieldlist{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}
+.fieldlist span{font-family:var(--mono);font-size:11.4px;background:var(--panel);border:1px solid var(--line);
+  padding:2px 7px;border-radius:4px;color:var(--ink-soft)}
+.inv{margin:0;padding-left:18px}
+.inv li{font-size:13.4px;margin-bottom:5px}
+pre.json{font-family:var(--mono);font-size:11.6px;line-height:1.6;background:var(--panel);
+  border:1px solid var(--line);border-radius:7px;padding:13px 15px;overflow-x:auto;margin:0;
+  white-space:pre;color:var(--ink-soft);max-height:440px;overflow-y:auto}
+pre.json .jk{color:var(--accent-ink)} pre.json .js{color:var(--pass)} pre.json .jn{color:var(--amber)}
+.empty{font-size:13.4px;color:var(--ink-faint);font-style:italic}
+
+hr{border:0;border-top:1px solid var(--line-soft);margin:32px 0}
+.foot{padding:36px 0 0;color:var(--ink-faint);font-size:12.8px;max-width:70ch}
+
+@media (max-width:1000px){
+  .shell{grid-template-columns:1fr}
+  .rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:20px 22px}
+  .main{padding:0 20px 80px}
+  .hero{padding:34px 0 28px}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+html{scroll-behavior:smooth}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+</style>
+
+<div class="shell">
+<nav class="rail">
+  <div class="brandmark">Automated Science</div>
+  <div class="brandname">OPHIS</div>
+  <div class="brandsub">A research ledger that decides what counts as knowledge — wrapped around a frozen 2000-step LLM training challenge.</div>
+
+  <div class="navgroup">Orientation</div>
+  <a href="#what"><span class="n">00</span>What this is</a>
+  <a href="#challenge"><span class="n">01</span>The frozen challenge</a>
+  <a href="#loop"><span class="n">02</span>The five-stage loop</a>
+
+  <div class="navgroup">The Ledger</div>
+  <a href="#knowledge"><span class="n">03</span>Knowledge</a>
+  <a href="#toolkit"><span class="n">04</span>Toolkit</a>
+  <a href="#ideas"><span class="n">05</span>Ideas</a>
+  <a href="#experiments"><span class="n">06</span>Experiments</a>
+  <a href="#refinement"><span class="n">07</span>Refinement</a>
+
+  <div class="navgroup">Reference</div>
+  <a href="#schemas"><span class="n">08</span>Record schemas</a>
+  <a href="#engine"><span class="n">09</span>The engine &amp; CLI</a>
+  <a href="#discipline"><span class="n">10</span>Gate discipline</a>
+
+  <div class="navgroup">Findings</div>
+  <a href="#results"><span class="n">11</span>Campaign results</a>
+  <a href="#integrity"><span class="n">12</span>Integrity findings</a>
+  <a href="#trace"><span class="n">13</span>A win, traced</a>
+  <a href="#reopen"><span class="n">14</span>A belief reopened</a>
+  <a href="#drift"><span class="n">15</span>Known drift</a>
+  <a href="#method"><span class="n">16</span>How this was verified</a>
+</nav>
+
+<main class="main">
+
+<header class="hero">
+  <div class="eyebrow">Repository Reference · vibeautoresearch-baiyu-v3</div>
+  <h1>A ledger that decides what counts as knowledge</h1>
+  <p class="lede">OPHIS is an automated-science system wrapped around a single, deliberately frozen machine-learning problem. An agent proposes ideas and interprets results — but <strong>schemas, fingerprints, gates, controls, and evidence decide what may be treated as knowledge.</strong> Every claim it holds is a typed record, cited to evidence, scoped to an exact experimental world, and superseded rather than edited.</p>
+
+  <div class="statrow">
+    <div class="stat"><div class="k">Baseline</div><div class="v">0.930647</div><div class="m">val_bpb, seeds 42/43/44</div></div>
+    <div class="stat"><div class="k">Best achieved</div><div class="v good">0.922710</div><div class="m">6 hold-out seeds 46–51</div></div>
+    <div class="stat"><div class="k">Improvement</div><div class="v good">−0.007937</div><div class="m">four additive levers</div></div>
+    <div class="stat"><div class="k">Decision floor</div><div class="v">0.001694</div><div class="m">2σ · σ_seed 0.000847</div></div>
+    <div class="stat"><div class="k">Runs</div><div class="v acc">281</div><div class="m">272 complete · 9 invalid</div></div>
+    <div class="stat"><div class="k">Beliefs</div><div class="v acc">63</div><div class="m">35 current-scope verified</div></div>
+    <div class="stat"><div class="k">Setup gate</div><div class="v bad">RED</div><div class="m">2 drifts, pending v13</div></div>
+  </div>
+</header>
+
+<!-- ═══════════ 00 ═══════════ -->
+<section id="what">
+  <div class="sectnum">00 — ORIENTATION</div>
+  <h2>What this is</h2>
+
+  <p>Two distinct things live in this repository, and keeping them apart is the key to reading it:</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>The object of study</h4>
+      <p>A nanoGPT-style language model in <code>train.py</code> — a materially modified fork of a Karpathy-derived baseline (<strong>+707 / −45 lines across 79 hunks</strong>). Architecture, optimizer (Muon/NorMuon), schedules, and hashed n-gram value embeddings are all levers. <code>lib.py</code> holds tokenizer/data helpers, <code>prepare.py</code> builds the dataset cache, <code>observable.py</code> owns instrumentation.</p>
+    </div>
+    <div class="card">
+      <h4>The instrument</h4>
+      <p>The <code>vibeautoresearch</code> package plus the <code>research/</code> ledger: <strong>21 JSONL registries, 19 typed record schemas</strong>, and a 9-command CLI that validates the graph, audits it, gates execution, and renders the current research state.</p>
+    </div>
+  </div>
+
+  <h3>The problem it exists to solve</h3>
+  <p>The system's own documentation states it plainly: the loop <em>"tests hundreds–thousands of interventions against one metric."</em> Under those conditions, <strong>the best result you find is almost certainly noise.</strong> The expected best-of-N |z| under pure noise grows like √(2 ln N) ≈ <strong>3.7 at N = 1000</strong> — meaning a 3.7σ "discovery" is exactly what you should expect from a thousand null candidates.</p>
+
+  <p>Nearly every rule in this repository is a defense against that single failure mode: pre-registered falsification criteria, measured noise floors, multiplicity correction, hold-out confirmation on fresh seeds, concurrent paired baselines, and an append-only history that makes retractions visible instead of silent.</p>
+
+  <blockquote>The loop is not an invitation to generate arbitrary observable combinations. <strong>The agent proposes and interprets; schemas, fingerprints, gates, controls, and evidence determine what may be treated as knowledge.</strong></blockquote>
+
+  <h3>The five questions</h3>
+  <p>The system organizes an agent around five questions, and each maps to a stage of the loop:</p>
+  <ol>
+    <li>What do we currently know? → <strong>Knowledge</strong></li>
+    <li>What can we currently observe, control, and evaluate? → <strong>Toolkit</strong></li>
+    <li>Which falsifiable idea is most worth testing next? → <strong>Ideas</strong></li>
+    <li>How can that idea be tested reproducibly? → <strong>Experiments</strong></li>
+    <li>How should the result change current knowledge and future priorities? → <strong>Refinement</strong></li>
+  </ol>
+
+  <h3>The four invariants</h3>
+  <p>Stated in <code>docs/AUTOMATED_SCIENCE_SYSTEM.md</code> as the philosophical spine:</p>
+
+  <div class="grid2">
+    <div class="card"><h4>Facts and interpretations are different objects</h4><p>"A run value is a fact. An observed pattern is exploratory. A mechanism is a causal explanation. A belief is the current interpretation of cited evidence. <strong>Changing a mechanism or belief never changes a run fact.</strong>"</p></div>
+    <div class="card"><h4>Stable IDs and versions</h4><p>All durable entities have typed IDs. Definitions that affect scientific meaning carry versions and fingerprints. Changing a formula, tensor source, trigger, action, outcome detector, control, or experiment design <strong>creates a new version</strong>.</p></div>
+    <div class="card"><h4>Tags are not specs</h4><p>Tags support retrieval. They <strong>never</strong> replace a formula, context, action contract, control, outcome definition, seed list, or analysis plan.</p></div>
+    <div class="card"><h4>Markdown is a view</h4><p>JSONL registries are authoritative. <code>RESEARCH_STATE.md</code> is generated from them and <strong>must not be edited manually</strong>.</p></div>
+  </div>
+
+  <h3>The layer separation, made concrete</h3>
+  <p>Four layers, deliberately never collapsed into one another. This is the single most important structural idea in the repository:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Layer</th><th>Holds</th><th>Has an assessment?</th><th>May back a belief?</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">runs</td><td>raw execution facts + measured values</td><td><span class="pill no">no</span></td><td><span class="pill no">no</span></td></tr>
+      <tr><td class="mono">observations</td><td>patterns + <em>required</em> possible_confounds</td><td><span class="pill no">no</span></td><td><span class="pill no">no</span></td></tr>
+      <tr><td class="mono">evidence</td><td>facts + typed assessment + 4-axis trust</td><td><span class="pill ok">yes</span></td><td><span class="pill ok">yes</span></td></tr>
+      <tr><td class="mono">beliefs</td><td>versioned standing conclusions, scoped</td><td>— it <em>is</em> the interpretation</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <p>A <code>RunRecord</code>'s own docstring states the rule outright: <em>"Immutable execution facts. Analysis belongs in evidence, not here."</em> An <code>EvidenceRecord</code>'s says: <em>"Immutable measurements plus a clearly labelled assessment."</em> The separation is enforced in the type system, not left to convention.</p>
+</section>
+
+<!-- ═══════════ 01 ═══════════ -->
+<section id="challenge">
+  <div class="sectnum">01 — ORIENTATION</div>
+  <h2>The frozen challenge</h2>
+
+  <p>Every measurement in this repository is judged against one deliberately immobilised setting, pinned by a <strong>scope key</strong> in <code>research/setup/reconciliation.json</code>. These four fields <em>are</em> the identity of the experimental world:</p>
+
+  <div class="kv">
+<span class="k">data_split_sha256</span> = <span class="v">ed8ea0554010df9fbfa47746adc6643d6446797753eb377c0b35413bdcf2fca3</span><br>
+<span class="k">max_steps</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <span class="v">2000</span><br>
+<span class="k">stop_mode</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <span class="v">"steps"</span><br>
+<span class="k">outcome_id</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <span class="v">"out_val_bpb"</span>
+  </div>
+
+  <p>Train on shards 1–10, validate on held-out shard 6542, measure <code>val_bpb</code> (bits per byte, lower is better), stop at exactly 2000 optimizer steps on a single H200. The scope key is structurally validated too: <code>data_split_sha256</code> must be a 64-character lowercase digest that <em>also</em> matches <code>frozen_files["data_split.json"]</code>, and <code>max_steps</code> must be an integer ≥ 11.</p>
+
+  <p><strong>Why fixed steps rather than wall-clock minutes?</strong> Because minutes can be gamed. A faster kernel, a better compiler flag, or a throughput trick buys more steps in the same time and lowers the metric without any method improvement. Fixing <em>steps</em> removes kernel and throughput gaming from the board entirely — the earlier 5-minute framing was retired precisely for this reason.</p>
+
+  <h3>Three axes that must not move</h3>
+  <p>From <code>agent.md</code>: a lower <code>val_bpb</code> is a real result <em>only</em> if it comes from a method change on a frozen playing field.</p>
+  <div class="grid2">
+    <div class="card"><h4>Data content <span class="pill nu">frozen</span></h4><p>The exact shard set in <code>data_split.json</code>. Adding, removing, swapping, or enlarging training shards — or substituting "better" data — moves the data-quality axis, not the algorithm. It invalidates the comparison outright.</p></div>
+    <div class="card"><h4>Compute budget <span class="pill nu">frozen</span></h4><p>Identical <code>MAX_STEPS</code> across control and treatment, always. Raising steps lowers <code>val_bpb</code> on its own because the model is compute-limited.</p></div>
+    <div class="card"><h4>Evaluation <span class="pill nu">frozen</span></h4><p>Held-out shard 6542, BPB metric, endpoint measurement — never a mid-run probe.</p></div>
+  </div>
+
+  <p>What you <em>may</em> vary: architecture, optimizer, schedule, regularization, initialization, and any model/training method change — plus data <strong>order</strong>.</p>
+
+  <div class="note"><span class="tag">The data-order subtlety</span>
+  <p>An intervention may change the <em>order</em> tokens are seen in (curriculum, reshuffle-between-epochs, packing) but never <em>which</em> tokens are trained on. And the order change must be a <strong>policy held identical across the paired seeds</strong> — never a fresh random shuffle. The reason is sharp: order is <em>already</em> seed-dependent, so a random reshuffle merely re-measures seed variance and tells you nothing about the policy. This matters most in this repeated-data regime (~1.6 epochs), where how repeated data is presented shapes overfitting.</p></div>
+
+  <h3>The repeated-data regime</h3>
+  <p>Only ~11 shards exist locally (~15M tokens each, ~151–166M unique total) and the box has no network to fetch more. At 2000 steps the training stream is <strong>294.9M tokens</strong> — so the data <em>repeats</em> roughly 1.6×. This is not incidental; it is the research frontier the program targets: <em>"map and exploit headroom in the repeated-data training regime, with emphasis on how recipe optima and mechanisms shift with training horizon."</em></p>
+  <p>A prior branch restricted training to shards 1–3, a much harsher ~5-epoch overfit that inflated <code>val_bpb</code> from ~0.95 to ~1.05. That was corrected on 2026-07-19 by restoring shards 1–10 — and every figure measured under the broken split is explicitly marked <strong>STALE — DO NOT USE</strong>.</p>
+
+  <h3>The measured noise floor</h3>
+  <p>The baseline is not a single number but a distribution, and the distinction between its two sigmas is load-bearing:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Quantity</th><th class="num">Value</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td>Baseline mean val_bpb</td><td class="num">0.930647</td><td>seeds 42 / 43 / 44</td></tr>
+      <tr><td>Per-seed values</td><td class="num">0.930008 · 0.931608 · 0.930324</td><td>plus a 42-rep at 0.930446</td></tr>
+      <tr><td><strong>σ_seed</strong> (seed-to-seed)</td><td class="num">0.000847</td><td><strong>the decision floor</strong></td></tr>
+      <tr><td>σ_repro (same-seed)</td><td class="num">0.000310</td><td>diagnostic only — <em>never</em> the floor</td></tr>
+      <tr><td>2σ adoption gate</td><td class="num">0.001694</td><td>a change must beat this to be adopted</td></tr>
+      <tr><td>Legacy baseline</td><td class="num">0.933386</td><td>superseded; retained in history</td></tr>
+      <tr><td>External benchmark (RSI)</td><td class="num">0.9109</td><td>different sandbox — a target, <em>not</em> a control</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note warn"><span class="tag">Why the two sigmas matter — the 7.43σ story</span>
+  <p>Same-seed training is nearly deterministic, so measuring a delta against σ_repro inflates significance by roughly <strong>3×</strong>. The documentation names a specific casualty: a write-up's claimed <em>"7.43σ"</em> was really <strong>~2.6σ</strong> on the correct sigma. The rule: <em>"The σ for a claim is seed-to-seed + temporal heterogeneity, NOT same-seed reproduction noise."</em></p>
+  <p>σ is also <strong>budget-dependent</strong>, not a constant: σ_repro ≈ 0.00009 at 2766 steps but ≈ 0.00062 at 1660 — a 7× difference. At fewer steps the loss curve is steeper, so identical kernel nondeterminism moves the metric more. Both quantities must be re-measured whenever the budget or data config changes.</p></div>
+
+  <div class="note bad"><span class="tag">Current status — the gate is red, with TWO drifts</span>
+  <p><code>reconciliation.json</code> records <code>status: passed</code> at <strong>version 12</strong>, but running <code>check-setup</code> today returns two separate failures:</p>
+  <ul>
+    <li><strong>Frozen-file drift:</strong> <code>lib.py</code> expected <code>62859edb…</code>, found <code>67e4314c…</code></li>
+    <li><strong>Reference-code drift:</strong> <code>train.py</code> expected <code>c23c6aa1…</code>, found <code>ae4f41a3…</code></li>
+  </ul>
+  <p>The <code>lib.py</code> drift is the stricter category — a <code>frozen_files</code> entry, not merely reference code. <strong>A v13 re-reconciliation of <code>train.py</code> alone would not clear the gate.</strong> Note also that <code>train.py</code> has moved on <em>again</em> since v12 was recorded. No new GPU evidence may be registered until this is resolved, and <code>validate</code>/<code>audit</code> both refuse to run.</p></div>
+
+  <h3>What "beating RSI" actually means</h3>
+  <p>The external RSI number (0.9109) came from a richer sandbox: B200 hardware, flash-attention that honours sliding windows, and the full no-repeat 400B corpus. This repository runs H200 + full-causal SDPA + ~10 repeating local shards. <strong>Absolute numbers are not comparable across sandboxes.</strong> RSI 0.9109 is a threshold to beat, not an internal control. The valid target is beating <em>our own same-data, same-compute local baseline</em> of 0.930647 with a genuine method change that clears the paired-seed gate.</p>
+</section>
+
+<!-- ═══════════ 02 ═══════════ -->
+<section id="loop">
+  <div class="sectnum">02 — ORIENTATION</div>
+  <h2>The five-stage loop</h2>
+
+  <div class="flow">
+    <div class="node"><div class="nn">01</div><div class="nt">Knowledge</div><div class="nd">Papers, claims, evidence, observations, beliefs</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="nn">02</div><div class="nt">Ideas</div><div class="nd">Mechanisms and falsifiable hypotheses</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="nn">03</div><div class="nt">Experiments</div><div class="nd">Frozen protocols, then runs</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="nn">04</div><div class="nt">Evidence</div><div class="nd">Measurements plus a typed verdict</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="nn">05</div><div class="nt">Refinement</div><div class="nd">Updates, decisions, audits — loops back</div></div>
+  </div>
+
+  <p>The <strong>Toolkit</strong> feeds Ideas from the side: it defines what can be observed, changed, held fixed, and scored. A hypothesis may only reference tools that already exist as registered, executable records — <em>"Do not approve an experiment that pretends the tool exists."</em></p>
+
+  <h3>The whole ledger — explore all 21 registries</h3>
+  <p>21 registries declared in <code>manifest.json</code> (schema version 1.2), of which 9 are declared append-only. Counts are <strong>live working-tree record counts</strong>. <strong>Click any registry</strong> to see its purpose, enforced invariants, complete field list, and a real record from the ledger.</p>
+
+  <div class="explorer" id="explorer"></div>
+  <p class="foot" style="padding-top:0">Every file's first line is a <code>#</code> comment header, so raw <code>wc -l</code> overcounts each registry by exactly one. Example records are real, with long string values truncated for display.</p>
+
+  <div class="note warn"><span class="tag">Finding: append-only is a convention, not an API guard</span>
+  <p>The <code>append_only</code> flag is passed to nine registries and stored at <code>registry.py:35</code> — but <strong>it is never read anywhere in the codebase.</strong> It does not gate <code>add()</code>, <code>load()</code>, deletion, or in-place editing. The manifest's <code>append_only</code> array is likewise not validated by <code>_manifest()</code>.</p>
+  <p>Append-only is upheld instead by three <em>other</em> mechanisms: <code>add()</code> only ever opens the file in <code>"a"</code> mode; content fingerprints detect any edit to an existing record; and supersession chains are validated (including cycle rejection). So a hand-edit is <em>caught</em>, but not <em>blocked</em>.</p></div>
+
+  <h3>The completeness gate</h3>
+  <p>The registries are the deliverable, not a side effect — but filled <strong>proportionately</strong>: each experiment populates the records <em>it</em> depends on and produces, not every registry on every run. Two commands enforce this per experiment:</p>
+  <ul>
+    <li><code>check-gate</code> (pre-run) refuses to freeze an experiment whose motivating observable is not registered-and-executable, or whose mechanism cites literature claims lacking an evidence assessment.</li>
+    <li><code>audit</code> (post-run) flags a completed run with no evidence, a hypothesis with no evidence, or a belief with no evidence.</li>
+  </ul>
+  <p>The required cycle is <code>mechanism → hypothesis → gated experiment → run → evidence → belief → decision</code> — <em>including nulls and contradictions</em>. A cycle leaving any of these empty is unfinished.</p>
+</section>
+
+<!-- ═══════════ 03 ═══════════ -->
+<section id="knowledge">
+  <div class="sectnum">03 — THE LEDGER</div>
+  <h2>Knowledge</h2>
+  <p>Six registries that separate <em>what a paper said</em> from <em>what we measured</em> from <em>what we now believe</em>.</p>
+
+  <h3>Papers — citation metadata only</h3>
+  <p>A paper record contains <strong>no scientific assertions</strong>. It holds title, authors, year, venue (with an explicit <code>peer_reviewed</code> boolean), a primary URL, a retrieval date, and a status of <code>active</code> / <code>superseded</code> / <code>retracted</code>. All 349 are currently <code>active</code>.</p>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">pap_muon</span><span class="fp">fingerprint 4facb73fbc4b0daa</span></div>
+    <div class="sb">
+      <p>"Muon: An optimizer for hidden layers in neural networks" · Keller Jordan · 2024 · venue <code>blog</code>, <strong><code>peer_reviewed: false</code></strong> · status <code>active</code> · notes: <em>"Seeded literature prior for the training-methods knowledge base."</em></p>
+    </div>
+  </div>
+
+  <p><strong>Why <code>peer_reviewed</code> is a first-class field:</strong> it feeds the downstream trust evaluation without laundering an unvetted source into settled fact. Muon originated as a blog post, and the record says so. That lets a later assessment rate it <code>strong</code> on directness (the author invented the method) while capping <code>design</code> — a nuance a single "credibility" score could not express.</p>
+
+  <p><strong>The <code>status</code> field is currently inert.</strong> It appears nowhere in the codebase except its own enum validation, and all 349 papers share the same value, so it carries zero information today. Its purpose is forward-looking: if a paper is retracted, you flip the status rather than delete the record — because claims and evidence already point at that <code>paper_id</code>, and deleting would orphan them.</p>
+
+  <h3>Claims — atomic, typed, and deliberately statusless</h3>
+  <p>A claim is one atomic statement extracted from a paper, typed into one of eight categories, with its own <code>scope</code>, <code>limitations</code>, and a <code>locator</code> naming where in the paper it came from (e.g. <code>"method definition"</code> vs. an abstract boast).</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Claim type</th><th class="num">n</th><th>Claim type</th><th class="num">n</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">method_definition</td><td class="num">242</td><td class="mono">predictive</td><td class="num">110</td></tr>
+      <tr><td class="mono">descriptive</td><td class="num">238</td><td class="mono">negative_result</td><td class="num">52</td></tr>
+      <tr><td class="mono">causal</td><td class="num">210</td><td class="mono">correlational</td><td class="num">22</td></tr>
+      <tr><td class="mono">mechanistic</td><td class="num">127</td><td class="mono">temporal_association</td><td class="num">11</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><strong>A claim has no status or assessment field.</strong> Its "assessed" state is derived entirely from whether an evidence record cites its <code>claim_id</code>. This is deliberate: the claim is <em>provenance</em>, a frozen record of what a paper asserted, and it is never edited to match a run.</p>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">clm_muon_1</span><span class="fp">type: mechanistic · locator: method definition</span></div>
+    <div class="sb">
+      <p><strong>statement:</strong> "Orthogonalizing each 2D parameter's momentum update via a Newton–Schulz iteration equalizes update magnitude across singular directions, so hidden matrices train faster per step than under Adam."</p>
+      <p><strong>scope:</strong> <code>applies_to: 2d_hidden_matrices</code> · <code>domain: transformer_lm_pretraining</code></p>
+      <p><strong>limitations:</strong> "Effect strongest for well-conditioned hidden layers; not shown for embeddings."</p>
+    </div>
+  </div>
+
+  <p>Because this claim is typed <code>mechanistic</code>, the ingestion protocol requires it to record <strong>direction of effect and the scope in which it holds</strong> — hence the explicit "trains faster" direction and the <code>2d_hidden_matrices</code> restriction. That scope is why real Muon setups are hybrid: Muon governs 2D hidden weights, Adam handles embeddings and scalars. Two OPHIS beliefs (<code>blf_cautupd_hurts</code>, <code>blf_adam_warmdown_optimal</code>) turn on exactly that split.</p>
+
+  <div class="note"><span class="tag">The 1012 vs 16 gap</span>
+  <p>Only <strong>16 of 1012 claims</strong> have a literature-evidence assessment — <strong>996 unassessed</strong>. (Run evidence cites 7 unique claims, all a subset of those 16, so the union is still 16.)</p>
+  <p>This is by design, not neglect. Claims are harvested broadly and cheaply — 349 papers seeded in a day. An <em>assessment</em> is an expensive judgment about transfer to this exact setup, written only when a hypothesis is about to consume an experiment slot. The protocol is explicit: <em>"Do not start an experiment merely because a paper is interesting."</em> The 996 is a visible backlog of unmined priors, not a bug.</p></div>
+
+  <h3>Evidence — measurements kept apart from judgment</h3>
+  <p>One <code>EvidenceRecord</code> type serves both literature and runs, with mirrored requirements enforced in <code>__post_init__</code>: literature evidence <em>requires</em> paper and claim ids; run/offline evidence <em>requires</em> run ids. Each record carries three separated blocks:</p>
+
+  <div class="grid2">
+    <div class="card"><h4><code>facts</code> — the measurements</h4><p>Immutable. Verbatim per-seed deltas, or what the papers actually reported. No interpretation. Must be non-empty.</p></div>
+    <div class="card"><h4><code>assessment</code> — the judgment</h4><p><code>relation</code> ∈ supports / opposes / mixed / inconclusive / not_tested · <code>strength</code> ∈ none / weak / moderate / strong · plus <code>limitations</code>.</p></div>
+    <div class="card"><h4><code>trust</code> — source quality</h4><p>Four axes — <code>design</code>, <code>replication</code>, <code>scope_match</code>, <code>directness</code> — each ∈ weak / adequate / strong / not_applicable, with reasons in <code>limitations</code>.</p></div>
+  </div>
+
+  <p><strong>Why four trust axes instead of one score?</strong> Because they move independently and the difference is actionable. A blog post by a method's inventor can be <code>strong</code> on directness while only <code>adequate</code> on design and replication. A rigorously-replicated paper run at 100× the scale is <code>strong</code> on design but only <code>adequate</code> on <code>scope_match</code>. Collapsing these into one number destroys exactly the information that determines whether a prior transfers.</p>
+
+  <h4>The literature side (4 records)</h4>
+  <div class="tw"><table>
+    <thead><tr><th>Evidence</th><th>What the papers report</th><th>Feeds</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">evd_lit_wsd_stable_phase</td><td>WSD schedules: a long stable full-LR phase + short cooldown captures most of the loss drop</td><td>the warmdown mechanism</td></tr>
+      <tr><td class="mono">evd_lit_ngram_capacity</td><td>Five papers (modded-nanoGPT, N-Grammer, SCONE, infini-gram) jointly argue n-gram embedding <em>capacity</em> is its own scaling axis</td><td><code>hyp_ngram_capacity_256</code></td></tr>
+      <tr><td class="mono">evd_lit_data_order_constrained</td><td>Curriculum ordering is ~irrelevant with ample compute but gives measurable gains in <em>constrained</em> regimes</td><td><code>hyp_shuffle_data_decorrelation</code></td></tr>
+      <tr><td class="mono">evd_lit_demon</td><td>Decaying momentum β₁ late in training improves final performance</td><td><code>hyp_demon_beta1_040</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>All four are <code>supports</code> / <code>moderate</code>, all four carry the same honest caveat — <em>"transfer to a 2000-step nanoGPT is plausible, not guaranteed"</em> — and all four were written on 2026-07-22 in a single planning burst, which is exactly what "create the assessment when you scope the hypothesis" looks like in practice.</p>
+
+  <div class="note good"><span class="tag">Same prior, four different outcomes</span>
+  <p>Those four literature assessments were all <code>supports / moderate</code> going in. Once actually run on the frozen challenge they landed in four different places:</p>
+  <ul>
+    <li>WSD warmdown → <strong>confirmed win</strong> (9 seeds) — <code>blf_warmdown_confirmed_9seed</code></li>
+    <li>n-gram capacity → <strong>the biggest win</strong> (−0.0040) — <code>blf_ngram_capacity_256_win_validated</code></li>
+    <li>data order → <strong>real but sub-floor</strong> (−0.00094) — <code>blf_data_order_small_real_subfloor</code></li>
+    <li>Demon β₁ → <strong>null</strong> (already tuned) — <code>blf_demon_beta1_tuned</code></li>
+  </ul>
+  <p>That spread is the entire reason literature evidence and beliefs are separate objects.</p></div>
+
+  <h4>The run side (50 records) — where the optimism dies</h4>
+  <div class="tw"><table>
+    <thead><tr><th>Verdict</th><th class="num">Literature (4)</th><th class="num">Runs (50)</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill ok">supports</span></td><td class="num">4 · 100%</td><td class="num">21 · 42%</td></tr>
+      <tr><td><span class="pill no">opposes</span></td><td class="num">0</td><td class="num">16 · 32%</td></tr>
+      <tr><td><span class="pill nu">inconclusive</span></td><td class="num">0</td><td class="num">9 · 18%</td></tr>
+      <tr><td><span class="pill nu">not_tested</span></td><td class="num">0</td><td class="num">3</td></tr>
+      <tr><td><span class="pill nu">mixed</span></td><td class="num">0</td><td class="num">1</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><strong>Literature evidence is unanimously optimistic; reality says no 58% of the time.</strong> That is the system working as designed: you only bother assessing literature for directions you already believe in, so the prior is biased by construction — and the runs are where that bias gets corrected. Every failure is recorded as first-class evidence because the protocol requires recording <em>"null, failed, and contradictory results."</em></p>
+
+  <p>Strength distribution across the 50: <strong>25 strong, 16 moderate, 6 weak, 3 none</strong>. Scope-match tells the story from the other side — <strong>49 of 50 are <code>scope_match: strong</code></strong>, because the evidence <em>is</em> the frozen challenge. Literature evidence sits at <code>adequate</code>; that one downgrade is why literature assessments cap out at <code>moderate</code> strength.</p>
+
+  <p>The single non-strong record is instructive: <code>evd_run_ngram_256x_transfer_2766_diagnostic</code> has <code>scope_match: not_applicable</code>. It is a beautiful statistical result — 3 paired seeds, mean −0.004276, <strong>t = −17.3</strong> — but it ran at <strong>2766 steps, not 2000</strong>, so it is labelled <em>"OFF-BUDGET DIAGNOSTIC … NOT an adopt input."</em> A t = −17.3 result at the wrong budget is marked not-applicable rather than strong. That is <code>scope_match</code> doing precisely its job.</p>
+
+  <h4>The crossover records</h4>
+  <p>16 of the run-evidence records carry both <code>run_ids</code> <em>and</em> <code>claim_ids</code>. That is the claim-revision mechanism: when your runs contradict a paper, you do not touch the paper or the claim — you file run evidence that <em>cites</em> the claim with relation <code>opposes</code> or <code>mixed</code>. The literature record stays intact as provenance; the disagreement is a new, dated, fingerprinted layer on top.</p>
+
+  <h3>Observations — patterns that are not yet evidence</h3>
+  <p>An observation records something noticed in run data that you were not testing for. It has <strong>no trust, no assessment, no method</strong> — instead it is <em>required</em> to carry <code>possible_confounds</code>, forcing you to state how you might be fooled. <code>run_ids</code> must be non-empty. It can never back a belief.</p>
+
+  <p>Observation IDs live in the <em>evidence</em> namespace (<code>evd_obs_*</code>) for a documented reason — the code comment reads: <em>"Observations use the evidence namespace because they may later be promoted."</em></p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Status</th><th class="num">n</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td><code>exploratory</code></td><td class="num">5</td><td>Noticed once. Default entry point.</td></tr>
+      <tr><td><code>replicated</code></td><td class="num">5</td><td>Held up in independent runs — still not a conclusion.</td></tr>
+      <tr><td><code>dismissed</code></td><td class="num">0</td><td>A confound explained it away. Record kept, marked dead.</td></tr>
+      <tr><td><code>promoted</code></td><td class="num">0</td><td>Graduated into a mechanism.</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Real examples show the type earning its keep:</p>
+  <ul>
+    <li><code>evd_obs_ngram_capacity_vram_linear</code> — VRAM scales ~linearly with table size (64×≈14GB, 128×≈57GB, 256×≈113GB), implying 512×≈226GB would OOM a 143GB H200. This is what <strong>bounded the capacity sweep at 256×</strong>. Confound noted: "allocator caching; early readings understate steady-state."</li>
+    <li><code>evd_obs_pipeline_not_bitwise_deterministic</code> — three 30-step runs at fixed seed and code do <em>not</em> reproduce bitwise.</li>
+    <li><code>evd_obs_sota_snapshots_were_not_runnable</code> — all four SOTA snapshots failed on import.</li>
+  </ul>
+  <p>Three observations are flagged <code>followup_required: true</code> and remain unresolved, including <code>evd_bug_fourgram_gate_uninitialized</code> — the bug that retracted ten runs.</p>
+
+  <h3>Beliefs — versioned interpretations</h3>
+  <p>A belief is the standing conclusion. It cites evidence (<code>evidence_ids</code>), names what it is about (<code>subject_ids</code> — enforced to be claim, mechanism, or hypothesis IDs only), carries a <code>scope</code> containing the scope key, and states its own <code>rationale</code>, <code>limitations</code>, and <code>next_test</code>.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Belief status</th><th class="num">n</th><th>Belief status</th><th class="num">n</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill ok">supported</span></td><td class="num">28</td><td><span class="pill nu">plausible</span></td><td class="num">2</td></tr>
+      <tr><td><span class="pill ok">strongly_supported</span></td><td class="num">24</td><td><span class="pill wa">context_dependent</span></td><td class="num">1</td></tr>
+      <tr><td><span class="pill nu">speculative</span></td><td class="num">6</td><td><span class="pill wa">challenged</span></td><td class="num">1</td></tr>
+      <tr><td><span class="pill nu">inconclusive</span></td><td class="num">1</td><td colspan="2"><strong>total 63</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The nine-value enum also includes <code>unsupported</code> and <code>contradicted</code>. Three of the nine — <code>challenged</code>, <code>contradicted</code>, <code>context_dependent</code> — exist specifically for the case where a run disagrees with published work. One is now in active use; see <a href="#reopen">A belief reopened</a>.</p>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">blf_ngram_capacity_256_win_validated</span><span class="pill ok">strongly_supported</span></div>
+    <div class="sb">
+      <p><strong>statement:</strong> "VALIDATED: NGRAM_TABLE_MULT 64→256 (4× n-gram VE capacity) lowers 2000-step val_bpb by ~−0.0040, confirmed on THREE independent seed batches — pilot (s42 −0.00363), discovery (s43-45 −0.00405, t=−22), and pre-registered hold-out (s46-48 −0.004012, t=−355, sd 2e−5). Compute-matched. First validated current-scope win; winner's curse excluded."</p>
+      <p><strong>subject_ids:</strong> <code>hyp_ngram_capacity_256</code> · <code>mech_ngram_short_context_memory</code> · <code>clm_r2_ngram_scone_scaling_embeddings_3</code></p>
+      <p><strong>supersedes:</strong> <code>blf_ngram_capacity_256_win_scoped</code> · <strong>limitations:</strong> "2000-step scope only; matched-compute longer-budget transfer still unverified"</p>
+    </div>
+  </div>
+
+  <div class="note"><span class="tag">Terminal ≠ current — the demotion mechanism</span>
+  <p>Being the newest version does <em>not</em> make a belief authoritative. <code>render-state</code> re-checks each belief's scope key against the live setup key and demotes any mismatch to <strong>[unscoped]</strong>. Running the real render logic against the live registries today gives: <strong>63 records → 20 superseded → 43 terminal → 36 in-scope → 35 verified, 1 provisional, 7 stale.</strong></p>
+  <p>When the challenge reset from the old 3-shard regime to the frozen 2000-step one, the entire prior config-tuning ledger demoted at once — <em>that is the intended behaviour</em>, not a failure. The populated-ledger policy states it directly: historical terminal beliefs "do not become current merely because they were never superseded."</p></div>
+
+  <p><strong>Does a belief use external knowledge?</strong> In two different senses. <strong>21 of 63 name a paper claim in <code>subject_ids</code></strong> — they adjudicate the literature. But <strong>zero cite a literature-evidence record as backing</strong>; all 49 evidence-backed beliefs rest on internal runs. The engine explicitly permits literature-only beliefs (they bypass the ≥3-seed requirement at <code>registry.py:816</code>) — nobody has used that path. External knowledge sets the agenda; internal runs settle it.</p>
+</section>
+
+<!-- ═══════════ 04 ═══════════ -->
+<section id="toolkit">
+  <div class="sectnum">04 — THE LEDGER</div>
+  <h2>Toolkit</h2>
+  <p>The vocabulary of the experiment: what can be changed, watched, held fixed, and scored. The proportions <em>are</em> the experimental design.</p>
+
+  <div class="statrow">
+    <div class="stat"><div class="k">Interventions</div><div class="v acc">82</div><div class="m">the search space</div></div>
+    <div class="stat"><div class="k">Observables</div><div class="v">13</div><div class="m">instrumentation</div></div>
+    <div class="stat"><div class="k">Contexts</div><div class="v">1</div><div class="m">the frozen environment</div></div>
+    <div class="stat"><div class="k">Outcomes</div><div class="v">1</div><div class="m">the single metric</div></div>
+  </div>
+
+  <p><strong>82 levers against 1 environment and 1 metric.</strong> Wide on what varies, singular on what does not — that asymmetry is what makes this a controlled comparison rather than a search. And the single outcome is what makes the multiplicity mathematics valid: the loop tests thousands of interventions against <em>one</em> metric, which is the denominator every winner's-curse correction assumes.</p>
+
+  <h3>Interventions — the levers</h3>
+  <p>Each is a single tested change with an <code>action</code> verb, a <code>target</code> (<code>type</code> + <code>selector</code>), exact <code>parameters</code>, a <code>timing.stage</code>, a <code>duration</code>, a <code>reversible</code> flag, a <code>cost_tier</code>, a <code>safety</code> block, and an <code>implementation</code> with a real entrypoint and test.</p>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">int_ngram_ve_lr_1375</span><span class="fp">unit_tested · light · reversible</span></div>
+    <div class="sb">
+      <p><strong>description:</strong> "Increase only the sparse bigram/trigram value-embedding LR multiplier from 1.0 to 1.375."</p>
+      <p><strong>parameters:</strong> <code>{NGRAM_VE_LR_SCALE: 1.375, reference_value: 1.0}</code> — the intervention encodes both the treatment <em>and</em> what it changes <em>from</em>, so a comparison is self-describing.</p>
+      <p><strong>implementation:</strong> <code>train.py:NGRAM_VE_LR_SCALE</code> · test <code>test_ngram_ve_lr_candidate_is_frozen</code> · <strong>safety:</strong> <code>changes_only_selected_sparse_parameter_groups</code>, <code>fast_fail_nonfinite_loss</code></p>
+    </div>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr><th>Target type</th><th class="num">n</th><th>Property</th><th>Distribution</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">model_architecture</td><td class="num">28</td><td>Reversible</td><td>82 / 82 <span class="pill ok">all</span></td></tr>
+      <tr><td class="mono">optimizer_parameter_group</td><td class="num">19</td><td>Cost tier</td><td>81 light · 1 moderate</td></tr>
+      <tr><td class="mono">training_process</td><td class="num">15</td><td>Status <code>available</code></td><td>45 — all referenced by an arm</td></tr>
+      <tr><td class="mono">optimizer_schedule</td><td class="num">13</td><td>Status <code>unit_tested</code></td><td>37 — <em>none</em> referenced</td></tr>
+      <tr><td class="mono">attention_backend</td><td class="num">2</td><td rowspan="4" colspan="2" style="vertical-align:middle">All 82 are <code>reversible: true</code> and all but one are <code>light</code>. The design favours cheap, safe, single-knob changes you can pilot at one seed and back out of.</td></tr>
+      <tr><td class="mono">optimizer</td><td class="num">2</td></tr>
+      <tr><td class="mono">optimizer_regularization</td><td class="num">2</td></tr>
+      <tr><td class="mono">data_order</td><td class="num">1</td></tr>
+    </tbody>
+  </table></div>
+
+  <p><code>timing.stage</code> is unusually granular — 14 distinct stages including <code>model_construction</code> (39), <code>optimizer_construction</code> (16), <code>optimizer_step</code> (5), <code>learning_rate_warmdown</code> (6), <code>data_loading</code>, and <code>attention_forward</code>. <em>When</em> you intervene is a different mechanism from <em>what</em> you change.</p>
+
+  <div class="note"><span class="tag">An exact and startling correspondence</span>
+  <p><strong>All 45 <code>available</code> interventions are referenced by an experiment arm, and all 37 <code>unit_tested</code> ones are unreferenced.</strong> Status is a perfect proxy for usage. Thirty-seven fully-built, tested levers have never been run — including <code>int_ngram_ve_lr_1375</code> above.</p></div>
+
+  <h3>Observables — the instruments</h3>
+  <p>An observable defines a measurement of internal dynamics: <code>sources</code> (each with name, target, tensor_type, declared <code>axes</code>, context), an <code>operation</code>, <code>reductions</code>, an <code>output</code> (type + units), a <code>collection</code> block (mode, cadence, cost tier, estimated overhead, profile status), and a <code>causal_availability</code> block.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Property</th><th>Distribution</th></tr></thead>
+    <tbody>
+      <tr><td><code>operation</code></td><td>11 <code>direct_scalar</code> · 2 <code>axis_reduction_pipeline</code></td></tr>
+      <tr><td><code>output.type</code></td><td>11 <code>scalar</code> · 2 <code>small_vector</code></td></tr>
+      <tr><td><code>causal_availability.uses_validation</code></td><td>9 false · 4 true <span class="pill nu">nested, not top-level</span></td></tr>
+      <tr><td><code>status</code></td><td>9 implemented · 3 available · 1 unit_tested</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note"><span class="tag">Enforced: reductions must be total</span>
+  <p>For an <code>axis_reduction_pipeline</code>, the sorted reduction axes must exactly equal the sorted declared source axes — <em>"axis_reduction_pipeline must reduce every declared source axis exactly once."</em> You cannot declare a source with axes <code>[layer, head]</code>, reduce only <code>layer</code>, and call the result a scalar. Ill-defined measurements are unconstructable.</p></div>
+
+  <p>The <code>causal_availability</code> block (<code>available_before_action</code>, <code>uses_validation</code>, <code>stage</code>) is what lets the system reason about whether a signal may legitimately <em>drive</em> an intervention. An observable that touches validation is diagnostic-only, structurally.</p>
+
+  <h3>Contexts — why exactly one</h3>
+  <p>A context describes the conditioning state present <em>before</em> any action — the schema's required field is literally <code>availability.available_before_action</code>.</p>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">ctx_five_minute_h200</span><span class="pill wa">stale naming</span></div>
+    <div class="sb">
+      <p><code>value: {accelerator: "NVIDIA H200", seed: 42, time_budget_seconds: 300}</code> · entrypoint <code>lib.py:TIME_BUDGET, train.py:_SEED</code></p>
+      <p>There is exactly one context because <strong>the entire methodology holds the environment constant and varies interventions.</strong> More contexts would only appear if you deliberately compared <em>across</em> environments — which the fixed-compute rule forbids for adoption decisions.</p>
+    </div>
+  </div>
+
+  <p>Note the drift: this record encodes <code>time_budget_seconds: 300</code> — the retired 5-minute regime, not the current 2000-step one. It is not load-bearing (the real scope lives in setup reconciliation, and the protocol says static comparisons should <em>omit</em> contexts entirely) but it is stale.</p>
+
+  <h3>The single outcome</h3>
+  <div class="spec">
+    <div class="sh"><span class="nm">out_val_bpb</span><span class="fp">Endpoint validation bits per byte · version 1 · unit_tested</span></div>
+    <div class="sb">
+      <p><code>metric</code> val_bpb / bits_per_byte · <code>direction</code> <strong>minimize</strong> · <code>data_split</code> validation · <code>aggregation</code> endpoint (<code>evaluate_bpb</code>) · <code>detector.finite_required</code> true · <code>policy_visible</code> <strong>false</strong></p>
+      <p>Entrypoint <code>train.py:evaluate_bpb final eval</code>, test <code>test_validation_bpb_is_endpoint_metric</code>.</p>
+      <p><code>direction: minimize</code> is why every improvement in this repository appears as a <em>negative</em> delta. <code>finite_required</code> means a NaN/inf run is rejected rather than scored.</p>
+    </div>
+  </div>
+
+  <div class="note good"><span class="tag">Enforced: the leakage firewall</span>
+  <p>If <code>data_split</code> is validation or test and <code>policy_visible</code> is true, construction raises <em>"validation/test outcomes cannot control online training."</em> The contaminating configuration is not discouraged — it is <strong>unconstructable</strong>. A signal that steers training must live in a separate record on the train split. Without this, the training loop could optimise toward the validation set directly and every result in the ledger would be worthless.</p></div>
+
+  <h3>Tool proposals &amp; capability gaps</h3>
+  <p>A matched pair: a <strong>tool proposal</strong> says "here's a tool we should build"; a <strong>capability gap</strong> says "here's the scientific question we can't answer without it." Both exist so a blocked idea is recorded honestly rather than silently dropped or faked — <em>"Do not pretend a tool exists, and do not silently skip the measurement."</em></p>
+
+  <p>Two proposals, both <code>proposed</code>: <code>tlp_smoothed_train_val_gap</code> (observable, light) and <code>tlp_reference_model_slm</code> (intervention, heavy).</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Capability gap</th><th>The question it blocks</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">gap_single_scope_no_longer_budget_transfer</td><td>Does the 256× win hold at a matched-compute longer budget (2766 steps)? Blocked because setup reconciliation holds <em>one</em> scope key.</td><td><span class="pill wa">open</span></td></tr>
+      <tr><td class="mono">…_transfer_resolved</td><td>Same question — resolved 2026-07-22 by adding a diagnostic-only <code>--diagnostic-steps</code> launch path to <code>run_gated.py</code></td><td><span class="pill ok">resolved</span></td></tr>
+      <tr><td class="mono">gap_no_smoothed_generalization_gap_observable</td><td>Is the 256× gain healthy generalization or memorization? No smoothed train/val-gap observable exists.</td><td><span class="pill wa">open</span></td></tr>
+      <tr><td class="mono">gap_rho1_lever_is_not_true_rho1</td><td><code>RHO1_GAMMA</code> is self-referential focal reweighting, <em>not</em> true Rho-1 (which needs a reference model) — so the Rho-1 claims cannot legitimately back the lever.</td><td><span class="pill wa">open</span></td></tr>
+      <tr><td class="mono">gap_no_fivegram_order_lever</td><td>Does the n-gram order ladder continue past 4-gram? <code>train.py</code> implements no 5-gram table.</td><td><span class="pill wa">open</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The resolved gap kept <em>both</em> records — the original and its <code>_resolved</code> twin — which is append-only history working as intended, though it reads as a duplicate. The third gap is the most interesting: it is an <strong>integrity</strong> gap, catching a mismatch between what a lever is named and what it actually does, with the recommended fix being to <em>rename it</em> to match reality.</p>
+</section>
+
+<!-- ═══════════ 05 ═══════════ -->
+<section id="ideas">
+  <div class="sectnum">05 — THE LEDGER</div>
+  <h2>Ideas</h2>
+  <p>Where knowledge becomes testable. Mechanisms say <em>why</em> something should work; hypotheses say <em>what exact result would prove it wrong</em>.</p>
+
+  <h3>Mechanisms (17)</h3>
+  <p>A mechanism is a falsifiable causal story, not a hunch. Required: a <code>causal_chain</code> of <strong>at least two steps</strong> (enforced), <code>assumptions</code>, <code>competing_mechanism_ids</code>, <code>scope</code>, and predicted observable/intervention behaviour.</p>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">mech_ngram_short_context_memory</span><span class="fp">origin_type: literature · status: active</span></div>
+    <div class="sb">
+      <p><strong>causal chain:</strong> "Local bigram/trigram context carries next-token information a token-only embedding misses." → "Hashed n-gram embedding tables cache this signal and, gated into the attention value path, make it available cheaply." → lower loss.</p>
+      <p><strong>assumptions:</strong> hash collisions are tolerable at the chosen table size; the learned gate can down-weight noisy n-gram rows; the benefit persists in the 2000-step repeated-data regime.</p>
+      <p><strong>claim_ids:</strong> 7 claims across modded-nanoGPT, N-Grammer, SCONE, infini-gram.</p>
+    </div>
+  </div>
+
+  <div class="note"><span class="tag">Enforced: provenance must be honest</span>
+  <p>A <code>literature</code> mechanism <em>requires</em> <code>claim_ids</code>. A <code>self_proposed</code> mechanism is <strong>forbidden</strong> from citing claims — <em>"self-proposed mechanism cannot claim literature provenance."</em> Its empirical grounding is meant to come from <code>observation_ids</code> instead. That is the designed promotion sink for observations.</p></div>
+
+  <p>Split: <strong>13 self-proposed, 4 literature</strong>; 9 active, 8 proposed. But <strong>zero of the 17 cite any observation.</strong> So all 13 self-proposed mechanisms currently have empty provenance — barred from citing papers, and not citing observations either. The graph edge exists and is validated; it has simply never been filled in.</p>
+
+  <h3>Hypotheses (39)</h3>
+  <p>A hypothesis converts a mechanism into one pre-registered bet, linking exact observable, trigger, intervention, outcome, controls, timing, failure condition, and estimated cost. Enforced invariants include: <code>mechanism_ids</code> must be non-empty; observable IDs must be unique; a hypothesis <strong>requires a <code>no_intervention</code> control</strong>; and a trigger must reference a predicted observable <em>unless</em> its type is <code>run_start</code> or <code>static_schedule</code>.</p>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">hyp_ngram_capacity_256</span><span class="fp">4× n-gram embedding capacity lowers 2000-step val_bpb</span></div>
+    <div class="sb">
+      <p><strong>mechanism:</strong> <code>mech_ngram_short_context_memory</code></p>
+      <p><strong>prediction:</strong> raising bigram+trigram VE hash buckets 4× (vocab×64 → vocab×256) lowers endpoint val_bpb versus the byte-identical mult=64 baseline by more than the floor.</p>
+      <p><strong>expected_effect:</strong> <code>{direction: decrease, estimand: endpoint_val_bpb_delta_vs_baseline, latency_steps: 0}</code></p>
+      <p><strong>falsification:</strong> "Adopt only if paired ≥3-seed mean delta ≤ −0.001694, all-same-sign, paired-t significant (confirmed on held-out seeds)."</p>
+      <p><strong>estimated_cost:</strong> 2 concurrent 2000-step H200 runs for the pilot; discovery adds ≥3 paired seeds; tier <code>light</code>.</p>
+    </div>
+  </div>
+
+  <p>The decisive design point: <strong>the decision rule is written when the hypothesis is proposed, not after seeing results.</strong> That is the pre-registration that defeats winner's curse — you cannot move the goalposts because the goalposts are fingerprinted into the record, and a run's <code>spec_fingerprints</code> would detect the drift.</p>
+
+  <p>All 39 hypotheses carry status <code>proposed</code>, and all 39 name a mechanism. The status does not advance even for hypotheses that clearly ran to completion — resolution is recorded downstream in evidence and beliefs (which point back via <code>subject_ids</code>) rather than by mutating the idea record. <strong>"39 proposed" does not mean "39 untested."</strong> This is consistent with the append-only philosophy: ideas are the stable subject, conclusions accrete around them.</p>
+</section>
+
+<!-- ═══════════ 06 ═══════════ -->
+<section id="experiments">
+  <div class="sectnum">06 — THE LEDGER</div>
+  <h2>Experiments</h2>
+
+  <h3>The six-rung ladder</h3>
+  <p>Cost discipline is an escalation policy — <em>"Cost effectiveness comes from rejecting weak ideas early, not from weakening confirmatory experiments."</em></p>
+  <div class="flow">
+    <div class="node"><div class="nn">1</div><div class="nt">offline_screen</div><div class="nd">Reuse existing data. No arms. Must control step, train loss, LR.</div></div>
+    <div class="node"><div class="nn">2</div><div class="nt">pilot</div><div class="nd">Exactly one seed. Plumbing, safety, cost — never a verdict.</div></div>
+    <div class="node"><div class="nn">3</div><div class="nt">matched_branch</div><div class="nd">Separate trigger value from action value</div></div>
+    <div class="node"><div class="nn">4</div><div class="nt">discovery</div><div class="nd">≥3 seeds, paired</div></div>
+    <div class="node"><div class="nn">5</div><div class="nt">validation</div><div class="nd">Fresh pre-registered hold-out seeds</div></div>
+    <div class="node"><div class="nn">6</div><div class="nt">locked_test</div><div class="nd">Hidden from the proposal loop</div></div>
+  </div>
+
+  <p>An <code>offline_screen</code> must have <strong>no arms</strong> (enforced); every other stage requires both a control and a treatment role. A pilot must declare <code>promotion_gate.verdict = implementation_only</code> — it is structurally forbidden from establishing a mechanism.</p>
+
+  <h3>Proposals → Gated → Runs</h3>
+  <p>Both files hold the same <code>ExperimentRecord</code> type; the difference is lifecycle. A proposal is an editable planning object. Once approved it is <strong>fingerprint-frozen</strong>, stamped with <code>frozen_at</code>, and <em>moves</em> into the gated registry, which is append-only.</p>
+
+  <p><strong>Why <code>proposals/experiments.jsonl</code> is empty:</strong> nothing is currently mid-draft. Every experiment ever designed has already been frozen and promoted. It is an empty inbox, not a dead feature.</p>
+
+  <p>The 45 gated experiments: <strong>38 discovery, 5 validation, 2 pilot</strong> — all status <code>approved</code>, all with <code>frozen_at</code> set. Seed counts show the ladder directly: 40 use 3 seeds, two use 6, one uses 4, and the two pilots use exactly 1.</p>
+
+  <h4>What a frozen experiment pins down</h4>
+  <div class="tw"><table>
+    <thead><tr><th>Field</th><th>Example — <code>exp_ngram_capacity_256_discovery</code></th></tr></thead>
+    <tbody>
+      <tr><td class="mono nw">hypothesis_id<br>+ fingerprint</td><td><code>hyp_ngram_capacity_256</code> / <code>e38f95fb07bdbed9</code> — pinned to an exact version. A run whose stored fingerprint disagrees raises <em>"hypothesis fingerprint drift."</em></td></tr>
+      <tr><td class="mono nw">arms</td><td><code>baseline</code> (role control, <code>int_baseline_frozen</code>) vs <code>ngram_mult_256</code> (role treatment), each with a <code>trigger</code> of type <code>run_start</code> conditioned on <code>initial_loss_is_finite</code></td></tr>
+      <tr><td class="mono nw">seeds</td><td><code>[43, 44, 45]</code> — a run at an unlisted seed is rejected by <code>authorize-run</code></td></tr>
+      <tr><td class="mono nw">checkpoint</td><td><code>{matching: same_checkpoint_per_seed, source: deterministic_seed_init}</code> — arms start byte-identical</td></tr>
+      <tr><td class="mono nw">randomization</td><td><code>{method: paired_same_seed_concurrent, unit: branch}</code></td></tr>
+      <tr><td class="mono nw">analysis_plan</td><td>baseline covariates (training_step, train_loss, learning_rate), a <code>multiplicity</code> family with method <code>report_N_and_correct</code>, and a noise model</td></tr>
+      <tr><td class="mono nw">promotion_gate</td><td>mean Δ ≤ −0.001694 (2× floor) · all three deltas same sign · paired-t p&lt;0.05 · train_val_gap not materially widened</td></tr>
+      <tr><td class="mono nw">data_policy</td><td><code>proposal_loop_access: false</code> + the full scope key + split <code>validation</code></td></tr>
+      <tr><td class="mono nw">budget</td><td>1.7 estimated GPU-hours against a hard cap — <em>"experiment estimate exceeds its hard budget cap"</em> is a schema error</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Compare the gates by rung. The <strong>pilot</strong>'s criteria are purely mechanical: <em>"run completes with finite loss · RESOLVED_CONFIG shows NGRAM_TABLE_MULT=256 on treat / 64 on baseline · no OOM."</em> The <strong>validation</strong>'s add a consistency requirement: <em>"consistent with the discovery estimate −0.00405."</em> The ladder tightens as it climbs.</p>
+
+  <h3>Runs (281)</h3>
+  <p>One run = one arm at one seed. Pure facts: git commit and dirty flag, config hash, frozen <code>spec_fingerprints</code> (hypothesis, experiment, outcome), tracker and artifact pointers, measured <code>outcome_values</code>, <code>actual_cost</code>, timestamps, and failure reason.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Property</th><th>Value</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Status</td><td>272 complete · <span class="pill no">9 invalid</span></td><td>invalid runs are retained, never deleted</td></tr>
+      <tr><td>Role</td><td>136 baseline · 145 treatment</td><td>near 1:1 — the paired concurrent design</td></tr>
+      <tr><td>Seeds</td><td>42 – 51</td><td>42–45 selection · 46–51 fresh hold-out</td></tr>
+      <tr><td><code>git_dirty</code></td><td><span class="pill wa">true on all 281</span></td><td>honestly recorded; reproducibility rests on <code>config_hash</code> + <code>spec_fingerprints</code> instead</td></tr>
+      <tr><td>Role enum</td><td>7 values</td><td>baseline, treatment, matched_time, shuffled_trigger, sham, validation, locked_test</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The <code>sham</code> and <code>shuffled_trigger</code> roles exist for a specific scientific rule: <em>"A treatment beating baseline does not prove that its trigger is useful."</em> Sham controls distinguish "the trigger fired at the right moment" from "this action is universally beneficial regardless of timing."</p>
+
+  <p>Run artifacts live <strong>by reference</strong>: <code>artifact_paths</code> points at logs on the remote H200 (e.g. <code>/home/user/ai4ai/…/w3_base_seed42_gpu.log</code>). The local <code>experiments/artifacts/</code> directory is the declared sink in the manifest but holds only a <code>.gitkeep</code> — nothing was ever pulled down, so the raw traces are not archived in this repository.</p>
+
+  <p>Execution goes through <code>tools/run_gated.py &lt;exp&gt; &lt;arm&gt; --seed N --gpu G --remote-wd … --ssh …</code>, which verifies code hashes on the remote, floor-gates sub-noise experiments, and auto-writes the <code>RunRecord</code>. Off-budget diagnostic runs tagged <code>diagnostic_offbudget</code> are exempt from the seed-preregistration check — the one deliberate hole, and it is tagged.</p>
+</section>
+
+<!-- ═══════════ 07 ═══════════ -->
+<section id="refinement">
+  <div class="sectnum">07 — THE LEDGER</div>
+  <h2>Refinement</h2>
+  <p>Where finished experiments become updated knowledge — and where the loop closes back into Knowledge, Toolkit, and Ideas.</p>
+
+  <h3>Evidence updates (46)</h3>
+  <p>The connective tissue: which evidence affects which hypotheses and beliefs, with a typed result, a reason, and a recommended next action. Fields: <code>experiment_id</code>, <code>evidence_ids</code> (non-empty), <code>affected_hypothesis_ids</code>, <code>affected_belief_ids</code>, <code>result</code>, <code>reason</code>, <code>recommended_action</code>.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Result</th><th class="num">n</th><th>Result</th><th class="num">n</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill ok">support</span></td><td class="num">15</td><td><span class="pill ok">weak_support</span></td><td class="num">3</td></tr>
+      <tr><td><span class="pill nu">null</span></td><td class="num">13</td><td><span class="pill no">invalid</span></td><td class="num">3</td></tr>
+      <tr><td><span class="pill no">oppose</span></td><td class="num">10</td><td><span class="pill nu">mixed</span></td><td class="num">2</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>26 of 46 updates are null, opposing, or invalid.</strong> Majority failure, recorded rather than buried.</p>
+
+  <p>An update is also the <em>routing</em> decision. The capacity pilot's update reads: <em>"Pilot succeeded on its implementation_only purpose … single-seed delta −0.00363 directionally promising but non-verdict,"</em> with recommended action <em>"Advance to a 3-seed discovery on fresh pre-registered seeds."</em></p>
+
+  <h3>Decisions (13)</h3>
+  <p>A decision preserves <em>why</em> a direction was stopped or prioritized, so a killed idea is not quietly re-tried. Fields: <code>decision</code>, <code>reasons</code> (non-empty), <code>evidence_ids</code>, <code>affected_ids</code>, <code>replacement_strategy</code>.</p>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">dec_warmdown_075_do_not_adopt</span><span class="pill no">do_not_adopt</span></div>
+    <div class="sb">
+      <p><strong>reasons:</strong> "Effect real but −0.00070 &lt; 0.000847 decision floor (sub-floor, below minimum effect of interest)." · "One of ~8 screened arms; adopting a sub-floor best-of-N is exactly the multiplicity trap the gate exists to prevent."</p>
+      <p><strong>replacement_strategy:</strong> "Keep baseline <code>WARMDOWN_RATIO=0.95</code>. Record the schedule axis as real-but-immaterial; do not spend more seeds unless the floor rule changes."</p>
+    </div>
+  </div>
+  <p>A directionally-correct, genuinely-present effect was <strong>rejected</strong> because it sat below the noise floor and would have been a winner's-curse trap. That is the discipline at its sharpest — and note the tension it creates with the campaign's win #3, where a warmdown of 0.75 <em>was</em> ultimately adopted after nine seeds pooled to t = −3.81.</p>
+
+  <h3>Audits (1)</h3>
+  <p>The single record, <code>aud_integrity_and_baseline_20260722</code>, opens with a finding coded <code>experiment_to_ledger_bypass_fixed</code>: <em>"Prior runs were executed as informal screens with 0 RunRecords (the gate was built then bypassed). Fixed: the WARMDOWN experiment is now the full chain."</em> The ledger auditing its own process failure and documenting the repair.</p>
+
+  <p>The live <code>audit</code> command computes findings deterministically — stale-scope beliefs, beliefs without evidence, claims without literature assessment, hypotheses without evidence, completed runs without evidence, completed experiments without refinement, and stale generated state — each as <code>{severity, code, record_id, message}</code>. <strong>It currently cannot run</strong>, because <code>validate</code> fails on setup drift first.</p>
+
+  <h3>Deprecations (0)</h3>
+  <p>Empty. The mechanism exists — <code>tools/archive.py</code> sets <code>status="deprecated"</code> in place and appends a <code>DeprecationRecord</code> naming a reason, an optional replacement, and evidence — with an <code>object_type</code> enum of 7 values. It has never been run, which is consistent with the 37 unused interventions and the never-promoted observations.</p>
+
+  <h3>Snapshots</h3>
+  <p><code>refinement/snapshots/pre_freshstart_20260721/</code> holds a complete copy of knowledge, ideas, experiments, and refinement as they stood <strong>before the 2026-07-21 reset</strong> to the frozen 2000-step challenge. When the campaign says "legacy superseded," this is where the legacy still lives, intact and inspectable. <code>snapshot-state &lt;label&gt;</code> writes these and refuses to overwrite an existing one.</p>
+</section>
+
+<!-- ═══════════ 08 ═══════════ -->
+<section id="schemas">
+  <div class="sectnum">08 — REFERENCE</div>
+  <h2>Record schemas</h2>
+  <p><strong>19</strong> frozen dataclasses across five modules. Every one validates itself in <code>__post_init__</code>. <strong>13 carry content fingerprints</strong> and re-validate them in <code>from_dict</code>; <strong>6 do not</strong> — <code>ToolProposal</code>, <code>CapabilityGap</code>, and all four refinement types.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Module</th><th class="num">Types</th><th>Records</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">knowledge.py</td><td class="num">5</td><td>Paper · Claim · Evidence · Observation · Belief</td></tr>
+      <tr><td class="mono">toolkit.py</td><td class="num">6</td><td>Observable · Intervention · Context · Outcome · ToolProposal · CapabilityGap</td></tr>
+      <tr><td class="mono">ideas.py</td><td class="num">2</td><td>Mechanism · Hypothesis</td></tr>
+      <tr><td class="mono">experiments.py</td><td class="num">2</td><td>Experiment · Run</td></tr>
+      <tr><td class="mono">refinement.py</td><td class="num">4</td><td>EvidenceUpdate · Audit · Decision · Deprecation</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>The enum vocabulary</h3>
+  <p>Closed vocabularies, not free text — which is what makes the ledger machine-checkable. A downstream query can filter on <code>relation == "supports"</code> and know the field cannot hold unvetted prose.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Enum</th><th class="num">n</th><th>Values</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">CLAIM_TYPES</td><td class="num">8</td><td>descriptive, correlational, predictive, temporal_association, causal, mechanistic, negative_result, method_definition</td></tr>
+      <tr><td class="mono">BELIEF_STATUSES</td><td class="num">9</td><td>unsupported, speculative, plausible, supported, strongly_supported, challenged, contradicted, context_dependent, inconclusive</td></tr>
+      <tr><td class="mono">TRUST_LEVELS</td><td class="num">4</td><td>weak, adequate, strong, not_applicable</td></tr>
+      <tr><td class="mono">TOOL_STATUSES</td><td class="num">6</td><td>proposed, implemented, unit_tested, cost_profiled, available, deprecated</td></tr>
+      <tr><td class="mono">COST_TIERS</td><td class="num">5</td><td>light, moderate, heavy, very_heavy, offline</td></tr>
+      <tr><td class="mono">HYPOTHESIS_STATUSES</td><td class="num">8</td><td>proposed, offline_screened, approved_for_pilot, running, validated, rejected, blocked, deprecated</td></tr>
+      <tr><td class="mono">EXPERIMENT_STAGES</td><td class="num">6</td><td>offline_screen, pilot, matched_branch, discovery, validation, locked_test</td></tr>
+      <tr><td class="mono">EXPERIMENT_STATUSES</td><td class="num">6</td><td>planned, approved, running, complete, failed, cancelled</td></tr>
+      <tr><td class="mono">RUN_STATUSES</td><td class="num">5</td><td>queued, running, complete, failed, invalid</td></tr>
+      <tr><td class="mono">run role</td><td class="num">7</td><td>baseline, treatment, matched_time, shuffled_trigger, sham, validation, locked_test</td></tr>
+      <tr><td class="mono">arm role</td><td class="num">3</td><td>control, treatment, sham <span class="pill nu">distinct from run role</span></td></tr>
+      <tr><td class="mono">evidence source_type</td><td class="num">3</td><td>literature, internal_run, offline_analysis</td></tr>
+      <tr><td class="mono">evidence relation</td><td class="num">5</td><td>supports, opposes, mixed, inconclusive, not_tested</td></tr>
+      <tr><td class="mono">evidence strength</td><td class="num">4</td><td>none, weak, moderate, strong</td></tr>
+      <tr><td class="mono">evidence_update result</td><td class="num">6</td><td>support, weak_support, mixed, null, oppose, invalid</td></tr>
+      <tr><td class="mono">observation status</td><td class="num">4</td><td>exploratory, replicated, dismissed, promoted</td></tr>
+      <tr><td class="mono">paper status</td><td class="num">3</td><td>active, superseded, retracted</td></tr>
+      <tr><td class="mono">mechanism origin_type</td><td class="num">3</td><td>literature, self_proposed, mixed</td></tr>
+      <tr><td class="mono">deprecation object_type</td><td class="num">7</td><td>claim, mechanism, observable, intervention, context, outcome, hypothesis</td></tr>
+      <tr><td class="mono">audit finding severity</td><td class="num">3</td><td>info, warning, error</td></tr>
+      <tr><td class="mono">capability_gap priority / status</td><td class="num">3 / 4</td><td>low, medium, high / open, in_progress, resolved, wont_fix</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Invariants the schemas actually enforce</h3>
+  <p>These are not conventions. Each raises a <code>SchemaError</code> at construction, with the verbatim message shown:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Category</th><th>Message</th></tr></thead>
+    <tbody>
+      <tr><td>Leakage</td><td class="mono">validation/test outcomes cannot control online training</td></tr>
+      <tr><td>Blinding</td><td class="mono">locked-test data must be hidden from the proposal loop</td></tr>
+      <tr><td>Measurement</td><td class="mono">axis_reduction_pipeline must reduce every declared source axis exactly once</td></tr>
+      <tr><td>Provenance</td><td class="mono">literature evidence requires paper_ids and claim_ids</td></tr>
+      <tr><td>Provenance</td><td class="mono">self-proposed mechanism cannot claim literature provenance</td></tr>
+      <tr><td>Theory depth</td><td class="mono">mechanism.causal_chain requires at least two steps</td></tr>
+      <tr><td>Control design</td><td class="mono">hypothesis requires a no_intervention control</td></tr>
+      <tr><td>Control design</td><td class="mono">all controls must use the same checkpoint</td></tr>
+      <tr><td>Control design</td><td class="mono">interventional arms must branch from the same checkpoint</td></tr>
+      <tr><td>Design</td><td class="mono">offline_screen evaluates existing data and must have no arms</td></tr>
+      <tr><td>Budget</td><td class="mono">experiment estimate exceeds its hard budget cap</td></tr>
+      <tr><td>Typing</td><td class="mono">belief subjects must be claim, mechanism, or hypothesis IDs</td></tr>
+      <tr><td>No stubs</td><td class="mono">implemented observable requires a real entrypoint</td></tr>
+      <tr><td>Integrity</td><td class="mono">declared fingerprint … does not match computed …</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ═══════════ 09 ═══════════ -->
+<section id="engine">
+  <div class="sectnum">09 — REFERENCE</div>
+  <h2>The engine &amp; CLI</h2>
+  <p>A dependency-free Python package. <code>core.py</code> holds primitives (<em>"Dependency-free validation and serialization primitives"</em>), <code>registry.py</code> the persistence and validation graph (<em>"The authoritative research graph described by <code>research/manifest.json</code>"</em>), <code>setup.py</code> the scope key (<em>"Validate the portable identity of an experimental world"</em>), and <code>cli.py</code> the interface.</p>
+
+  <h3>Fingerprints — a seal, not storage</h3>
+  <div class="kv">
+<span class="k">def</span> canonical_json(value):<br>
+&nbsp;&nbsp;<span class="k">return</span> json.dumps(value, allow_nan=<span class="v">False</span>, sort_keys=<span class="v">True</span>, separators=(<span class="v">","</span>,<span class="v">":"</span>))<br><br>
+<span class="k">def</span> fingerprint(value):<br>
+&nbsp;&nbsp;<span class="k">return</span> hashlib.sha256(canonical_json(value).encode(<span class="v">"utf-8"</span>)).hexdigest()[<span class="v">:16</span>]
+  </div>
+
+  <p>Canonicalization guarantees the same <em>content</em> always yields the same <em>bytes</em> regardless of field order; SHA-256 then reduces it to a 16-hex-character seal.</p>
+
+  <p><strong>This is one-way.</strong> A fingerprint is not a location and stores nothing — you cannot recover a record from <code>4facb73fbc4b0daa</code>. It exists for two jobs: <code>check_fingerprint</code> recomputes the hash and raises if a declared value no longer matches (so a frozen record cannot be silently mutated — a change <em>must</em> become a new record with a new fingerprint), and runs store <code>spec_fingerprints</code> so they can prove which exact version of a hypothesis, experiment, and outcome they were executed against. Mismatch raises <em>"hypothesis fingerprint drift."</em></p>
+
+  <p>Typed IDs are validated against <strong>18 prefix patterns</strong>: <code>pap_ clm_ evd_ blf_ obs_ int_ ctx_ out_ tlp_ gap_ mech_ hyp_ exp_ run_ upd_ aud_ dec_ dep_</code>.</p>
+
+  <h3>The nine CLI commands</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td class="mono nw">validate</td><td>Full cross-reference check of the graph; raises on setup drift, broken references, fingerprint mismatch, supersession cycles, or a stale generated state</td></tr>
+      <tr><td class="mono nw">summary</td><td>Registry counts and warnings (shares the default path with <code>validate</code>)</td></tr>
+      <tr><td class="mono nw">audit</td><td>Deterministic findings sorted by severity — never edits facts</td></tr>
+      <tr><td class="mono nw">render-state</td><td>Atomically regenerates <code>RESEARCH_STATE.md</code>; prints <code>{"generated": path}</code></td></tr>
+      <tr><td class="mono nw">render-literature</td><td>Rewrites <em>only</em> the block between <code>BEGIN/END GENERATED LITERATURE SNAPSHOT</code>, preserving editorial prose</td></tr>
+      <tr><td class="mono nw">check-setup</td><td>Prints status, fingerprint, scope key; fails unless <code>passed</code> with no frozen-file drift</td></tr>
+      <tr><td class="mono nw">check-gate</td><td>Read-only: may this experiment be frozen? Applies setup, scope, literature-assessment, analysis, and executable-tool gates without mutation</td></tr>
+      <tr><td class="mono nw">authorize-run</td><td><strong>Fails closed</strong> unless one exact (experiment, arm, seed, max_steps) tuple belongs to a current unresolved gate</td></tr>
+      <tr><td class="mono nw">snapshot-state</td><td>Writes an immutable labelled snapshot; refuses to overwrite</td></tr>
+    </tbody>
+  </table></div>
+  <p>There is <strong>no <code>fingerprint</code> subcommand</strong> — that is a function in <code>core.py</code> only. Errors surface as JSON via <code>__main__.py</code>: a <code>SchemaError</code> becomes <code>{"error": …}</code> on stderr with exit code 2.</p>
+
+  <h3>How execution is gated</h3>
+  <p>Nothing may run unless three things hold simultaneously: the setup record status is <code>passed</code>; every frozen file's SHA-256 still matches (recomputed live, including the reference-code path); and the target experiment freezes the <em>current</em> scope key. The relevant error is blunt: <em>"setup reconciliation is {status!r}; experiments are stopped."</em></p>
+
+  <p>A setup record can only <em>reach</em> <code>passed</code> if its baseline observed value sits within <code>tolerance_sigma × effective_sigma</code> of expected, using <strong>at least three unique seeds</strong>. The reconciliation is thus itself an experiment that must pass a gate.</p>
+
+  <div class="note"><span class="tag">How a belief becomes "verified"</span>
+  <p><code>render-state</code> decides verified vs. provisional in code: a belief must cite evidence, and then either be backed <em>only</em> by literature, or draw on <strong>≥3 distinct seeds</strong> from completed runs (<code>registry.py:816</code>). The ≥3-seed rule is an executable check, not a guideline — and it is why a one-seed pilot can never mint a belief no matter how good its number looks.</p></div>
+
+  <h3>Tests — 106 across 7 files</h3>
+  <p>The suite splits into framework tests and training-code tests, wired together by each toolkit record's <code>implementation.test</code> field.</p>
+  <div class="tw"><table>
+    <thead><tr><th>File</th><th class="num">Tests</th><th>Guards</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">test_track_b.py</td><td class="num">32</td><td>Time-matched timing, telemetry, byte-identical-when-off</td></tr>
+      <tr><td class="mono">test_research_system.py</td><td class="num">22</td><td><strong>The ledger's invariants</strong> — scope demotion, leakage, append-only, gate authorization</td></tr>
+      <tr><td class="mono">test_baseline_training_spec.py</td><td class="num">21</td><td>That the frozen config and each candidate lever are byte-faithful</td></tr>
+      <tr><td class="mono">test_doc_mask_impl.py</td><td class="num">11</td><td>Dense vs block-sparse attention-mask execution</td></tr>
+      <tr><td class="mono">test_run_gated.py</td><td class="num">9</td><td>The launcher: floor gates, frozen env, code verification</td></tr>
+      <tr><td class="mono">test_lr_warmup.py</td><td class="num">6</td><td>LR warmup schedule behaviour</td></tr>
+      <tr><td class="mono">test_observable.py</td><td class="num">5</td><td>Observable units, gap computation, dashboard schema</td></tr>
+    </tbody>
+  </table></div>
+  <p>Representative framework tests read like a specification of everything on this page: <code>test_validation_outcome_cannot_control_training</code>, <code>test_scope_mismatch_demotes_terminal_belief_and_approved_gate</code>, <code>test_belief_supersession_cycle_is_rejected</code>, <code>test_run_seed_must_be_preregistered</code>, <code>test_authorize_run_requires_exact_current_gate_tuple</code>, <code>test_setup_drift_stops_validation</code>, <code>test_axis_reduction_must_reduce_every_axis</code>, <code>test_completed_run_appears_in_audit_until_evidence_exists</code>.</p>
+</section>
+
+<!-- ═══════════ 10 ═══════════ -->
+<section id="discipline">
+  <div class="sectnum">10 — REFERENCE</div>
+  <h2>Gate discipline</h2>
+
+  <h3>Fixed compute per comparison</h3>
+  <p>The most emphatic rule in the repository: <strong>every adopt/discard comparison holds control and treatment at identical <code>MAX_STEPS</code>.</strong> Cross-budget comparison is forbidden because more compute lowers <code>val_bpb</code> by itself — the historical curve <strong>1660 → 0.9473, 2500 → 0.9189, 2766 → 0.9126</strong> shows exactly how a "win" could be manufactured from compute alone.</p>
+  <p>Runs that deliberately vary compute are <strong>diagnostics only</strong> — mapping the bpb-vs-tokens curve or locating the matched-compute operating point — and must be recorded as such, never used to promote or kill a change.</p>
+  <p>A subtler trap: <em>same steps is not same compute.</em> A wider MLP or bigger batch does more FLOPs per step, so it can win a step-matched race by spending more. Where compute differs materially, the result must be reported as a <strong>quality–compute tradeoff, not a win</strong>. Every arm therefore records steps, tokens, wall time, estimated FLOPs, peak memory, parameter count, and batch tokens.</p>
+
+  <h3>The verdict gate</h3>
+  <p>Three conditions, all required:</p>
+  <ol>
+    <li>A <strong>paired t-test over ≥3 seed deltas</strong> (self-calibrating)</li>
+    <li><strong>All deltas the same sign</strong></li>
+    <li><strong>|mean| above the effect-heterogeneity floor</strong></li>
+  </ol>
+  <p>Baselines must be freshly reproduced <strong>concurrently</strong> — same batch, GPU, and time window — because cross-time baselines carry temporal drift of about 0.0007 that a same-seed sigma cannot see. One-seed runs are plumbing pilots only; two-pair tests stay exploratory.</p>
+
+  <h3>Selection discipline</h3>
+  <p>With hundreds to thousands of interventions tested against one metric, the best-of-N is inflated by construction. A 1σ one-sided gate passes <strong>~16% of null candidates</strong>; expected best-of-N |z| under pure noise grows like √(2 ln N) ≈ <strong>3.7 at N = 1000</strong>. Five standing rules follow:</p>
+  <ol>
+    <li><strong>Always report N.</strong> "376 improved ≥3σ" is uninterpretable without the denominator.</li>
+    <li><strong>Correct for multiplicity</strong> — a Bonferroni/FDR-adjusted <em>z</em>, or better, judge only by hold-out confirmation.</li>
+    <li><strong>Variance-aware selection.</strong> Select on the lower confidence bound of the paired delta, never the mean alone. Same-seed repetitions cannot even see the relevant (seed) variance.</li>
+    <li><strong>Hold-out confirmation.</strong> A selected candidate's selection-time mean is <em>not reportable</em>; re-run the top-k on fresh pre-registered seeds it was not selected on, against a concurrent fresh baseline, and quote only those.</li>
+    <li><strong>Round to the noise floor.</strong> Seven significant figures against σ≈0.0008 is false precision that hides which sigma was used.</li>
+  </ol>
+  <p>Plus a structural defense: <strong>a never-touched test split</strong>, scored exactly once per confirmed winner, because thousands of adaptive selections against one validation shard is gradual val-set overfitting.</p>
+
+  <h3>The exploration budget</h3>
+  <p>Refinement (nudging a bracketed knob) and exploration (a structurally novel change) draw from one budget on a firm <strong>6:4 split — 60% explore, 40% refine</strong> — counted by <strong>experiment slots, not compute</strong>, because exploration costs more per experiment and compute-budgeting would starve it.</p>
+  <div class="grid2">
+    <div class="card"><h4>Trailing-window rule</h4><p>Over any 10 launched experiments, ≥6 must be <code>track:explore</code>. If it falls below, the next slots <em>must</em> be exploration until restored.</p></div>
+    <div class="card"><h4>Anti-streak cap</h4><p>No more than <strong>2 consecutive</strong> refine experiments. A raw percentage can be satisfied by front- or back-loading; the streak cap is what actually prevents drift into a tuning lane.</p></div>
+    <div class="card"><h4>Plateau rule</h4><p>After K = 3 refinement pilots fail to beat the record, raise exploration to ~50% until a new validated win lands.</p></div>
+    <div class="card"><h4>Reset rule</h4><p>Once an exploration change is validated and adopted, return to 6:4 and refine locally around the new baseline.</p></div>
+  </div>
+  <p>The share may flex within a 50–70% explore band under those triggers, but absent an explicit trigger it holds at 6:4. The documented failure mode this guards against is explicit: a 2026-07-19 session that collapsed into a six-experiment tuning streak. Exploration vs. refinement is a distinction of <em>structure and magnitude, not subsystem</em> — swapping the optimizer or a data-order policy is exploration; nudging a bracketed β is refinement.</p>
+
+  <h3>Correcting a paper</h3>
+  <p>When a run contradicts published work, the claim record is <strong>never</strong> edited — it is provenance. Instead: (1) keep the claim unchanged, (2) file run evidence citing the run IDs <em>and</em> the claim ID with relation <code>opposes</code> or <code>mixed</code>, (3) append a belief with status <code>challenged</code> / <code>contradicted</code> / <code>context_dependent</code> superseding the prior, and (4) state the scope in which the paper's result fails to reproduce here versus the scope the paper reported.</p>
+  <blockquote>Literature priors are corrected by local evidence through beliefs, never by rewriting the claim.</blockquote>
+</section>
+
+<!-- ═══════════ 11 ═══════════ -->
+<section id="results">
+  <div class="sectnum">11 — FINDINGS</div>
+  <h2>Campaign results</h2>
+  <p>Baseline <strong>0.930647</strong> → best <strong>0.922710</strong>, a <strong>−0.007937</strong> improvement from four mutually orthogonal, additive levers, verified on six hold-out seeds (46–51).</p>
+
+  <div class="tw"><table>
+    <thead><tr><th class="num">#</th><th>Lever</th><th>Mechanism</th><th class="num">val_bpb</th><th class="num">Δ</th><th>Evidence</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td class="mono">NGRAM_TABLE_MULT=256</td><td>4× hash-bucket capacity for rare bigram/trigram value embeddings</td><td class="num">0.925318</td><td class="num">−0.00405</td><td>discovery t≈−22 · hold-out t≈−355</td></tr>
+      <tr><td class="num">2</td><td class="mono">DOC_MASK_MODE=seg</td><td>Block cross-document attention in packed rows</td><td class="num">0.923930</td><td class="num">−0.00139</td><td>pooled 6-seed t=−5.38</td></tr>
+      <tr><td class="num">3</td><td class="mono">WARMDOWN_RATIO=0.75</td><td>Earlier, longer LR warmdown</td><td class="num">0.923684</td><td class="num">−0.00040</td><td>9-seed pooled t=−3.81</td></tr>
+      <tr><td class="num">4</td><td class="mono">NGRAM_FOURGRAM_MULT=256</td><td>4th-order context beyond bigram+trigram</td><td class="num">0.922710</td><td class="num">−0.00131</td><td>6-seed hold-out t=−26.27, p&lt;0.01</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Additivity was <em>measured</em>, not assumed: the seg mask's marginal effect (−0.00146) is preserved when stacked on capacity, matching its −0.00143 standalone effect. Win #3 is real but tiny — its hold-out margin over #2 sits within noise. Note also that the four deltas sum to −0.00715, slightly short of the −0.007937 headline; the summary reports both figures as transcribed without reconciling the gap.</p>
+
+  <h3>The central insight</h3>
+  <blockquote>Wins come from <strong>adding</strong> capacity, structure, or schedule that doesn't disturb the tuned optimizer. Every model/optimizer <strong>perturbation</strong> regressed.</blockquote>
+  <p>The frozen configuration — Muon/NorMuon + QK-norm + squared-ReLU + n-gram value embeddings — is a tight, co-tuned local optimum whose only slack is <em>added</em> capacity/structure/schedule. The failure table is unambiguous:</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Lever</th><th>Axis</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Tied embeddings (<code>TIE_EMBED</code>)</td><td>embedding</td><td><span class="pill no">catastrophic</span> +1.78 (val_bpb ≈ 2.72)</td></tr>
+      <tr><td>Residual scaling</td><td>residual</td><td><span class="pill no">hurts</span> +0.0142 (3/3)</td></tr>
+      <tr><td>Cautious Adam update</td><td>optimizer</td><td><span class="pill no">hurts</span> +0.0111 (3/3) — Adam group needs full momentum</td></tr>
+      <tr><td>SwiGLU MLP</td><td>architecture</td><td><span class="pill no">hurts</span> +0.0041 (3/3) — under-trained vs sqrelu-tuned config</td></tr>
+      <tr><td>Shared trigram VE</td><td>architecture</td><td><span class="pill no">hurts</span> +0.0016 — regime-dependent (neutral on B200)</td></tr>
+      <tr><td><code>FINAL_LR_FRAC=0.0</code></td><td>schedule</td><td><span class="pill no">hurts</span> +0.0012 — VE tables need a nonzero late LR floor</td></tr>
+      <tr><td>Window + seg</td><td>attention</td><td><span class="pill no">hurts</span> +0.0010 — windowing discards useful in-doc context</td></tr>
+      <tr><td>Data reshuffle</td><td>data order</td><td><span class="pill wa">real but sub-floor</span> −0.00094 (3/3, t=−3.0)</td></tr>
+      <tr><td>Per-doc RoPE reset</td><td>positional</td><td><span class="pill nu">null</span> — redundant with the seg mask</td></tr>
+      <tr><td>VE-LR ×0.5 · Demon β1 · weight decay 0.15 · zero-init lm_head · 5-gram</td><td>various</td><td><span class="pill nu">null</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>The product-key learned sparse memory — the campaign's <em>primary architecture bet</em>, 4.84B parameters over layers [1,5,7] with zero-init gating for exact step-0 identity — also failed: +0.000593 at default router LR (3/3 worse), −0.000138 at ×0.25 (null). The honest ambiguity is recorded: this cannot separate "learned retrieval doesn't beat random hashing here" from "2000 steps is too short for a zero-init 4.84B-parameter memory to learn routing."</p>
+
+  <h3>Closing the n-gram design space — and measuring <em>why</em></h3>
+  <p>Capacity saturates at 256× (confirmed three independent ways); order terminates at 4-gram. The 5-gram rung fails (mean −0.000470, t = −1.92, 2/3 negative, and +10.6 GB for a sub-threshold return). But rather than assert a ceiling, the campaign <em>measured the cause</em> using exact n-gram statistics over the real 294.9M-token training stream — a property of the data, not of any table:</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Context</th><th class="num">Distinct</th><th class="num">Singleton rate</th><th class="num">Median occurrences</th></tr></thead>
+    <tbody>
+      <tr><td>bigram</td><td class="num">8.49M</td><td class="num">1.2%</td><td class="num">1468</td></tr>
+      <tr><td>trigram</td><td class="num">70.4M</td><td class="num">15.9%</td><td class="num">26</td></tr>
+      <tr><td>4-gram</td><td class="num">164.8M</td><td class="num">45.8%</td><td class="num">2</td></tr>
+      <tr><td>gappy-4 (−4,−2,−1,0)</td><td class="num">205.4M</td><td class="num">60.3%</td><td class="num">1</td></tr>
+      <tr><td>5-gram</td><td class="num">229.0M</td><td class="num">69.9%</td><td class="num">1</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note good"><span class="tag">Why the ladder stops</span>
+  <p>Going 4→5-gram, the fraction of positions whose context <em>never recurs</em> jumps from <strong>45.8% to 69.9%</strong>, and the median context is seen exactly once. <em>"A hashed VE row for a singleton context receives one gradient in the entire run and cannot generalize — the 5-gram rung is starved by construction at this token budget."</em></p>
+  <p>The order ceiling is therefore a <strong>data-budget artifact, not an architectural limit</strong> — and the first thing to retest if the step/token budget is ever unfrozen. The measurement also independently reconfirmed the single-pass regime: the stream is exhausted inside shard 5.</p></div>
+
+  <p>Note the care in the negative claim: the 5-gram point estimate is still <em>negative</em> (helping), merely too small to clear the gate. The honest conclusion is "not worth its cost at 2000 steps," not "5th-order context is useless." Similarly, a gappy-4 probe showed the 4-gram win does <em>not</em> depend on contiguity — what the rung buys is the <em>existence</em> of a 4-token conjunction, not its adjacency structure.</p>
+
+  <div class="note warn"><span class="tag">A naive reading that was wrong</span>
+  <p>The apparent "1.66× bigger improvement on rare tokens" from the capacity win is an <strong>artifact</strong>. A causal observable probe (val nats by frequency decile, 64× vs 256×) showed <em>relative</em> improvement is flat-to-declining with rarity — 5.26% frequent vs 4.14% rare — and flat across position. Rare tokens simply have more loss to give. This substantially weakened the "collision interference on rare n-grams" rationale for brute-force capacity scaling.</p></div>
+</section>
+
+<!-- ═══════════ 12 ═══════════ -->
+<section id="integrity">
+  <div class="sectnum">12 — FINDINGS</div>
+  <h2>Integrity findings</h2>
+  <p>The campaign summary devotes a section to <strong>seven mistakes that each changed a conclusion or a claim</strong>. It is the most unusual thing in this repository, and the most valuable.</p>
+
+  <div class="note bad"><span class="tag">Finding 1 — the false negative that became SOTA</span>
+  <p><code>fourgram_gate</code> was created and used in the forward pass but omitted from <code>init_weights</code>. Because the model builds on meta then calls <code>to_empty()</code>, it held <strong>uninitialized GPU memory</strong> for every run with <code>NGRAM_FOURGRAM_MULT&gt;0</code> — the 4-gram signal was being injected through a <em>random</em> gate.</p>
+  <p><strong>10 runs retracted</strong> and the conclusion "n-gram order is redundant with capacity" withdrawn. After a guarded <code>zeros_</code> init, the axis was re-measured and <em>won</em> (−0.001307, 6/6 hold-out seeds, t = −26.27), becoming SOTA #4. It had been a false negative all along. The re-measurement also required the row-wise-state and sparse-gradient infrastructure, since the configuration previously OOM'd at ~151 GB and now runs at 76.6 GB.</p></div>
+
+  <div class="note warn"><span class="tag">Finding 2 — incompatible units</span>
+  <p><code>DIAGNOSE</code> reports mean nats per <em>token</em>; <code>val_bpb</code> is per <em>byte</em>. Its mask is a byte <em>indicator</em>, not a count, so the two can move in opposite directions — demonstrated on the seg contrast, where val_bpb improved by −0.00173 while per-token nats worsened by +0.0801 in all eight position bins. Since the val set is identical, implied bytes/token would have to differ by 3.3%, which is impossible. Consequence: the seg-mask position causal test is <strong>not runnable</strong> with that instrumentation, and any DIAGNOSE contrast whose two metrics disagree in sign must be discarded.</p></div>
+
+  <div class="note warn"><span class="tag">Finding 3 — reserved key</span>
+  <p>The product-key memory used <code>nn.ModuleDict</code> key <code>"values"</code>, colliding with the reserved dict method and raising <code>KeyError</code> at construction. Caught by a smoke test <em>before</em> any experiment ran — the one finding that cost nothing.</p></div>
+
+  <div class="note bad"><span class="tag">Finding 4 — an overclaim retracted</span>
+  <p>The pipeline is <strong>not bitwise deterministic</strong>. Three 30-step runs at fixed seed and code: v10 run1 5.068482, v10 run2 (same binary) 5.066724, v11 5.070265. <strong>v10 disagreed with itself by 0.001758</strong> — matching the 0.001783 v10↔v11 gap it was being compared against, so the new lever was indistinguishable from run-to-run nondeterminism.</p>
+  <p>Every "byte-identical when off" claim was therefore downgraded to <strong>structural</strong> identity ("no added ops or memory when off"), verified via capture-site counts and peak VRAM rather than equal loss. Notably, this was checked <em>because</em> the lever looked provably inert by inspection — the same reasoning that produced the finding-1 false negative.</p></div>
+
+  <div class="note bad"><span class="tag">Finding 5 — the ritual that was never tested</span>
+  <p>All four SOTA snapshots were <strong>not runnable</strong>: each omitted <code>observable.py</code>, which <code>train.py</code> imports unconditionally, so each failed instantly with <code>ModuleNotFoundError</code>.</p>
+  <p><em>"Hash verification could never have caught this: all four recorded hashes verified correctly, because hashes validate the files that are present and say nothing about a file never included."</em> The reproducibility ritual had been performed four times and never once tested. After the fix, sota_004 reproduced end-to-end at 0.923582 vs a recorded 0.923642 (Δ = 0.19 σ_repro), with peak VRAM matching exactly.</p></div>
+
+  <div class="note bad"><span class="tag">Finding 6 — the vacuous check</span>
+  <p>A verification step read <code>o.get('errors')</code> while the validator emits <code>error</code> (singular), so it returned <code>None</code> regardless of state. Several "validate clean" confirmations were meaningless — <strong>including one written into a commit message</strong> — while two records were citing an <code>ObservationRecord</code> in <code>evidence_ids</code>, where only evidence records are permitted.</p></div>
+
+  <div class="note warn"><span class="tag">Finding 7 — a label, not a configuration</span>
+  <p>The configured TTTL attention windows are not executed by the frozen SDPA path: <code>attention_func</code> ignores <code>window_size</code> and runs full causal SDPA; the window applies only for <code>DOC_MASK_MODE=window|both</code>, not the winning <code>seg</code> mode. Paired comparisons remain unbiased (both arms share full-length attention), but "TTTL baseline" was only a configuration <em>label</em>, and the old FLOP telemetry undercounted attention.</p></div>
+
+  <div class="note"><span class="tag">The pattern</span>
+  <p>Findings 1, 5, and 6 share one root cause, named explicitly: <strong>verification that inspects rather than executes.</strong></p>
+  <blockquote style="margin:8px 0 0">An uninitialized gate that looked initialized, a snapshot that looked complete, a validator call that looked clean. Each was caught only by running the thing.</blockquote></div>
+</section>
+
+<!-- ═══════════ 13 ═══════════ -->
+<section id="trace">
+  <div class="sectnum">13 — FINDINGS</div>
+  <h2>A win, traced end to end</h2>
+  <p>The 256× capacity result, followed through every registry it touches.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Stage</th><th>Record</th><th>Content</th></tr></thead>
+    <tbody>
+      <tr><td>Literature</td><td class="mono">clm_r2_ngram_scone… <span class="pill nu">+6 more</span></td><td>SCONE names the <em>count</em> of cached n-gram embeddings as a distinct scaling axis</td></tr>
+      <tr><td>Assessment</td><td class="mono">evd_lit_ngram_capacity</td><td><span class="pill ok">supports</span> / moderate — "capacity is a scaling lever, not just an LR/schedule knob." Caveat: those papers use non-hashed or offloaded tables; <code>scope_match</code> only <em>adequate</em></td></tr>
+      <tr><td>Mechanism</td><td class="mono">mech_ngram_short_context_memory</td><td>Local context carries information a token embedding misses → hashed tables cache it → gated into the attention value path</td></tr>
+      <tr><td>Hypothesis</td><td class="mono">hyp_ngram_capacity_256</td><td>Falsification fixed in advance: ≤ −0.001694, all-same-sign, paired-t significant</td></tr>
+      <tr><td>Pilot</td><td class="mono">exp_…_pilot</td><td>1 seed [42] · gate is mechanical only: runs, config-verifies 64 vs 256, no OOM</td></tr>
+      <tr><td>Discovery</td><td class="mono">exp_…_discovery</td><td>3 seeds [43,44,45] · statistical gate</td></tr>
+      <tr><td>Validation</td><td class="mono">exp_…_validation</td><td>3 fresh seeds [46,47,48] — never used for selection</td></tr>
+      <tr><td>Runs</td><td class="mono">20 RunRecords</td><td>arms paired baseline vs treatment. (The discovery experiment holds 12 rather than 6 — it also carries off-budget diagnostic runs at other seeds.)</td></tr>
+      <tr><td>Evidence</td><td class="mono">evd_run_…_pilot</td><td><span class="pill ok">supports</span> / <strong>weak</strong> — Δ −0.00363, "directionally promising but non-verdict"</td></tr>
+      <tr><td>Evidence</td><td class="mono">evd_run_…_discovery</td><td><span class="pill ok">supports</span> / <strong>strong</strong> — mean −0.00405, t = −22</td></tr>
+      <tr><td>Evidence</td><td class="mono">evd_run_…_validation</td><td><span class="pill ok">supports</span> / <strong>strong</strong> — mean −0.004012, sd 2e−5</td></tr>
+      <tr><td>Update</td><td class="mono">upd_… ×3</td><td>routes each stage forward: "Advance to a 3-seed discovery on fresh pre-registered seeds"</td></tr>
+      <tr><td>Belief</td><td class="mono">blf_ngram_capacity_256_win_validated</td><td><span class="pill ok">strongly_supported</span> · supersedes <code>…_win_scoped</code></td></tr>
+      <tr><td>Gap</td><td class="mono">gap_single_scope_no_longer_budget_transfer</td><td>The belief's own <code>limitations</code> field names the debt it left behind</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Three things this makes visible:</p>
+  <ul>
+    <li><strong>Evidence strength tracks the rung.</strong> The pilot is <code>weak</code> <em>by rule</em> — one seed cannot be strong, no matter how good the number looks.</li>
+    <li><strong>The belief closes three links at once.</strong> Its <code>subject_ids</code> name the hypothesis (tested), the mechanism (explained), <em>and</em> the SCONE claim (the literature prediction settled).</li>
+    <li><strong>It left a tracked debt.</strong> The limitation pointed at a capability gap, which was later resolved by building a diagnostic-only launch path — closing a loop that began with a paper.</li>
+  </ul>
+
+  <div class="note"><span class="tag">And a counter-example</span>
+  <p><code>int_ngram_ve_lr_1375</code> — a fully built, <code>unit_tested</code> lever for a 1.375× sparse-embedding LR — is referenced by <strong>zero</strong> hypotheses or experiments. It is one of the 37 built-but-never-run interventions. Not every lever gets a story.</p></div>
+</section>
+
+<!-- ═══════════ 14 ═══════════ -->
+<section id="reopen">
+  <div class="sectnum">14 — FINDINGS</div>
+  <h2>A belief reopened — the ledger self-correcting</h2>
+  <p>The clearest demonstration that supersession is a live mechanism rather than a design document. It happened while this reference was being compiled.</p>
+
+  <p>A belief, <code>blf_env_lever_space_exhausted</code>, had concluded that the accessible environment-lever space on the frozen challenge was <strong>exhausted</strong> — 33 experiments across 8 axes, with <code>WARMUP_RATIO=0.02</code> testing null as the final lever. That is a strong, load-bearing conclusion: it is the claim that justifies abandoning knob-search entirely and moving to structural work.</p>
+
+  <p>Then the warmup experiment was re-examined. The retraction evidence records what was found:</p>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">evd_run_ngram256_seg_warmup002_retracted</span><span class="pill no">not_tested · strength none</span></div>
+    <div class="sb">
+      <p><strong>consequence:</strong> "The <code>WARMUP_RATIO=0.02</code> arms and the 256x+seg control arms trained the <strong>IDENTICAL schedule</strong>. The three paired arms differed only in a logged configuration string, so the reported deltas (−0.000006 / −0.000036 / −0.000154) …"</p>
+    </div>
+  </div>
+
+  <p><strong>The knob was dead.</strong> Setting it changed a logged string and nothing else. The three "paired arms" were the same configuration run twice, so the deltas measured pure run-to-run noise — which is exactly why they were so implausibly tiny. A null result had been read as "this lever does nothing," when the truth was "this lever was never applied."</p>
+
+  <p>The system's response is precisely what the protocol prescribes, and none of it involves deleting anything:</p>
+
+  <div class="flow">
+    <div class="node"><div class="nn">1</div><div class="nt">Evidence appended</div><div class="nd">relation <code>not_tested</code>, strength <code>none</code> — a fourth such record</div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="nn">2</div><div class="nt">Update appended</div><div class="nd"><code>upd_warmup002_invalidated_dead_knob</code>, result <code>invalid</code></div></div>
+    <div class="arrow">→</div>
+    <div class="node"><div class="nn">3</div><div class="nt">Belief superseded</div><div class="nd"><code>…_v2</code> with status <code>challenged</code></div></div>
+  </div>
+
+  <div class="spec">
+    <div class="sh"><span class="nm">blf_env_lever_space_exhausted_v2</span><span class="pill wa">challenged</span></div>
+    <div class="sb">
+      <p><strong>statement:</strong> "REOPENED: the env-lever space on the frozen 2000-step challenge is NOT established as exhausted. The v1 belief rested on <code>WARMUP_RATIO=0.02</code> being the last lever and testing null; that experiment never varied the schedule (dead knob, see <code>evd_run_ngram256_seg_warmup002_retracted</code>), so LR warmup is untested…"</p>
+      <p><strong>supersedes:</strong> <code>blf_env_lever_space_exhausted</code></p>
+    </div>
+  </div>
+
+  <p>This is the <code>challenged</code> status — one of the three reserved for contradiction — in genuine use, and it is why the belief count moved from 62 to 63 and the status table gained an entry. The v1 record remains in append-only history, readable, with its reasoning intact. Anyone reading the ledger later can see not just that the conclusion changed, but <em>why</em>, and which specific piece of evidence broke it.</p>
+
+  <div class="note"><span class="tag">The generalizable lesson</span>
+  <p>This is <strong>the same failure mode as integrity findings 1, 5, and 6</strong>: a check that inspected rather than executed. A configuration string was logged, so the lever <em>looked</em> set. Nobody verified that the resolved schedule actually differed between arms. The tell was there in the data — deltas of −0.000006 are far below even same-seed reproduction noise, which should read as "nothing happened" rather than "no effect."</p>
+  <p>A null result and a dead knob produce identical-looking output. Distinguishing them requires checking that the treatment was actually applied — which is why <code>promotion_gate</code> criteria for the capacity pilot included the line <em>"RESOLVED_CONFIG shows NGRAM_TABLE_MULT=256 on treat / 64 on baseline."</em> That check exists because this class of error was anticipated; here it simply was not applied.</p></div>
+</section>
+
+<!-- ═══════════ 15 ═══════════ -->
+<section id="drift">
+  <div class="sectnum">15 — FINDINGS</div>
+  <h2>Known drift &amp; open seams</h2>
+  <p>An honest reference has to record where the system's discipline has not been applied to itself. All verified against the current working tree.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Seam</th><th>What's actually true</th><th>Impact</th></tr></thead>
+    <tbody>
+      <tr><td><strong>The setup gate is red</strong></td><td><code>reconciliation.json</code> says <code>passed</code> at v12, but <code>check-setup</code> reports <em>two</em> drifts: <code>lib.py</code> (a frozen file) and <code>train.py</code> (reference code). A v13 covering only <code>train.py</code> would not clear it.</td><td><span class="pill no">blocking</span> — <code>validate</code> and <code>audit</code> both refuse to run; no new evidence may be registered</td></tr>
+      <tr><td><strong>RESEARCH_STATE.md is stale</strong></td><td>It reports 62 beliefs / 49 run-evidence / 45 updates; the working tree holds 63 / 50 / 46. Records were appended after the last render, and <code>render-state</code> cannot run while the gate is red.</td><td><span class="pill wa">medium</span> — the canonical generated view lags the registries</td></tr>
+      <tr><td><strong>The only context is stale</strong></td><td><code>ctx_five_minute_h200</code> encodes <code>time_budget_seconds: 300</code> — the retired 5-minute regime</td><td><span class="pill wa">low</span> — the real scope lives in setup reconciliation; static comparisons omit contexts anyway</td></tr>
+      <tr><td><strong>Self-proposed mechanisms have no provenance</strong></td><td>0 of 17 mechanisms cite observations, yet 13 are <code>self_proposed</code> and therefore barred from citing claims</td><td><span class="pill wa">medium</span> — 13 theories with no recorded empirical origin</td></tr>
+      <tr><td><strong>The observation ladder is unused</strong></td><td>0 promoted, 0 dismissed. <code>evd_bug_fourgram_gate_uninitialized</code> clearly drove a retraction yet is still marked <code>replicated</code></td><td><span class="pill wa">medium</span> — influence flowed through reasoning, not recorded links</td></tr>
+      <tr><td><strong><code>append_only</code> is inert</strong></td><td>The flag is stored on nine registries and never read; immutability rests on append-mode writes plus fingerprints</td><td><span class="pill wa">medium</span> — a manual edit is caught, not blocked</td></tr>
+      <tr><td><strong>37 unused interventions</strong></td><td>Every <code>unit_tested</code> intervention is unreferenced; <code>deprecations.jsonl</code> is empty, so the archiving pass has never run</td><td><span class="pill nu">low</span> — clutter, not error</td></tr>
+      <tr><td><strong>A duplicate capability gap</strong></td><td><code>gap_single_scope_no_longer_budget_transfer</code> (open) and its <code>_resolved</code> twin share one question</td><td><span class="pill nu">low</span> — reads as 4 open / 1 resolved</td></tr>
+      <tr><td><strong>Raw artifacts aren't archived</strong></td><td><code>experiments/artifacts/</code> holds only <code>.gitkeep</code>; the 281 runs' logs live only on the remote box</td><td><span class="pill wa">medium</span> — numbers captured, raw traces not reproducible from this repo</td></tr>
+      <tr><td><strong><code>LITERATURE_SYNTHESIS.md</code> drifted</strong></td><td>Its header cites 265 papers / 766 claims and a <code>val_bpb</code> ~1.046–1.052 plateau — the obsolete 3-shard regime. A <code>render-literature</code> snapshot mechanism was since added to bind its counts to the registries.</td><td><span class="pill wa">low</span> — directional priors still useful; its numbers are not</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note"><span class="tag">The recurring shape</span>
+  <p>Most seams are the same species: <strong>a discipline enforced at the point of creation, but not maintained afterwards.</strong> Statuses that never advance, ladders never climbed, cleanup passes never run, generated views never regenerated.</p>
+  <p>The invariants that <em>are</em> enforced — leakage, provenance, scope, budget caps, fingerprints — hold perfectly, because they raise a <code>SchemaError</code> at construction and nothing can proceed. The ones that depend on someone coming back later are exactly the ones that drifted. That is a general lesson about where to spend enforcement effort, and this repository is an unusually clean natural experiment in it.</p></div>
+</section>
+
+<!-- ═══════════ 16 ═══════════ -->
+<section id="method">
+  <div class="sectnum">16 — COLOPHON</div>
+  <h2>How this page was verified</h2>
+
+  <p>This reference was compiled by reading the repository directly, then <strong>independently cross-validated by a multi-agent audit</strong>: eight subsystem auditors extracted facts with file-and-line evidence, and adversarial checkers independently recomputed every count and re-opened every cited file, returning CONFIRMED / REFUTED / CORRECTED verdicts. A final hostile review pass then re-verified the finished page against the working tree.</p>
+
+  <p>The cross-checks earned their keep. Corrections forced into this page:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Claim as first drafted</th><th>Verdict</th><th>Corrected to</th></tr></thead>
+    <tbody>
+      <tr><td>21 record dataclasses</td><td><span class="pill no">refuted</span></td><td><strong>19</strong> (5+6+2+2+4)</td></tr>
+      <tr><td>15 fingerprinted record types</td><td><span class="pill no">corrected</span></td><td><strong>13</strong> — the error was inherited from the wrong total</td></tr>
+      <tr><td>62 beliefs · 49 run-evidence · 45 updates</td><td><span class="pill no">refuted</span></td><td><strong>63 · 50 · 46</strong> — the first draft trusted the <em>stale generated</em> <code>RESEARCH_STATE.md</code> instead of the working tree</td></tr>
+      <tr><td>Belief statuses summing to 62</td><td><span class="pill no">refuted</span></td><td>a 7th status, <code>challenged: 1</code>, was missing</td></tr>
+      <tr><td>run_evidence <code>not_tested</code> = 2</td><td><span class="pill no">corrected</span></td><td><strong>3</strong></td></tr>
+      <tr><td>evidence_update <code>invalid</code> = 2</td><td><span class="pill no">corrected</span></td><td><strong>3</strong></td></tr>
+      <tr><td>19 superseded beliefs</td><td><span class="pill no">corrected</span></td><td><strong>20</strong> (35 verified was correct)</td></tr>
+      <tr><td>Setup gate blocked by <code>train.py</code> only</td><td><span class="pill no">corrected</span></td><td><strong>two</strong> drifts — <code>lib.py</code> is also frozen and also drifted</td></tr>
+      <tr><td>~100 tests across 6 files</td><td><span class="pill no">corrected</span></td><td><strong>106 across 7</strong></td></tr>
+    </tbody>
+  </table></div>
+
+  <p>That last-but-one correction is the instructive one: an earlier draft of this page reproduced the stale generated view rather than the live registries — <em>exactly</em> the failure mode described in <a href="#drift">Known drift</a>, committed by this document about that document. It was caught only by recomputing the counts, which is the same lesson as integrity findings 1, 5, and 6.</p>
+
+  <div class="note"><span class="tag">Where the numbers come from</span>
+  <p>Every count is a record count read from the working tree (JSONL <code>#</code> comment headers excluded — raw <code>wc -l</code> overcounts by exactly one per file). The ledger is append-only and actively worked on, so counts will move. The canonical live view is <code>research/knowledge/RESEARCH_STATE.md</code> — but note it is currently stale and cannot be regenerated until the setup gate is cleared.</p></div>
+
+  <p class="foot">Sources: <code>vibeautoresearch/</code> (core, registry, setup, cli, knowledge, toolkit, ideas, experiments, refinement) · <code>research/</code> (21 registries, manifest, reconciliation, RESEARCH_STATE, CAMPAIGN_SUMMARY, LITERATURE_SYNTHESIS) · <code>docs/</code> (AUTOMATED_SCIENCE_SYSTEM, AGENT_PROTOCOL, COST_AND_GATES) · <code>program.md</code>, <code>agent.md</code>, <code>README.md</code>, <code>tests/</code>.</p>
+</section>
+
+</main>
+</div>
+
+<script>
+var REGDATA = {"papers":{"count":349,"fields":["authors","fingerprint","notes","paper_id","retrieved_at","status","tags","title","urls","venue","version","year"],"example":{"authors":["Keller Jordan"],"fingerprint":"4facb73fbc4b0daa","notes":"Seeded literature prior for the training-methods knowledge base.","paper_id":"pap_muon","retrieved_at":"2026-07-19","status":"active","tags":[],"title":"Muon: An optimizer for hidden layers in neural networks","urls":{"primary":"https://kellerjordan.github.io/posts/muon/"},"venue":{"name":"blog","peer_reviewed":false},"version":"","year":2024}},"claims":{"count":1012,"fields":["claim_id","claim_type","extracted_at","fingerprint","limitations","locator","paper_id","scope","statement","tags"],"example":{"claim_id":"clm_muon_1","claim_type":"mechanistic","extracted_at":"2026-07-19","fingerprint":"e3eef08fac98eed1","limitations":["Effect strongest for well-conditioned hidden layers; not shown for embeddings."],"locator":"method definition","paper_id":"pap_muon","scope":{"applies_to":"2d_hidden_matrices","domain":"transformer_lm_pretraining"},"statement":"Orthogonalizing each 2D parameter's momentum update via a Newton-Schulz iteration equalizes update magnitude across singular directions, so hidden matrices train faster per step than under Adam.","tags":["optimizer","muon","orthogonalization"]}},"literature_evidence":{"count":4,"fields":["analysis","artifact_paths","assessment","claim_ids","created_at","created_by","evidence_id","experiment_id","facts","fingerprint","hypothesis_ids","paper_ids","run_ids","source_type","supersedes_evidence_id","tags","trust"],"example":{"analysis":{"code_ref":"research/knowledge/external/claims.jsonl","method":"literature assessment vs the WARMDOWN stable-phase mechanism"},"artifact_paths":[],"assessment":{"limitations":["transfer to fixed 2000-step nanoGPT plausible not guaranteed"],"relation":"supports","strength":"moderate"},"claim_ids":["clm_wsd_schedule_1","clm_wsd_schedule_2","clm_sched_lr_wsd_constant_cooldown_1","clm_sched_lr_wsd_constant_cooldown_2"],"created_at":"2026-07-22T00:00:00-07:00","created_by":"claude-ledger","evidence_id":"evd_lit_wsd_stable_phase","experiment_id":"","facts":{"reported":"WSD/constant-then-cooldown schedules: long stable full-LR phase + short cooldown captures most of the loss drop; stable-phase length and cooldown shape both matter."},"fingerprint":"11e556d93fb6fa4d","hypothesis_ids":[],"paper_ids":["pap_wsd_schedule","pap_sched_lr_wsd_constant_cooldown"],"run_ids":[],"source_type":"literature","supersedes_evidence_id":"","tags":["wsd","schedule"],"trust":{"design":"strong","directness":"strong","limitations":["source scale/budget larger than this 2000-step nanoGPT"],"replication":"strong","scope_match":"adequate"}}},"run_evidence":{"count":50,"fields":["analysis","artifact_paths","assessment","claim_ids","created_at","created_by","evidence_id","experiment_id","facts","fingerprint","hypothesis_ids","paper_ids","run_ids","source_type","supersedes_evidence_id","tags","trust"],"example":{"analysis":{"code_ref":"tools/run_gated.py + w3/w4 remote logs","method":"paired concurrent A/B, paired-t over seed deltas vs seed-to-seed floor 0.000847"},"artifact_paths":[],"assessment":{"limitations":["real directional effect but sub-floor / below minimum effect of interest -> not adopt-grade"],"relation":"supports","strength":"moderate"},"claim_ids":["clm_wsd_schedule_1","clm_sched_lr_wsd_constant_cooldown_1"],"created_at":"2026-07-22T01:00:00-07:00","created_by":"claude-ledger","evidence_id":"evd_run_warmdown_075","experiment_id":"exp_warmdown_075","facts":{"result":"WARMDOWN_RATIO=0.75 vs frozen baseline, 6 paired seeds (42-47): deltas -0.00072/-0.00113/-0.00031/-0.00088/-0.00044/-0.00070; mean -0.00070; 6/6 better; paired-t~5.75. Fresh out-of-selection seeds 45/46/47 mean -0.00067 (3/3). 0.85 bracket mean -0.00082 (2/2)."},"fingerprint":"6b8609a00798f8ac","hypothesis_ids":["hyp_warmdown_stable_phase"],"paper_ids":[],"run_ids":["run_exp_warmdown_075_baseline_s42_35a69a1ae0398d42","run_exp_warmdown_075_baseline_s43_ef269419689dcf64","run_exp_warmdown_075_baseline_s44_5324b3da91e0bd99","run_exp_warmdown_075_baseline_s45_4764d0978c1693e8","run_exp_warmdown_075_baseline_s46_2eab18b0b51691e5","run_exp_warmdown_075_baseline_s47_8960c6a9c51bd821","\u2026 +6 more"],"source_type":"internal_run","supersedes_evidence_id":"","tags":["warmdown","convergence","sub_floor"],"trust":{"design":"strong","directness":"strong","limitations":["one of ~8 screened arms (multiplicity)","effect below the 0.000847 decision floor"],"replication":"strong","scope_match":"strong"}}},"observations":{"count":10,"fields":["created_at","fingerprint","followup_required","observation_id","possible_confounds","run_ids","statement","status","tags"],"example":{"created_at":"2026-07-22T06:00:00-07:00","fingerprint":"6add6692e185312d","followup_required":false,"observation_id":"evd_obs_ngram_capacity_vram_linear","possible_confounds":["allocator caching; early readings understate steady-state"],"run_ids":["run_exp_ngram_capacity_2_ngram_mult_256_s43_6f1d19458417ae46","run_exp_ngram_capacity_2_ngram_mult_256_s44_f4f0692d10043b71","run_exp_ngram_capacity_2_ngram_mult_256_s45_675cff61a14cbff2","run_exp_ngram_capacity_1_ngram_mult_128_s43_1123e0dc759bd422","run_exp_ngram_capacity_1_ngram_mult_128_s44_88b98359525f1ac1","run_exp_ngram_capacity_1_ngram_mult_128_s45_7b90bc8e8ad86e19"],"statement":"Steady-state VRAM scales ~linearly with NGRAM_TABLE_MULT: 64x~14GB, 128x~57GB, 256x~113GB (full RMSProp state on the sparse tables). Implies 512x ~226GB -> OOM on a 143GB H200; 256x is the ceiling of the feasible sweep.","status":"exploratory","tags":["ngram","capacity","vram"]}},"beliefs":{"count":63,"fields":["belief_id","created_at","created_by","evidence_ids","fingerprint","limitations","next_test","rationale","scope","statement","status","subject_ids","supersedes_belief_id","tags","version"],"example":{"belief_id":"blf_ngram_capacity_256_win_validated","created_at":"2026-07-22T08:25:00-07:00","created_by":"claude-ledger","evidence_ids":["evd_run_ngram_capacity_256_validation","evd_run_ngram_capacity_256_discovery","evd_run_ngram_capacity_256_pilot"],"fingerprint":"99f0e2de4eded326","limitations":["2000-step scope only; matched-compute longer-budget transfer still unverified (see gap_single_scope_no_longer_budget_transfer)"],"next_test":"Matched-compute longer-budget transfer check, then freeze 256x as the default.","rationale":"Three independent confirmations including a fresh-seed hold-out; effect size stable to the 4th decimal.","scope":{"model":"nanoGPT rsi/daniel n_layer=8","regime":"repeated-data 2000-step H200","scope_key":{"data_split_sha256":"ed8ea0554010df9fbfa47746adc6643d6446797753eb377c0b35413bdcf2fca3","max_steps":2000,"outcome_id":"out_val_bpb","stop_mode":"steps"}},"statement":"VALIDATED: NGRAM_TABLE_MULT 64->256 (4x n-gram VE capacity) lowers 2000-step val_bpb by ~-0.0040, confirmed on THREE independent seed batches -- pilot (s42 -0.00363), discovery (s43-45 -0.00405, t=-22), and pre-registered hold-out (s46-48 -0.004012, t=-355, sd 2e-5). Compute-matched. First validated \u2026","status":"strongly_supported","subject_ids":["hyp_ngram_capacity_256","mech_ngram_short_context_memory","clm_r2_ngram_scone_scaling_embeddings_3"],"supersedes_belief_id":"blf_ngram_capacity_256_win_scoped","tags":["ngram","capacity","win","validated"],"version":3}},"observables":{"count":13,"fields":["causal_availability","collection","description","fingerprint","implementation","name","observable_id","operation","output","reductions","sources","status","tags","version"],"example":{"causal_availability":{"available_before_action":true,"stage":"after_forward_before_optimizer_step","uses_validation":false},"collection":{"cadence_steps":1,"cost_tier":"light","estimated_overhead_pct":0.1,"mode":"online","profile_status":"estimated"},"description":"Per-step detached training cross-entropy used only for diagnostics and fast-fail checks.","fingerprint":"a7684e82e3232c5e","implementation":{"entrypoint":"observable.py:build_step_observables","test":"tests/test_baseline_training_spec.py:BaselineTrainingSpecTest.test_training_loss_observable_is_emitted"},"name":"Raw training loss","observable_id":"obs_raw_train_loss","operation":"direct_scalar","output":{"type":"scalar","units":"nats_per_token"},"reductions":[],"sources":[{"axes":[],"context":"train","name":"train_loss","target":"train.py:train_loss","tensor_type":"scalar"}],"status":"unit_tested","tags":["baseline","loss"],"version":1}},"interventions":{"count":82,"fields":["action","cost_tier","description","duration","fingerprint","implementation","intervention_id","name","parameters","reversible","safety","status","tags","target","timing","version"],"example":{"action":"apply_current_optimizer_and_time_based_schedules","cost_tier":"moderate","description":"Frozen current train.py configuration for the first five-minute H200 reference run.","duration":{"type":"full_run"},"fingerprint":"ce8da4280d504b6c","implementation":{"entrypoint":"train.py:training-loop inline schedule (lrm_muon/muon_momentum/muon_beta2/adam_beta1/muon_weight_decay)","test":"tests/test_baseline_training_spec.py:BaselineTrainingSpecTest.test_current_schedule_entrypoints_exist"},"intervention_id":"int_current_schedule","name":"Current nanoGPT training schedule","parameters":{"depth":8,"matrix_lr":0.04,"seed":42,"time_budget_seconds":300,"warmdown_ratio":0.95,"weight_decay":0.1},"reversible":true,"safety":{"fast_fail_nonfinite_loss":true,"max_train_loss":100,"validation_policy_control":false},"status":"unit_tested","tags":["baseline","schedule"],"target":{"selector":"train.py default optimizer groups","type":"training_process"},"timing":{"stage":"optimizer_step"},"version":1}},"contexts":{"count":1,"fields":["availability","context_id","fingerprint","implementation","name","source","status","tags","value","version"],"example":{"availability":{"available_before_action":true},"context_id":"ctx_five_minute_h200","fingerprint":"e734eb957b15433d","implementation":{"entrypoint":"lib.py:TIME_BUDGET,train.py:_SEED","test":"tests/test_baseline_training_spec.py:BaselineTrainingSpecTest.test_time_budget_is_five_minutes"},"name":"Five-minute single-H200 run","source":{"type":"runtime_and_hardware"},"status":"unit_tested","tags":["baseline","h200"],"value":{"accelerator":"NVIDIA H200","seed":42,"time_budget_seconds":300,"type":"structured"},"version":1}},"outcomes":{"count":1,"fields":["aggregation","data_split","detector","direction","fingerprint","implementation","metric","name","outcome_id","policy_visible","status","tags","version"],"example":{"aggregation":{"evaluation":"evaluate_bpb","type":"endpoint"},"data_split":"validation","detector":{"finite_required":true},"direction":"minimize","fingerprint":"214ee86f4e923930","implementation":{"entrypoint":"train.py:evaluate_bpb final eval","test":"tests/test_baseline_training_spec.py:BaselineTrainingSpecTest.test_validation_bpb_is_endpoint_metric"},"metric":{"name":"val_bpb","units":"bits_per_byte"},"name":"Endpoint validation bits per byte","outcome_id":"out_val_bpb","policy_visible":false,"status":"unit_tested","tags":["primary","validation","bpb"],"version":1}},"tool_proposals":{"count":2,"fields":["acceptance_tests","created_at","estimated_implementation_cost","estimated_runtime_cost","motivation","name","proposal_id","required_by_hypotheses","status","suggested_collection_frequency_steps","tool_type"],"example":{"acceptance_tests":["EMA(train CE, halflife>=100) minus matched-step val CE written to observable_curves.json","no hot-loop printing","zero effect on outputs/optimizer/seed"],"created_at":"2026-07-22T06:00:00-07:00","estimated_implementation_cost":"light","estimated_runtime_cost":"light","motivation":"Per-step gap too noisy to detect memorization; a smoothed gap enables generalization-health checks for capacity experiments.","name":"smoothed_train_val_gap","proposal_id":"tlp_smoothed_train_val_gap","required_by_hypotheses":["hyp_ngram_capacity_256"],"status":"proposed","suggested_collection_frequency_steps":50,"tool_type":"observable"}},"capability_gaps":{"count":5,"fields":["blocked_hypothesis_ids","created_at","gap_id","missing_capabilities","priority","question","recommended_solution","status"],"example":{"blocked_hypothesis_ids":["hyp_fourgram_capacity_sweep"],"created_at":"2026-07-23T00:30:00-07:00","gap_id":"gap_no_fivegram_order_lever","missing_capabilities":["train.py implements bigram, trigram and fourgram n-gram value-embedding orders only (NGRAM_BIGRAM_MULT / NGRAM_TRIGRAM_MULT / NGRAM_FOURGRAM_MULT). There is NO fivegram path (grep: 0 occurrences of fivegram / NGRAM_FIVE / 5gram). Testing the next rung of the order ladder requires new code, so it was \u2026"],"priority":"high","question":"Does the n-gram ORDER ladder continue past 4-gram? The 4-gram order just produced SOTA #4 (-0.001307 on 6 hold-out seeds) after being wrongly retracted, so 5-gram is the obvious next rung -- but it cannot be tested.","recommended_solution":"Add a fivegram table/hash/gate/optimizer-group mirroring the fourgram path: fivegram_table_size = vocab * NGRAM_FIVEGRAM_MULT, K=2 factored half-dim tables on the same layers, disjoint 10-prime hash family, and CRITICALLY a correctly zero-initialised fivegram_gate in GPT.init_weights (the missing fo \u2026","status":"open"}},"mechanisms":{"count":17,"fields":["assumptions","causal_chain","claim_ids","competing_mechanism_ids","description","fingerprint","intervention_predictions","mechanism_id","name","notes","observable_predictions","observation_ids","origin_type","scope","status","tags","version"],"example":{"assumptions":["Hash collisions are tolerable at the chosen table size / vocab.","The learned gate can down-weight noisy n-gram rows.","Benefit persists in the 2000-step repeated-data regime, not only fresh-stream training."],"causal_chain":["Local bigram/trigram context carries next-token information a token-only embedding misses.","Hashed n-gram embedding tables cache this signal and, gated into the attention value path, add it cheaply per token.","Sparse n-gram rows are updated rarely, so they benefit from a higher effective learning rate than dense matrices.","The extra local signal reduces per-token loss, most where token-only context is weakest."],"claim_ids":["clm_modded_nanogpt_1","clm_modded_nanogpt_3","clm_r2_ngram_n_grammer_1","clm_r2_ngram_n_grammer_2","clm_r2_ngram_scone_scaling_embeddings_1","clm_r2_ngram_scone_scaling_embeddings_3","\u2026 +1 more"],"competing_mechanism_ids":[],"description":"The baseline already injects per-token value embeddings into the attention value path; extending this with hashed bigram/trigram embedding tables gated into the value path gives the model a cheap local n-gram (short-context) memory, lowering loss without the cost of convolutional/attention-heavy alt \u2026","fingerprint":"88fc5d5607e8bed2","intervention_predictions":[{"expected_change":"vs this control, an enriched hashed n-gram value-embedding (larger tables / added gated trigram path / retuned sparse LR) lowers 2000-step val_bpb beyond the 0.0007 floor","intervention_id":"int_current_schedule"}],"mechanism_id":"mech_ngram_short_context_memory","name":"Hashed n-gram value-embedding short-context memory","notes":"Seeded 2026-07-21 as the anchor exploration direction (Recursive 'short-context memory' result). Preserve; do not archive.","observable_predictions":[{"expected_pattern":"lower at matched step vs baseline when n-gram memory is enriched","observable_id":"obs_raw_train_loss"},{"expected_pattern":"watch for widening (memorization) if n-gram capacity is raised too far in the repeated-data regime","observable_id":"obs_train_val_gap"}],"observation_ids":[],"origin_type":"literature","scope":{"hardware":"single H200","max_steps":2000,"model":"nanoGPT (rsi/daniel)","regime":"repeated-data (~1.6 epoch)","stop_mode":"steps"},"status":"active","tags":["ngram","value_embedding","short_context_memory","architecture","explore","priority"],"version":1}},"hypotheses":{"count":39,"fields":["context_ids","controls","created_at","estimated_cost","expected_effect","falsification","fingerprint","hypothesis_id","intervention","mechanism_ids","notes","observable_predictions","outcome","prediction","status","tags","title","trigger","version"],"example":{"context_ids":["ctx_five_minute_h200"],"controls":[{"control_id":"baseline","description":"Frozen-baseline control (no env overrides), same seed/data order.","kind":"no_intervention","matching":{"same_checkpoint":true,"same_data_order":true}}],"created_at":"2026-07-22T00:00:00-07:00","estimated_cost":{"basis":"6 paired 2000-step H200 runs","cost_tier":"moderate","currency_cost":0.0,"gpu_hours":0.9},"expected_effect":{"direction":"decrease","estimand":"endpoint_val_bpb_delta_vs_baseline","latency_steps":0},"falsification":{"decision_rule":"Adopt only if paired >=3-seed mean delta <= -minimum_effect, all-same-sign, paired-t significant.","failure_condition":"null/worse/sub-minimum-effect.","minimum_seeds":3},"fingerprint":"e5cc2f288a4d0017","hypothesis_id":"hyp_warmdown_stable_phase","intervention":{"intervention_id":"int_warmdown_075","parameters":{"env":{"WARMDOWN_RATIO":"0.75"}},"version":1},"mechanism_ids":["mech_lr_stable_phase_convergence"],"notes":"Formalized from screen.","observable_predictions":[{"expected_pattern":{"type":"finite_and_decreasing"},"observable_id":"obs_raw_train_loss","version":1,"window":{"steps":2000,"type":"full_training_run"}}],"outcome":{"outcome_id":"out_val_bpb","version":1},"prediction":{"direction":"decrease","estimand":"endpoint_val_bpb"},"status":"proposed","tags":["schedule","convergence"],"title":"Longer Muon stable phase lowers val_bpb","trigger":{"condition":{"operator":"initial_loss_is_finite"},"observable_id":"obs_raw_train_loss","type":"run_start"},"version":1}},"gated_experiments":{"count":45,"fields":["analysis_plan","arms","budget","checkpoint","created_at","data_policy","experiment_id","fingerprint","frozen_at","hypothesis_fingerprint","hypothesis_id","notes","promotion_gate","randomization","seeds","stage","status","tags","title","version"],"example":{"analysis_plan":{"baseline_covariates":["training_step","train_loss","learning_rate"],"multiplicity":{"family_id":"convergence_wave_2026_07","method":"report_N_and_correct"},"noise_model":{"effective_sigma":0.000847,"minimum_effect":0.000847,"source":"reconciliation seed-to-seed sigma"},"outcome_id":"out_val_bpb","primary_estimand":"paired_endpoint_val_bpb_delta","uncertainty_method":"paired_t_over_seed_deltas"},"arms":[{"arm_id":"baseline","control_id":"baseline","description":"Frozen baseline control.","intervention_id":"int_baseline_frozen","role":"control","trigger":{"condition":"initial_loss_is_finite","type":"run_start"}},{"arm_id":"warmdown_075","control_id":"baseline","description":"WARMDOWN_RATIO=0.75.","intervention_id":"int_warmdown_075","role":"treatment","trigger":{"condition":"initial_loss_is_finite","type":"run_start"}}],"budget":{"basis":"6 paired H200 runs","estimated_currency_cost":0.0,"estimated_gpu_hours":0.9,"hard_cap_currency_cost":0.0},"checkpoint":{"matching":"same_checkpoint_per_seed","source":"deterministic_seed_init"},"created_at":"2026-07-22T00:00:00-07:00","data_policy":{"proposal_loop_access":false,"scope_key":{"data_split_sha256":"ed8ea0554010df9fbfa47746adc6643d6446797753eb377c0b35413bdcf2fca3","max_steps":2000,"outcome_id":"out_val_bpb","stop_mode":"steps"},"split":"validation"},"experiment_id":"exp_warmdown_075","fingerprint":"763e077923c28974","frozen_at":"2026-07-22T00:00:00-07:00","hypothesis_fingerprint":"e5cc2f288a4d0017","hypothesis_id":"hyp_warmdown_stable_phase","notes":"Run as screen then formalized.","promotion_gate":{"criteria":["paired mean delta <= -0.000847","all-same-sign","paired-t significant"],"on_fail":"record belief; do not adopt.","on_pass":"adopt."},"randomization":{"method":"paired_same_seed_concurrent","unit":"branch"},"seeds":[42,43,44,45,46,47],"stage":"discovery","status":"approved","tags":["schedule"],"title":"WARMDOWN_RATIO 0.75 vs frozen baseline","version":1}},"runs":{"count":281,"fields":["actual_cost","arm_id","artifact_paths","config_hash","ended_at","experiment_id","failure_reason","fingerprint","git_commit","git_dirty","hypothesis_id","intervention_events_path","outcome_values","role","run_id","seed","spec_fingerprints","started_at","status","tags","tracker"],"example":{"actual_cost":{"currency_cost":0.0,"gpu_hours":0.15,"observable_overhead_pct":0.0},"arm_id":"baseline","artifact_paths":{"log":"/home/user/ai4ai/temp_autoresearch_baiyu_freshstart/w3_base_seed42_gpu.log"},"config_hash":"35a69a1ae0398d42","ended_at":"2026-07-22T01:00:00-07:00","experiment_id":"exp_warmdown_075","failure_reason":"","fingerprint":"e14518b81ab97443","git_commit":"uncommitted","git_dirty":true,"hypothesis_id":"hyp_warmdown_stable_phase","intervention_events_path":"none","outcome_values":{"val_bpb":0.930082},"role":"baseline","run_id":"run_exp_warmdown_075_baseline_s42_35a69a1ae0398d42","seed":42,"spec_fingerprints":{"experiment":"763e077923c28974","hypothesis":"e5cc2f288a4d0017","outcome":"214ee86f4e923930"},"started_at":"2026-07-22T01:00:00-07:00","status":"complete","tags":["bound_run","config_verified"],"tracker":{"kind":"remote_tmux","log":"/home/user/ai4ai/temp_autoresearch_baiyu_freshstart/w3_base_seed42_gpu.log"}}},"evidence_updates":{"count":46,"fields":["affected_belief_ids","affected_hypothesis_ids","created_at","evidence_ids","experiment_id","reason","recommended_action","result","update_id"],"example":{"update_id":"upd_warmdown_075_closure","experiment_id":"exp_warmdown_075","evidence_ids":["evd_run_warmdown_075"],"affected_belief_ids":["blf_warmdown_075_real_sub_floor"],"affected_hypothesis_ids":["hyp_warmdown_stable_phase"],"result":"mixed","reason":"Discovery on 6 paired seeds (42-47) confirmed a real, all-same-sign directional effect (mean paired delta -0.00070 val_bpb, 6/6 better, paired-t~5.75), so the stable-phase warmdown mechanism is directionally supported; but endpoint |mean| 0.00070 is below the 0.000847 decision floor (and below the 2 \u2026","recommended_action":"Close exp_warmdown_075: keep baseline WARMDOWN_RATIO=0.95, record the schedule axis as real-but-immaterial, spend no further seeds unless the floor rule changes. Redirect budget to a candidate whose pre-registered minimum effect of interest is >= 2x the decision floor (>= 0.001694).","created_at":"2026-07-22T02:00:00-07:00"}},"audits":{"count":1,"fields":["audit_id","created_at","created_by","findings","scope","summary"],"example":{"audit_id":"aud_integrity_and_baseline_20260722","created_at":"2026-07-22T01:30:00-07:00","created_by":"claude-audit","findings":[{"code":"experiment_to_ledger_bypass_fixed","message":"Prior runs were executed as informal screens with 0 RunRecords (the gate was built then bypassed). Fixed: the WARMDOWN experiment is now the full chain (literature_evidence->mechanism->intervention->hypothesis->gated exp_warmdown_075->12 config-verified RunRecords via run_gated.py->run_evidence->bel \u2026","record_id":"experiments/runs/runs.jsonl","severity":"warning"},{"code":"baseline_discontinuity_unexplained","message":"Legacy baseline 0.933386 vs current corrected 0.930647 (-0.004) is NOT explained by the BPB byte-count fix. Verified by direct recompute (tokenizer + val shard 6542): the fix SHRINKS the val byte denominator (3,027,266->3,023,570) so it can only RAISE bpb (~0.9345 predicted), never lower it. The obs \u2026","record_id":"setup/reconciliation.json","severity":"warning"},{"code":"current_setup_internally_stable","message":"The current corrected setup is self-consistent: rebase_seed42=0.930008 and v2 w3_base_seed42=0.930082 both reproduce ~0.9301. All experiment DELTAS use this single stable setup, so they remain valid regardless of the legacy discontinuity; only the absolute comparison to the superseded legacy value i \u2026","record_id":"setup/reconciliation.json","severity":"info"},{"code":"warmdown_real_but_sub_floor","message":"WARMDOWN result confirmed by verification: real, 6/6 seeds, paired-t~5.74, replicates on fresh seeds, but sub-floor (-0.00070 < 0.000847). Reframed: the 0.85 arm is also better (nominally more), so it is a 'shorter-warmdown helps the underfit regime' AXIS, not a 0.75 optimum. Not adopt-grade.","record_id":"knowledge/beliefs.jsonl","severity":"info"},{"code":"rsi_daniel_progress_basis_divergence","message":"Baseline matches rsi/daniel on all config + inline schedule formulas, but the progress basis diverges: daniel uses step/MAX_STEPS; this repo uses (step-10)/(MAX_STEPS-10) (excludes compile steps), shifting schedule events ~0.5%. Small but real; a faithful-reproduction note.","record_id":"train.py","severity":"warning"},{"code":"multiplicity_uncorrected","message":"~8 arms were screened; WARMDOWN is one marginal hit. Fresh-seed replication mitigates winner's-curse, but the family-wise multiplicity was not formally corrected. Enforce report-N + minimum-effect >= 2x floor going forward.","record_id":"experiments/gated/experiments.jsonl","severity":"warning"}],"scope":"Process integrity + baseline provenance after multi-agent verification (2026-07-22).","summary":"Multi-agent verification caught a real error (baseline 'benign' claim), which is retracted; the byte fix does not explain the legacy->current shift. The experiment-to-ledger bypass is being closed (WARMDOWN chain formalized). Science deltas remain valid on the internally-stable current setup."}},"decisions":{"count":13,"fields":["affected_ids","created_at","created_by","decision","decision_id","evidence_ids","reasons","replacement_strategy"],"example":{"affected_ids":["exp_warmdown_075","int_warmdown_075"],"created_at":"2026-07-22T01:00:00-07:00","created_by":"claude-campaign","decision":"do_not_adopt","decision_id":"dec_warmdown_075_do_not_adopt","evidence_ids":["evd_run_warmdown_075"],"reasons":["Effect real but -0.00070 < 0.000847 decision floor (sub-floor, below minimum effect of interest).","One of ~8 screened arms; adopting a sub-floor best-of-N is exactly the multiplicity trap the gate exists to prevent."],"replacement_strategy":"Keep baseline WARMDOWN_RATIO=0.95. Record the schedule axis as real-but-immaterial; do not spend more seeds unless the floor rule changes."}},"experiment_proposals":{"count":0,"fields":[],"example":null},"deprecations":{"count":0,"fields":[],"example":null}};
+
+var REGMETA = [
+ {g:"Knowledge — what we know"},
+ {k:"papers",f:"knowledge/external/papers.jsonl",t:"PaperRecord",m:"editable",
+  p:"Bibliographic metadata only — the citation, never the science. A paper record asserts that a source exists and describes it: title, authors, year, venue (with an explicit peer_reviewed boolean), primary URL, and retrieval date. The actual assertions live one layer down in claims.jsonl. This separation is what lets the same paper be rated strong on one trust axis and weak on another: trust is a judgement about a claim in a context, not a property of the publication.",
+  i:["venue must contain both name and peer_reviewed; peer_reviewed is forced to a boolean","urls must contain a primary key","year must be ≥ 1900","status ∈ {active, superseded, retracted} — retraction re-labels, never deletes, because claims and evidence already point at this paper_id"],
+  n:"All 349 records are currently status=active, so the field carries no information yet. It is never read by any code path — it exists so a future retraction can be recorded without orphaning downstream references."},
+ {k:"claims",f:"knowledge/external/claims.jsonl",t:"ClaimRecord",m:"editable",
+  p:"One atomic statement extracted from a paper, typed into one of eight categories, with its own scope and limitations. A locator records where in the paper it came from — a method definition carries different evidential weight than an abstract's boast. Claims are provenance: they record what a paper asserted and are never edited to match a run.",
+  i:["claim_type ∈ 8 values: descriptive, correlational, predictive, temporal_association, causal, mechanistic, negative_result, method_definition","paper_id must resolve to a real paper","For predictive/causal/mechanistic claims the ingestion protocol requires recording direction of effect and the scope in which it holds"],
+  n:"A claim has NO status or assessment field. Its 'assessed' state is derived purely from whether an evidence record cites its claim_id — currently 16 of 1012, leaving 996 unassessed. That backlog is deliberate: assessment is expensive and written only when a hypothesis is about to spend an experiment slot."},
+ {k:"literature_evidence",f:"knowledge/external/literature_evidence.jsonl",t:"EvidenceRecord",m:"append-only",
+  p:"Where a paper claim is promoted from 'something a paper said' into citeable evidence. Each record keeps three things rigorously apart: facts (what the sources reported, verbatim), assessment (the typed verdict — relation and strength), and trust (four-axis source quality). This is the judgement layer, and it is the only way literature can enter a belief.",
+  i:["source_type=literature REQUIRES non-empty paper_ids AND claim_ids","assessment must contain relation ∈ {supports, opposes, mixed, inconclusive, not_tested}, strength ∈ {none, weak, moderate, strong}, and limitations","trust must rate design, replication, scope_match, directness — each ∈ {weak, adequate, strong, not_applicable}","analysis must contain method and code_ref","facts must be non-empty"],
+  n:"All 4 records are supports/moderate. Every one is capped at moderate because scope_match is only adequate — the source papers ran at larger scale than this 2000-step challenge. Written in a single planning burst on 2026-07-22, which is what 'assess when you scope the hypothesis' looks like in practice."},
+ {k:"run_evidence",f:"knowledge/internal/run_evidence.jsonl",t:"EvidenceRecord",m:"append-only",
+  p:"The experimental half of the evidence layer — same record type as literature evidence, but grounded in OPHIS's own runs. Each record ties a named analysis to a specific gated experiment and the hypothesis it tests, holds the raw per-seed deltas in facts, and states a typed verdict in assessment. This is what beliefs actually rest on.",
+  i:["source_type=internal_run REQUIRES non-empty run_ids","Same assessment/trust/analysis requirements as literature evidence","An evidence_id may not collide between the literature and run files — they share one namespace","Records citing both run_ids and claim_ids are the claim-revision mechanism: contradict a paper without editing it"],
+  n:"Relation split: 21 supports, 16 opposes, 9 inconclusive, 3 not_tested, 1 mixed — only 42% support. 49 of 50 are scope_match=strong because the evidence IS the frozen challenge. The one exception is an off-budget 2766-step diagnostic marked not_applicable despite a t of −17.3."},
+ {k:"observations",f:"knowledge/internal/observations.jsonl",t:"ObservationRecord",m:"editable",
+  p:"Something noticed in run data that you were not testing for. Deliberately weaker than evidence: it has no trust, no assessment, and no method. Instead it is REQUIRED to carry possible_confounds, forcing you to state how you might be fooled. An observation can never back a belief — it must first graduate into a mechanism.",
+  i:["run_ids must be non-empty — an observation must be grounded in real runs","status ∈ {exploratory, replicated, dismissed, promoted}","followup_required must be a boolean","observation_id is validated in the EVIDENCE namespace (evd_obs_*) because observations may later be promoted — the id survives graduation"],
+  n:"This file is NOT append-only: you advance an observation by editing its status in place. Currently 5 exploratory, 5 replicated, 0 promoted, 0 dismissed — the ladder has never been climbed, even though evd_bug_fourgram_gate_uninitialized clearly drove a 10-run retraction."},
+ {k:"beliefs",f:"knowledge/beliefs.jsonl",t:"BeliefRecord",m:"append-only",
+  p:"The standing conclusions — what OPHIS currently thinks is true. A belief cites evidence, names what it is about, carries the scope key it was measured under, and states its own rationale, limitations, and next_test. Interpretations change by APPENDING a new version that supersedes the old one; the old record stays readable forever.",
+  i:["subject_ids must be non-empty and every id must start with clm_, mech_, or hyp_ — 'belief subjects must be claim, mechanism, or hypothesis IDs'","status ∈ 9 values including challenged, contradicted, context_dependent for disagreeing with a paper","supersedes_belief_id must resolve; supersession cycles are rejected","render-state marks a belief verified only if it cites evidence AND is either literature-only or draws on ≥3 distinct seeds"],
+  n:"63 records → 20 superseded → 43 terminal → 36 in-scope → 35 verified. Terminal does NOT mean current: a belief whose scope_key no longer matches the live setup is demoted to [unscoped] automatically. 21 of 63 name a paper claim as a subject; ZERO cite literature evidence as backing."},
+
+ {g:"Toolkit — what we can do"},
+ {k:"observables",f:"toolkit/available/observables.jsonl",t:"ObservableRecord",m:"editable",
+  p:"A defined measurement of internal training dynamics — not the final score, but what you watch during a run to understand why it behaves as it does. Declares source tensors with named axes, the operation that reduces them, output type and units, collection cadence and overhead, and a causal_availability block governing whether the signal may legitimately drive an action.",
+  i:["sources must be non-empty; each needs name, target, tensor_type, axes, context","operation ∈ {axis_reduction_pipeline, composition, direct_scalar}","For axis_reduction_pipeline the reduced axes must EXACTLY equal the declared source axes — 'must reduce every declared source axis exactly once'","causal_availability requires available_before_action, uses_validation, stage","An implemented/unit_tested/available observable may not have a not_implemented entrypoint"],
+  n:"11 direct_scalar, 2 axis_reduction_pipeline. uses_validation is nested under causal_availability (4 true / 9 false), not a top-level field. The protocol says a static run-start comparison should OMIT observables rather than route through a dummy tool — which is why 82 interventions need only 13 observables."},
+ {k:"interventions",f:"toolkit/available/interventions.jsonl",t:"InterventionRecord",m:"editable",
+  p:"A single tested change you can make to a run — the levers, and the widest part of the toolkit. Each records an action verb, what it targets, exact parameters (including the reference_value it changes FROM, so a comparison is self-describing), when in the run it fires, its cost tier, safety guards, and a real entrypoint plus test.",
+  i:["target must contain type and selector","timing must contain stage; duration must contain type","reversible is a forced boolean","cost_tier ∈ {light, moderate, heavy, very_heavy, offline}","status ∈ TOOL_STATUSES; an implemented one requires a real entrypoint"],
+  n:"All 82 are reversible and 81 are light — the design favours cheap, safe, single-knob changes. A striking correspondence: all 45 status=available interventions are referenced by an experiment arm, and all 37 status=unit_tested ones are unreferenced. Status is a perfect proxy for usage; 37 fully-built levers have never been run."},
+ {k:"contexts",f:"toolkit/available/contexts.jsonl",t:"ContextRecord",m:"editable",
+  p:"The conditioning state that exists BEFORE any action — the frozen stage every experiment runs on. Hardware, seed, budget. Not something you are testing; it is what you hold constant so that differences are attributable to the intervention.",
+  i:["source and value must each contain a type","availability.available_before_action is a forced boolean","implementation requires entrypoint and test"],
+  n:"There is exactly ONE context because the entire methodology fixes the environment and varies interventions. More contexts would only appear if you compared across environments — which the fixed-compute rule forbids for adoption decisions. Note the drift: this record still encodes time_budget_seconds=300, the retired 5-minute regime, not the current 2000-step one."},
+ {k:"outcomes",f:"toolkit/available/outcomes.jsonl",t:"OutcomeRecord",m:"editable",
+  p:"The single metric everything is judged by. Defines the measured quantity and units, the direction (minimize), which split it reads, how it aggregates over the run, a detector guarding validity, and — critically — whether the training policy is allowed to see it.",
+  i:["direction ∈ {minimize, maximize}; data_split ∈ {train, validation, test}","aggregation must contain type","policy_visible is a forced boolean","HARD BLOCK: if data_split ∈ {validation, test} and policy_visible is true → 'validation/test outcomes cannot control online training'"],
+  n:"One outcome, out_val_bpb, direction=minimize — which is why every improvement in this repo appears as a NEGATIVE delta. finite_required means a NaN run is rejected rather than scored. The single metric is also what makes the multiplicity mathematics valid: thousands of interventions tested against ONE metric is the denominator every winner's-curse correction assumes."},
+ {k:"tool_proposals",f:"toolkit/proposed/tool_proposals.jsonl",t:"ToolProposalRecord",m:"editable",
+  p:"'Here is a tool we should build.' Filed when a needed observable, intervention, context, or outcome does not exist — so the gap is recorded rather than faked. Paired with a capability gap, which supplies the scientific motivation.",
+  i:["tool_type ∈ {observable, intervention, context, outcome}","status ∈ {proposed, approved, implemented, rejected}","must carry estimated implementation and runtime cost"],
+  n:"Two records, both proposed: tlp_smoothed_train_val_gap (an observable, light) and tlp_reference_model_slm (an intervention, heavy). The protocol is blunt: 'Do not pretend a tool exists, and do not silently skip the measurement.' Not fingerprinted."},
+ {k:"capability_gaps",f:"toolkit/capability_gaps.jsonl",t:"CapabilityGapRecord",m:"editable",
+  p:"The honest 'we cannot test this yet' ledger. Each record links a scientific QUESTION to the specific MISSING CAPABILITY that blocks it, the hypotheses stuck behind it, a priority, and a recommended fix. This is what keeps a blocked idea from quietly evaporating.",
+  i:["missing_capabilities must be non-empty","priority ∈ {low, medium, high}; status ∈ {open, in_progress, resolved, wont_fix}","blocked_hypothesis_ids must resolve to real hypotheses"],
+  n:"The only toolkit record with no implementation/entrypoint — because a gap is precisely the ABSENCE of one. Five records, 4 open / 1 resolved. One is an integrity gap: RHO1_GAMMA is focal reweighting, not true Rho-1, so the Rho-1 claims cannot legitimately back the lever — the recommended fix is to RENAME the lever to match reality."},
+
+ {g:"Ideas — what to test next"},
+ {k:"mechanisms",f:"ideas/mechanisms.jsonl",t:"MechanismRecord",m:"editable",
+  p:"A falsifiable causal story — not 'X helps' but 'X helps BECAUSE of this chain, under these assumptions, unless a competing explanation is true.' Mechanisms are what make a result generalize past one config: the protocol prefers mechanism-linked results because a bare val_bpb number does not transfer.",
+  i:["causal_chain requires at least TWO steps","origin_type ∈ {literature, self_proposed, mixed}","A literature mechanism REQUIRES claim_ids","A self_proposed mechanism is FORBIDDEN from having claim_ids — 'self-proposed mechanism cannot claim literature provenance'","observable_predictions each need observable_id and expected_pattern"],
+  n:"13 self_proposed, 4 literature. But ZERO of 17 cite any observation — so all 13 self-proposed mechanisms have empty provenance: barred from citing papers, and not citing observations either. observation_ids is the designed promotion sink for observations, and it has never been used."},
+ {k:"hypotheses",f:"ideas/hypotheses.jsonl",t:"HypothesisRecord",m:"editable",
+  p:"A mechanism converted into ONE pre-registered bet. Links exact observable, trigger, intervention, outcome, controls, expected effect, estimated cost — and, decisively, a falsification block naming the threshold that would kill it, written BEFORE any run. This is the pre-registration that defeats winner's curse: the goalposts are fingerprinted into the record.",
+  i:["mechanism_ids must be non-empty","observable IDs must be unique","A hypothesis REQUIRES a no_intervention control","The trigger must reference a predicted observable UNLESS trigger.type is run_start or static_schedule","expected_effect direction ∈ 4 values"],
+  n:"All 39 carry status=proposed and all 39 name a mechanism. The status does not advance even for hypotheses that clearly completed — resolution is recorded downstream in evidence and beliefs, which point back via subject_ids. So '39 proposed' does NOT mean '39 untested'."},
+
+ {g:"Experiments — how we test it"},
+ {k:"experiment_proposals",f:"experiments/proposals/experiments.jsonl",t:"ExperimentRecord",m:"editable",
+  p:"The drafting bay. A proposal is an editable planning object — the same ExperimentRecord type as a gated experiment, but not yet frozen. Once approved it is fingerprint-frozen, stamped with frozen_at, and MOVES into the gated registry.",
+  i:["Same schema as gated experiments","Nothing may launch training from a proposal — only a frozen gated record authorizes execution"],
+  n:"EMPTY (0 records) — and that is the healthy state. It means nothing is currently mid-draft: every experiment ever designed has already been frozen and promoted. An empty inbox, not a dead feature."},
+ {k:"gated_experiments",f:"experiments/gated/experiments.jsonl",t:"ExperimentRecord",m:"append-only",
+  p:"A frozen, pre-registered protocol. Everything about how a test will run AND how it will be judged, locked before execution: arms and their roles, exact seeds, checkpoint matching, randomization, the analysis plan with its multiplicity method, the promotion gate, the data policy, and a budget with a hard cap.",
+  i:["seeds must be non-empty and unique","arm role ∈ {control, treatment, sham}","An offline_screen must have NO arms; any other stage requires BOTH a control and a treatment","All controls must use the same checkpoint; interventional arms must branch from the same checkpoint","promotion_gate requires criteria, on_pass, on_fail","Budget estimate may not exceed the hard cap","Locked-test data must be hidden from the proposal loop","hypothesis_fingerprint pins an exact hypothesis version — drift raises an error"],
+  n:"45 records: 38 discovery, 5 validation, 2 pilot — all approved, all with frozen_at set. Seed counts show the ladder directly: 40 use 3 seeds, two use 6, one uses 4, and the two pilots use exactly 1. A pilot must declare promotion_gate.verdict=implementation_only — it is structurally forbidden from establishing a mechanism."},
+ {k:"runs",f:"experiments/runs/runs.jsonl",t:"RunRecord",m:"append-only",
+  p:"One execution of one arm at one seed. Pure facts and nothing else — the class docstring reads 'Immutable execution facts. Analysis belongs in evidence, not here.' Captures git provenance, the resolved config hash, the frozen spec fingerprints it ran against, pointers to artifacts, the measured outcome, actual cost, and any failure reason.",
+  i:["role ∈ 7 values: baseline, treatment, matched_time, shuffled_trigger, sham, validation, locked_test","status ∈ {queued, running, complete, failed, invalid}","spec_fingerprints must contain hypothesis, experiment, outcome — mismatch raises 'fingerprint drift'","A run's seed must be pre-registered in its experiment, EXCEPT runs tagged diagnostic_offbudget"],
+  n:"281 runs: 272 complete, 9 invalid (invalid runs are RETAINED, never deleted — the fourgram retraction lives here). 136 baseline vs 145 treatment, near 1:1 because of the paired concurrent design. git_dirty is true on all 281, honestly recorded; reproducibility rests on config_hash and spec_fingerprints instead. Artifacts are referenced by remote path, not copied in."},
+
+ {g:"Refinement — how knowledge updates"},
+ {k:"evidence_updates",f:"refinement/evidence_updates.jsonl",t:"EvidenceUpdateRecord",m:"append-only",
+  p:"The connective tissue that closes the loop: which evidence affects which hypotheses and beliefs, with a typed result, a reason, and a recommended next action. Also the routing decision — an update is what says 'advance to a 3-seed discovery' or 'stop here'.",
+  i:["evidence_ids must be non-empty","result ∈ {support, weak_support, mixed, null, oppose, invalid}","An experiment completed without an evidence update is an audit finding"],
+  n:"26 of 46 updates are null, opposing, or invalid — majority failure, recorded rather than buried, exactly as the protocol demands ('record null, failed, and contradictory results'). Not fingerprinted."},
+ {k:"audits",f:"refinement/audits.jsonl",t:"AuditRecord",m:"append-only",
+  p:"A systematic integrity sweep, stored as a curated record with a scope, a summary, and typed findings. Complements the live audit command, which computes findings deterministically from the graph.",
+  i:["Each finding requires severity, code, record_id, message","finding severity ∈ {info, warning, error}"],
+  n:"One record, aud_integrity_and_baseline_20260722, whose first finding is 'experiment_to_ledger_bypass_fixed' — the ledger auditing its OWN process failure: prior runs had been executed as informal screens with zero RunRecords. The gate had been built, then bypassed."},
+ {k:"decisions",f:"refinement/decisions.jsonl",t:"DecisionRecord",m:"append-only",
+  p:"Preserves WHY a direction was stopped or prioritized, so a killed idea is not quietly re-tried later. Records the verdict, the objects it affects, the evidence behind it, explicit reasons, and a replacement strategy.",
+  i:["reasons must be non-empty","evidence_ids and affected_ids must resolve"],
+  n:"The sharpest example is dec_warmdown_075_do_not_adopt, which REJECTED a real, directionally-correct effect: '−0.00070 < 0.000847 decision floor' and 'one of ~8 screened arms; adopting a sub-floor best-of-N is exactly the multiplicity trap the gate exists to prevent.' Discipline beating a tempting number."},
+ {k:"deprecations",f:"refinement/deprecations.jsonl",t:"DeprecationRecord",m:"append-only",
+  p:"Retires a dead idea or tool WITHOUT deleting it. The helper sets the object's status to deprecated in place and appends a record naming the reason, an optional replacement, and supporting evidence. render-state then drops it from active views while the history stays on disk.",
+  i:["object_type ∈ 7 values: claim, mechanism, observable, intervention, context, outcome, hypothesis","Must name a reason; replacement is optional"],
+  n:"EMPTY — the archiving pass has never been run, despite 37 unused interventions and mechanisms no live hypothesis builds on. Archiving is explicitly cleanup, not a verdict: 'a deprecated negative result still lives in beliefs/evidence.'"}
+];
+
+(function(){
+  var host=document.getElementById('explorer'); if(!host) return;
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function hl(obj){
+    var t=JSON.stringify(obj,null,1);
+    t=esc(t);
+    t=t.replace(/&quot;/g,'"');
+    t=t.replace(/"([^"]+)":/g,'<span class="jk">"$1"</span>:');
+    t=t.replace(/: ("(?:[^"\\]|\\.)*")/g,': <span class="js">$1</span>');
+    t=t.replace(/: (-?\d+\.?\d*(?:e-?\d+)?|true|false|null)/g,': <span class="jn">$1</span>');
+    return t;
+  }
+  var html='', idx=0;
+  REGMETA.forEach(function(r){
+    if(r.g){ html+='<div class="exgroup">'+esc(r.g)+'</div>'; return; }
+    var d=REGDATA[r.k]||{count:0,fields:[],example:null};
+    var pid='exp_'+(idx++);
+    var pill=r.m==='append-only'?'<span class="pill ap">append-only</span>':'<span class="pill nu">editable</span>';
+    html+='<button class="exrow" aria-expanded="false" aria-controls="'+pid+'" data-p="'+pid+'">'+
+      '<span class="rn">'+esc(r.f.split('/').pop())+'</span>'+
+      '<span class="rc">'+d.count+'</span>'+pill+'<span class="rx">+</span></button>';
+    var body='<h5>Purpose</h5><p>'+esc(r.p)+'</p>';
+    body+='<h5>Enforced invariants</h5><ul class="inv">'+r.i.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';
+    body+='<h5>In this ledger</h5><p>'+esc(r.n)+'</p>';
+    if(d.fields && d.fields.length){
+      body+='<h5>Fields ('+d.fields.length+')</h5><div class="fieldlist">'+
+        d.fields.map(function(f){return '<span>'+esc(f)+'</span>';}).join('')+'</div>';
+    }
+    body+='<h5>Example record'+(d.example?' — <code>'+esc(r.t)+'</code> from <code>'+esc(r.f)+'</code>':'')+'</h5>';
+    body+= d.example ? '<pre class="json">'+hl(d.example)+'</pre>'
+                     : '<p class="empty">This registry is empty — there is no record to show. See "In this ledger" above for why that is the expected state.</p>';
+    html+='<div class="expanel" id="'+pid+'">'+body+'</div>';
+  });
+  host.innerHTML=html;
+  host.addEventListener('click',function(e){
+    var b=e.target.closest('.exrow'); if(!b) return;
+    var panel=document.getElementById(b.getAttribute('data-p'));
+    var open=b.getAttribute('aria-expanded')==='true';
+    b.setAttribute('aria-expanded',open?'false':'true');
+    panel.classList.toggle('open',!open);
+    b.querySelector('.rx').textContent=open?'+':'−';
+  });
+})();
+
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('.rail a'));
+  var secs  = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); });
+  function sync(){
+    var y = window.scrollY + 130, best = 0;
+    for (var i=0;i<secs.length;i++){ if (secs[i] && secs[i].offsetTop <= y) best = i; }
+    links.forEach(function(a,i){ a.classList.toggle('on', i===best); });
+  }
+  var tick=false;
+  window.addEventListener('scroll', function(){
+    if(tick) return; tick=true;
+    window.requestAnimationFrame(function(){ sync(); tick=false; });
+  }, {passive:true});
+  sync();
+})();
+</script>
+
+</body>
+</html>

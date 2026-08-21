@@ -1,0 +1,2562 @@
+{
+  "assay_id": "paper019_round2_canonical_key_mediator_v1",
+  "assay_script_sha256": "c1be30554ed8075afb1a50fc8f71290108579be5285a13a9ec81003371e5900c",
+  "assay_spec_sha256": "7721667dac142626ffc0e5d18f414c13c982231a8cc8fb00e9a86c8fa335d17e",
+  "dataset": {
+    "canonical_split": "test",
+    "data_split_sha256": "ed8ea0554010df9fbfa47746adc6643d6446797753eb377c0b35413bdcf2fca3",
+    "shards": [
+      {
+        "bytes": 91699537,
+        "path": "/Users/baiyu/.cache/autoresearch/data/shard_06542.parquet",
+        "row_groups": 83,
+        "rows": 84992,
+        "sha256": "769fe59d108dfd2cfa186c63173b83fbfb90a7adb3519519ba6eaa6ca9889f94",
+        "shard_id": 6542
+      }
+    ]
+  },
+  "gate_definitions": {
+    "alias_set_explained_fraction_min": 0.95,
+    "observed_ngram_occurrence_affected_min": 0.1,
+    "occurrence_aggregation": "minimum_strict_share_across_orders_2_and_3",
+    "strict_affected_definition": "An occurrence is affected only when its canonical n-gram tuple is shared by at least two distinct raw n-gram tuples observed in the frozen packed sample.",
+    "vocabulary_key_cardinality_collapse_min": 0.1
+  },
+  "gates": {
+    "alias_set_explained_fraction": {
+      "observed": 1.0,
+      "operator": ">=",
+      "pass": true,
+      "threshold": 0.95
+    },
+    "observed_ngram_occurrence_affected": {
+      "observed": 0.0371551513671875,
+      "operator": ">=",
+      "pass": false,
+      "threshold": 0.1
+    },
+    "vocabulary_key_cardinality_collapse": {
+      "observed": 0.1689453125,
+      "operator": ">=",
+      "pass": true,
+      "threshold": 0.1
+    }
+  },
+  "intermediate_artifact_sha256": {
+    "alias_sets.jsonl": "cddb6deeb2d6fcee12959cb59ee68d7bf71302b737ae69d311de9e76034f86d1",
+    "packing_events.jsonl": "535c71e8e1336555ff282c300bd77b3362c8229e7b9147c148255a12767a033f",
+    "projection.jsonl": "24a8c5845ee1ff1f3b6b8a4d6d1ab2944fd2a1cb7b8c74423f6dbb2b13861d05",
+    "unexplained_alias_sets.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "local_source": {
+    "paths": {
+      "data_split": "/Users/baiyu/Desktop/OPHIS/vibeautoresearch_reimplementation/data_split.json",
+      "lib": "/Users/baiyu/Desktop/OPHIS/vibeautoresearch_reimplementation/lib.py",
+      "prepare": "/Users/baiyu/Desktop/OPHIS/vibeautoresearch_reimplementation/prepare.py",
+      "train": "/Users/baiyu/Desktop/OPHIS/vibeautoresearch_reimplementation/train.py"
+    },
+    "sha256": {
+      "data_split": "ed8ea0554010df9fbfa47746adc6643d6446797753eb377c0b35413bdcf2fca3",
+      "lib": "67e4314c73f4e3176a2f6fe6b110ed8393069038a5b23f259f252ee5f87c088c",
+      "prepare": "64fa6178cd67ea7bd8dfd165e80c28bbec4da7991f4243c594c27ce6ad8e3255",
+      "train": "0b1904b3bbe8819c8b09533791ca1ac4442ee76d4f7a9bd2d7c90a2b88ba4f4e"
+    },
+    "verified_lib_fragments": [
+      "row_capacity = T + 1",
+      "while len(doc_buffer) < buffer_size:",
+      "token_lists = tokenizer.encode(doc_batch, prepend=bos_token)",
+      "if doc_len <= remaining and doc_len > best_len:",
+      "cpu_inputs.copy_(row_buffer[:, :-1])",
+      "cpu_targets.copy_(row_buffer[:, 1:])"
+    ],
+    "verified_train_fragments": [
+      "prev_idx = torch.cat([idx[:, :1], idx[:, :-1]], dim=1)",
+      "prev2_idx = torch.cat([idx[:, :2], idx[:, :-2]], dim=1)",
+      "((prev_idx * p1) ^ (idx * p2)) % self.bigram_table_size",
+      "((prev2_idx * lp[0]) ^ (prev_idx * lp[1]) ^ (idx * lp[2]))"
+    ]
+  },
+  "mode": "offline_read_only_inputs_no_cuda_no_training",
+  "ngram_impact": {
+    "2": {
+      "alias_exposed_occurrence_share": 0.7891693115234375,
+      "alias_exposed_occurrences": 103438,
+      "bos_exposed_occurrence_share": 0.00200653076171875,
+      "bos_exposed_occurrences": 263,
+      "canonical_distinct_ngram_tuples": 67164,
+      "merged_canonical_tuple_count": 3078,
+      "observed_distinct_key_collapse": 0.050846499533648004,
+      "order": 2,
+      "protected_exposed_occurrence_share": 0.24292755126953125,
+      "protected_exposed_occurrences": 31841,
+      "raw_distinct_ngram_tuples": 70762,
+      "strict_affected_occurrence_share": 0.177886962890625,
+      "strict_affected_occurrences": 23316,
+      "top_merged_examples": [
+        {
+          "canonical_tuple": [
+            44,
+            287
+          ],
+          "occurrence_count": 411,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 410,
+              "tuple": [
+                44,
+                288
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                44,
+                1282
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            258,
+            262
+          ],
+          "occurrence_count": 383,
+          "raw_variant_count": 6,
+          "raw_variants": [
+            {
+              "count": 342,
+              "tuple": [
+                287,
+                262
+              ]
+            },
+            {
+              "count": 18,
+              "tuple": [
+                582,
+                262
+              ]
+            },
+            {
+              "count": 17,
+              "tuple": [
+                848,
+                262
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                258,
+                262
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                287,
+                370
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                582,
+                370
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            46,
+            262
+          ],
+          "occurrence_count": 243,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 236,
+              "tuple": [
+                46,
+                370
+              ]
+            },
+            {
+              "count": 5,
+              "tuple": [
+                46,
+                1236
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                46,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            44,
+            262
+          ],
+          "occurrence_count": 238,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 235,
+              "tuple": [
+                44,
+                262
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                44,
+                370
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                44,
+                1236
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            283,
+            262
+          ],
+          "occurrence_count": 198,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 196,
+              "tuple": [
+                283,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                1231,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                2055,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            274,
+            257
+          ],
+          "occurrence_count": 152,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 149,
+              "tuple": [
+                306,
+                257
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                1573,
+                257
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                274,
+                257
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            46,
+            273
+          ],
+          "occurrence_count": 140,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 135,
+              "tuple": [
+                46,
+                581
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                46,
+                338
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                46,
+                1279
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            261,
+            262
+          ],
+          "occurrence_count": 137,
+          "raw_variant_count": 4,
+          "raw_variants": [
+            {
+              "count": 125,
+              "tuple": [
+                331,
+                262
+              ]
+            },
+            {
+              "count": 6,
+              "tuple": [
+                3513,
+                262
+              ]
+            },
+            {
+              "count": 4,
+              "tuple": [
+                2145,
+                262
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                331,
+                370
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            46,
+            410
+          ],
+          "occurrence_count": 136,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 133,
+              "tuple": [
+                46,
+                619
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                46,
+                1202
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                46,
+                442
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            287,
+            262
+          ],
+          "occurrence_count": 136,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 130,
+              "tuple": [
+                288,
+                262
+              ]
+            },
+            {
+              "count": 4,
+              "tuple": [
+                432,
+                262
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                1282,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            273,
+            274
+          ],
+          "occurrence_count": 130,
+          "raw_variant_count": 4,
+          "raw_variants": [
+            {
+              "count": 77,
+              "tuple": [
+                338,
+                306
+              ]
+            },
+            {
+              "count": 35,
+              "tuple": [
+                581,
+                306
+              ]
+            },
+            {
+              "count": 12,
+              "tuple": [
+                1279,
+                306
+              ]
+            },
+            {
+              "count": 6,
+              "tuple": [
+                273,
+                306
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            274,
+            262
+          ],
+          "occurrence_count": 129,
+          "raw_variant_count": 7,
+          "raw_variants": [
+            {
+              "count": 112,
+              "tuple": [
+                306,
+                262
+              ]
+            },
+            {
+              "count": 7,
+              "tuple": [
+                1573,
+                370
+              ]
+            },
+            {
+              "count": 6,
+              "tuple": [
+                306,
+                1236
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                274,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                274,
+                483
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                1573,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                2997,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            273,
+            367
+          ],
+          "occurrence_count": 125,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 70,
+              "tuple": [
+                338,
+                385
+              ]
+            },
+            {
+              "count": 42,
+              "tuple": [
+                581,
+                385
+              ]
+            },
+            {
+              "count": 13,
+              "tuple": [
+                1279,
+                385
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            337,
+            310
+          ],
+          "occurrence_count": 125,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 57,
+              "tuple": [
+                601,
+                313
+              ]
+            },
+            {
+              "count": 44,
+              "tuple": [
+                847,
+                313
+              ]
+            },
+            {
+              "count": 24,
+              "tuple": [
+                1261,
+                313
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            258,
+            257
+          ],
+          "occurrence_count": 117,
+          "raw_variant_count": 5,
+          "raw_variants": [
+            {
+              "count": 103,
+              "tuple": [
+                287,
+                257
+              ]
+            },
+            {
+              "count": 8,
+              "tuple": [
+                582,
+                257
+              ]
+            },
+            {
+              "count": 4,
+              "tuple": [
+                287,
+                327
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                258,
+                257
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                848,
+                257
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            310,
+            348
+          ],
+          "occurrence_count": 115,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 86,
+              "tuple": [
+                313,
+                363
+              ]
+            },
+            {
+              "count": 19,
+              "tuple": [
+                891,
+                363
+              ]
+            },
+            {
+              "count": 10,
+              "tuple": [
+                1748,
+                363
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            304,
+            262
+          ],
+          "occurrence_count": 110,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 66,
+              "tuple": [
+                354,
+                483
+              ]
+            },
+            {
+              "count": 43,
+              "tuple": [
+                307,
+                483
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                2383,
+                370
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            320,
+            262
+          ],
+          "occurrence_count": 107,
+          "raw_variant_count": 4,
+          "raw_variants": [
+            {
+              "count": 102,
+              "tuple": [
+                324,
+                262
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                2096,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                1119,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                2188,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            338,
+            262
+          ],
+          "occurrence_count": 105,
+          "raw_variant_count": 4,
+          "raw_variants": [
+            {
+              "count": 94,
+              "tuple": [
+                347,
+                262
+              ]
+            },
+            {
+              "count": 9,
+              "tuple": [
+                1706,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                1706,
+                370
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                3323,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            44,
+            273
+          ],
+          "occurrence_count": 103,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 101,
+              "tuple": [
+                44,
+                338
+              ]
+            },
+            {
+              "count": 2,
+              "tuple": [
+                44,
+                581
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            283,
+            312
+          ],
+          "occurrence_count": 96,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 95,
+              "tuple": [
+                283,
+                315
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                283,
+                1722
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            647,
+            293
+          ],
+          "occurrence_count": 93,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 88,
+              "tuple": [
+                719,
+                352
+              ]
+            },
+            {
+              "count": 4,
+              "tuple": [
+                7270,
+                352
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                7303,
+                352
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            285,
+            257
+          ],
+          "occurrence_count": 88,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 82,
+              "tuple": [
+                285,
+                257
+              ]
+            },
+            {
+              "count": 5,
+              "tuple": [
+                285,
+                327
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                2955,
+                327
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            46,
+            258
+          ],
+          "occurrence_count": 85,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 82,
+              "tuple": [
+                46,
+                582
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                46,
+                287
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            44,
+            276
+          ],
+          "occurrence_count": 82,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 81,
+              "tuple": [
+                44,
+                351
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                44,
+                2111
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        }
+      ],
+      "total_occurrences": 131072
+    },
+    "3": {
+      "alias_exposed_occurrence_share": 0.9033432006835938,
+      "alias_exposed_occurrences": 118403,
+      "bos_exposed_occurrence_share": 0.00299072265625,
+      "bos_exposed_occurrences": 392,
+      "canonical_distinct_ngram_tuples": 107897,
+      "merged_canonical_tuple_count": 1194,
+      "observed_distinct_key_collapse": 0.011959378405355164,
+      "order": 3,
+      "protected_exposed_occurrence_share": 0.334442138671875,
+      "protected_exposed_occurrences": 43836,
+      "raw_distinct_ngram_tuples": 109203,
+      "strict_affected_occurrence_share": 0.0371551513671875,
+      "strict_affected_occurrences": 4870,
+      "top_merged_examples": [
+        {
+          "canonical_tuple": [
+            376,
+            963,
+            272
+          ],
+          "occurrence_count": 47,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 24,
+              "tuple": [
+                676,
+                1071,
+                272
+              ]
+            },
+            {
+              "count": 13,
+              "tuple": [
+                1010,
+                1071,
+                272
+              ]
+            },
+            {
+              "count": 10,
+              "tuple": [
+                1627,
+                1071,
+                272
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            3249,
+            4829,
+            4328
+          ],
+          "occurrence_count": 45,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 40,
+              "tuple": [
+                3763,
+                5677,
+                5065
+              ]
+            },
+            {
+              "count": 5,
+              "tuple": [
+                7031,
+                5677,
+                5065
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            499,
+            285,
+            262
+          ],
+          "occurrence_count": 43,
+          "raw_variant_count": 4,
+          "raw_variants": [
+            {
+              "count": 35,
+              "tuple": [
+                557,
+                285,
+                262
+              ]
+            },
+            {
+              "count": 4,
+              "tuple": [
+                2164,
+                285,
+                262
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                2704,
+                285,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                549,
+                285,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            46,
+            337,
+            310
+          ],
+          "occurrence_count": 38,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 37,
+              "tuple": [
+                46,
+                847,
+                313
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                46,
+                1261,
+                313
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            266,
+            2198,
+            108
+          ],
+          "occurrence_count": 36,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 30,
+              "tuple": [
+                266,
+                2502,
+                108
+              ]
+            },
+            {
+              "count": 6,
+              "tuple": [
+                359,
+                2502,
+                108
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            552,
+            274,
+            262
+          ],
+          "occurrence_count": 35,
+          "raw_variant_count": 4,
+          "raw_variants": [
+            {
+              "count": 14,
+              "tuple": [
+                610,
+                306,
+                262
+              ]
+            },
+            {
+              "count": 11,
+              "tuple": [
+                1091,
+                306,
+                262
+              ]
+            },
+            {
+              "count": 5,
+              "tuple": [
+                610,
+                1573,
+                370
+              ]
+            },
+            {
+              "count": 5,
+              "tuple": [
+                687,
+                306,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            46,
+            410,
+            274
+          ],
+          "occurrence_count": 31,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 30,
+              "tuple": [
+                46,
+                619,
+                306
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                46,
+                1202,
+                306
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            293,
+            707,
+            293
+          ],
+          "occurrence_count": 31,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 29,
+              "tuple": [
+                352,
+                786,
+                352
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                294,
+                786,
+                352
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                1690,
+                786,
+                352
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            114,
+            100,
+            1730
+          ],
+          "occurrence_count": 29,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 26,
+              "tuple": [
+                114,
+                100,
+                1956
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                114,
+                100,
+                6998
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            256,
+            4989,
+            273
+          ],
+          "occurrence_count": 28,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 21,
+              "tuple": [
+                256,
+                5884,
+                273
+              ]
+            },
+            {
+              "count": 7,
+              "tuple": [
+                319,
+                5884,
+                273
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            258,
+            262,
+            32
+          ],
+          "occurrence_count": 28,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 25,
+              "tuple": [
+                287,
+                262,
+                32
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                582,
+                262,
+                32
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            362,
+            394,
+            4623
+          ],
+          "occurrence_count": 25,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 24,
+              "tuple": [
+                1477,
+                421,
+                5431
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                4213,
+                421,
+                5431
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            363,
+            281,
+            314
+          ],
+          "occurrence_count": 24,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 19,
+              "tuple": [
+                639,
+                281,
+                317
+              ]
+            },
+            {
+              "count": 5,
+              "tuple": [
+                3225,
+                281,
+                317
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            389,
+            483,
+            333
+          ],
+          "occurrence_count": 23,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 20,
+              "tuple": [
+                416,
+                530,
+                341
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                4297,
+                530,
+                341
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            538,
+            285,
+            262
+          ],
+          "occurrence_count": 23,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 21,
+              "tuple": [
+                594,
+                285,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                1945,
+                285,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                3792,
+                285,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            262,
+            32,
+            51
+          ],
+          "occurrence_count": 22,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 19,
+              "tuple": [
+                262,
+                32,
+                51
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                483,
+                32,
+                51
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            310,
+            823,
+            501
+          ],
+          "occurrence_count": 22,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 18,
+              "tuple": [
+                313,
+                916,
+                551
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                891,
+                916,
+                551
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                1748,
+                916,
+                551
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            4352,
+            376,
+            963
+          ],
+          "occurrence_count": 21,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 16,
+              "tuple": [
+                5095,
+                676,
+                1071
+              ]
+            },
+            {
+              "count": 5,
+              "tuple": [
+                5095,
+                1010,
+                1071
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            549,
+            285,
+            262
+          ],
+          "occurrence_count": 19,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 18,
+              "tuple": [
+                607,
+                285,
+                262
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                4073,
+                285,
+                262
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            257,
+            1299,
+            285
+          ],
+          "occurrence_count": 18,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 17,
+              "tuple": [
+                257,
+                1460,
+                285
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                327,
+                1460,
+                285
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            320,
+            1150,
+            44
+          ],
+          "occurrence_count": 18,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 12,
+              "tuple": [
+                1119,
+                1296,
+                44
+              ]
+            },
+            {
+              "count": 5,
+              "tuple": [
+                324,
+                1296,
+                44
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                2188,
+                1296,
+                44
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            46,
+            573,
+            331
+          ],
+          "occurrence_count": 17,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 16,
+              "tuple": [
+                46,
+                1270,
+                339
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                46,
+                1822,
+                339
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            274,
+            402,
+            257
+          ],
+          "occurrence_count": 17,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 14,
+              "tuple": [
+                306,
+                433,
+                257
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                306,
+                3557,
+                257
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            304,
+            552,
+            274
+          ],
+          "occurrence_count": 17,
+          "raw_variant_count": 3,
+          "raw_variants": [
+            {
+              "count": 13,
+              "tuple": [
+                354,
+                1091,
+                306
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                307,
+                1091,
+                1573
+              ]
+            },
+            {
+              "count": 1,
+              "tuple": [
+                307,
+                1091,
+                306
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        },
+        {
+          "canonical_tuple": [
+            256,
+            421,
+            690
+          ],
+          "occurrence_count": 16,
+          "raw_variant_count": 2,
+          "raw_variants": [
+            {
+              "count": 13,
+              "tuple": [
+                256,
+                455,
+                766
+              ]
+            },
+            {
+              "count": 3,
+              "tuple": [
+                319,
+                455,
+                766
+              ]
+            }
+          ],
+          "raw_variants_truncated": false
+        }
+      ],
+      "total_occurrences": 131072
+    }
+  },
+  "projection": {
+    "alias_set_count": 900,
+    "alias_set_explained_count": 900,
+    "alias_set_explained_fraction": 1.0,
+    "alias_set_unexplained_count": 0,
+    "aliased_token_id_count": 2284,
+    "canonical_vocab_size": 6808,
+    "collapsed_key_count": 1384,
+    "explanation_label_counts": {
+      "Lowercase": 666,
+      "NFD": 1,
+      "NFKC": 1,
+      "SentinelRestore": 1,
+      "SingleSpaceSentinel": 1,
+      "Strip": 868,
+      "StripAccents": 1,
+      "WhitespaceCollapse": 13
+    },
+    "original_vocab_size": 8192,
+    "protected_id_count": 271,
+    "protected_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139,
+      140,
+      141,
+      142,
+      143,
+      144,
+      145,
+      146,
+      147,
+      148,
+      149,
+      150,
+      151,
+      152,
+      153,
+      154,
+      155,
+      156,
+      157,
+      158,
+      159,
+      160,
+      161,
+      162,
+      163,
+      164,
+      165,
+      166,
+      167,
+      168,
+      169,
+      170,
+      171,
+      172,
+      173,
+      174,
+      175,
+      176,
+      177,
+      178,
+      179,
+      180,
+      181,
+      182,
+      183,
+      184,
+      185,
+      186,
+      187,
+      188,
+      189,
+      190,
+      191,
+      192,
+      193,
+      194,
+      195,
+      196,
+      197,
+      198,
+      199,
+      200,
+      201,
+      202,
+      203,
+      204,
+      205,
+      206,
+      207,
+      208,
+      209,
+      210,
+      211,
+      212,
+      213,
+      214,
+      215,
+      216,
+      217,
+      218,
+      219,
+      220,
+      221,
+      222,
+      223,
+      224,
+      225,
+      226,
+      227,
+      228,
+      229,
+      230,
+      231,
+      232,
+      233,
+      234,
+      235,
+      236,
+      237,
+      238,
+      239,
+      240,
+      241,
+      242,
+      243,
+      244,
+      245,
+      246,
+      247,
+      248,
+      249,
+      250,
+      251,
+      252,
+      253,
+      254,
+      255,
+      473,
+      677,
+      3865,
+      4343,
+      5943,
+      6252,
+      6495,
+      7179,
+      7185,
+      7787,
+      7822,
+      8188,
+      8189,
+      8190,
+      8191
+    ],
+    "protected_ids_by_reason": {
+      "bos": [
+        8188
+      ],
+      "decoded_replacement_character": [
+        128,
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255,
+        473,
+        677,
+        3865,
+        4343,
+        5943,
+        6252,
+        6495,
+        7179,
+        7185,
+        7787,
+        7822
+      ],
+      "empty_decoding": [],
+      "single_raw_byte": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        183,
+        184,
+        185,
+        186,
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193,
+        194,
+        195,
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202,
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209,
+        210,
+        211,
+        212,
+        213,
+        214,
+        215,
+        216,
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223,
+        224,
+        225,
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232,
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239,
+        240,
+        241,
+        242,
+        243,
+        244,
+        245,
+        246,
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253,
+        254,
+        255
+      ],
+      "special": [
+        8188,
+        8189,
+        8190,
+        8191
+      ]
+    },
+    "protected_ids_one_to_one": true,
+    "protected_reason_counts": {
+      "bos": 1,
+      "decoded_replacement_character": 139,
+      "empty_decoding": 0,
+      "single_raw_byte": 256,
+      "special": 4
+    },
+    "vocabulary_key_cardinality_collapse": 0.1689453125
+  },
+  "runtime": {
+    "normalizer_behavioral_checks": {
+      "compatibility_case_accent": true,
+      "leading_trailing_stripped": true,
+      "single_space_preserved": true,
+      "whitespace_collapsed": true
+    },
+    "pyarrow": "20.0.0",
+    "python": "3.12.10 | packaged by conda-forge | (main, Apr 10 2025, 22:19:24) [Clang 18.1.8 ]",
+    "python_executable": "/opt/anaconda3/envs/pytorch/bin/python",
+    "tiktoken": "0.9.0",
+    "tokenizers": "0.22.2"
+  },
+  "sample": {
+    "bos_occurrences_in_inputs": 134,
+    "context_length": 2048,
+    "documents_consumed_or_cropped": 156,
+    "documents_cropped": 29,
+    "documents_loaded_into_buffer": 1280,
+    "documents_remaining_in_buffer": 1124,
+    "input_token_positions": 131072,
+    "loaded_document_text_sha256": "cae5f32cd47e4095fea880cd838a51fd99c3d65ef4730c038c5e7be8a5959fc4",
+    "packed_full_rows_int64le_sha256": "a3ed7eab4eda9ccf2803444b6776d762cbecadabe956f21a9827eb2cecb74bed",
+    "packed_inputs_int64le_sha256": "2f12f64e407c1e3308138483ff1146ad335a5c408097012598d3a43a661421d3",
+    "packed_rows": 64,
+    "packed_targets_int64le_sha256": "f5df73f268377c0954d19b5743dd7c0385390cfc3640a432c60c95a4bd2067e5",
+    "packing_event_count": 156
+  },
+  "schema_version": 1,
+  "scope_limits": [
+    "The upstream demo uses the DeepSeek-V3 tokenizer; this assay uses the current 8,192-token OPHIS RustBPE tokenizer.",
+    "The upstream repository does not pin the tokenizers package version; this assay records the exact local version.",
+    "The local tokenizer cache lacks tokenizer_train_split.json, so the current pickle is identified by bytes and semantic vocabulary digest, not by complete tokenizer-training provenance.",
+    "One-to-one protection for special, BOS, every one-byte token, replacement-character decoding, and empty decoding is a conservative OPHIS safety extension.",
+    "The strict occurrence metric is computed before the existing modulo hash tables; it measures canonical tuple mergers, not random hash collisions or learned value quality.",
+    "The packed sample mirrors current best-fit packing and current row-prefix shifts; it is one frozen validation sample, not a population estimate.",
+    "No model input ID, target, byte count, document boundary, token order, parameter, optimizer state, or RNG state is changed or tested here.",
+    "Passing these mediator gates neither predicts nor establishes BPB improvement and does not authorize a GPU run."
+  ],
+  "source": {
+    "archive_path": "/Users/baiyu/Desktop/OPHIS/vibeautoresearch_reimplementation/research/experiments/artifacts/external_code/pap_deepseek_engram_2026/engram-fb7f84a2.tar.zst",
+    "archive_sha256": "789b81408ab98b4cb90a2b00f4f6a15ded1651f13972cd4498edcd5b52ac1061",
+    "demo_member": "engram-fb7f84a2/engram_demo_v1.py",
+    "demo_sha256": "9d082070654df217e21bbca9926a4267bdf2cce7777aa6739747c24de30d2044",
+    "local_safety_extension": "Use a separate identity namespace for every special, BOS, one-byte, replacement-character, or empty-decoding token ID. This is deliberately more conservative than the demo and guarantees these IDs remain one-to-one.",
+    "paper_id": "pap_deepseek_engram_2026",
+    "repository_commit": "fb7f84a21f91223715394a33a1dc24bbfb7f788e",
+    "source_faithful_component": "normalization stage order and normalized-if-nonempty fallback",
+    "source_manifest_path": "/Users/baiyu/Desktop/OPHIS/vibeautoresearch_reimplementation/research/experiments/artifacts/external_code/pap_deepseek_engram_2026/manifest.json",
+    "source_manifest_sha256": "8bf752884195b74c511c63a53a5d2c00264e53354ec5dcb52b56f6c9ed7aad2d",
+    "verified_demo_fragments": [
+      "normalizers.NFKC()",
+      "normalizers.NFD()",
+      "normalizers.StripAccents()",
+      "normalizers.Lowercase()",
+      "normalizers.Replace(Regex(r\"[ \\t\\r\\n]+\"), \" \")",
+      "normalizers.Replace(Regex(r\"^ $\"), SENTINEL)",
+      "normalizers.Strip()",
+      "normalizers.Replace(SENTINEL, \" \")",
+      "if \"\ufffd\" in text:",
+      "key = norm if norm else text",
+      "for tid in range(vocab_size):"
+    ]
+  },
+  "tokenizer": {
+    "bos_id": 8188,
+    "bos_token": "<|reserved_0|>",
+    "directory": "/Users/baiyu/.cache/autoresearch/tokenizer",
+    "name": "rustbpe",
+    "pattern": "'(?i:[sdmt]|ll|ve|re)|[^\\r\\n\\p{L}\\p{N}]?+\\p{L}+|\\p{N}{1,2}| ?[^\\s\\p{L}\\p{N}]++[\\r\\n]*|\\s*[\\r\\n]|\\s+(?!\\S)|\\s+",
+    "pickle_path": "/Users/baiyu/.cache/autoresearch/tokenizer/tokenizer.pkl",
+    "pickle_sha256": "888c9fa865c72c25f9c5e9467136a9cc8655253db459fb97481deb326681c629",
+    "semantic_id_to_raw_bytes_sha256": "662fa9cfd0dcec68785377b48cbc172642ad88d9e5c5fbd0c0422dd17140f9d8",
+    "special_token_ids": {
+      "<|reserved_0|>": 8188,
+      "<|reserved_1|>": 8189,
+      "<|reserved_2|>": 8190,
+      "<|reserved_3|>": 8191
+    },
+    "token_bytes_path": "/Users/baiyu/.cache/autoresearch/tokenizer/token_bytes.pt",
+    "token_bytes_sha256": "33f5b2ae0b1765c9e083bfc1c3df87efe9738068e15a80d234623a2c3b261d6d",
+    "tokenizer_train_split_metadata_present": false,
+    "vocab_size": 8192
+  },
+  "verdict": {
+    "all_offline_mediator_gates_pass": false,
+    "bpb_claim": false,
+    "conclusion": "the frozen local key-collapse mediator fails at least one paper-019 offline threshold and the arm should be killed before GPU scoring",
+    "minimum_strict_affected_share": 0.0371551513671875,
+    "run_authority": false,
+    "sota_claim": false,
+    "status": "KILL_BEFORE_GPU_SCORING"
+  }
+}

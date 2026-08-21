@@ -1,0 +1,86 @@
+%% Paper 028 -- ICML-style. The campaign's first prospectively-confirmed
+%% mechanism, and the separate finding that its profitable regime is unaffordable.
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\vb}{\mathrm{val\_bpb}}
+\icmltitlerunning{A Confirmed Mechanism With an Unreachable Operating Point}
+\begin{document}
+\twocolumn[
+\icmltitle{A Confirmed Mechanism With an Unreachable Operating Point}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, mechanism testing, throughput, negative results, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report the first mechanism in this campaign whose discriminating prediction was registered \emph{before} the discriminating data existed and then held. A profile attributes the training step's low utilisation ($\approx$19\% MFU, launch-bound) to $\approx$194k tiny fill launches in the hashed $n$-gram value-embedding path. We proposed a cause --- autograd's dense embedding backward allocates and zero-fills a gradient the size of the \emph{entire} table while a step touches $\sim$1e-4 of its rows --- and derived a prediction that separates it from the obvious rival: \textbf{fill-flood says the cost of the dense path scales with TABLE ROWS, so a sparse-gradient replacement should look better as tables grow; a memory-bandwidth account says it scales with TOUCHED rows, so the comparison should be flat in table size.} A first experiment (E6) tested the sparse replacement at the frame's default multiplier and \textbf{failed in the direction opposite to its own prediction}: $+13.4$\% step time, killed at its preregistered trap-check. A second (E7), a $2\times2$ over table multiplier and sparse gradients, then confirmed the interaction: the sparse penalty falls from $+12.95$\% to $+3.22$\% as tables grow $4\times$. \textbf{The mechanism is supported and the intervention is dead}, because the table size at which sparse gradients would pay ($\approx$342$\times$) lies far past the quality knee: $256\times$ already costs $+0.0109\,\vb$, $4.2\times$ the adoption gate. We argue this pairing --- a true mechanism with an unaffordable operating point --- is a distinct and under-reported outcome class, and that separating ``the mechanism is right'' from ``the change is worth making'' is what let us extract a positive result from two failed experiments.
+\end{abstract}
+
+\section{Why This Paper Is Not a Third Null}
+Papers 026 and 027 recorded five preregistered interventions landing inside $\pm$1.3e-3 of zero against a gate of 2.6e-3. The natural next move --- run a sixth --- has poor expected information. What changed here is that we stopped testing \emph{interventions} and started testing a \emph{mechanism}: a proposed cause for an observed phenomenon, carrying a prediction that some rival account forbids.
+
+The distinction matters operationally. An intervention test answers ``does this help?'' and a null answers almost nothing about why. A mechanism test answers ``is this the reason?'' and \emph{either} outcome is informative. Both E6 and E7 were, as interventions, failures. As a mechanism test the pair is a success.
+
+\section{The Observed Phenomenon}
+Profiling the reference step (\texttt{evd\_obs\_ngram\_kernel\_profile}) shows the step is dominated not by attention ($\approx$5\%) or cross-entropy ($\approx$1.6\%) but by a long tail of tiny kernels, including $\approx$194k int/fill launches concentrated in the $n$-gram value-embedding construction. Measured MFU is $\approx$19\% while paper 026 measured the block GEMMs themselves at $\approx$90\%. The loss is \emph{outside} the matmuls, and the step is \textbf{launch-bound, not compute-bound}.
+
+\section{The Proposed Cause and Its Falsifier}
+The hashed $n$-gram value embeddings hold $\approx$1.61e9 parameters over 14 registered hash sites --- 95\% of the model's real parameter count, a fact absent from the reported 94M figure. A single step gathers at most $B{\cdot}T \approx 1.5$e5 distinct rows per site, a $\sim$1e-4 fraction. Autograd's dense embedding backward nevertheless allocates a gradient the full size of the table and must zero it before scatter-accumulation. Emitted as many small tiled fills rather than one memset, that zeroing converts table \emph{size} into launch \emph{count} --- which is what the profile shows.
+
+\textbf{The registered discriminator.} Let $P(m)$ be the step-time penalty of replacing the dense backward with sparse capture at table multiplier $m$, and let $O$ be the fixed overhead sparse capture adds (chiefly the \texttt{custom\_op} boundary blocking inductor's epilogue fusion). Fill-flood predicts the removed work grows with table rows:
+\[
+P(m) \;=\; O \;-\; F\cdot(m/64),
+\]
+strictly decreasing in $m$. The bandwidth account predicts $P$ independent of $m$. \emph{This was written into the mechanism record before E6 returned any data.}
+
+\section{E6: Failing in the Opposite Direction}
+E6 enabled sparse capture at the default multiplier, predicting $-9.3$\% step time and $\vb$ $-0.0058$ via the token law. Measured over 5 clean pairs: \textbf{1779 vs 2016 mean steps, $+13.37$\% step time, 5/5 pairs against}, every treatment arm below every control arm. The round was killed at its preregistered batch-1 trap-check rather than run to $n{=}10$.
+
+Two things are worth recording. First, the falsification record had named the expected failure mode in advance --- ``the \texttt{custom\_op} boundary blocks inductor epilogue fusion and the lost fusion costs more than the removed fills'' --- and that is what occurred; this is the seventh proposal killed by the campaign's compiled-baseline rule. Second, the analysis rule was fixed before launch: because the treatment's own mechanism \emph{is} throughput, RAW was preregistered as the decision metric. Applying the token-law control variate here would have subtracted the hypothesis, converting ``13\% slower'' into ``intrinsic $+0.0009$, essentially null'' --- a defensible-sounding sentence that would have been false by construction.
+
+\textbf{An unplanned check of the token law.} It predicts $+0.00753\,\vb$ from the lost tokens alone; the observed RAW delta was $+0.00841$. Agreement to 12\% at $\approx3\times$ the throughput perturbation of any prior test, leaving an intrinsic residual of $+0.0009$.
+
+\section{E7: The Interaction}
+A $2\times2$ over $m \in \{64, 256\}$ and sparse $\in \{0,1\}$, 4 seeds per cell, 16 arms.
+
+\begin{center}\begin{small}
+\begin{tabular}{lrrr}
+\toprule
+cell & $\vb$ & step ms & med MFU \\
+\midrule
+$m{=}64$, dense  & 0.933346 & 149.8 & 19.41 \\
+$m{=}64$, sparse & 0.941059 & 169.2 & 17.18 \\
+$m{=}256$, dense & 0.944230 & 186.2 & 15.62 \\
+$m{=}256$, sparse& 0.946569 & 192.2 & 15.13 \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+\textbf{Penalty at $m{=}64$: $+19.4$\,ms ($+12.95$\%). At $m{=}256$: $+6.0$\,ms ($+3.22$\%).} The penalty falls $3.2\times$ while tables grow $4\times$. The prediction registered before E6 is confirmed; the bandwidth account, which requires flatness, is contradicted.
+
+Solving $P(m)=O-F(m/64)$ on the two points gives $F=4.47$\,ms of fill cost at $m{=}64$ and $O=23.87$\,ms of \texttt{custom\_op} overhead, hence break-even near $m\approx342$. \textbf{We flag this explicitly as an interpolation, not a test} --- two points determine two parameters exactly --- and register it as a prediction for a third multiplier rather than a result.
+
+\textbf{A methodological note that changed a verdict.} Our contention screen uses a $\ge$1950-step floor, calibrated at $m{=}64$. The $m{=}256$ arms legitimately complete $\approx$1620 steps because the step is 25\% slower; an absolute floor would have quarantined an entire healthy cell. Median \emph{step time} is operating-point-independent and contention-robust, and screening on it also exonerated arm \texttt{s45\_m64\_sg0}, which the step floor would have flagged (1908 steps) despite a step time of 150.2\,ms, squarely in family. The step-count screen is a proxy that silently assumes a fixed operating point.
+
+\section{Why the Direction Is Nevertheless Closed}
+The regime in which the fill flood dominates is a regime this frame cannot afford. At fixed sparsity setting, $m{=}256$ costs $+0.010883\,\vb$ against $m{=}64$ --- $4.2\times$ the gate. Break-even for sparse gradients sits above that, at $m\approx342$. \textbf{There is no table size that is both large enough for sparse gradients to pay and small enough for the model to be good.}
+
+This is a specific and, we think, under-named outcome: the mechanism is real, its prediction survived a prospective discriminating test, and the intervention derived from it is still worthless \emph{here}. Recording only ``sparse gradients failed'' would have discarded a confirmed causal account of the campaign's dominant throughput bottleneck. Recording only ``fill-flood confirmed'' would have implied an adoption that does not exist. The registry now carries them as separate records: mechanism \texttt{status=active}, hypothesis \texttt{status=rejected}.
+
+\section{Next Experiments}
+Rated on novelty / provenance / validity / impact / reliability / feasibility / falsifiability, 1--5.
+
+\textbf{1. TN-gram: CP factors shared across $n$-gram orders} (5/5/4/5/3/4/5) --- \emph{running as E8}. One shared factor table replaces the 14 order- and layer-specific tables, with a learned per-site absorption vector specialising each use. \emph{Why it should work:} \texttt{clm\_tngram\_cp\_shared\_factors\_mechanism} is the only claim in our 123-claim corpus whose recorded scope is literally \texttt{short\_budget\_transformer\_lm\_pretraining} --- no downward extrapolation is required. It attacks the subsystem holding 95\% of parameters and, per this paper, the throughput bottleneck: 14 dense zero-fills collapse to 1. Smoke measurement gives 143.1\,ms vs 148.9\,ms ($-3.9$\%) and 44\,GB vs 55\,GB. \emph{Design:} three arms, because two would confound sharing with capacity. A = baseline; B = shared factors ($\approx$14$\times$ fewer $n$-gram parameters); C = independent tables shrunk to B's parameter count. B vs C isolates sharing; A vs C measures capacity alone. \emph{Prior against it:} E7 shows the capacity--quality curve is steep, so B pays a capacity cost that sharing must overcome.
+
+\textbf{2. A third multiplier to test the $P(m)$ fit} (2/5/5/2/5/5/5). Run sparse vs dense at $m{=}128$; the fit predicts $+14.9$\,ms. Cheap, and converts an interpolation into a test. Low impact --- it cannot reopen the direction --- but it is the honest completion of this paper's central claim.
+
+\textbf{3. Attack $O$ rather than $F$} (4/3/4/4/3/3/4). The $23.87$\,ms \texttt{custom\_op} overhead is now measured, not inferred, and it is the single largest identified non-GEMM cost in the step. If sparse capture were expressible without an autograd-function boundary --- e.g. as a compiled scatter that inductor can fuse --- break-even moves from $m\approx342$ toward the usable range. \emph{Risk:} six proposals have already died to this exact boundary, which is evidence the boundary is hard to avoid, not that nobody tried.
+
+\textbf{4. Retire the absolute step-count screen} (1/5/5/3/5/5/4). Replace the $\ge$1950-step floor with a median-step-time band computed per operating point. This paper shows the floor mis-screens whenever an arm legitimately changes step time, which is exactly the case for every throughput lever we intend to test.
+
+\section{Conclusion}
+Two failed interventions produced one confirmed mechanism. The fill-flood account of this model's launch-bound step made a prediction that a rival account forbade, the prediction was registered before the data existed, and it held: the sparse-gradient penalty fell $3.2\times$ as tables grew $4\times$. The same experiment closed the direction, because the multiplier at which the mechanism pays costs $4.2$ gates of quality. We record the mechanism as active and the intervention as rejected, and we take the general lesson to be that a campaign stuck on nulls should test causes rather than changes --- a null intervention teaches almost nothing, while a mechanism test cannot fail to.
+\end{document}

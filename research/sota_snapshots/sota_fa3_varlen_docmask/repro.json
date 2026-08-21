@@ -1,0 +1,84 @@
+{
+ "name": "sota_fa3_varlen_docmask",
+ "val_bpb_mean": 0.93493,
+ "val_bpb_best": 0.93334,
+ "n_seeds": 10,
+ "seeds": [
+  42,
+  43,
+  44,
+  45,
+  46,
+  47,
+  48,
+  49,
+  50,
+  51
+ ],
+ "per_seed": {
+  "42": 0.937327,
+  "43": 0.935396,
+  "44": 0.936189,
+  "45": 0.933834,
+  "46": 0.934646,
+  "47": 0.93334,
+  "48": 0.934018,
+  "49": 0.935478,
+  "50": 0.934774,
+  "51": 0.934301
+ },
+ "paired_baseline": {
+  "42": 0.9413,
+  "43": 0.942041,
+  "44": 0.942675,
+  "45": 0.938412,
+  "46": 0.940594,
+  "47": 0.940028,
+  "48": 0.937718,
+  "49": 0.939772,
+  "50": 0.942177,
+  "51": 0.936806,
+  "mean": 0.940152
+ },
+ "paired_delta_mean": -0.005222,
+ "paired_delta_sd": 0.001619,
+ "paired_t": -10.2,
+ "all_same_sign": true,
+ "gate_2sigma": 0.004072,
+ "gate_cleared": true,
+ "steps": {
+  "treatment": [
+   1175,
+   1186,
+   1181,
+   1176,
+   1188,
+   1182
+  ],
+  "baseline": [
+   1135,
+   1139,
+   1103,
+   1133,
+   1138,
+   1100
+  ]
+ },
+ "env": "ATTN_BACKEND=fa3 COMPILE_MODE=max-autotune-no-cudagraphs STOP_MODE=time TIME_BUDGET=300 DOC_MASK=1 DOC_MASK_IMPL=varlen",
+ "levers": [
+  "fa3 varlen intra-document attention masking via cu_seqlens",
+  "SSSL short-window span //4",
+  "batch 2^18",
+  "matrix_lr 0.03",
+  "n-gram(2,3) hash value embeddings",
+  "Muon",
+  "squared-ReLU MLP"
+ ],
+ "mechanism": "Document structure is handed to the fa3 kernel as cu_seqlens rather than materialized as a boolean mask, so cross-document attention blocks are skipped outright. Quality AND throughput improve together (+40..78 steps).",
+ "frame": "walltime_5min_h200",
+ "date": "2026-07-29",
+ "note": "Supersedes sota_swin4 (0.95058). Also beats the reconciled 10-seed baseline 0.939797 by -0.003493. Prior sdpa/flex doc-masking was sub-gate ONLY because the fa3->sdpa backend penalty (+0.012) cancelled the doc-mask benefit (-0.011); running it on fa3 removes the penalty.",
+ "vs_reconciled_10seed_baseline": -0.004867,
+ "funnel_stage": "n=10 COMPLETE (1->3->6->10); satisfies this scope's min_seeds=10 adoption requirement",
+ "val_bpb_sd": 0.001198
+}

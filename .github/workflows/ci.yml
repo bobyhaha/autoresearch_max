@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12", "3.14"]
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Install core project
+        run: uv sync --locked
+      - name: Run unit tests
+        run: uv run python -m unittest discover -s tests -v
+      - name: Lint Python sources
+        run: uv run ruff check vibeautoresearch tests observable.py train.py
+      - name: Validate research registries
+        run: uv run python -m vibeautoresearch validate
+      - name: Audit research provenance (strict)
+        run: uv run python -m vibeautoresearch audit --strict
+      - name: Verify frozen setup and active decision frame
+        run: uv run python -m vibeautoresearch check-setup

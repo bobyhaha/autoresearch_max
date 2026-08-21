@@ -1,0 +1,373 @@
+%% Prospective, append-only execution addendum. It contains no scored result.
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{seqsplit}
+\usepackage{xcolor}
+\usepackage{icml2024}
+\makeatletter
+\gdef\isaccepted{1}
+\renewcommand{\Notice@String}{\textit{Internal OPHIS preregistration in ICML
+two-column format. Not peer reviewed, submitted to, or accepted by ICML.}}
+\makeatother
+\hypersetup{
+  pdfauthor={GPT Research Coordinator and independent adversarial critic},
+  pdfsubject={Internal OPHIS preregistration; not an ICML submission or acceptance}
+}
+
+\newcommand{\bpb}{\mathrm{bpb}}
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+\newcommand{\passx}{\textcolor{blue}{pass}}
+\newcommand{\killx}{\textcolor{red}{kill}}
+\newcommand{\holdx}{\textcolor{orange}{hold}}
+\newcommand{\hashx}[1]{{\ttfamily\seqsplit{#1}}}
+\icmltitlerunning{Paper 019a: Boundary-Sidecar Attribution Addendum}
+
+\begin{document}
+\twocolumn[
+\icmltitle{Paper 019a: Observe Before Optimizing\\
+An Attribution Addendum for Packer-Sourced FA3 Boundaries}
+\begin{icmlauthorlist}
+\icmlauthor{GPT Research Coordinator}{ophis}
+\icmlauthor{Systems Proposer and Independent Adversarial Critic}{ophis}
+\end{icmlauthorlist}
+\icmlaffiliation{ophis}{OPHIS governed autoresearch campaign}
+\icmlcorrespondingauthor{GPT Research Coordinator}{baiyuzhu@mit.edu}
+\icmlkeywords{automated research, causal attribution, FlashAttention, systems optimization, preregistration}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+This prospective addendum strengthens only the Round-1 execution contract of
+paper 019 before any governed performance diagnostic.  The candidate moves
+document-boundary discovery from a per-step CUDA scan to exact metadata
+already known by the packer.  A newer independent critic lowers its local
+impact and transfer scores, from the paper-canonical 33/40 to 30/40, while
+retaining it as a diagnostic-first dependency.  We freeze a 1,000-batch
+pre-clock equivalence gate, a sequential 20-step scanner/scanner A/A phase, a
+20-step scanner/sidecar A/B phase, a 10-step washout, and exactly 200 clean
+timing samples.  Model, optimizer, data, boundary, loss, CPU-RNG, CUDA-RNG,
+and compiler identities are bound at the relevant phase boundaries.  Two
+independent H200 executions already pass adversarial event-lifetime, dynamic
+shape, and real FlashAttention-3 forward/backward tests; that evidence
+validates the implementation substrate but is neither a speed result nor a
+RunRecord.  A single physical placement can only kill the mechanism or
+require a separately preregistered role-swapped profile.  It cannot authorize
+a validation-BPB endpoint.  The historical 0.927183 remains the chart origin
+and a quarantined provenance observation; this addendum reports no new SOTA.
+\end{abstract}
+
+\section{Authority, Scope, and Non-Claims}
+
+Paper 019 preregistered a connected five-round program
+\cite{paper019}.  Its immutable TeX and PDF SHA-256 values are respectively
+\hashx{9ba9d7bcdf7a29612bf2bc4fb6d7b8cfe69c53969187793e8f5b7960de164bc5}
+and
+\hashx{17a8e9d3e2af669bb4b0c105c1ec7965ad0cd9f8bc59fc7467230526db839db8}.
+This append-only addendum supersedes its Round-1 execution details where the
+two disagree; it does not change the other four rounds, alter their order, or
+authorize an experiment.  In particular:
+\[
+\boxed{\begin{gathered}
+\text{no scored endpoint, no validation BPB,}\\
+\text{no comparator rebind, and no new SOTA.}
+\end{gathered}}
+\]
+The chart must continue to begin at historical experiment 501, its original
+timestamp, and $\valbpb=0.927183$.  That point is not a contemporaneous
+control.  The active causal question remains sidecar minus scanner under the
+same recovered recipe and a fresh governed seed.
+
+This document was frozen after implementation-level systems validation but
+before the governed phased diagnostic.  Preflight failures and fixes are
+preserved rather than erased.  A diagnostic may execute only after typed
+registration, setup reconciliation, source-hash matching, strict repository
+audit, and a fresh tenant-free GPU inventory.
+
+\section{Explicit Ratings and Selection Rationale}
+
+Every vector uses the fixed order novelty (N), primary-source provenance (P),
+causal validity (V), expected local impact (I), transfer reliability (R),
+feasibility/cost (F), falsifiability (X), and connected-program coherence
+(C).  All dimensions are scored from 1 to 5, where higher is better.
+
+\begin{table}[t]
+\caption{Explicit ratings frozen before the governed diagnostic.}
+\label{tab:ratings}
+\centering\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{p{0.36\linewidth}p{0.43\linewidth}r}
+\toprule
+assessment & N/P/V/I/R/F/X/C & sum\\
+\midrule
+original proposer &
+4/4/5/3/4/4/5/5 & 34\\
+paper-019 critic &
+4/4/5/3/3/4/5/5 & 33\\
+new independent critic &
+4/4/5/2/2/3/5/5 & 30\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The lower live score is authoritative for current risk assessment.  The
+candidate is not expected to improve modeling quality directly, and the
+cost removed may be too small relative to GPU-placement variance.  It remains
+first for a dependency reason, not because 30/40 is the largest portfolio
+score: exact boundary metadata is needed to observe and attribute later
+document-local mechanisms, and an accepted systems gain would increase the
+charged update exposure of every downstream round.  This preserves the
+campaign principle:
+\begin{quote}
+\emph{Before a system can improve itself, it must be able to observe and
+attribute its failures.}
+\end{quote}
+
+The strongest model reserve proposed after the plateau is GPAS residual
+activation control, proposer score
+4/5/5/4/4/5/5/5 = 37/40 \cite{gpas2025}.  The strongest independently
+criticized Engram child is distinct prime moduli per hash head/layer,
+4/5/5/3/3/5/5/5 = 35/40 \cite{engram2026}.  Neither is authorized here.
+They remain analysis-only successors so that a higher-scoring idea cannot
+silently bypass the already frozen causal dependency.
+
+\section{Mechanism and Plausibility}
+
+The scanner reconstructs boundaries from the packed token tensor on every
+training microbatch: it compares BOS locations, performs data-dependent
+compaction, and materializes cumulative sequence lengths on CUDA.  The
+packer already knows every row start and interior document start while it
+writes the batch.  The treatment records those flattened offsets into a
+three-slot pinned-CPU \texttt{int32} ring, asynchronously copies only the
+logical prefix to CUDA, and protects reuse with producer and consumer events.
+The same offset tensor supplies FlashAttention-3's
+\texttt{cu\_seqlens\_q} and \texttt{cu\_seqlens\_k}.
+
+The causal path is therefore
+\[
+\begin{aligned}
+\text{packer-known starts}
+&\rightarrow \text{exact pinned sidecar}\\
+&\rightarrow \text{remove CUDA boundary scan}\\
+&\rightarrow \text{lower charged step time}\\
+&\rightarrow \text{more updates in 300 seconds}\\
+&\rightarrow \text{possibly lower endpoint BPB}.
+\end{aligned}
+\]
+The mechanism is plausible only if every semantic and state mediator is
+identical and the timing gain clears a robust break-even.  The FA3 source
+supports the external cumulative-boundary interface \cite{fa3}; it does not
+support the local speed or BPB claim.  That claim must come entirely from
+the governed local contrast.
+
+\section{Frozen Phased Diagnostic}
+
+\paragraph{Symmetric pre-clock assay.}
+Both registered arms independently instantiate scanner and sidecar loaders
+and compare exactly 1,000 batches before the diagnostic clock.  Inputs,
+targets, epochs, flattened cumulative boundaries, boundary counts, maximum
+segment length, and SHA-256 digests must match.  Required invariants are zero
+first offset, terminal offset $BT$, strict increase, every row start, and no
+gap greater than $T$.  An interior-BOS mismatch is a hard kill.
+
+\paragraph{Steps 0--19: A/A attribution prefix.}
+Both physical arms consume scanner-derived masks.  The treatment advances and
+safely discards its sidecar lease so producer behavior remains exercised; this
+conservative asymmetry is disclosed and is not used as a speed sample.
+Immediately after update 20, exact data, boundary, micro-loss, model,
+optimizer, CPU-RNG, and CUDA-RNG hashes must agree across arms.
+
+\paragraph{Steps 20--39: A/B mechanism phase.}
+At step 20, the treatment alone switches its consumed mask metadata to the
+sidecar; the control remains on the scanner.  After update 40, the same
+phase-local data, boundary, loss, state, and RNG hashes must agree.  Any state
+divergence kills the mechanism, even if timing appears favorable.
+
+\paragraph{Steps 40--49: washout.}
+These ten steps are executed but excluded from the performance estimator.
+They prevent the activation boundary, Python allocation transients, and
+phase-local instrumentation from entering the clean window.
+
+\paragraph{Steps 50--249: clean profile.}
+Exactly 200 positive finite step-time observations are retained.  They form
+20 consecutive blocks of 10, and the same complete blocks determine both the
+point estimate and its one-sided 95\% lower confidence bound.  The bootstrap
+uses the frozen seed 19019063 and 10,000 resamples.  No in-clock state hashing,
+boundary hashing, or graph probing is admitted to this window unless charged
+symmetrically.
+
+\paragraph{Compiler identity.}
+The first model call may create exactly one PyTorch Dynamo graph at site
+\texttt{0:0}.  Every later model call executes under
+\texttt{fail\_on\_recompile}.  Callback-derived compile IDs are hashed; zero
+recompiles and zero CUDA-graph recordings are required.  Unsupported model or
+optimizer state types fail closed rather than falling back to
+representation-dependent hashing.
+
+\section{Two-Level Performance Decision}
+
+For the first physical placement, the treatment/control token-rate point
+ratio must be at least 1.054 and its one-sided 95\% lower bound at least
+1.041.  The point threshold rounds up the robust scientific break-even from
+paper 019,
+\[
+r_{\rm robust}
+=\exp(0.002396/0.046)=1.05347.
+\]
+The separate 1.041 lower-bound screen approximates the central, rather than
+robust, token-law break-even and is a fixed diagnostic decision bound rather
+than population-level experimental confidence.
+Failure of either preregistered diagnostic threshold kills Round 1 before
+validation scoring.
+
+Passing both thresholds does \emph{not} authorize a 300-second endpoint.
+One GPU may be systematically faster than the other, and temporal
+bootstrapping cannot identify placement bias.  A pass yields only
+\texttt{REQUIRE\_COUNTERBALANCED\_PROFILE}.  A separately frozen role-swapped
+AB/BA profile must reuse the same source, challenge, UUID bindings, phase
+contract, and complete-block estimator.  Only a counterbalanced pass may
+promote the ordinary two-arm endpoint proposal through the normal typed gate.
+Thus a single placement can kill or request stronger evidence, but cannot
+create a favorable BPB opportunity.
+
+Each pair artifact must bind exactly two distinct immutable RunRecords, their
+fingerprints, roles, run UUIDs, source snapshot, challenge fingerprint, and
+resolved configurations.  The sole resolved arm difference is
+\texttt{PACKER\_DOC\_BOUNDARIES}.  A child failure still writes an
+\texttt{INVALID\_DIAGNOSTIC} pair artifact.  Recovery may finalize comparison
+from existing records but may never relaunch the same immutable diagnostic.
+
+\section{H200 Systems Evidence Before Execution}
+
+Two independent non-experimental validators ran on H200s: one with ordinary
+asynchronous CUDA execution and one with
+\texttt{CUDA\_LAUNCH\_BLOCKING=1}.  Both produced the same terminal digest and
+passed delayed H2D, delayed consumer work across ring wraps, outstanding
+fourth-lease rejection, wrong-stream rejection, discard contracts, poisoned
+tail lengths, exact capacity bounds, a single dynamic compile identity,
+forced static-shape recompile rejection, and real FA3 varlen
+forward/backward bitwise equivalence over nine ring-wrap iterations.
+The FA3 check used a synthetic 32-token, two-head, head-dimension-64 workload
+and a small compiled helper.  It did not execute the full training graph.
+
+\begin{table}[t]
+\caption{Preflight evidence.  ``Pass'' is systems scope only.}
+\label{tab:h200}
+\centering\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{p{0.49\linewidth}p{0.26\linewidth}}
+\toprule
+check & result\\
+\midrule
+runtime & PyTorch 2.9.1+cu128; CUDA 12.8\\
+device & NVIDIA H200, SM90\\
+event and ring lifetime & \passx\\
+Dynamo graphs / recompiles & 1 / 0\\
+forced recompile & rejected\\
+real FA3 forward/backward & bitwise exact\\
+async vs blocking log SHA & identical\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two predecessor attempts are part of the record.  The first failed before GPU
+work because the standalone validator lacked the repository root on
+\texttt{sys.path}; the second found that applying
+\texttt{fail\_on\_recompile} to the initial call rejects the required first
+compile.  The frozen implementation now permits the first compile and applies
+the stance to all later calls.  These failures improve attribution; they are
+not discarded failed trials.
+
+The validated FA3 result digest is
+\hashx{e5a96b00475fbcf1425eb72315ef0ef02e6138fc82cb84983529ef452f750127}.
+The two log files share SHA-256
+\hashx{37bae79b44198818fce02ef54a6a26482f119505511a547fa9fd6a17759ac906}.
+This evidence is neither a RunRecord nor a throughput measurement.
+
+\section{Retrospective Round-2 Update}
+
+Paper 019's canonical-key Round 2 was independently evaluated by its frozen
+offline mediator before any GPU scoring.  The 8,192-token vocabulary reduced
+to 6,808 canonical keys (16.8945\%), while the conservative observed affected
+shares were 17.7887\% for bigrams and 3.7155\% for trigrams.  The governing
+minimum, 3.7155\%, was below the preregistered 10\% gate.  The result is
+\[
+\boxed{\texttt{KILL\_BEFORE\_GPU\_SCORING}.}
+\]
+The result and output-manifest SHA-256 values are
+\hashx{9d0e3a122a7e880471bc793368576a89afa5cfbe442f1149c1bbc651eed4d761}
+and
+\hashx{d15dc6b3be202b463befd270abf1af04b8b24c3ab3a6acce831a7a5a58189f63}.
+Pooled or less conservative shares cannot replace the frozen statistic.
+This result was known only after paper 019 and may update the portfolio, but
+it may not tune Round-1 thresholds.  A future paper may replace the dead round
+with the independently ranked prime-modulus $\rightarrow$ constant-parameter
+$K=4$ $\rightarrow$ contextual-gate Engram chain.
+
+\section{Reproducibility Binding}
+
+The exact systems-validation manifest is stored under
+\path{research/experiments/artifacts/paper019_round1_fa3_boundary_sidecar}.
+At this addendum freeze, the principal source SHA-256 values are:
+\begin{center}
+\scriptsize
+\begin{tabular}{p{0.95\linewidth}}
+lib.py\\
+\hashx{13de28bcb398866be65cfca489413818d75dc2fcd2461e367be06198f879123d}\\[2pt]
+train.py\\
+\hashx{e2d4ac9e91c6ef716a8fdab35ab72da3e0e4bb23cbbecee04cc528b66d172b8b}\\[2pt]
+tools/run\_gated.py\\
+\hashx{47d08ec38f6dff53ed50cdc5e4ddaf88342da0f2e9c5993219baf4121711868a}\\[2pt]
+tools/run\_stage.py\\
+\hashx{c7d3ab45af2983598936859ea9f14c34ebb6da3ce9b1d0cc9d00ca6c764b16c0}\\[2pt]
+tools/register\_paper019\_fa3\_boundary\_sidecar\_chain.py\\
+\hashx{d8f6b4e71a65c971ceffdcb63630b99daa4d4cd57c3546cc52410558ee8e9ce0}\\[2pt]
+tools/validate\_packer\_sidecar\_h200.py\\
+\hashx{e5d58f8d0a3db1a87b1e82ee1b4063da92e49eac015a7c6b6e0f720379a1c9e4}\\[2pt]
+H200 validation manifest\\
+\hashx{f0a226c34198186bfce9a047e328d2b4e3fb290a3993dc1cb24829792b37c213}
+\end{tabular}
+\end{center}
+Any later edit invalidates these bindings and requires a new reconciliation
+and explicit amendment before execution.  Remote launch must independently
+match the local source hashes and the pinned FA3 repository.
+
+\section{Conclusion}
+
+This addendum converts an attractive exact-semantics optimization into a
+failure-attributable sequence.  It separates semantic equivalence, state
+equivalence, compiler identity, systems lifetime, clean timing, placement
+bias, and endpoint BPB.  The candidate can advance only by clearing each
+link in order; a favorable downstream number cannot repair an upstream
+failure.  That discipline is the mechanism by which exploration remains
+novel without becoming ungrounded.
+
+{\footnotesize
+\begin{thebibliography}{9}
+
+\bibitem[GPT Research Coordinator(2026)]{paper019}
+GPT Research Coordinator.
+Observe, Attribute, Then Improve: A Critic-Ranked Five-Mechanism Program for
+an Autoresearch Plateau. OPHIS paper 019, 2026.
+
+\bibitem[Dao et al.(2024)]{fa3}
+T. Dao et al.
+FlashAttention-3: Fast and Accurate Attention with Asynchrony and
+Low-precision. NeurIPS, 2024.
+
+\bibitem[Chen et al.(2025)]{gpas2025}
+T. Chen et al.
+GPAS: Accelerating Convergence of LLM Pretraining via
+Gradient-Preserving Activation Scaling.
+NeurIPS, 2025.
+
+\bibitem[Cheng et al.(2026)]{engram2026}
+X. Cheng et al.
+Conditional Memory via Scalable Lookup: A New Axis of Sparsity for Large
+Language Models. ACL, 2026.
+
+\end{thebibliography}
+}
+
+\end{document}

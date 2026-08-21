@@ -1,0 +1,232 @@
+%% Paper 006 -- ICML-conference-style LaTeX version.
+%% NOTE: Requires the ICML 2024 style file (icml2024.sty) from the ICML author kit
+%% (https://icml.cc/ -> Author Instructions) to be placed alongside this file to compile.
+%% Compile with: pdflatex paper_006_throughput_and_a_retraction_20260727.tex
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% Use the accepted (camera-ready) option so author names and affiliations render.
+\usepackage[accepted]{icml2024}
+
+% Convenience macro for validation bits-per-byte.
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+
+\icmltitlerunning{Throughput Levers and a Retracted False Positive}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Throughput Levers and a Retracted False Positive: \\ GPU-Contention Confounds in Shared-Cluster A/B Testing}
+
+\begin{icmlauthorlist}
+\icmlauthor{Autonomous Research Agent (OPHIS)}{ophis}
+\end{icmlauthorlist}
+
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+
+\icmlcorrespondingauthor{Autonomous Research Agent (OPHIS)}{baiyuzhu@mit.edu}
+
+\icmlkeywords{fp8 training, mixed precision, A/B testing, shared clusters, retraction, false positives, mixture of experts, EMA, autonomous research, Machine Learning}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report rounds 26--36 (exp168--exp229) of an autonomous pretraining campaign on a fresh Karpathy \texttt{autoresearch} baseline ($\sim$50M-parameter nanochat-style GPT, Muon+AdamW, fixed 5-minute wall-clock budget on one H200 of a shared $8\times$H200 node, scored by validation bits per byte, single-seed $\sigma \approx 0.0015$). Entering these rounds the reference is a converged configuration --- bf16, n-gram (2,3) value embeddings at table size $2^{20}$, FFN $6\times$, \texttt{TOTAL\_BATCH} $2^{18}$, \texttt{max-autotune} --- at a 16-seed mean of $\valbpb = 0.9546$ (best single seed 0.9521). Four exotic quality levers are certified null, each for a specific mechanistic reason under the update-limited $q \cdot U$ decomposition: parameter EMA (EMA-evaluated weights are worse at every decay tested, because warmdown-to-zero already leaves the final weights at the basin, with no oscillation for averaging to remove); sparse n-gram gradients (a torch-2.9 throughput regression, 987--1239 steps vs.\ $\sim$1670 dense); multi-hash Bloom-style n-gram tables ($k = 2/3/4$ all $\geq$ the single-hash reference --- per-row over-subscription cancels the collision reduction); and a dense-expert MoE (catastrophic, 1.14--1.31). The centerpiece, however, is methodological: fp8 e4m3 MLP GEMMs initially appeared to \emph{win} (3-seed 0.9538 vs.\ a concurrent bf16 control at 0.9562, later 6-seed paired $-0.0015$, $+2\%$ MFU) and were adopted as a campaign milestone. A subsequent rigor check --- an interleaved-GPU paired A/B with fp8 on even GPUs, bf16 on odd, matched seeds --- measured a paired $\Delta = +0.0002$ (fp8 marginally worse) at \emph{equal} MFU (43.1 vs.\ 42.9). The apparent win was a shared-cluster per-GPU contention artifact: the earlier controls had landed on systematically slower GPUs. The milestone was retracted and the reference reverted to bf16 at 0.9546. We state the general principle --- when the effect size sought ($\sim$1 seed-$\sigma$) is below the per-GPU nuisance variance ($\sim$1--2\% MFU), treatment and control \emph{must} be interleaved across devices or run same-GPU sequential --- and close with Hypothesis H6 (the frame is genuinely floored at $\approx 0.9546$; confidence 0.75) and a ranked, falsifiable program.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+By round 25 of this campaign, the quality surface around the adopted configuration was mapped and flat: scalar knobs saturated, capacity additions null or negative, and the reference certified at a 13-seed mean of $\valbpb = 0.9548$ \cite{ophis2026capstone}. Rounds 26--36, reported here, therefore turned to the two remaining classes of candidate: \emph{exotic} quality mechanisms outside the knob surface (weight averaging, sparse gradients, multi-hash memory, mixture-of-experts), and \emph{throughput} levers (fp8 GEMMs), which under a fixed wall-clock budget act on $\valbpb$ by raising the update count $U$ at fixed per-update quality $q$.
+
+The scientific core of this paper is not a lever but a correction. An fp8 matrix-multiply change passed the campaign's pre-registered 3-seed gate, was extended to six seeds, adopted as a milestone, and then --- under a stricter, GPU-interleaved paired design --- shown to be null. The original ``win'' was an artifact of \emph{where the control ran}: on a shared $8\times$H200 node, per-GPU contention moves throughput by more than the entire effect being measured, and the earlier control runs had been placed on systematically slower devices. We document the false positive, the design that caught it, the mechanism of the bias, and the retraction, because we believe this failure mode is generic to any fixed-wall-clock evaluation run on shared hardware:
+
+\begin{enumerate}
+    \item \textbf{F1 (Sections~\ref{sec:fp8}--\ref{sec:retraction}):} a statistically gated adoption can still be false when the nuisance variance (per-GPU contention, $\sim$1--2\% MFU) exceeds the effect size ($\sim$1 seed-$\sigma$) and correlates with treatment assignment. An interleaved-GPU paired A/B (fp8 on even GPUs, bf16 on odd, matched seeds) reduced the adopted $-0.0015$ effect to $+0.0002$ at equal MFU, and the milestone was retracted.
+    \item \textbf{F2 (Section~\ref{sec:nulls}):} four mechanistically distinct exotic quality levers --- EMA, sparse n-gram gradients, multi-hash tables, dense-expert MoE --- are null or worse, each failing at a predictable point of the $q \cdot U$ decomposition.
+\end{enumerate}
+
+Finding a false positive is cheap; \emph{self}-catching one, attributing it, and reverting the reference is the part of the protocol we consider transferable.
+
+\section{Experimental Setup}
+\label{sec:setup}
+
+\paragraph{Frame.} As in prior papers: each run trains a $\sim$50M-parameter nanochat-style GPT \cite{karpathy2025nanochat} (depth 8, sliding-window attention, Muon \cite{jordan2024muon} + AdamW) for a fixed 5-minute wall-clock budget on one H200, processing $\sim$440M tokens; runs are launched up to 7-wide across a \emph{shared} $8\times$H200 node. Metric: validation bits per byte ($\valbpb$), lower is better. Steps completed are an outcome, not a control.
+
+\paragraph{Reference.} The converged configuration entering round 26: bf16, n-gram (2,3) hash value embeddings at table size $2^{20}$, FFN ratio $6\times$, \texttt{TOTAL\_BATCH} $2^{18}$, \texttt{max-autotune}. The 13-seed mean of 0.9548 extended during these rounds to a 16-seed mean of $0.9546$ ($\sim$1670 steps/run); campaign-best single seed 0.9521.
+
+\paragraph{Noise floor and gate.} Single-seed $\sigma \approx 0.0015$; changes are adopted only on a 3-seed paired comparison clearing $2\sigma$ against concurrent controls.
+
+\paragraph{The nuisance term this paper is about.} The node is shared with co-tenant jobs. Per-GPU contention induces $\sim$1--2\% variance in MFU between simultaneously launched, nominally identical runs --- visible as reference step counts scattering from 1591 to 1746 across waves. Because $\valbpb$ at this frame is update-limited \cite{ophis2026capstone}, a 1--2\% shift in $U$ moves the metric by an amount comparable to, or larger than, the seed noise $\sigma \approx 0.0015$. Concurrent controls remove \emph{wave-level} drift but not \emph{device-level} assignment bias; Section~\ref{sec:retraction} shows the difference is decisive.
+
+\section{Exotic-Quality Nulls (Rounds 26--29)}
+\label{sec:nulls}
+
+Under the update-limited decomposition $d(\valbpb) \approx -(dq \cdot U + q \cdot dU)$, a lever wins only by raising $q \cdot U$. Each of the four mechanisms below fails at a specific, predictable point.
+
+\paragraph{Parameter EMA / weight averaging (exp181--exp187): null, mechanism understood.}
+An exponential moving average of weights was evaluated at decays $\{0.99, 0.998, 0.999, 0.9995\}$ and, for 0.999, at a delayed start (start-fraction 0.5) and across seeds 42/43/44. The EMA-evaluated weights were worse than the raw final weights in \emph{every} configuration: at decay 0.999 the EMA evaluates at 1.004 against a raw 0.9553 (badly stale); at 0.998, 0.972; at 0.99, $\approx 0.956$, converging to the raw value from above but never crossing it. The mechanism is the learning-rate schedule: warmdown decays the learning rate to zero, so the final iterate has already stopped oscillating and \emph{is} the basin average. EMA and SWA-style averaging \cite{izmailov2018swa} pay off when the trajectory still orbits a basin at nonzero learning rate; with warmdown-to-zero there is no oscillation left to average away, and any finite decay only mixes in stale weights ($dq < 0$). Discarded.
+
+\paragraph{Sparse n-gram gradients (exp175--exp177): a predicted throughput regression.}
+The n-gram value-embedding backward can scatter sparse gradients instead of densifying. The upstream code note recommends this on torch 2.13; this campaign runs torch 2.9, and we pre-registered the prediction that the older sparse scatter path would be \emph{slower}. It was: 987/1239/1235 steps versus $\sim$1670 for the paired dense controls, i.e.\ a 26--41\% loss of $U$, with $\valbpb$ 0.9908/0.9696/0.9721 (3-seed mean 0.9775) against dense controls at 0.9559/0.9579/0.9562 (mean 0.9567, run without \texttt{max-autotune} in the same wave). Same $q$, collapsed $U$. Rejected at 3 seeds.
+
+\paragraph{Multi-hash (Bloom-style) n-gram tables (exp191--exp194): over-subscription cancels the collision gain.}
+Hashing each n-gram with $k$ independent functions into the $2^{20}$ table and summing the $k$ rows reduces the probability that a frequent n-gram is corrupted by a colliding neighbor --- the standard Bloom-filter argument. But at fixed table size each \emph{row} now serves $k\times$ more n-grams, so per-row interference grows exactly as fast as per-key collision purity improves. Empirically $k=2/3/4$ gave 0.9595/0.9569/0.9564, monotonically approaching but never reaching the single-hash reference 0.9546 ($k=4$ still $+0.0018$, $> 1\sigma$ on the wrong side). The $k=1$ re-control (0.9663 at an anomalous 1366 steps) was itself discarded as contention-tainted --- in retrospect, an early tell of the artifact class in Section~\ref{sec:retraction}. Discarded.
+
+\paragraph{Dense-expert MoE (exp168, exp170): catastrophic, and instructively so.}
+A mixture-of-experts FFN \cite{shazeer2017outrageously} implemented with \emph{dense} expert computation (all experts evaluated, gated mixture, no sparse dispatch) is the worst result of the campaign: $E{=}8$/top-2/mult-3 reached only $\valbpb = 1.3133$ at 741 steps; $E{=}4$/top-2/mult-2, 1.1356 at 1434 steps. Two mechanisms compound. First, dense evaluation of all experts multiplies FLOPs per token without the sparse-compute capacity gain that motivates MoE, so $U$ collapses (741 steps) at \emph{no} $dq$ benefit --- it defeats the fixed-FLOPs purpose of the architecture. Second, router logits are unstable in the first minutes of training, and a 5-minute run is \emph{only} first minutes, so the mixture also damages $q$. The null indicts this implementation, not the mechanism; a true grouped-GEMM sparse dispatch remains the top-ranked open direction (Section~\ref{sec:future}).
+
+\section{The fp8 Arc: an Apparent Win (Rounds 30--34)}
+\label{sec:fp8}
+
+With quality levers exhausted, throughput is the remaining factor of $q \cdot U$, and the kernel audit of the capstone \cite{ophis2026capstone} priced MLP GEMMs at 36\% of the step. Casting the MLP GEMMs to fp8 e4m3 on the forward pass (bf16 backward, per-tensor scaling) \cite{micikevicius2022fp8} is the natural lever.
+
+\paragraph{The initial A/B.} fp8 seeds 42/43/44 (exp195--exp197): 0.9539/0.9540/0.9535, 1715--1737 steps, MFU 43.9 --- 3-seed mean $0.9538$. The concurrent bf16 controls (exp198--exp199, seeds 42/43): 0.9556/0.9568 at 1639/1637 steps, MFU 41.6 --- mean $0.9562$. Extension to six fp8 seeds (mean 0.9537) against five bf16 controls (mean 0.9554) gave a seed-paired $\Delta = -0.0015$, i.e.\ fp8 better by $\approx 1\sigma$ per seed consistently across pairs, at $+2\%$ MFU. Under the campaign's rules this cleared the gate, and fp8 MLP was \textbf{adopted} as a milestone (exp202). Nine fp8 reference seeds settled at 0.9536 with the campaign-best single seed, 0.9521 (exp28, seed 50).
+
+\paragraph{Extensions behaved as predicted --- which made the anomaly visible.} fp8 \emph{attention} projections (exp209--exp210) were rejected: the per-head projection GEMMs are too small for fp8 tensor-core throughput to matter (1703 steps, no MFU gain) and seed 43 regressed to 0.9579, consistent with q/k quantization risk. fp8 \emph{lm\_head} (exp213--exp220) raised MFU to 44.1 but was quality-neutral (6-seed 0.9542 vs.\ fp8 reference 0.9536--0.9540), and was not adopted. Meanwhile the fp8 reference re-runs scattered oddly with \emph{placement}: seed 54 posted 0.9584 on a slow GPU at 1650 steps. The pattern --- effects tracking step counts, step counts tracking devices --- motivated a stricter design.
+
+\section{The Retraction: Cross-GPU A/B Contention (Rounds 35--36)}
+\label{sec:retraction}
+
+\paragraph{The interleaved design.} Treatment and control were launched simultaneously with GPU assignment \emph{interleaved} --- fp8 on even-indexed GPUs, bf16 on odd --- with matched seeds 60/61/62 (exp224--exp229), so that any device-level contention gradient is shared across arms rather than loaded onto one.
+
+\paragraph{The result.} Seed-paired differences (fp8 $-$ bf16): $+0.0006$, $-0.0010$, $+0.0009$; paired $\Delta = +0.0002$ --- fp8 \emph{marginally worse} --- with MFU now \emph{equal}: 43.1 (fp8) vs.\ 42.9 (bf16), step counts 1711/1723/1655 vs.\ 1718/1679/1667. The $+2\%$ MFU gap of Section~\ref{sec:fp8} was never a property of fp8.
+
+\paragraph{The mechanism of the bias.} In the original A/Bs the bf16 controls had been placed on GPUs 3--5, which on this shared node were systematically slower or more contended during those waves: the controls posted MFU 41.6 and 1632--1683 steps against the established reference's own $\sim$1670-step, $\sim$43-MFU norm. Depressed $U$ on the control arm manufactured a $\approx 0.0015$ quality deficit that was then attributed to the treatment. The false positive was \emph{consistent across seeds} --- seed-pairing is no defense when both members of the comparison inherit a device-level offset --- and so it passed a gate designed for seed noise.
+
+\paragraph{The retraction.} The fp8 milestone was retracted, and the reference reverted to bf16 at the 16-seed mean $0.9546$. fp8 MLP is reclassified from ``win'' to ``neutral: equal quality, equal effective MFU under fair placement.''
+
+\paragraph{The general principle.} When the effect size sought (here $\sim$1 seed-$\sigma$, 0.0015) is smaller than the nuisance variance of the platform (here per-GPU contention worth 1--2\% MFU, i.e.\ 1--2\% of $U$, i.e.\ $\gtrsim 1\sigma$ of metric), treatment and control \emph{must} be interleaved across devices with matched seeds, or run same-GPU sequential. Wave-concurrency alone is insufficient: it controls \emph{when} runs execute but not \emph{where}. The practical tell that should trigger the check is cheap to monitor: \textbf{a ``control'' posting lower MFU or step count than the established reference norm is presumptively contaminated}, because the control is, by construction, the same program as the reference. The multi-hash $k{=}1$ control (1366 steps) and the initial bf16 controls (41.6 MFU) both showed the tell before the interleaved design was built.
+
+\section{Results}
+\label{sec:results}
+
+Table~\ref{tab:results} summarizes rounds 26--36 (exp168--exp229, with the fp8 arc's exp26--exp28 confirmation seeds). Verdicts reflect final, GPU-controlled status; the fp8 row records the full adopt-then-retract trajectory. Data: \texttt{campaign\_log.jsonl}.
+
+\begin{table*}[t]
+\caption{Rounds 26--36. Reference entering (and, after the retraction, leaving) this block: bf16, 16-seed mean $\valbpb = 0.9546$, $\sim$1670 steps. Single-seed $\sigma \approx 0.0015$. The fp8 MLP row is the retracted false positive: it cleared the 3-seed gate against wave-concurrent (but not GPU-interleaved) controls, was adopted, and was then measured null under the interleaved paired design.}
+\label{tab:results}
+\vskip 0.15in
+\begin{center}
+\begin{small}
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccl}
+\toprule
+Lever & Exps & $\valbpb$ & Steps & Verdict \\
+\midrule
+Reference (bf16, 16 seeds) & exp160--190 & \textbf{0.9546} (best 0.9521) & $\sim$1670 & reference \\
+\midrule
+Dense-expert MoE $E{=}8$/t2/m3 & exp168 & 1.3133 & 741 & catastrophic (dense FLOPs, no dispatch) \\
+Dense-expert MoE $E{=}4$/t2/m2 & exp170 & 1.1356 & 1434 & catastrophic; discard \\
+Sparse n-gram grads (3 seeds) & exp175--177 & 0.9775 & 987--1239 & torch-2.9 throughput regression \\
+\quad dense controls (3 seeds) & exp178--180 & 0.9567 & 1593--1638 & control (no \texttt{max-autotune}) \\
+EMA, decay 0.99--0.9995 & exp181--187 & EMA $\geq$ raw, up to 1.004 & 1591--1675 & null; no basin left after warmdown \\
+Multi-hash n-gram $k{=}2/3/4$ & exp191--194 & 0.9595/0.9569/0.9564 & 1612--1635 & $\geq$ ref; over-subscription; discard \\
+\quad multi-hash $k{=}1$ control & exp191 & 0.9663 & 1366 & contention-tainted; discarded \\
+\midrule
+fp8 MLP (6 seeds, wave controls) & exp195--202 & 0.9537 vs.\ 0.9554 & 1712--1737 & \textbf{adopted}: paired $-0.0015$, ``$+2\%$ MFU'' \\
+\quad fp8 ref confirm (9 seeds) & exp26--28, 216--223 & 0.9536 (best 0.9521) & 1650--1731 & held while adopted \\
+fp8 attention & exp209--210 & 0.9544 / 0.9579 & 1639--1703 & no MFU gain (small GEMMs); discard \\
+fp8 lm\_head (6 seeds) & exp213--220 & 0.9542 (MFU 44.1) & 1724--1746 & neutral vs.\ fp8 ref \\
+\textbf{Interleaved fp8/bf16 (3 pairs)} & exp224--229 & paired $\Delta = +0.0002$ & 1655--1723 & \textbf{fp8 null, equal MFU (43.1/42.9);} \\
+ & & & & \textbf{retracted; revert to bf16} \\
+\bottomrule
+\end{tabular}}
+\end{small}
+\end{center}
+\vskip -0.1in
+\end{table*}
+
+Three readings of the table. First, every quality mechanism fails where the $q \cdot U$ decomposition says it must: EMA and multi-hash add no $q$; sparse-grad and dense-MoE destroy $U$. Second, the only row that ever cleared the adoption gate in this block is the one that was later retracted --- at a converged frontier, the base rate of true positives is low enough that the gate's residual false-positive channels dominate what gets through. Third, the step-count column is diagnostic throughout: every anomaly in it (741, 987--1239, 1366, the controls' 1632--1683) marks a row whose $\valbpb$ cannot be read at face value.
+
+\section{Discussion}
+\label{sec:discussion}
+
+The campaign's statistical gate was designed against one noise source --- seed variance --- and it worked against that source. The fp8 false positive entered through a channel the gate did not model: a nuisance variable (per-GPU throughput on a shared node) that (a) exceeds the effect size, (b) is stable within a wave, and (c) was correlated with arm assignment because controls were placed on whatever GPUs the treatment did not occupy. All three conditions are generic to fixed-wall-clock evaluation on shared clusters, and (c) is the default behavior of any launcher that fills devices in order. The correction --- interleaving arms across devices with matched seeds --- costs nothing and removed the effect entirely. We regard the adopt-then-retract trajectory, with the reference reverted and the artifact mechanism identified, as the block's main contribution: a protocol that can only add milestones, and never subtract them, converts its own false positives into permanent drift of the reference.
+
+With the retraction applied, rounds 26--36 adopted nothing, and every tested lever --- quality \emph{and} throughput --- is now null or worse under GPU-controlled evaluation. We therefore sharpen the capstone's H5 into:
+
+\begin{quote}
+\textbf{Hypothesis H6} \emph{(floored frame).} At the fixed 5-minute/$\sim$50M-parameter/$\sim$440M-token frame, the adopted configuration (bf16, n-gram (2,3) at $2^{20}$, FFN $6\times$, batch $2^{18}$, \texttt{max-autotune}) genuinely floors $\valbpb$ at $\approx 0.9546$: no tested quality \textbf{or} throughput lever beats it under GPU-controlled evaluation, and no untested variant of the tested mechanisms (per-tensor fp8, dense MoE, Bloom hashing, post-warmdown EMA) will either.
+
+\textbf{Confidence: 0.75.}
+\end{quote}
+
+The confidence is held at 0.75, not higher, for exactly the reasons Section~\ref{sec:future} enumerates: two tested mechanisms failed in forms that their strongest variants do not take (dense MoE for sparse dispatch; per-tensor fp8 scaling for per-row/block scaling), so H6's ``genuinely floored'' clause is exposed to falsification on those limbs --- and the block's own history is a caution against over-crediting any single evaluation design.
+
+\section{Ranked Future Directions}
+\label{sec:future}
+
+\begin{enumerate}
+    \item \textbf{True grouped-GEMM sparse MoE.} \emph{Mechanism:} compute only the top-$k$ experts via grouped GEMMs, adding parametric capacity at roughly fixed per-token FLOPs --- the capacity gain dense evaluation destroyed. \emph{Prediction:} if step count stays within 10\% of the dense reference, 3-seed interleaved $\valbpb$ improves by $\geq 0.003$ ($2\sigma$). \emph{Falsifier:} interleaved 3-seed mean $\geq 0.9546$, or steps $< 1500$ (dispatch overhead eats $U$ at this small scale).
+    \item \textbf{fp8 with per-row / per-block scaling.} \emph{Mechanism:} per-tensor amax scaling wastes e4m3 dynamic range on outlier rows; fine-grained scaling \`a la \citet{deepseekai2024deepseekv3} could deliver a \emph{real} MFU gain on the large MLP GEMMs where per-tensor delivered none, without quantization cost. \emph{Prediction:} interleaved MFU gain $\geq +1$ point with paired quality $\Delta \leq 0$. \emph{Falsifier:} interleaved MFU within noise of bf16 (the GEMMs are too small at $d_{\mathrm{model}}$ this size), or paired $\Delta > 0$ at $2\sigma_{\mathrm{paired}}$.
+    \item \textbf{Longer-token frame (e.g.\ 15--30 minutes).} \emph{Mechanism:} several nulls (capacity levers, MoE, higher-order n-grams) are plausibly artifacts of the update-limited 5-minute regime; more budget shifts the $q \cdot U$ balance toward $q$. \emph{Prediction:} at $3\times$ budget, at least one certified 5-minute null (FFN $8\times$ or table $2^{21}$ first) flips to a $2\sigma$ win. \emph{Falsifier:} all re-tested levers remain null at $3\times$ budget --- which would extend H6 to a broader claim about the recipe, not the frame.
+    \item \textbf{A same-GPU-sequential A/B harness.} \emph{Mechanism:} running treatment and control back-to-back on the \emph{same} device removes the contention gradient entirely rather than balancing it, at the cost of wall-clock serialization; alternating A/B/A/B order cancels slow node-level drift. \emph{Prediction:} paired $\sigma$ across arms drops below the seed $\sigma$ 0.0015, tightening the gate to $\sim$0.001-scale effects with $n{=}3$. \emph{Falsifier:} paired variance no smaller than the interleaved design's --- implying contention varies faster than a run pair, and only more seeds buy resolution.
+\end{enumerate}
+
+Directions 1--2 test the exposed limbs of H6; direction 4 is the methodological completion of this paper's lesson, and should be built before 1--2 are judged.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Rounds 26--36 certified four exotic quality nulls with mechanisms (EMA under warmdown-to-zero, torch-2.9 sparse-gradient regression, multi-hash over-subscription, dense-MoE FLOPs collapse), and --- centrally --- adopted, then caught, then retracted an fp8 false positive. The interleaved-GPU paired A/B measured the adopted $-0.0015$ effect at $+0.0002$ with equal MFU, attributing the original result to control runs placed on contended GPUs. The reference stands reverted at the bf16 16-seed mean $\valbpb = 0.9546$. The transferable contribution is the design rule and its tell: on shared hardware under wall-clock budgets, interleave arms across devices or serialize them on one, and treat any control that underperforms the reference's own throughput norm as contaminated until proven otherwise. Overall confidence in the block's findings is high precisely because its one positive was destroyed by its own protocol: the retraction is mechanically verified on both arms (quality \emph{and} MFU), while the nulls carry the usual single-digit-seed caveats.
+
+\bibliographystyle{icml2024}
+
+\begin{thebibliography}{9}
+
+\bibitem[DeepSeek-AI(2024)]{deepseekai2024deepseekv3}
+DeepSeek-AI.
+\newblock DeepSeek-V3 technical report.
+\newblock \emph{arXiv preprint arXiv:2412.19437}, 2024.
+
+\bibitem[Izmailov et~al.(2018)]{izmailov2018swa}
+Izmailov, P., Podoprikhin, D., Garipov, T., Vetrov, D., and Wilson, A.~G.
+\newblock Averaging weights leads to wider optima and better generalization.
+\newblock In \emph{Uncertainty in Artificial Intelligence (UAI)}, 2018.
+
+\bibitem[Jordan et~al.(2024)]{jordan2024muon}
+Jordan, K., Jin, Y., Boza, V., You, J., Cesista, F., Newhouse, L., and Bernstein, J.
+\newblock Muon: An optimizer for hidden layers in neural networks.
+\newblock 2024.
+\newblock URL \url{https://kellerjordan.github.io/posts/muon/}.
+
+\bibitem[Karpathy(2025)]{karpathy2025nanochat}
+Karpathy, A.
+\newblock nanochat: The best ChatGPT that \$100 can buy.
+\newblock 2025.
+\newblock URL \url{https://github.com/karpathy/nanochat}.
+
+\bibitem[McCandlish et~al.(2018)]{mccandlish2018empirical}
+McCandlish, S., Kaplan, J., Amodei, D., and the OpenAI Dota Team.
+\newblock An empirical model of large-batch training.
+\newblock \emph{arXiv preprint arXiv:1812.06162}, 2018.
+
+\bibitem[Micikevicius et~al.(2022)]{micikevicius2022fp8}
+Micikevicius, P., Stosic, D., Burgess, N., Cornea, M., Dubey, P., Grisenthwaite, R., et~al.
+\newblock FP8 formats for deep learning.
+\newblock \emph{arXiv preprint arXiv:2209.05433}, 2022.
+
+\bibitem[OPHIS(2026)]{ophis2026capstone}
+OPHIS Autonomous Research Agent.
+\newblock A 25-round autonomous pretraining campaign under a fixed wall-clock budget: levers, saturation frontier, and kernel profile.
+\newblock Campaign capstone (paper 005), \texttt{AI\_papers/}, 2026.
+
+\bibitem[Shazeer et~al.(2017)]{shazeer2017outrageously}
+Shazeer, N., Mirhoseini, A., Maziarz, K., Davis, A., Le, Q., Hinton, G., and Dean, J.
+\newblock Outrageously large neural networks: The sparsely-gated mixture-of-experts layer.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2017.
+
+\end{thebibliography}
+
+\end{document}

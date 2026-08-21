@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "assay_id": "paper019_round2_canonical_key_mediator_v1",
+  "purpose": "Offline mediator assay only; this specification does not authorize a training run and does not predict or establish BPB.",
+  "source": {
+    "paper_id": "pap_deepseek_engram_2026",
+    "repository_commit": "fb7f84a21f91223715394a33a1dc24bbfb7f788e",
+    "archive_path": "research/experiments/artifacts/external_code/pap_deepseek_engram_2026/engram-fb7f84a2.tar.zst",
+    "archive_sha256": "789b81408ab98b4cb90a2b00f4f6a15ded1651f13972cd4498edcd5b52ac1061",
+    "manifest_path": "research/experiments/artifacts/external_code/pap_deepseek_engram_2026/manifest.json",
+    "demo_member": "engram-fb7f84a2/engram_demo_v1.py",
+    "demo_sha256": "9d082070654df217e21bbca9926a4267bdf2cce7777aa6739747c24de30d2044"
+  },
+  "local_source": {
+    "train_path": "train.py",
+    "train_sha256": "0b1904b3bbe8819c8b09533791ca1ac4442ee76d4f7a9bd2d7c90a2b88ba4f4e",
+    "lib_path": "lib.py",
+    "lib_sha256": "67e4314c73f4e3176a2f6fe6b110ed8393069038a5b23f259f252ee5f87c088c",
+    "prepare_path": "prepare.py",
+    "prepare_sha256": "64fa6178cd67ea7bd8dfd165e80c28bbec4da7991f4243c594c27ce6ad8e3255",
+    "data_split_path": "data_split.json",
+    "data_split_sha256": "ed8ea0554010df9fbfa47746adc6643d6446797753eb377c0b35413bdcf2fca3"
+  },
+  "tokenizer": {
+    "directory": "~/.cache/autoresearch/tokenizer",
+    "pickle_name": "tokenizer.pkl",
+    "pickle_sha256": "888c9fa865c72c25f9c5e9467136a9cc8655253db459fb97481deb326681c629",
+    "token_bytes_name": "token_bytes.pt",
+    "token_bytes_sha256": "33f5b2ae0b1765c9e083bfc1c3df87efe9738068e15a80d234623a2c3b261d6d",
+    "expected_vocab_size": 8192,
+    "bos_token": "<|reserved_0|>",
+    "special_tokens": [
+      "<|reserved_0|>",
+      "<|reserved_1|>",
+      "<|reserved_2|>",
+      "<|reserved_3|>"
+    ]
+  },
+  "sample": {
+    "data_directory": "~/.cache/autoresearch/data",
+    "split": "val",
+    "expected_shard_ids": [
+      6542
+    ],
+    "expected_shard_sha256": {
+      "6542": "769fe59d108dfd2cfa186c63173b83fbfb90a7adb3519519ba6eaa6ca9889f94"
+    },
+    "tokenizer_batch_size": 128,
+    "packing_buffer_size": 1000,
+    "context_length": 2048,
+    "packed_rows": 64,
+    "shuffle_data": false,
+    "epoch": 1,
+    "ngram_orders": [
+      2,
+      3
+    ],
+    "ngram_site_semantics": "Mirror train.py exactly: prev=cat(idx[:,:1],idx[:,:-1]); prev2=cat(idx[:,:2],idx[:,:-2]); count every packed input position, including BOS and document transitions."
+  },
+  "projection": {
+    "source_pipeline": [
+      "NFKC",
+      "NFD",
+      "StripAccents",
+      "Lowercase",
+      "Replace(/[ \\t\\r\\n]+/, ' ')",
+      "Replace(/^ $/, U+E000)",
+      "Strip",
+      "Replace(U+E000, ' ')",
+      "fallback to decoded text if normalized text is empty"
+    ],
+    "local_safety_extension": "Use a separate identity namespace for every special, BOS, one-byte, replacement-character, or empty-decoding token ID. This is deliberately more conservative than the demo and guarantees these IDs remain one-to-one.",
+    "protected_classes": [
+      "special",
+      "bos",
+      "single_raw_byte",
+      "decoded_replacement_character",
+      "empty_decoding"
+    ]
+  },
+  "kill_gates": {
+    "vocabulary_key_cardinality_collapse_min": 0.1,
+    "observed_ngram_occurrence_affected_min": 0.1,
+    "occurrence_aggregation": "minimum_strict_share_across_orders_2_and_3",
+    "strict_affected_definition": "An occurrence is affected only when its canonical n-gram tuple is shared by at least two distinct raw n-gram tuples observed in the frozen packed sample.",
+    "alias_set_explained_fraction_min": 0.95
+  },
+  "declared_outputs": [
+    "result.json",
+    "REPORT.md",
+    "projection.jsonl",
+    "alias_sets.jsonl",
+    "unexplained_alias_sets.jsonl",
+    "packing_events.jsonl",
+    "output_manifest.json"
+  ]
+}

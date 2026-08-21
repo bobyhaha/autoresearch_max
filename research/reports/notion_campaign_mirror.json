@@ -1,0 +1,12 @@
+{
+  "page_id": "3ac431f7-6c38-819c-b0b5-e10e8d0a38fd",
+  "page_url": "https://app.notion.com/p/3ac431f76c38819cb0b5e10e8d0a38fd",
+  "title": "OPHIS Autoresearch Campaign — 12h Governed Run (2026-07-29)",
+  "parent_page_id": "39c431f7-6c38-80dd-acd0-fe5f4d53c313",
+  "created_at": "2026-07-29T13:50:00Z",
+  "last_synced_at": "2026-07-29T20:09:00Z",
+  "last_synced_hourly_report_id": "hrp_g16_0002",
+  "last_synced_milestone": "The closeout correction is fetch-verified on Notion: 0.927183 is labeled only as the historical chart origin, terminal-invalid and non-scored BPB fields are excluded by typed policy, Paper-020 runtime authority is retired before launch, B1 v2 remains REVISE, SSH authentication still blocks census, and there is no new SOTA",
+  "authoritative_local_root": "research",
+  "update_policy": "Append a timestamped status section after each terminal experiment decision or material paper/protocol milestone; fetch before every update."
+}

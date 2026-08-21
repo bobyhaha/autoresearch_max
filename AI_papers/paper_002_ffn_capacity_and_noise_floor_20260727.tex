@@ -1,0 +1,218 @@
+%% Paper 002 -- ICML-conference-style LaTeX version.
+%% NOTE: Requires the ICML 2024 style file (icml2024.sty) from the ICML author kit
+%% (https://icml.cc/ -> Author Instructions) to be placed alongside this file to compile.
+%% Compile with: pdflatex paper_002_ffn_capacity_and_noise_floor_20260727.tex
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% Use the accepted (camera-ready) option so author names and affiliations render.
+\usepackage[accepted]{icml2024}
+
+% Convenience macro for validation bits-per-byte.
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+
+\icmltitlerunning{The Single-Seed Noise-Floor Trap and an FFN-Capacity Optimum}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{The Single-Seed Noise-Floor Trap and an FFN-Capacity Optimum \\ in Fixed-Wall-Clock LLM Pretraining}
+
+\begin{icmlauthorlist}
+\icmlauthor{Autonomous Research Agent (OPHIS)}{ophis}
+\end{icmlauthorlist}
+
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+
+\icmlcorrespondingauthor{Autonomous Research Agent (OPHIS)}{baiyuzhu@mit.edu}
+
+\icmlkeywords{feed-forward width, FFN ratio, wall-clock training, seed variance, statistical gates, hyperparameter optimization, autonomous research, Machine Learning}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report rounds 6--10 (exp036--exp070) of an autonomous hyperparameter campaign on a fresh Karpathy \texttt{autoresearch} baseline (nanochat-style GPT, $\sim$50M parameters, depth 8, sliding-window attention, Muon+AdamW) under a fixed 5-minute wall-clock budget on a single H200, continuing from the \texttt{TOTAL\_BATCH\_SIZE} $=2^{18}$ reference adopted in paper 001 (3-seed base mean $\valbpb = 0.97966$, $\sigma \approx 0.0015$). Two findings survive. First, a cautionary null: re-tuning learning rates at the new batch size produced two single-seed pilots that \emph{looked} $\sim$1.5$\sigma$ better than base (\texttt{matrix\_lr} $0.03$: $0.977569$; \texttt{embedding\_lr} $0.8$: $0.977905$), yet 3-seed paired confirmation returned both to the base mean ($0.97968$ and $0.97981$) and their combination was worse ($0.98025$) --- a clean demonstration that single-seed deltas below $\sim$2$\sigma$ are noise, and that only multi-seed paired confirmation is trustworthy. Second, a confirmed structural lever: widening the FFN from the stock $4\times$ to $6\times$ improves $\valbpb$ to a 3-seed mean of $0.97696$ (best $0.975010$), a paired $\Delta = -0.0027$ on all three seeds (paired $t \approx 4.3$), \emph{despite} reducing step count from $\sim$2000 to $\sim$1720. Ratios $7\times$--$10\times$ do not beat $6\times$ ($8\times$ 3-seed $0.97763$; $10\times$ $0.97985$), locating a capacity optimum. This refines paper 001's ``update-count-limited'' claim into a capacity$\times$update trade-off: at this frame the model was FFN-capacity-limited, and capacity-per-step can beat step count. Net campaign state: $\valbpb = 0.975$ best, $-0.055$ versus the naive $1.0301$ baseline.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Paper 001 of this campaign \cite{ophis2026paper001} established two results under a fixed 5-minute wall-clock budget: the cold-compile first run is an invalid control (F1), and halving \texttt{TOTAL\_BATCH\_SIZE} to $2^{18}$ tokens --- doubling optimizer updates --- was the sole change to clear the pre-registered 3-seed $2\sigma$ gate (F2). That paper closed by hypothesizing the frame is \emph{update-count-limited}, and ranked as next steps (a) re-tuning learning rates at the new batch size and (b) structural exploration of new mechanisms.
+
+Rounds 6--10 executed both, and each produced a finding:
+
+\begin{enumerate}
+    \item \textbf{F3 (Section~\ref{sec:noisefloor}):} the learning-rate re-tune produced textbook \emph{noise-floor traps}. Two single-seed pilots sat $\sim$1.5$\sigma$ below the base mean and would have been adopted by any greedy single-seed policy; both evaporated exactly to the base mean under 3-seed paired confirmation, and their combination was worse than base. Sub-2$\sigma$ single-seed deltas carry no information at this frame.
+    \item \textbf{F4 (Section~\ref{sec:ffn}):} structural exploration found the campaign's second confirmed lever. Widening the FFN hidden ratio from $4\times$ to $6\times$ improves $\valbpb$ by a paired $-0.0027$ on all three seeds despite completing $\sim$14\% \emph{fewer} steps. The frame is therefore not purely update-count-limited: near the default architecture it was FFN-\emph{capacity}-limited, and the correct picture is a capacity$\times$update product with an interior optimum.
+\end{enumerate}
+
+Together the findings sharpen both halves of the campaign's methodology: F3 hardens the statistical gate, and F4 corrects the mechanistic story that gate is protecting.
+
+\section{Experimental Setup}
+\label{sec:setup}
+
+The frame, model, metric, and discipline are identical to paper 001 \cite{ophis2026paper001}, which we summarize only briefly. Each run trains a nanochat-style GPT \cite{karpathy2025nanochat} of $\sim$50M parameters (depth 8, sliding-window attention, Muon \cite{jordan2024muon} + AdamW) for exactly 5 minutes of wall clock on a single H200; the metric is validation bits per byte ($\valbpb$, lower is better) at the end of the budget. Steps completed are an outcome, not a control.
+
+\paragraph{Reference.} All comparisons in this paper are against the configuration adopted in paper 001: \texttt{TOTAL\_BATCH\_SIZE} $= 2^{18}$ tokens ($\sim$2000 steps), with a 3-seed base mean of $\valbpb = 0.97966$ and single-seed noise $\sigma \approx 0.0015$.
+
+\paragraph{Keep/discard gate.} Unchanged: single-seed runs are screening pilots only; a change is adopted only if a 3-seed paired comparison against concurrent base controls clears $2\sigma$. Rounds 6--7 stress-tested this gate (Section~\ref{sec:noisefloor}); it held.
+
+\section{The Single-Seed Noise-Floor Trap (Finding F3)}
+\label{sec:noisefloor}
+
+Paper 001's top-ranked follow-up was to re-tune per-group learning rates at the new, smaller batch size, since batch-size/learning-rate coupling predicts the optimum may shift \cite{mccandlish2018empirical}. Rounds 6--7 swept \texttt{matrix\_lr} and \texttt{embedding\_lr} around their defaults at $2^{18}$.
+
+Two pilots flashed apparent signal. As single seeds, \texttt{matrix\_lr} $= 0.03$ reached $0.977569$ and \texttt{embedding\_lr} $= 0.8$ reached $0.977905$ --- respectively $-0.0021$ and $-0.0018$ below the base mean, i.e.\ $\sim$1.5$\sigma$, the most promising-looking pilots of the campaign to that point. A greedy single-seed policy adopts both.
+
+Three-seed paired confirmation erased both effects exactly:
+
+\begin{itemize}
+    \item \texttt{matrix\_lr} $0.03$: seeds $0.977569 / 0.982521 / 0.978951$, mean $\mathbf{0.97968}$ --- indistinguishable from the base mean $0.97966$. \textbf{Rejected.}
+    \item \texttt{embedding\_lr} $0.8$: seeds $0.977905 / 0.981219 / 0.980303$, mean $\mathbf{0.97981}$ --- indistinguishable from base. \textbf{Rejected.}
+    \item Their combination (\texttt{matrix\_lr} $0.03$ $+$ \texttt{embedding\_lr} $0.8$): mean $\mathbf{0.98025}$ --- \emph{worse} than base. \textbf{Rejected.}
+\end{itemize}
+
+The pilots were not weak versions of a real effect; they were the favorable tail of the seed distribution. Both 3-seed means landed within $0.00015$ of the base mean, which is what a true effect size of zero predicts. The combination result is the sharper warning: stacking two ``promising'' noise draws produced a configuration mildly worse than doing nothing.
+
+We state the operational lesson as F3: \emph{at $\sigma \approx 0.0015$, single-seed deltas below $\sim$2$\sigma$ ($\sim$0.003 $\valbpb$) carry no adoption-relevant information; they select seeds, not configurations. Only $n \geq 3$ paired confirmation is trustworthy, and apparent pilot gains should be presumed to be noise until confirmed.} This is the same statistical reality documented for pipeline-level variance elsewhere \cite{bouthillier2021accounting}, encountered here in the wild by an autonomous agent whose gate was designed for exactly this failure mode. The remaining learning-rate pilot (\texttt{matrix\_lr} $0.02$: $0.977884$, $n{=}1$) was logged as noise without confirmation, closing the knob re-tune: \textbf{the learning-rate surface at $2^{18}$ is flat}, as it was at $2^{19}$.
+
+\section{An FFN-Capacity Lever (Finding F4)}
+\label{sec:ffn}
+
+With scalar knobs exhausted on both batch sizes, round 8 screened structural mechanisms, one seed each: GeLU activation in place of ReLU$^2$ ($0.99595$), head dimension 64 ($0.98646$), rotary base $10^5$ ($0.98085$), logit softcap 30 ($0.98437$), and a \emph{narrower} FFN ratio of $3\times$ ($0.98449$) --- all worse; an all-short attention-window pattern SSSS ($0.97821$) --- neutral. The exception was widening the FFN hidden ratio from the stock $4\times$ to $6\times$: $\valbpb = 0.97501$, a single-seed $-0.0047$, the first pilot of the campaign to exceed the $2\sigma$ screening bar and the best value observed to date.
+
+Round 9 confirmed it. Three seeds gave $0.975010 / 0.978757 / 0.977104$, mean $\mathbf{0.97696}$, and the paired comparison against the concurrent base seeds improved on \emph{all three} pairs with mean $\Delta = -0.0027$ (paired $t \approx 4.3$). \textbf{Adopted} --- the campaign's second confirmed lever and second milestone.
+
+The mechanistically interesting fact is the step count. The $6\times$ FFN is slower per step: it completes $\sim$1720 steps in the budget versus $\sim$2000 for base, surrendering $\sim$14\% of its optimizer updates, and winning anyway. This directly refines paper 001's Hypothesis H1. The frame is not update-count-limited \emph{simpliciter}; $\valbpb$ behaves as a product of per-step capacity and update count, and at the stock $4\times$ ratio the FFN --- the transformer's primary store of learned key--value memories \cite{geva2021kv} --- was the binding constraint. We state the revised hypothesis:
+
+\begin{quote}
+\textbf{Hypothesis H2} \emph{(capacity$\times$update trade-off).} At the 5-minute/1-H200 frame, $\valbpb$ is set by a capacity$\times$update-count product: widening the FFN buys per-step modeling capacity at a throughput cost, and the stock ratio $4\times$ is \textbf{under-provisioned} --- the marginal $\valbpb$ value of FFN capacity exceeds that of the steps it displaces --- with the optimum near $6\times$, beyond which the throughput cost dominates.
+
+\textbf{Confidence: 0.75.}
+\end{quote}
+
+Both flanks were tested in rounds 9--10. Below: $3\times$ regresses badly ($0.98449$) despite \emph{more} steps ($\sim$2130). Above: $8\times$ reached a 3-seed mean of $0.97763$ with high seed variance (spread $0.974736$--$0.98065$) and $\sim$1530 steps --- not better than $6\times$; $7\times$ as a single seed gave $0.97491$, statistically indistinguishable from the $6\times$ seed-42 value ($0.97501$) and, per F3, not adoptable on one seed; $10\times$ gave $0.97985$ at only 1367 steps, erasing the gain entirely. The ratio is settled at $\mathbf{6\times}$ on parsimony: no wider ratio cleared the gate against it.
+
+Interaction checks all came back negative. $6\times$+SSSS ($0.976579 / 0.979096$) matches $6\times$ alone --- the neutral window pattern adds nothing. $6\times$+GQA with halved KV heads ($0.983354 / 0.983825$) trades quality for throughput the frame does not repay. Critically, $6\times$ at \texttt{TOTAL\_BATCH} $2^{17}$ ($0.980407 / 0.983063$) is worse than $6\times$ at $2^{18}$: the batch-size optimum of paper 001 is \emph{stable} under the architecture change, consistent with the critical-batch-size picture \cite{mccandlish2018empirical} being governed by gradient noise rather than by FFN width. The confidence on H2 is held at $0.75$ rather than higher because the $7\times$ flank is unresolved at $n{=}1$, the $8\times$ variance is anomalously high and unexplained, and ``capacity'' has only been probed through one axis (FFN width) --- depth and aspect-ratio probes in paper 001 were losers, so the product form of H2 is an extrapolation from a single confirmed lever.
+
+\section{Results}
+\label{sec:results}
+
+Table~\ref{tab:results} summarizes rounds 6--10. $\Delta\valbpb$ is reported against the round-6 reference mean $0.97966$ (\texttt{TOTAL\_BATCH} $2^{18}$, 3-seed); negative is better. Data: \texttt{campaign\_log.jsonl}, exp036--exp070.
+
+\begin{table*}[t]
+\caption{All configurations, rounds 6--10. $\Delta\valbpb$ is versus the $2^{18}$ 3-seed reference mean $0.97966$ (negative $=$ better). Single-seed rows are screening pilots; only $n \geq 3$ rows are eligible for the $2\sigma$ keep gate. The paired rows for the two learning-rate pilots illustrate F3: apparent $\sim$1.5$\sigma$ single-seed gains that vanish under confirmation.}
+\label{tab:results}
+\vskip 0.15in
+\begin{center}
+\begin{small}
+\begin{tabular}{lcccl}
+\toprule
+Config & mean $\valbpb$ & $\Delta$ vs.\ reference & Seeds & Verdict \\
+\midrule
+Reference: \texttt{TOTAL\_BATCH} $2^{18}$, FFN $4\times$ ($\sim$2000 steps) & 0.97966 & --- & 3 & reference (paper 001) \\
+\midrule
+\texttt{matrix\_lr} 0.03 (pilot) & 0.977569 & $-0.0021$ ($\sim$1.5$\sigma$) & 1 & noise-floor trap (F3) \\
+\texttt{matrix\_lr} 0.03 (confirmation) & 0.97968 & $+0.0000$ & 3 & reject --- $\equiv$ base \\
+\texttt{embedding\_lr} 0.8 (pilot) & 0.977905 & $-0.0018$ ($\sim$1.5$\sigma$) & 1 & noise-floor trap (F3) \\
+\texttt{embedding\_lr} 0.8 (confirmation) & 0.97981 & $+0.0002$ & 3 & reject --- $\equiv$ base \\
+\texttt{matrix\_lr} 0.03 $+$ \texttt{embedding\_lr} 0.8 & 0.98025 & $+0.0006$ & 2 & reject --- worse than base \\
+\texttt{matrix\_lr} 0.02 & 0.977884 & $-0.0018$ & 1 & noise, not confirmed \\
+\midrule
+GeLU activation (vs.\ ReLU$^2$) & 0.99595 & $+0.0163$ & 1 & worse, discard \\
+head\_dim 64 (8 heads) & 0.98646 & $+0.0068$ & 1 & worse, discard \\
+rotary base $10^5$ & 0.98085 & $+0.0012$ & 1 & worse, discard \\
+logit softcap 30 & 0.98437 & $+0.0047$ & 1 & worse, discard \\
+attention window SSSS (all-short) & 0.97821 & $-0.0015$ & 1 & neutral, discard \\
+FFN ratio $3\times$ ($\sim$2130 steps) & 0.98449 & $+0.0048$ & 1 & worse, discard \\
+\midrule
+\textbf{FFN ratio $6\times$ ($\sim$1720 steps)} & \textbf{0.97696} (best 0.975010) & $-0.0027$ (paired $t \approx 4.3$) & \textbf{3} & \textbf{keep --- adopted (F4)} \\
+FFN ratio $7\times$ & 0.97491 & $-0.0047$ & 1 & $\equiv 6\times$ at $n{=}1$; not adopted (F3) \\
+FFN ratio $8\times$ ($\sim$1530 steps) & 0.97763 & $-0.0020$, high variance & 3 & not better than $6\times$, discard \\
+FFN ratio $10\times$ (1367 steps) & 0.97985 & $+0.0002$ & 1 & worse, discard \\
+FFN $6\times$ $+$ SSSS & 0.97784 & $\equiv 6\times$ & 2 & no added gain, discard \\
+FFN $6\times$ $+$ GQA (KV heads $/2$) & 0.98359 / 0.98383 & $+0.0041$ & 2 & worse, discard \\
+FFN $6\times$ $+$ \texttt{TOTAL\_BATCH} $2^{17}$ & 0.98040 / 0.98306 & $+0.0021$ & 2 & worse; batch optimum stays $2^{18}$ \\
+\bottomrule
+\end{tabular}
+\end{small}
+\end{center}
+\vskip -0.1in
+\end{table*}
+
+Three features stand out. First, the only two sub-base 3-seed means in the table are the FFN $6\times$ family; every scalar-knob row collapses onto the reference under confirmation. Second, the FFN column is non-monotonic exactly as H2 predicts, with a regression on both flanks ($3\times$ and $10\times$) bracketing the $6\times$ optimum. Third, every combination built on top of $6\times$ (window pattern, GQA, smaller batch) is neutral or worse --- the adopted configuration is a local optimum in the directions probed, not a springboard for further stacking.
+
+\section{Threats to Validity}
+\label{sec:threats}
+
+\begin{enumerate}
+    \item \textbf{Single-seed nulls.} As in paper 001, most rejections in Table~\ref{tab:results} rest on one seed against $\sigma \approx 0.0015$; ``worse, discard'' rows with $|\Delta| < 0.003$ should be read as ``no effect resolvable at $n{=}1$.'' F3 itself demonstrates how misleading such rows can be in the \emph{favorable} direction; the same applies symmetrically.
+    \item \textbf{The $7\times$ flank is open.} FFN $7\times$ matched $6\times$ on its single seed. The settled ratio of $6\times$ rests on parsimony plus the $8\times$/$10\times$ regressions, not on a 3-seed rejection of $7\times$; the true optimum could sit between $6\times$ and $8\times$.
+    \item \textbf{Unexplained $8\times$ variance.} The $8\times$ seed spread ($0.974736$--$0.98065$) is roughly double the base $\sigma$. If wider FFNs genuinely inflate seed variance, the noise floor --- and hence the gate --- is configuration-dependent, which the current protocol does not model.
+    \item \textbf{$\sigma$ reused across configurations.} The $\sigma \approx 0.0015$ estimate comes from base-configuration seeds; all $z$-style claims inherit it. The paired $t \approx 4.3$ for F4 is the more robust statistic, since it uses within-pair differences.
+    \item \textbf{Capacity probed on one axis.} H2's ``capacity'' is operationalized solely as FFN width. Depth and aspect-ratio changes were losers in paper 001 under the same frame, so the product framing may be specific to FFN capacity rather than capacity generally.
+    \item \textbf{Shared hardware.} The node is shared; co-tenant load shifts step counts between waves. Concurrent controls mitigate but do not eliminate this.
+\end{enumerate}
+
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+Rounds 6--10 delivered one hardened method and one adopted change. Methodologically, F3 shows the pre-registered gate doing exactly its job: two $\sim$1.5$\sigma$ single-seed learning-rate ``gains'' at the new batch size collapsed onto the base mean under 3-seed paired confirmation ($0.97968$, $0.97981$ vs.\ base $0.97966$), and their combination was worse ($0.98025$); no single-seed delta below $\sim$2$\sigma$ will be trusted for the remainder of the campaign. Substantively, F4 widens the FFN from $4\times$ to $6\times$ for a confirmed paired $\Delta = -0.0027$ on all three seeds ($t \approx 4.3$, mean $0.97696$, best $0.975010$) while \emph{losing} $\sim$14\% of optimizer steps --- refining paper 001's update-count-limited picture into the capacity$\times$update trade-off of H2 (confidence $0.75$). The batch-size optimum of $2^{18}$ is stable under the new architecture, and ratios $7\times$--$10\times$ do not beat $6\times$.
+
+Net campaign state after ten rounds: best $\valbpb = 0.975$, an improvement of $-0.055$ versus the naive first-run baseline of $1.0301$, with two adopted changes (\texttt{TOTAL\_BATCH} $2^{18}$; FFN $6\times$) and two methodological findings (compile-cache confound; noise-floor trap) each backed by concurrent controls.
+
+Ranked next experiments: (1) explore qualitatively new mechanisms rather than knob ranges --- foremost n-gram/Engram-style memory modules, which add capacity through a different channel than FFN width and directly test whether H2's product form generalizes; (2) resolve the $6\times$--$8\times$ flank with 3-seed runs at $7\times$ if and only if a new mechanism does not dominate the queue; (3) estimate configuration-dependent seed variance (3 seeds at $8\times$ vs.\ base) to check whether the gate's $\sigma$ should scale with FFN width.
+
+\bibliographystyle{icml2024}
+
+\begin{thebibliography}{7}
+
+\bibitem[Bouthillier et~al.(2021)]{bouthillier2021accounting}
+Bouthillier, X., Delaunay, P., Bronzi, M., Trofimov, A., Nichyporuk, B., Szeto, J., et~al.
+\newblock Accounting for variance in machine learning benchmarks.
+\newblock In \emph{Proceedings of Machine Learning and Systems 3 (MLSys)}, 2021.
+
+\bibitem[Geva et~al.(2021)]{geva2021kv}
+Geva, M., Schuster, R., Berant, J., and Levy, O.
+\newblock Transformer feed-forward layers are key-value memories.
+\newblock In \emph{Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing (EMNLP)}, pp.\ 5484--5495, 2021.
+
+\bibitem[Jordan et~al.(2024)]{jordan2024muon}
+Jordan, K., Jin, Y., Boza, V., You, J., Cesista, F., Newhouse, L., and Bernstein, J.
+\newblock Muon: An optimizer for hidden layers in neural networks.
+\newblock 2024.
+\newblock URL \url{https://kellerjordan.github.io/posts/muon/}.
+
+\bibitem[Karpathy(2025)]{karpathy2025nanochat}
+Karpathy, A.
+\newblock nanochat: The best ChatGPT that \$100 can buy.
+\newblock 2025.
+\newblock URL \url{https://github.com/karpathy/nanochat}.
+
+\bibitem[McCandlish et~al.(2018)]{mccandlish2018empirical}
+McCandlish, S., Kaplan, J., Amodei, D., and the OpenAI Dota Team.
+\newblock An empirical model of large-batch training.
+\newblock \emph{arXiv preprint arXiv:1812.06162}, 2018.
+
+\bibitem[OPHIS(2026)]{ophis2026paper001}
+Autonomous Research Agent (OPHIS).
+\newblock Compile-cache confounds and an update-count-limited batch-size optimum in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 001, autoresearch reimplementation campaign, 2026.
+
+\bibitem[Shallue et~al.(2019)]{shallue2019measuring}
+Shallue, C.~J., Lee, J., Antognini, J., Sohl-Dickstein, J., Frostig, R., and Dahl, G.~E.
+\newblock Measuring the effects of data parallelism on neural network training.
+\newblock \emph{Journal of Machine Learning Research}, 20(112):1--49, 2019.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,3 @@
+{"name":"sota_fp8_ngram","val_bpb_mean":0.9535,"val_bpb_best":0.9521,"n_seeds":9,"vs_naive":"+0.077 (~7.5%)",
+ "levers":["warm torch.compile","batch 2^18","FFN 6x","n-gram(2,3)@2^20","max-autotune","fp8 e4m3 MLP GEMMs (fwd fp8 / bwd bf16)"],
+ "rejected_fp8":"attention proj GEMMs too small for fp8 (no MFU gain + q/k quant risk)","frame":"walltime_5min_h200","date":"2026-07-27"}

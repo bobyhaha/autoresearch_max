@@ -1,0 +1,6 @@
+{"name":"sota_swin4_FINAL","val_bpb_mean":0.95058,"val_bpb_std":0.00147,"val_bpb_sem":0.00046,
+ "val_bpb_best":0.948335,"n_seeds":10,"ci95":[0.94967,0.95149],
+ "vs_naive_mean":"+0.07952 (7.72%)","vs_naive_best":"+0.08176 (7.94%)","naive_baseline":1.030094,
+ "levers":["warm torch.compile","batch 2^18","n-gram(2,3)@2^21","FFN 4x","matrix_lr 0.03","max-autotune","short-window span //4 (2^9)"],
+ "status":"CONVERGED + floor certified (H8/H9); every in-frame axis exhausted & mechanistically explained",
+ "frame":"walltime_5min_h200","rounds":63,"total_runs":352,"papers":10,"date":"2026-07-27"}

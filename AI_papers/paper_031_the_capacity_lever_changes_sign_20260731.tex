@@ -1,0 +1,114 @@
+%% Paper 031 -- ICML-style. A lever whose sign depends on the operating point,
+%% and a frame whose optimum is a boundary optimum.
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\vb}{\mathrm{val\_bpb}}
+\icmltitlerunning{The Capacity Lever Changes Sign}
+\begin{document}
+\twocolumn[
+\icmltitle{The Capacity Lever Changes Sign: Boundary Optima and Why Interior Sweeps Mislead}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, data-constrained pretraining, memorisation, boundary optima, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report a lever whose \emph{sign} depends on the operating point, and a diagnosis of why twenty-two directions in this campaign returned nothing. Sorting every closed direction by its effect on \emph{tokens consumed} collapses the campaign into four rows: interventions that do not move tokens land within $\pm$1.3e-3 against a 2.6e-3 gate, while interventions that move tokens either are already captured by \texttt{torch.compile} or push training past a repetition wall worth 16--18 gates. The frame therefore has essentially one free parameter, and the best configuration already sits just under the wall at 1.9 passes over a frozen corpus. \textbf{This is a boundary optimum}, which explains the null results directly: the gradient is zero in the feasible directions and a cliff in the one that matters. The wall itself is a property of tokens and not of model shape --- three configurations spanning 39.8M--94.4M dense parameters and three different shapes cross it at 2.3--2.7 passes --- and shuffling data order moves it by only 4.7\% of its size, confirming repetition rather than corpus region as the cause. Reviewing the campaign grid then exposed an empty cell: n-gram capacity had been varied only \emph{below} the wall and regularisation only \emph{above} it. Filling it, \textbf{cutting hash-table rows by $4\times$ improves the over-the-wall configuration by $0.0163$ ($6.2$ gates), where an earlier sweep measured a comparable cut \emph{costing} $+0.0079$ below the wall.} The sign of the capacity lever is a property of the operating point, not of the lever.
+\end{abstract}
+
+\section{Twenty-Two Directions, Four Rows}
+Sorted by what each lever does to tokens consumed:
+
+\begin{center}\begin{small}
+\begin{tabular}{lll}
+\toprule
+lever class & tokens & outcome \\
+\midrule
+intrinsic refinements & none & all $\pm$1.3e-3 \\
+compile-captured & none & 8 killed prospectively \\
+depth $8{\to}6$ & $+62$\% & $-0.002002$, 0.77 gates \\
+depth 5 / dim 512 / $2\times$ & $+100$--$140$\% & collapse, 16--18 gates \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+The adoption gate is $0.002614$; the intrinsic channel tops out near $0.0013$; the throughput channel is bounded above by a cliff. The window between ``too small to matter'' and ``over the edge'' is narrow, and the best measured configuration --- depth 6, dim 640, 483M tokens --- sits inside it. \textbf{At a boundary optimum, local search reports zero gradient in every direction it is allowed to move and a cliff in the one it is not.} That is the campaign's null-result pattern, and it is a property of the frame rather than of the interventions.
+
+\section{The Wall Is About Tokens, Not Shape}
+\begin{center}\begin{small}
+\begin{tabular}{lrrrr}
+\toprule
+configuration & steps & tokens & passes & $\vb$ \\
+\midrule
+depth 6, dim 640 & 3276 & 483M & 1.9 & \textbf{0.9296} \\
+$2\times$ budget, d8 & 3918 & 578M & 2.3 & 0.9870 \\
+depth 6, dim 512 & 4228 & 623M & 2.5 & 0.9729 \\
+depth 5, dim 512 & 4528 & 668M & 2.7 & 0.9784 \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+Three shapes, 39.8M--94.4M dense parameters, one boundary. Separately, shuffling row-group order at depth 5 moves the endpoint by $0.0022$ --- $4.7$\% of the $0.0464$ cliff --- against preregistered thresholds of $<$0.003 for a repetition cause and $>$0.01 for a corpus-region cause. \textbf{The cause is repetition.} This mattered because shard order is fixed, so ``the third pass'' and ``the tail of the corpus for the third time'' had been perfectly confounded in every run the campaign had ever done.
+
+\section{What Regularisation Does and Does Not Do}
+Two attempts failed before the right one. Global weight decay $\{0.1,0.3,0.6\}$ degraded monotonically; reading the optimizer groups showed why --- it reaches only the dense matrices, $3.2$\% of parameters, while the $2.82$e9-parameter hash tables (96.8\% of the model) use a separate coefficient defaulting to zero. Correcting that, decay applied to the tables \emph{closed the train/val gap by 93\%} ($+0.2795 \to +0.0201$) and the endpoint \emph{still} worsened at both depths. In a hashed $n$-gram memory the memorising rows and the signal-carrying rows are the same rows, and a norm penalty is indiscriminate across rows.
+
+\section{The Empty Cell, and the Sign Flip}
+\begin{center}\begin{small}
+\begin{tabular}{lll}
+\toprule
+ & below wall (1.9) & above wall (2.7) \\
+\midrule
+capacity & $+0.0079$, $+0.0109$ & \textbf{never tested} \\
+regularisation & $+0.0349$ & $+0.0128$ \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+Capacity had been varied only where there is no overfitting to remove, and regularisation only where there is. The cell was empty because a prior result was reused outside the operating point that produced it --- ``capacity was already swept'' was true and irrelevant.
+
+Filling it, at depth 5 (2.7 passes), $n{=}4$, 12/12 arms clean:
+
+\begin{center}\begin{small}
+\begin{tabular}{rrrrr}
+\toprule
+mult & $\vb$ & train & val & gap \\
+\midrule
+64 & 0.979248 & 2.4838 & 2.7546 & $+0.2708$ \\
+\textbf{16} & \textbf{0.962948} & 2.6034 & 2.6954 & $+0.0920$ \\
+4 & 0.969048 & 2.6786 & 2.6783 & $-0.0003$ \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+\textbf{$-0.016300$ at mult 16, $6.2$ gates better}, against a preregistered threshold of $0.01$. The earlier sweep measured a comparable cut \emph{costing} $+0.0079$ below the wall. \textbf{The sign flips.}
+
+\textbf{And it is not decay in disguise.} Decay closed the gap while losing the endpoint; cutting rows moves the gap $+0.2708 \to +0.0920$ \emph{and} improves the endpoint, with training loss rising only $2.4838 \to 2.6034$ while validation falls $2.7546 \to 2.6954$. Shrinking every row removes signal and memorisation together. Removing rows forces distinct contexts to collide into a shared row, which is a structural constraint toward generalisation. Same phrase, different operator.
+
+\textbf{Scope.} This recovers 33\% of the cliff, and the rescued configuration ($0.962948$) remains $0.0334$ worse than the best one ($0.929570$). It is a mechanism result, not an adoption.
+
+\section{Next Experiments}
+\subsection{E22 --- Does the sign flip reach the best configuration?} \emph{(running)}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} Internal, from E8 and E21 above. No external claim.
+\item \textbf{Mechanism.} \emph{Observed:} the capacity lever costs $+0.0079$ below the wall and gains $0.0163$ above it. \emph{Proposed cause:} row count sets memorisation capacity; below threshold rows carry signal and removing them costs, above it surplus rows store memorised continuations and removing them pays. \emph{Rival:} the flip tracks the train/val \emph{gap}, not the pass count --- depth 6's gap is $-0.0663$ (validation better than training), so cuts must hurt there. \emph{Separator:} the sign at depth 6, the one point where pass count is near the boundary but the gap is negative.
+\item \textbf{Hypothesis.} depth 6 $\times$ mult $\{64,32,16\}$, $n{=}4$. Anything beating mult 64 by $\ge$1 gate goes to $n{=}10$ through the full funnel before any claim.
+\item \textbf{Reasoning.} \emph{Against, and this is my honest prior:} E8 measured the cut costing at a comparable pass count, and depth 6 is not overfitting by the gap measure, so harm is expected. \emph{For:} 1.9 passes is close to the flip and the flip location is unmeasured. Cost is nil --- E21 measured step time unchanged by mult ($66.5$ vs $67.0$\,ms).
+\item \textbf{Ratings.} 3 / 4 / 5 / 5 / 4 / 5 / 5.
+\end{itemize}
+
+\subsection{E23 --- Locate the flip}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} Internal.
+\item \textbf{Mechanism.} \emph{Observed:} sign is negative at 1.2--2.0 passes and positive at 2.7. \emph{Cause:} a threshold in tokens-per-row. \emph{Rival:} a threshold in the train/val gap. \emph{Separator:} these predict different flip locations when pass count and gap are varied independently, which \texttt{TIME\_BUDGET} and depth do separately.
+\item \textbf{Hypothesis.} Sweep \texttt{TIME\_BUDGET} $\in\{300,375,450\}$ at fixed depth 6 $\times$ mult $\{64,16\}$, $n{=}3$, and locate the crossing. \emph{Decision rule:} if the crossing tracks passes it should sit near 2.2--2.4 regardless of depth.
+\item \textbf{Reasoning.} \emph{For:} a located threshold turns an observed sign flip into a predictive rule, and the campaign has been repeatedly burned by extrapolating levers across operating points. \emph{Against:} it changes the charged budget, so results are not comparable to the frame's gate and this is measurement, not a candidate.
+\item \textbf{Ratings.} 2 / 5 / 5 / 3 / 5 / 4 / 5.
+\end{itemize}
+
+\section{Conclusion}
+A campaign of null results is not always a campaign of bad ideas. Here it was a boundary optimum: one free parameter, a baseline already at its edge, and a cliff in the only direction with headroom. The one lever that moved the cliff was found not by a new idea but by noticing that a cell of the campaign's own grid was empty --- capacity had been swept only where the phenomenon it acts on does not exist. The general lesson is that a lever's sign can belong to the operating point rather than to the lever, and that a result which rules something out is scoped to the regime that produced it.
+\end{document}

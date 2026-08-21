@@ -1,0 +1,655 @@
+%% Consolidated retrospective synthesis of papers 019--022.
+%% This paper authorizes no new experiment.
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage[accepted]{icml2024}
+
+\newcommand{\bpb}{\mathrm{bpb}}
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+\newcommand{\keepx}{\textcolor{blue}{keep}}
+\newcommand{\killx}{\textcolor{red}{kill}}
+\newcommand{\deferx}{\textcolor{orange}{defer}}
+\icmltitlerunning{Observe Before Improve}
+
+\begin{document}
+\twocolumn[
+\icmltitle{Observe Before Improve: From a Quarantined Minimum to an
+Attributed Control-Transport Failure}
+\begin{icmlauthorlist}
+\icmlauthor{GPT Research Coordinator}{ophis}
+\icmlauthor{Independent Architecture, Systems, Statistics, and Dynamics Proposers}{ophis}
+\icmlauthor{Independent Adversarial Critics}{ophis}
+\end{icmlauthorlist}
+\icmlaffiliation{ophis}{OPHIS governed autoresearch campaign}
+\icmlcorrespondingauthor{GPT Research Coordinator}{baiyuzhu@mit.edu}
+\icmlkeywords{automated research, failure attribution, preregistration, multiagent criticism, wall-clock language modeling}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We consolidate the campaign artifacts formerly numbered 019--022 and report
+the result that those preregistrations could not contain prospectively.
+Historical direct-SSH evidence suggested that FA3 document isolation helped,
+but lacked immutable RunRecords.  A governed reproduction subsequently
+progressed from mean paired $\Delta\valbpb=-0.005416$ at $n=3$, to
+$-0.005299$ at $n=6$, and $-0.0054258$ at $n=10$, with every pair helping.
+This is an adoption candidate, not an adopted default.  The historical
+campaign minimum, $0.927183$, is one seed-47 treatment observation rather
+than a contemporaneous control.  Three independent proposal agents and a
+separate critic therefore selected a dual-anchor recipe-transport experiment,
+rated 87.0/100 on explicit novelty, provenance, validity, impact, reliability,
+feasibility, falsifiability, and program-coherence axes.  The sole immutable
+four-pair/eight-H200 wave was terminally invalid: a returning foreign process
+occupied the seed-47 treatment GPU, the watchdog identified its PID and
+working directory, and the arm exited 79.  The deterministic evaluator
+returned \texttt{invalid} with zero admissible complete pairs.  Three complete
+treatment endpoints---0.927454, 0.930124, and 0.927999---are descriptive only
+and none beats 0.927183.  No replay qualification, Q2, control rebind,
+adoption, or new SOTA is claimed.  The central result is methodological:
+before a system can improve itself, it must observe and attribute its
+failures.
+\end{abstract}
+
+\section{Scope, Supersession, and Evidence Labels}
+
+This ICML-format artifact replaces the individual live files formerly named
+paper 019, 020, 021, and both paper-022 variants.  Their committed bytes remain
+recoverable in Git history.  Paper 019 was the prospective provenance-repair
+preregistration.  Paper 020 reported only the $n=3$ checkpoint and was later
+made background-only because it used two rather than three independent
+proposers and referred to literature records not yet present in the live
+registry.  Paper 021 repaired the proposer count and provenance, reported
+evidence available through $n=6$, and contained no result from its proposed
+mechanisms.  Its mechanism queue became background-only for block 22.  Of the
+two paper-022 drafts, \emph{Dual-Anchor Transport Before Control} was the sole
+canonical execution authority; \emph{Recover the Recipe, Not the Scalar} was
+a withdrawn, non-authorizing design study.
+
+This paper is a retrospective synthesis and authorizes no new GPU work.
+Repository facts, historical observations, preregistered judgments, and
+post-run conclusions remain distinct:
+\begin{itemize}
+\item $0.927183$ is the chart and provenance anchor, not a valid control.
+\item Historical direct-SSH results are quarantined priors, not RunRecords.
+\item Prospective $n=3$ and $n=6$ results are promotion signals.
+\item Prospective $n=10$ document isolation is an adoption candidate.
+\item The control-transport wave is invalid; its complete endpoints are
+descriptive and cannot be subsetted into an efficacy estimate.
+\end{itemize}
+
+\section{Frozen Scientific Frame}
+
+All scored arms use one physical H200, \texttt{STOP\_MODE=time},
+\texttt{TIME\_BUDGET=300}, a frozen split, tokenizer and evaluator, FA3,
+and \texttt{max-autotune-no-cudagraphs}.  Controls are concurrent,
+same-seed, and physically disjoint.  Raw treatment-minus-control endpoint BPB
+is authoritative.  The campaign's effective standard deviation
+$\sigma=0.001198$ fixes a raw minimum-effect gate
+\[
+                 2\sigma=0.002396.
+\]
+Steps, tokens, MFU, and token-law residuals are diagnostics unless a
+preregistered fidelity estimand explicitly says otherwise.  Moving compilation,
+packing, prefetch, or queue priming outside the charged clock is forbidden.
+
+Every idea is scored from 1 (weak) to 5 (strong) on novelty (N), primary
+provenance (P), causal validity (V), expected local impact (I), transfer
+reliability (R), feasibility/cost (F), and numeric falsifiability (X).
+Canonical paper 022 additionally scores program coherence (C).  Prestige can
+raise provenance; it cannot override arithmetic, implementation, dependency,
+fairness, or reward-hack vetoes.
+
+\section{Prospective Provenance Repair}
+
+\paragraph{Mechanism.}
+Document boundaries define a block-diagonal causal graph.  The FA3 varlen
+path receives compact \texttt{cu\_seqlens}, preventing tokens from attending
+across documents and skipping cross-document blocks \cite{dao2024fa3}.
+The governed comparison changed only explicit \texttt{DOC\_MASK=0} versus
+\texttt{DOC\_MASK=1} under the same varlen/both-mode implementation.
+
+\begin{table}[t]
+\caption{Evidence lineage for FA3 document isolation.  Negative BPB deltas
+help.  Only governed rows are causal campaign evidence.}
+\label{tab:docmask}
+\centering\scriptsize
+\begin{tabular}{lrrr}
+\toprule
+stage & mean $\Delta\bpb$ & helping & mean $\Delta$steps\\
+\midrule
+history & $-0.005222$ & $10/10$ & unavailable\\
+prospective $n=3$ & $-0.005416$ & $3/3$ & $+44.00$\\
+prospective $n=6$ & $-0.005299$ & $6/6$ & $+43.33$\\
+prospective $n=10$ & $-0.0054258$ & $10/10$ & $+42.6$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+At $n=3$, seeds 53--55 respectively produced control-to-treatment BPB
+$0.940045\!\rightarrow\!0.934950$,
+$0.939083\!\rightarrow\!0.935298$, and
+$0.941731\!\rightarrow\!0.934364$, with deltas $-0.005095$,
+$-0.003785$, and $-0.007367$.  All arms passed source/config/runtime hashes,
+physical UUID and training-PID binding, pre-clock boundary attestation,
+co-tenancy sampling, terminal markers, and independently recomputed boundary
+digests.  The $n=10$ result supports the end-to-end mechanism, but does not
+separate attention semantics from throughput-mediated exposure or training
+isolation from evaluation isolation.
+
+\section{Proposal and Critique Evolution}
+
+\subsection{Paper 019: provenance before novelty}
+
+Three independent proposers supplied architecture, systems, and
+training-dynamics candidates.  The coordinator added M because the registry
+required prospective document-isolation reproduction.  Table
+\ref{tab:p019} preserves every critic score.  The authorized order was
+M $\rightarrow$ E-v1 $\rightarrow$ F $\rightarrow$ A $\rightarrow$ C;
+these were judgments, not outcomes.
+
+\begin{table*}[t]
+\caption{Paper-019 critic ratings.  Vectors are N/P/V/I/R/F/X.}
+\label{tab:p019}
+\centering\scriptsize
+\begin{tabular}{clcl}
+\toprule
+ID & candidate & critic vector & disposition\\
+\midrule
+M & prospective FA3 reproduction & 1/5/5/5/4/5/5 & rank 1, provenance repair\\
+E & packer metadata + double buffer & 5/5/4/4/3/3/5 & split; keep E-v1 only\\
+F & packed n-gram tables & 4/3/4/3/3/4/5 & profile-conditional keep\\
+A & BOS-safe n-gram prefixes & 4/3/5/2/3/5/5 & conditional keep\\
+C & zero-init/tanh n-gram gate & 4/4/3/2/2/4/5 & exploratory keep\\
+J & stride-sampled future-2 auxiliary & 5/3/3/3/2/3/5 & later paper only\\
+D & full nGPT conversion & 4/5/2/4/1/1/4 & defer\\
+G & softcap-aware CCE & 4/5/4/4/3/1/5 & defer\\
+B & signed CountSketch memory & 4/2/1/1/1/4/3 & kill\\
+H & FA4 document masking & 2/5/3/2/2/1/4 & kill in block\\
+I & epoch-$\geq2$ n-gram freeze & 4/3/2/2/1/2/4 & kill formulation\\
+K & lossless tail-carry packer & 4/3/5/1/3/3/5 & kill\\
+L & mask BOS targets & 3/2/2/1/2/5/5 & kill\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The critic removed double buffering from E-v1 because overlap is a separate
+causal mechanism and can move work outside the clock.  Packed tables survived
+only if a profile attributed at least a gate-sized fraction of charged time
+to removable launch overhead.  Correcting BOS semantics was not accepted as
+evidence of a gate-sized effect.  ReZero supports zero-initialized residual
+branches, not a numerical transfer guarantee for this learned hash memory
+\cite{bachlechner2020rezero}.  Full nGPT, CCE, and FA4 remained too bundled,
+dependency-heavy, or locally sub-gate despite credible sources.
+
+\subsection{Paper 020: broad literature, then authority correction}
+
+Paper 020 read 27 primary 2025--2026 sources and scored three proposed
+mechanisms, but later became background-only.  The scores remain useful
+historical judgments:
+\begin{table}[t]
+\caption{Paper-020 core proposer-to-critic ratings
+(N/P/V/I/R/F/X).}
+\label{tab:p020core}
+\centering\scriptsize
+\begin{tabular}{lcc}
+\toprule
+candidate & proposer & critic\\
+\midrule
+conditioned Q/K/V & 4/5/4/4/4/5/5 & 4/5/4/3/3/5/5\\
+compression curriculum & 4/5/4/4/4/4/4 & 3/5/3/3/3/3/5\\
+elementwise head gate & 2/5/5/4/4/4/5 & 2/5/3/2/3/4/5\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Conditioned initialization ranked first because it was atomic and had no
+runtime cost, but its transfer to zero \texttt{c\_proj}, QK/output
+normalization, Muon, and short training was uncertain
+\cite{saratchandran2026conditioned}.  Curriculum ranked second because
+ordering evidence was confounded by source, difficulty, packing, and worktile
+distributions.  The gate refinement was paper-derived rather than
+paper-faithful and violated the later mechanism-only rule.
+
+\subsection{Paper 021: three proposers and explicit vetoes}
+
+Paper 021 repaired the proposer process and corrected paper 020's mechanism
+attributions.  Table \ref{tab:p021keep} reports every survivor or deferral;
+Table \ref{tab:p021kill} reports every kill.
+
+\begin{table*}[t]
+\caption{Paper-021 survivors/deferred candidates.  Vectors are proposer
+$\rightarrow$ critic on N/P/V/I/R/F/X.}
+\label{tab:p021keep}
+\centering\scriptsize
+\begin{tabular}{p{0.24\linewidth}p{0.36\linewidth}p{0.31\linewidth}}
+\toprule
+candidate & proposer $\rightarrow$ critic & disposition\\
+\midrule
+exact packer metadata &
+5/5/5/4/4/4/5 $\rightarrow$ 4/5/5/3/3/3/5 &
+rank 1; requires $+4.5\%$ token/s profile\\
+conditioned Q/K + head-offset V &
+4/4/3/3/2/4/5 and 4/5/4/3/3/5/5 $\rightarrow$ 4/4/3/3/2/5/5 &
+rank 2; local full-rank V adaptation\\
+logical QKV fusion &
+2/5/4/3/3/4/5 $\rightarrow$ 2/5/4/2/2/4/5 &
+rank 3; profile-conditional\\
+charged CPU producer &
+3/5/3/3/2/3/5 $\rightarrow$ 3/5/4/2/2/3/5 &
+rank 4; profile-conditional\\
+tensorized n-gram N=3/R=512 &
+5/5/4/4/3/2/5 $\rightarrow$ 5/3/2/3/2/1/5 &
+defer; wrong live provenance and likely slow\\
+compression curriculum &
+3/5/2/3/2/2/5 $\rightarrow$ 3/4/2/3/2/1/5 &
+defer; score and clock wrapper unavailable\\
+QK/V $2\times2$ attribution &
+3/5/5/2/3/4/5 $\rightarrow$ 2/4/5/2/3/3/5 &
+conditional child after $n\geq3$\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Paper-021 killed pool.  All candidates retain explicit scores even
+when a veto overrides their totals.}
+\label{tab:p021kill}
+\centering\scriptsize
+\begin{tabular}{p{0.27\linewidth}p{0.38\linewidth}p{0.25\linewidth}}
+\toprule
+candidate & proposer $\rightarrow$ critic & principal veto\\
+\midrule
+full-input headwise gate & 3/5/4/2/3/5/5 $\rightarrow$ 1/4/4/1/2/5/5 & nearby knob\\
+paper-020 elementwise gate & 2/5/3/2/3/4/5 $\rightarrow$ 1/4/3/1/2/4/5 & non-faithful refinement\\
+memory-aware cosine n-gram gate & 4/4/3/3/2/4/5 $\rightarrow$ 3/2/2/2/1/3/5 & large source adaptation\\
+packed n-gram tables & 4/3/2/1/2/2/5 $\rightarrow$ 2/4/4/1/4/3/5 & sub-gate profile\\
+FA4/Flex retry & 2/5/3/1/3/1/5 $\rightarrow$ 1/5/2/1/4/1/5 & duplicate/missing dependency\\
+Cut Cross Entropy & 1/5/4/1/4/2/5 $\rightarrow$ unchanged & CE share only 1.626\%\\
+epoch n-gram freeze & 3/3/1/2/1/2/5 $\rightarrow$ 2/4/1/1/1/2/5 & invalid epoch trigger\\
+immediate LR bracket & 1/3/2/1/2/5/5 $\rightarrow$ 1/4/3/1/3/5/5 & mechanism-only veto\\
+literal repeated-identity V & critic-added 3/5/2/2/1/5/5 & global rank $\leq128$\\
+TN-gram N=5/rank sweep & critic-added 1/5/3/2/2/1/4 & premature child\\
+nonzero \texttt{c\_proj} workaround & critic-added 1/2/1/2/1/5/5 & destroys attribution\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The exact-metadata mechanism removes a documented CUDA
+\texttt{torch.nonzero} host synchronization, but the fixed-batch law gives
+$-0.06\ln(1.045)=-0.002641$: only $0.000245$ beyond the gate.  It is plausible
+only after a clock-faithful profile.  Conditioned Q/K uses independent
+semi-orthogonal per-head projections; the disjoint head-offset V is explicitly
+a local full-rank-768 adaptation rather than a source-faithful claim.
+Zero-\texttt{c\_proj} and normalization require a mediator test before
+endpoint scoring.  Paper 021 also corrected curriculum attributions:
+39.5\% fewer steps was compression plus linear pacing, 41.7\% compression
+plus interleaving, and 29.8\% token-count plus quadratic pacing.
+
+\section{Recovering the Recipe, Not the Scalar}
+
+The historical minimum belongs to an indivisible six-coordinate recipe:
+TTTL attention allocation, matrix LR .04, device batch 72, total batch
+147456, warmdown .85, and continuous Muon momentum.  Common settings include
+FA3 varlen/both-mode document isolation and 64$\times$ n-gram tables.
+No component receives causal credit.
+
+\begin{table}[t]
+\caption{Historical seed-47--50 block.  These values are forensic anchors,
+not live controls.}
+\label{tab:history}
+\centering\small
+\begin{tabular}{rrrrr}
+\toprule
+seed & control & recipe & $\Delta\bpb$ & steps\\
+\midrule
+47 & .928310 & .927183 & -.001127 & 2022\\
+48 & .928480 & .927380 & -.001100 & 2017\\
+49 & .931671 & .929782 & -.001889 & 1983\\
+50 & .927581 & .927861 & +.000280 & 1989\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The recipe mean is 0.9280515 (SD 0.00118829).  Historical paired deltas have
+mean $-0.0009590$, SD 0.00090335, and approximate 90\% CI
+$[-0.002022,0.000104]$.  The historical pair contrast therefore neither
+establishes superiority nor clears the current $-0.002396$ gate.  Relative to
+the frozen operational reference 0.934930, the local point prediction was
+$-0.0068785$; this was a design prior, not evidence.
+
+\subsection{Canonical paper-022 ranking}
+
+Three independent reproducibility, statistics, and mechanism proposers
+generated eight deduplicated designs.  A separate critic scored
+N/P/V/I/R/F/X/C with fixed weights
+8/17/18/14/13/9/9/12 percent.  Table \ref{tab:p022} preserves proposer
+vectors, per-axis critic changes, final vectors, and weighted totals.
+
+\begin{table*}[t]
+\caption{Canonical paper-022 ranking.  A veto overrides the weighted total.}
+\label{tab:p022}
+\centering\tiny
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{r p{0.245\linewidth} l l l r p{0.19\linewidth}}
+\toprule
+rank & candidate & proposer & critic $\delta$ & critic & total & disposition\\
+\midrule
+1 & current-source four-seed dual-anchor transport &
+4/5/5/5/5/4/5/5 & -1/0/-1/0/-1/-1/0/0 &
+3/5/4/5/4/3/5/5 & 87.0 & selected after tooling\\
+2 & fresh-seed replacement funnel &
+3/5/5/5/5/4/5/5 & 0/-1/-1/0/0/0/0/-1 &
+3/4/4/5/5/4/5/4 & 85.6 & conditional on rank 1\\
+3 & source$\times$recipe $2\times2$ &
+4/5/5/4/5/2/5/5 & +1/0/0/-1/-2/-1/0/0 &
+5/5/5/3/3/1/5/5 & 82.0 & launcher/sample veto\\
+4 & archived/current source bridge &
+4/4/4/4/4/2/5/4 & -1/+1/-1/0/-1/-1/0/0 &
+3/5/3/4/3/1/5/4 & 72.0 & multi-source veto\\
+5 & warmdown$\times$momentum &
+2/4/5/2/3/2/5/3 & 0/0/0/0/0/0/0/+1 &
+2/4/5/2/3/2/5/4 & 70.4 & deferred attribution\\
+6 & archived-source exact-recipe A/A &
+2/5/3/3/3/3/5/4 & 0/0/+1/0/0/-2/0/-1 &
+2/5/4/3/3/1/5/3 & 68.8 & source-launch veto\\
+7 & current-recipe A/A, $n=16$ &
+4/5/5/4/5/4/5/5 & -2/-1/-2/-2/-1/-2/-1/-2 &
+2/4/3/2/4/2/4/3 & 61.6 & calibration only\\
+8 & repeated seed-47 replicas &
+2/4/1/2/1/5/3/1 & -1/0/0/-1/0/-1/-1/0 &
+1/4/1/1/1/4/2/1 & 37.4 & pseudoreplication; kill\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Why rank 1, and why it was plausible}
+
+Rank 1 simultaneously asked whether the historical recipe transported to
+instrumented current source and whether it beat a concurrent current recipe.
+Rank 2 could test present efficacy but not historical transport.  Rank 3 was
+more attributive in principle, but the repository could not atomically govern
+two executable source hashes, four cells, and adequate replication.  Ranks 4
+and 6 failed the same multi-source/source-launch dependency.  Rank 5
+decomposed a sub-gate historical schedule contrast before qualifying the
+whole operating point.  Rank 7 calibrated harness noise instead of improving
+the model; rank 8 was seed-47 pseudoreplication.
+
+The causal hypothesis was connected and deliberately local.  A smaller
+global batch yields more optimizer updates at comparable token exposure;
+TTTL changes attention allocation; LR, warmdown, and Muon momentum retune the
+finite-budget trajectory.  The preserved recipe averaged 2002.75 optimizer
+steps and 295.318M tokens.  Its point prediction had 0.0044825 BPB margin
+beyond the gate.  No 2025--2026 paper establishes this exact bundle or
+predicts 0.927183.  Recursive supports realistic comparator discipline and
+multi-seed experimentation \cite{recursive2026}; Kimi K3 motivates
+architecture--optimization--systems co-design, not transfer of this bundle's
+effect \cite{kimik3}.  Conditioned initialization and gated attention support
+later branches, not the recipe itself \cite{saratchandran2026conditioned,
+qiu2025gated}.
+
+\section{The Canonical Q1 Experiment}
+
+Four current-source pairs used seeds 47--50 and all eight H200s.  Both arms
+shared the frozen source and common environment.  The current control used
+SSSL/.03/128/262144/.95/momentum-continuity 0; the recovered recipe used
+TTTL/.04/72/147456/.85/continuity 1.  The decision required the intersection
+of:
+\begin{enumerate}
+\item a 90\% replay-equivalence interval inside
+$[-0.002396,+0.002396]$;
+\item a one-sided 95\% upper bound for treatment-minus-control at or below
+$-0.002396$, with all $4/4$ pairs helping;
+\item a 90\% log-token-ratio interval inside
+$[\log(0.98),\log(1.02)]$; and
+\item every source, config, runtime, device, PID, boundary, completion, and
+co-tenancy invariant.
+\end{enumerate}
+Equivalence testing placed non-equivalence in the null; nonsignificance could
+not be relabeled as equivalence \cite{schuirmann1987,lakens2017}.  Exact
+six-decimal reproduction was explicitly rejected as a reward-hack surface.
+
+\section{Terminal Result: Invalid, Observed, Attributed}
+
+Two clean node inventories preceded the immutable schedule.  Seven arms
+completed.  Late in seed-47 recovered-recipe training, the isolation watchdog
+observed foreign PID 2743971, parent PID 2728906, launched from
+\texttt{/data2/ncpl-pathA/work/vbird\_autoresearch/temp-epoch23-peak}.
+The watchdog killed only the affected training PID and emitted
+\texttt{GPU\_COTENANCY\_DETECTED\_PID=2743971} and
+\texttt{EXIT\_CODE=79}.  The arm has no terminal BPB.
+
+\begin{table*}[t]
+\caption{Q1 terminal arm facts.  Complete endpoints are shown for
+transparency; the all-four-pair estimand is invalid and no statistical gate is
+evaluated.}
+\label{tab:q1}
+\centering\small
+\begin{tabular}{rllrrrrl}
+\toprule
+seed & arm & status & $\valbpb$ & steps & tokens & $\Delta$ vs control & use\\
+\midrule
+47 & current control & complete & .933479 & 1177 & 308543488 & -- & descriptive\\
+47 & recovered recipe & invalid & -- & -- & -- & -- & cotenant; exit 79\\
+48 & current control & complete & .935231 & 1169 & 306446336 & -- & descriptive\\
+48 & recovered recipe & complete & .927454 & 2012 & 296681472 & -.007777 & descriptive\\
+49 & current control & complete & .937245 & 1144 & 299892736 & -- & descriptive\\
+49 & recovered recipe & complete & .930124 & 1981 & 292110336 & -.007121 & descriptive\\
+50 & current control & complete & .933191 & 1184 & 310378496 & -- & descriptive\\
+50 & recovered recipe & complete & .927999 & 1989 & 293289984 & -.005192 & descriptive\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The deterministic evaluator returned \texttt{invalid},
+\texttt{complete\_pairs=0}.  The exact one-wave design cannot silently drop
+seed 47, retry it, remap it, or promote the remaining three pairs.  Relative
+to historical recovered endpoints, seeds 48--50 differed by
+$+0.000074$, $+0.000342$, and $+0.000138$, but these are descriptive replay
+residuals.  None of the complete treatment endpoints beats 0.927183.
+Accordingly:
+\[
+\boxed{\begin{gathered}
+\text{no transport verdict, no Q2,}\\
+\text{no control rebind, no SOTA}
+\end{gathered}}
+\]
+
+This failure is scientifically useful because it is attributed.  The launch
+was clean at a fixed commit; the later dirty flag arose from append-only wave
+and RunRecord ledgers.  Eight remote logs were copied into a local governed
+artifact bundle and matched against preregistered SHA-256 values.  The
+failure is not ``variance,'' ``bad luck,'' or a hidden exclusion.  It is a
+specific, timestamped resource-isolation violation whose causal consequence
+is a terminally missing arm.
+
+\section{Connected Improvement Program}
+
+The campaign should not respond by accumulating unrelated additions.
+The dependency body is:
+\[
+\begin{gathered}
+\boxed{\text{observable, attributable control}}\\[-2pt]
+\downarrow\\[-2pt]
+\boxed{\text{representation and memory}} \rightarrow
+\boxed{\text{attention}}\\[-2pt]
+\downarrow\hspace{75pt}\downarrow\\[-2pt]
+\boxed{\text{optimization stability}} \rightarrow
+\boxed{\text{systems exposure}} .
+\end{gathered}
+\]
+Representation and attention share projection/value paths; attention and
+normalization shape residual transport; optimizer mechanisms share parameter
+groups; packer and producer mechanisms share loader work; systems speedups
+change update exposure under a wall-clock budget.  Each mechanism requires
+observable mediators---branch norms, router entropy, gradient flow, kernel
+share, queue wait, or token/update exposure---so an endpoint failure can be
+attributed.  Independent wins must precede a new prospective $2\times2$
+interaction paper.  A plateau triggers a broad, primary-literature-grounded
+search across representation, attention, memory, initialization,
+normalization, data order, optimization, and systems, followed by independent
+criticism; it does not license nearby knob repetition.
+
+\section{Limitations}
+
+The document-isolation effect is end-to-end and does not identify its
+training, evaluation, or throughput submechanisms.  The recipe bundle changes
+six coordinates, so even a valid transport result would not attribute
+component effects.  Four historical overlap seeds provide low-power
+equivalence evidence.  A clean prelaunch inventory cannot guarantee that a
+tenant will not return later.  The fixed 300-second frame rewards useful
+wall-clock co-design but requires unusually strict clock placement and
+exposure accounting.  Finally, ratings are explicit judgments, not empirical
+effects; high scores never substitute for a successful offline gate or
+prospective result.
+
+\section{Conclusion}
+
+The campaign repaired one historical mechanism prospectively, reconstructed
+the recipe behind its best scalar, ranked control-transport designs through
+independent proposal and criticism, and then refused to overclaim when the
+selected wave lost isolation.  The outcome is not a new SOTA.  It is evidence
+that the research system can preserve a negative operational fact, identify
+its cause, block invalid inference, and update its program coherently.
+Observation and attribution are not administrative overhead: they are
+preconditions for self-improvement.
+
+\appendix
+\clearpage
+\onecolumn
+\vspace*{0.7in}
+\section{Background Literature-Pool Ratings}
+
+Table \ref{tab:p020poola} preserves the paper-020 critic ratings that informed
+later vetoes.  These are protocol/background judgments, not authorizations.
+
+\begin{table}[!ht]
+\caption{Paper-020 background pool, part A.  Vectors are N/P/V/I/R/F/X.}
+\label{tab:p020poola}
+\centering\tiny
+\begin{tabular}{lllclll}
+\toprule
+candidate & vector & total change & disposition &
+candidate & vector & total change\\
+\midrule
+KernelBench-Verified & 2/4/5/2/5/5/5 & 34$\to$28 & method &
+FASTKERNELS & 2/4/4/2/4/4/5 & 33$\to$25\\
+SOL-ExecBench & 2/4/4/2/4/4/5 & 32$\to$25 & method &
+Original KernelBench & 1/5/3/1/3/3/4 & 28$\to$20\\
+FA4 H200 LPT & 2/4/3/1/3/2/5 & 28$\to$20 & profile only &
+SparseTransX & 1/5/3/2/3/3/5 & 27$\to$22\\
+Cut Cross Entropy & 1/5/4/1/4/3/5 & 26$\to$23 & sub-gate &
+Mirage & 2/5/4/1/3/1/2 & 26$\to$18\\
+Event Tensor & 3/5/3/1/3/1/2 & 26$\to$18 & kill &
+ThunderKittens & 2/5/4/1/3/1/3 & 25$\to$19\\
+APOLLO & 2/5/3/1/3/1/3 & 24$\to$18 & kill &
+YOUMU & 2/5/3/1/3/1/3 & 23$\to$18\\
+Liger & 1/4/3/1/3/2/4 & 21$\to$18 & kill &
+Curriculum Dynamics & 2/3/2/2/2/2/3 & 19$\to$16\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[!ht]
+\caption{Paper-020 background pool, part B.}
+\label{tab:p020poolb}
+\centering\tiny
+\begin{tabular}{lllclll}
+\toprule
+candidate & vector & total change & disposition &
+candidate & vector & total change\\
+\midrule
+Native Sparse Attention & 4/5/4/1/4/1/4 & 29$\to$23 & kill &
+Multi-Token Attention & 4/5/3/1/3/1/3 & 28$\to$20\\
+Byte Latent Transformer & 4/5/5/1/4/1/3 & 28$\to$23 & negative &
+attention-side Peri-LN & 2/5/3/2/3/3/5 & 27$\to$23\\
+fixed spectral conditioning & 3/5/3/2/2/3/5 & 27$\to$23 & defer &
+Memory Layers at Scale & 2/5/3/1/4/1/3 & 27$\to$19\\
+MuToR & 3/5/4/1/4/1/4 & 27$\to$22 & kill &
+RNoPE & 2/5/3/1/2/4/4 & 26$\to$21\\
+Differential Transformer & 2/5/3/1/3/2/5 & 26$\to$21 & kill &
+MTP curriculum negative & 1/5/5/1/5/2/5 & 26$\to$24\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Withdrawn Paper-022 Design Scores}
+
+The non-authorizing \emph{Recipe, Not the Scalar} draft used
+N/P/V/I/R/F/X with weights .10/.15/.20/.20/.15/.10/.10.  Table
+\ref{tab:withdrawn} preserves its explicit history; it must not be read as the
+canonical rank or execution order.
+
+\begin{table}[!ht]
+\caption{Withdrawn paper-022 design study.  Totals are out of five.}
+\label{tab:withdrawn}
+\centering\tiny
+\begin{tabular}{clllrl}
+\toprule
+ID & candidate & proposer & critic & total change & status\\
+\midrule
+A & preserved-source whole recipe & 3/5/5/5/4/3/5 & 2/4/4/5/3/3/5 & 4.45$\to$3.85 & draft rank 1\\
+B & source$\times$recipe bridge & 4/5/5/5/4/3/5 & 4/4/5/5/4/2/5 & 4.55$\to$4.30 & runner veto\\
+C & three-arm bridge & 4/5/4/5/4/4/5 & 3/4/3/5/3/2/5 & 4.45$\to$3.65 & defer\\
+D & current-source transplant & 2/3/4/5/4/5/5 & 2/3/3/4/3/5/5 & 4.05$\to$3.50 & not exact replay\\
+E & historical schedule contrast & 2/5/4/3/3/4/5 & 2/4/4/2/3/4/5 & 3.70$\to$3.35 & defer\\
+F & old-recipe A/A & 3/5/4/2/4/3/5 & 2/4/2/1/2/2/4 & 3.65$\to$2.30 & diagnostic\\
+G & clean-directory doc-mask replay & 1/5/5/5/5/4/5 & unchanged & 4.50$\to$4.50 & dependency\\
+H & six-factor factorial & 2/4/4/2/2/1/5 & 2/4/3/2/2/1/5 & 2.90$\to$2.70 & kill/defer\\
+I & force 2000 steps & 2/5/2/4/3/2/5 & 1/5/1/3/2/1/5 & 3.30$\to$2.55 & kill\\
+J & shared remote source swap & 1/2/1/5/1/4/3 & 1/1/1/4/1/4/3 & 2.45$\to$2.10 & kill\\
+K & new per-arm container & 3/5/5/5/5/1/5 & 3/4/3/4/3/1/4 & 4.40$\to$3.25 & defer\\
+L & stored historical baseline & 1/2/1/3/1/5/4 & 1/1/1/2/1/5/3 & 2.25$\to$1.80 & kill\\
+M & exact scalar reproduction & 1/1/1/1/1/5/1 & 1/2/1/1/1/5/3 & 1.40$\to$1.75 & kill\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+{\footnotesize
+\begin{thebibliography}{20}
+\bibitem[Bachlechner et al.(2020)]{bachlechner2020rezero}
+T. Bachlechner et al. ReZero is All You Need. arXiv:2003.04887, 2020.
+
+\bibitem[Dao et al.(2024)]{dao2024fa3}
+T. Dao et al. FlashAttention-3: Fast and Accurate Attention with
+Asynchrony and Low-precision. NeurIPS, 2024.
+
+\bibitem[Kim et al.(2025)]{kim2025periln}
+J. Kim et al. Peri-LN: Revisiting Normalization Layer in the Transformer
+Architecture. ICML, 2025.
+
+\bibitem[Moonshot AI(2026)]{kimik3}
+Moonshot AI. Kimi K3: Open Frontier Intelligence. Technical report, 2026.
+\url{https://github.com/MoonshotAI/Kimi-K3/blob/main/k3_tech_report.pdf}.
+
+\bibitem[Qiu et al.(2025)]{qiu2025gated}
+Z. Qiu et al. Gated Attention for Large Language Models: Non-linearity,
+Sparsity, and Attention-Sink-Free. NeurIPS Best Paper, 2025.
+
+\bibitem[Recursive(2026)]{recursive2026}
+Recursive. First Steps Toward Automated AI Research. Company research
+report, 2026.
+\url{https://www.recursive.com/articles/first-steps-toward-automated-ai-research}.
+
+\bibitem[Saratchandran and Lucey(2026)]{saratchandran2026conditioned}
+H. Saratchandran and S. Lucey. Conditioned Initialization for Attention.
+ICLR, 2026.
+
+\bibitem[Schuirmann(1987)]{schuirmann1987}
+D. J. Schuirmann. A Comparison of the Two One-Sided Tests Procedure and
+the Power Approach for Assessing the Equivalence of Average Bioavailability.
+Journal of Pharmacokinetics and Biopharmaceutics, 15:657--680, 1987.
+
+\bibitem[Lakens(2017)]{lakens2017}
+D. Lakens. Equivalence Tests: A Practical Primer for $t$ Tests,
+Correlations, and Meta-Analyses. Social Psychological and Personality
+Science, 8(4):355--362, 2017.
+\end{thebibliography}
+}
+
+\end{document}

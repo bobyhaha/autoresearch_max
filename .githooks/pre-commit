@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Validate the exact Git index that will become the commit. A worktree-only check
+# can be fooled when the registry fix is unstaged or an uncovered campaign row is
+# staged beside unrelated work.
+set -uo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)" || exit 1
+STAGED_TREE="$(mktemp -d "${TMPDIR:-/tmp}/vibeautoresearch-index.XXXXXX")" || exit 1
+cleanup_staged_tree() {
+  rm -rf -- "$STAGED_TREE"
+}
+trap cleanup_staged_tree EXIT HUP INT TERM
+
+git -C "$REPO_ROOT" checkout-index --all --force --prefix="$STAGED_TREE/" || exit 1
+cd "$STAGED_TREE" || exit 1
+PYTHON_RUNNER="${PYTHON_BIN:-python3}"
+failed=0
+
+if ! validation_output="$("$PYTHON_RUNNER" -m vibeautoresearch validate 2>&1)"; then
+  echo "BLOCKED: staged research state is invalid"
+  printf '%s\n' "$validation_output" | head -20
+  failed=1
+else
+  echo "ok: staged research registries and campaign coverage"
+fi
+
+if ! test_output="$("$PYTHON_RUNNER" -m unittest discover -s tests -q 2>&1)"; then
+  echo "BLOCKED: staged test suite is red"
+  printf '%s\n' "$test_output" | tail -20
+  failed=1
+else
+  echo "ok: staged tests"
+fi
+
+if [ "$failed" -ne 0 ]; then
+  echo
+  echo "Commit blocked by the integrity gate."
+  exit 1
+fi
+echo "integrity gate passed"

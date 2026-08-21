@@ -1,0 +1,98 @@
+%% Paper 032 -- ICML-style. Retracts paper 027's explanation, refutes its
+%% replacement, and records the null as unexplained.
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\vb}{\mathrm{val\_bpb}}
+\icmltitlerunning{Two Explanations Refuted}
+\begin{document}
+\twocolumn[
+\icmltitle{Two Explanations Refuted: Retracting Our Own Account of a Null Result}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, self-correction, negative results, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+Paper~027 reported that three zero-cost architectural refinements are null in this frame and explained it by \emph{duration}: they ``act on asymptotic optimisation quality \ldots whose benefit accrues over many more updates than 2000.'' \textbf{We retract that explanation.} It made a prediction it had never been tested on, because all three levers had only ever run at one depth. Re-running two of them --- alone and stacked --- at a configuration completing 3276 optimizer steps instead of 2016, a 63\% increase at identical wall-clock, leaves every arm inside $\pm$1.3e-3: conditioned init $+0.000355$, Peri-LN $+0.000652$, both stacked $+0.000311$. More updates changed nothing, and two nulls composed to a null. We then proposed and tested the obvious replacement --- \emph{dilution}, since every refinement acts on a dense path that is 3.2\% of this model's parameters --- by turning the dilution factor into a knob via hash-table size ($30.9\times \to 2.9\times$, an $11\times$ change in dense share). \textbf{Dilution is refuted too}: the refinement effect moves from $+0.000079$ to $-0.000149$, both noise, a ratio of $1.90\times$ against a preregistered threshold of $3\times$. Three candidate explanations have now been tested and two are dead; the surviving one is drawn from CIFAR-10 ResNets and makes no quantitative prediction here. \textbf{We record the null as unexplained} rather than adopt the last option standing, and argue that a campaign should be able to say this.
+\end{abstract}
+
+\section{What Was Retracted, and Why It Was Testable}
+Paper~027's Section~5 offered a duration account. Its virtue is that it is falsifiable and its flaw is that we never falsified it: the three levers it explained had all been measured at one operating point, $\approx$2016 steps at depth 8. A later result --- depth 6 completing 3276 steps at the same 300\,s --- created the test for free.
+
+\begin{center}\begin{small}
+\begin{tabular}{lrr}
+\toprule
+arm at depth 6 & paired $\Delta\vb$ & gates \\
+\midrule
+conditioned init & $+0.000355$ & 0.14 \\
+Peri-LN attention & $+0.000652$ & 0.25 \\
+both stacked & $+0.000311$ & 0.12 \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+$n{=}4$ seeds, all clean on the two-sided screen. These are indistinguishable from the depth-8 values the original paper reported. \textbf{63\% more updates changed nothing.} Paper~027 now carries a correction notice; its measurements stand, its explanation does not.
+
+\textbf{This was also the campaign's first stacking test.} Every lever until now had been run alone against a baseline and closed. Two nulls compose to a null, with no super-additivity --- which removes a standing worry that the campaign had been discarding levers that would have worked in combination.
+
+\section{The Replacement, and Its Refutation}
+Dilution is the obvious successor. Conditioned init acts on attention $Q/K$ initialisation; Peri-LN wraps the attention sublayer output. Both act on the dense path, which is $94.4$e6 of $2.91$e9 parameters --- \textbf{3.2\% of the model} --- while the other 96.8\% is 14 hashed $n$-gram tables the campaign separately records as the sole source of data-limitation here. On that account a dense improvement of $x$ moves the model by $\approx0.032x$, so a genuine 1e-2 dense effect would land at 3e-4 and be indistinguishable from noise.
+
+The virtue of this hypothesis is that the dilution factor is a \emph{knob}:
+
+\begin{center}\begin{small}
+\begin{tabular}{rrrr}
+\toprule
+mult & tables & dense share & dilution \\
+\midrule
+64 & 2818.6M & 3.2\% & $30.9\times$ \\
+4 & 176.2M & 34.9\% & $2.9\times$ \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+\textbf{Preregistered separator.} Dilution required the refinement effect at mult 4 to exceed that at mult 64 by at least $3\times$ in magnitude. The forgetting account required both inside $\pm$1.3e-3 with no interaction.
+
+\begin{center}\begin{small}
+\begin{tabular}{lrr}
+\toprule
+ & refinement effect & gates \\
+\midrule
+mult 64 (dilution $30.9\times$) & $+0.000079$ & 0.03 \\
+mult 4 (dilution $2.9\times$) & $-0.000149$ & 0.06 \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+Ratio $1.90\times$, and both values are noise. \textbf{An $11\times$ change in dense share did not make the refinements matter.} Dilution is refuted.
+
+\section{What We Are Left With}
+Three explanations tested; two dead. The survivor is that the relevant unit is \emph{accumulated regularisation} rather than duration or dilution, which is consistent with both results --- but its source is BatchNorm ResNets on CIFAR-10, states in its own limitations that it contains no transformer or language-model experiments, and makes no quantitative prediction for this frame. Adopting it because it is the last option standing would be selection by elimination among three guesses, not evidence.
+
+\textbf{So the null is unexplained, and we record it that way.} A campaign that always has an explanation for its nulls is producing narrative at the rate it produces experiments. The measured facts are: these refinements are null at 2016 steps and at 3276 steps, alone and stacked, at 3.2\% dense share and at 34.9\%. Any future account must fit all four.
+
+\section{Next Experiments}
+\subsection{E25 --- Attention window pattern at depth 6} \emph{(running)}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} Internal: the campaign records that halving the short-attention span was a confirmed throughput win in an earlier configuration, on the reasoning that the $n$-gram tables already supply local recall. No external claim.
+\item \textbf{Mechanism.} \emph{Observed:} \texttt{WINDOW\_PATTERN=TTTL} was tuned at depth 8, where it yields two full-window layers of eight. At depth 6 the same string yields two of six --- a 50\% higher share of the most expensive layer type than the pattern was tuned to deliver, and nobody retuned it. \emph{Cause:} full-window layers cost $O(T^2)$ attention, and in a wall-clock frame that converts to tokens through the token law. \emph{Rival:} those layers carry long-range structure a hash of recent tokens cannot represent, so removing one costs more than the tokens are worth --- which is what removing whole layers did. \emph{Separator:} the step-time reading, not the endpoint. If attention FLOPs bind, \texttt{TTTT} is measurably faster; if not, it is speed-neutral and any change is pure quality loss.
+\item \textbf{Hypothesis.} depth 6 $\times$ \{TTTL, TTTT, TTLL\} $\times$ 4 seeds; both directions measured rather than assuming monotonicity. Anything beating TTTL by $\ge$1 gate goes to $n{=}10$ through the funnel.
+\item \textbf{Reasoning.} \emph{Against, and this is the honest prior:} attention was profiled at $\approx$1.6\% of step, capping this lever near $-0.001$ --- under half a gate --- unless depth 6 at dim 640 has a materially different attention share. That is why it is a cheap test and not a promising one.
+\item \textbf{Ratings.} 2 / 3 / 5 / 3 / 4 / 5 / 5.
+\end{itemize}
+
+\subsection{E26 --- Test the surviving account on its own terms}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} arXiv 2605.29152. Scope recorded as mismatched: BatchNorm ResNets, CIFAR-10, no transformers.
+\item \textbf{Mechanism.} \emph{Observed:} refinements are null across duration and dense share. \emph{That paper's cause:} initialisation effects are erased by \emph{accumulated regularisation}, $\mathcal{T}_{\mathrm{adapt}} = \sum \eta_k$ for adaptive optimisers, and it reports the initialisation spread collapsing from 26pp to 0.3pp when L2 is added at fixed duration. \emph{Prediction here:} conditioned init should show a larger effect when accumulated regularisation is \emph{lower}. \emph{Rival:} it is scope-mismatched and predicts nothing for transformers with hashed memories.
+\item \textbf{Hypothesis.} \texttt{COND\_INIT} $\times$ \texttt{WEIGHT\_DECAY} $\in \{0, 0.1\}$ at depth 6, $n{=}4$. At WD${=}0$ the accumulated-regularisation timescale is far smaller, so the account predicts the init effect survives.
+\item \textbf{Reasoning.} \emph{For:} it converts an untestable survivor into a falsifiable claim, and WD${=}0$ is free. \emph{Against:} WD${=}0$ changes the baseline itself, so the contrast is between two non-standard configurations and nothing here can be adopted; and E14 already showed this frame is sensitive to weight decay in ways that may swamp the effect.
+\item \textbf{Ratings.} 3 / 3 / 4 / 3 / 4 / 5 / 5.
+\end{itemize}
+
+\section{Conclusion}
+We retracted our own explanation of a null, proposed a replacement, and refuted that too. What remains is a well-characterised negative result with no accepted cause: null at 2016 and 3276 steps, alone and stacked, at 3.2\% and 34.9\% dense share. We think recording that honestly is worth more than the third guess would have been.
+\end{document}

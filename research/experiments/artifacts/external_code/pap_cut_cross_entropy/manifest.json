@@ -1,0 +1,90 @@
+{
+  "schema_version": 2,
+  "classification": "external_systems_source_reference",
+  "paper_id": "pap_cut_cross_entropy",
+  "external_role": "cut_cross_entropy_sota_systems_reference",
+  "captured_at": "2026-07-29T10:21:11Z",
+  "repository": {
+    "url": "https://github.com/apple/ml-cross-entropy",
+    "default_branch": "main",
+    "head_resolution_method": "git ls-remote --symref <url>.git HEAD",
+    "commit": "b7a02791b234e187b524fb1dba6a812d521b203a",
+    "tree": "b0afdd514aed1c47c7470af6bd4cc835bb666ff1",
+    "commit_time": "2025-09-23T11:20:12-07:00",
+    "commit_subject": "Bump version",
+    "fetch_depth": 1,
+    "tracked_paths": 49,
+    "gitlinks": []
+  },
+  "artifacts": [
+    {
+      "path": "ml-cross-entropy-b7a02791.tar.zst",
+      "role": "normalized_commit_source_archive",
+      "bytes": 412865,
+      "sha256": "4222a83d4d25304beac914424bb43d108c9894f78c4d6fb44f9fbf776f28ec94",
+      "uncompressed_tar_bytes": 788480,
+      "archive_root": "ml-cross-entropy-b7a02791/",
+      "regular_files": 49,
+      "symlinks": 0
+    }
+  ],
+  "normalization": {
+    "recipe": "git archive --format=tar --prefix=ml-cross-entropy-b7a02791/ b7a02791b234e187b524fb1dba6a812d521b203a | zstd -19 -T1",
+    "git_version": "2.39.5 (Apple Git-154)",
+    "zstd_version": "1.5.7",
+    "deterministic_rebuild_byte_identical": true
+  },
+  "license": {
+    "path": "LICENSE",
+    "declared_family": "Apple source-code license; non-SPDX label retained",
+    "sha256": "4862c77f9bf843ff8fca191ae1d124a94849105dba5891bc33aa934440732600"
+  },
+  "verified_files": [
+    {
+      "path": "README.md",
+      "sha256": "cb36302c6b6c5ff1214da80fbad9f06e7b0d11f1bd3343d5a47e2aaa646ea7db"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "27279150367c52c784074e178bdf9f3a1b65d4b5ad589930d801a372062541b0"
+    },
+    {
+      "path": "cut_cross_entropy/cce.py",
+      "sha256": "6ddd5a31b9a653a2f0b5ee0560b8de0bfe42d48523d12172c3adeb3c0da75c00"
+    },
+    {
+      "path": "cut_cross_entropy/linear_cross_entropy.py",
+      "sha256": "3330159049228ddeb38b8b939407c5f23a2773436673781cb1c2dadb9e068d42"
+    },
+    {
+      "path": "cut_cross_entropy/cce_lse_forward.py",
+      "sha256": "09d53533fa5ac65bc60277a7a6b6a3927cbbe7b0f02e64897cb355fded41eaf2"
+    },
+    {
+      "path": "cut_cross_entropy/cce_backward.py",
+      "sha256": "530f4086c0f8b595708055d3e0575253e7328aaa3fa1fa96427f392468027e52"
+    },
+    {
+      "path": "benchmark/__main__.py",
+      "sha256": "1eadfa72a34f1d7ba40b4e0bf7ece77f1d6f0749b64e85d74f2bbc7c9ad58e30"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "4862c77f9bf843ff8fca191ae1d124a94849105dba5891bc33aa934440732600"
+    }
+  ],
+  "verification": {
+    "zstd_integrity_test": true,
+    "archive_embedded_commit": "b7a02791b234e187b524fb1dba6a812d521b203a",
+    "archive_embedded_commit_matches_resolved_head": true,
+    "archive_path_accounting_matches_git_tree": true,
+    "git_lfs_pointers_detected": 0,
+    "local_sota_adoption_claimed": false
+  },
+  "scope_and_adoption_caveats": [
+    "This is an immutable external systems reference for Cut Cross-Entropy, not a governed local OPHIS SOTA or evidence of an end-to-end val_bpb improvement.",
+    "Any local adoption requires shape- and vocabulary-matched forward/backward equivalence tests, tolerance preregistration, deterministic seed checks, and wall-clock profiling on the exact H200 software stack.",
+    "A faster or lower-memory loss kernel may be end-to-end negligible when cross-entropy is not the binding runtime component; profile share must be measured before spending a governed experiment round.",
+    "The upstream LICENSE is a custom Apple source-code license, not assumed to be an SPDX-standard permissive license; redistribution and modification must follow its exact text."
+  ]
+}

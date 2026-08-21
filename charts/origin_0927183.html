@@ -1,0 +1,248 @@
+<title>What 0.927183 Actually Is</title>
+<style>
+.r{color-scheme:light;
+--s1:#fcfcfb;--s2:#f4f3f0;--tp:#0b0b0b;--ts:#52514e;--tm:#82817a;--ln:#e0dfd9;
+--c1:#2a78d6;--c2:#eb6834;--c3:#1baf7a;--acc:#e34948;
+--disp:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+--body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme=light])) .r{color-scheme:dark;
+--s1:#1a1a19;--s2:#232322;--tp:#fff;--ts:#c3c2b7;--tm:#8d8c84;--ln:#34342f;
+--c1:#3987e5;--c2:#d95926;--c3:#199e70;--acc:#e66767;}}
+:root[data-theme=dark] .r{color-scheme:dark;
+--s1:#1a1a19;--s2:#232322;--tp:#fff;--ts:#c3c2b7;--tm:#8d8c84;--ln:#34342f;
+--c1:#3987e5;--c2:#d95926;--c3:#199e70;--acc:#e66767;}
+.r{background:var(--s1);color:var(--tp);font-family:var(--body);line-height:1.55;
+-webkit-font-smoothing:antialiased;padding:40px 22px 72px;}
+.w{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:34px}
+.eyebrow{font:600 11.5px/1 var(--body);letter-spacing:.13em;text-transform:uppercase;color:var(--tm)}
+h1{font:400 40px/1.1 var(--disp);margin:11px 0 0;text-wrap:balance;letter-spacing:-.015em}
+.lede{font-size:17px;color:var(--ts);max-width:64ch;margin:15px 0 0}
+.lede b{color:var(--tp);font-weight:600}
+.hero{background:var(--s2);border:1px solid var(--ln);border-radius:3px;padding:22px 24px;
+display:flex;flex-wrap:wrap;gap:30px 46px;align-items:flex-start}
+.kpi{display:flex;flex-direction:column;gap:5px;min-width:118px}
+.kpi .k{font:600 10.5px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--tm)}
+.kpi .val{font:500 25px/1 var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi .sub{font-size:12.5px;color:var(--ts)}
+.card{background:var(--s1);border:1px solid var(--ln);border-radius:3px;padding:24px 24px 16px}
+h2{font:400 22px/1.25 var(--disp);margin:0 0 4px;letter-spacing:-.01em}
+.csub{font-size:13.5px;color:var(--ts);margin:0 0 20px}
+.lg{display:flex;flex-wrap:wrap;gap:8px 20px;margin:0 0 14px;font-size:12.5px;color:var(--ts)}
+.lg span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 0 2px var(--s1)}
+.dash{width:19px;height:0;border-top:2px dashed var(--acc);flex:none}
+.scroll{overflow-x:auto}
+svg{display:block;min-width:660px}
+.gl{stroke:var(--ln);stroke-width:1}
+.ax{fill:var(--tm);font:11px var(--mono);font-variant-numeric:tabular-nums}
+.axl{fill:var(--ts);font:600 10.5px var(--body);letter-spacing:.08em;text-transform:uppercase}
+circle.pt{stroke:var(--s1);stroke-width:2;cursor:pointer}
+circle.pt:hover{stroke:var(--tp)}
+.oline{stroke:var(--acc);stroke-width:2;stroke-dasharray:5 4}
+.oband{fill:var(--acc);opacity:.055}
+.olab{fill:var(--acc);font:600 11px var(--body)}
+.callout{fill:var(--tp);font:600 12px var(--body)}
+.calsub{fill:var(--ts);font:11.5px var(--mono);font-variant-numeric:tabular-nums}
+.leader{stroke:var(--tm);stroke-width:1}
+#tt{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;background:var(--tp);
+color:var(--s1);padding:8px 11px;border-radius:3px;font:12px var(--body);z-index:9;max-width:270px}
+#tt b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font:600 10.5px var(--body);letter-spacing:.09em;text-transform:uppercase;
+color:var(--tm);padding:0 12px 9px 0;border-bottom:1px solid var(--ln);white-space:nowrap}
+td{padding:7px 12px 7px 0;border-bottom:1px solid var(--ln)}
+td.n,th.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+tr.o td{background:color-mix(in srgb,var(--acc) 9%,transparent);font-weight:600}
+tr.hi td{background:color-mix(in srgb,var(--c2) 8%,transparent)}
+.tag{font:600 10px var(--body);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;
+border-radius:2px;color:var(--s1)}
+.tag.control{background:var(--c1)}.tag.treatment{background:var(--c2)}.tag.sweep{background:var(--c3)}
+.ph{color:var(--tm);font-size:12px}
+.note{font-size:13.5px;color:var(--ts);border-left:2px solid var(--acc);padding:2px 0 2px 15px;
+margin:20px 0 0;max-width:70ch}
+.note b{color:var(--tp)}
+details{margin-top:8px}summary{cursor:pointer;font-size:13px;color:var(--ts);padding:8px 0}
+.foot{font-size:12.5px;color:var(--tm);border-top:1px solid var(--ln);padding-top:16px}
+@media(max-width:640px){h1{font-size:30px}.hero{gap:22px 30px}}
+</style>
+<div class=r><div class=w>
+
+<header>
+<div class=eyebrow>OPHIS · walltime_5min_h200 · historical chart origin</div>
+<h1>What 0.927183 actually is</h1>
+<p class=lede>The campaign chart anchors on experiment 501 and reports that nothing in the
+646 experiments since has beaten it. Zooming into its neighbourhood shows why:
+<b>0.927183 is the treatment arm of an A/B that did not clear its gate</b>, and it is the
+minimum of a 0.0013-wide cluster that contains five control runs.</p>
+</header>
+
+<div class=hero>
+<div class=kpi><div class=k>Chart origin</div><div class="val" style="color:var(--acc)">0.927183</div>
+<div class=sub>exp 501 · M_t_s47 · block21</div></div>
+<div class=kpi><div class=k>Its own A/B</div><div class=val>0.37&thinsp;gates</div>
+<div class=sub>&minus;0.000959 mean, 3/4 seeds<br>gate is 0.002614 &mdash; did not clear</div></div>
+<div class=kpi><div class=k>Nearest control</div><div class=val>0.927581</div>
+<div class=sub>M_c_s50 &mdash; a control arm,<br>0.000398 away</div></div>
+<div class=kpi><div class=k>Cluster</div><div class=val>17&thinsp;pts</div>
+<div class=sub>inside 0.001313<br>5 of them controls</div></div>
+</div>
+
+<div class=card>
+<h2>The run-up, the origin, and the ten points after</h2>
+<p class=csub>Experiments 455&ndash;511. Lower is better. Every point is one 300&nbsp;s H200 arm on the
+compiled production path.</p>
+<div class=lg>
+<span><span class=sw style="background:var(--c1)"></span>control arm</span>
+<span><span class=sw style="background:var(--c2)"></span>treatment arm</span>
+<span><span class=sw style="background:var(--c3)"></span>sweep arm (no paired control)</span>
+<span><span class=dash></span>0.927183 historical chart origin</span>
+</div>
+<div class=scroll><svg viewBox="0 0 900 430" role=img
+aria-label="Dot plot of val_bpb for experiments 455 to 511, showing 0.927183 as the minimum of a tight cluster">
+
+</svg></div>
+<p class=note>The shaded band marks the ten experiments after the origin. Four of them land
+within 0.0008 of it &mdash; including <b>F_wd_s51 at 0.927340</b> and the control
+<b>M_c_s50 at 0.927581</b>. A number that control arms reach is not a frontier.</p>
+</div>
+
+<div class=card>
+<h2>The A/B that produced the origin</h2>
+<p class=csub>block21 momentum-continuity, four paired seeds. This is the entire evidence base
+for the number the whole campaign was later measured against.</p>
+<div class=scroll><table>
+<thead><tr><th class=n>Seed</th><th class=n>Control M_c</th><th class=n>Treatment M_t</th>
+<th class=n>&Delta;</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td class=n>47</td><td class=n>0.928310</td><td class=n><b>0.927183</b></td>
+<td class=n>&minus;0.001127</td><td>treatment better &mdash; <b>the chart origin</b></td></tr>
+<tr><td class=n>48</td><td class=n>0.928480</td><td class=n>0.927380</td>
+<td class=n>&minus;0.001100</td><td>treatment better</td></tr>
+<tr><td class=n>49</td><td class=n>0.931671</td><td class=n>0.929782</td>
+<td class=n>&minus;0.001889</td><td>treatment better</td></tr>
+<tr><td class=n>50</td><td class=n>0.927581</td><td class=n>0.927861</td>
+<td class=n>+0.000280</td><td>control better</td></tr>
+<tr class=hi><td class=n>mean</td><td class=n>&mdash;</td><td class=n>&mdash;</td>
+<td class=n>&minus;0.000959</td><td>3/4 seeds · sd 0.000903 · <b>0.37 gates &mdash; no adoption</b></td></tr>
+</tbody></table></div>
+<p class=note>Seed 47 is the luckiest draw of the four. Anchoring the chart there measures every
+later experiment against <b>an order statistic rather than a result</b> &mdash; the same
+winner-selection error the campaign spent a full reflection on, embedded in the axis itself.</p>
+</div>
+
+<div class=card>
+<h2>All 56 points</h2>
+<p class=csub>Experiments 455&ndash;511 as plotted. The origin row is highlighted.</p>
+<details open><summary>Table view (also serves the light-mode contrast relief rule)</summary>
+<div class=scroll><table>
+<thead><tr><th class=n>Exp</th><th>Arm</th><th class=n>val_bpb</th><th>Role</th><th>Phase</th></tr></thead>
+<tbody><tr><td class=n>455</td><td>r_sssl_s44</td><td class="n v">0.935988</td><td><span class="tag treatment">treatment</span></td><td class=ph>block16</td></tr>
+<tr><td class=n>456</td><td>f2_oldcfg_dmoff_s42</td><td class="n v">0.930514</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>457</td><td>f2_oldcfg_dmoff_s43</td><td class="n v">0.934086</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>458</td><td>f2_oldcfg_dmon_s43</td><td class="n v">0.932944</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>459</td><td>f2_newcfg_dmoff_s42</td><td class="n v">0.941036</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>460</td><td>f2_newcfg_dmon_s42</td><td class="n v">0.937827</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>461</td><td>f2_oldcfg_dmon_s42</td><td class="n v">0.928066</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>462</td><td>f3_oldoff_s44</td><td class="n v">0.930881</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>463</td><td>f3_oldon_s44</td><td class="n v">0.929302</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>464</td><td>f3_oldoff_s45</td><td class="n v">0.932445</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>465</td><td>f3_oldon_s45</td><td class="n v">0.930189</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>466</td><td>f3_oldoff_s46</td><td class="n v">0.935423</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>467</td><td>f3_oldon_s46</td><td class="n v">0.933231</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>468</td><td>f5_oldoff_s47</td><td class="n v">0.929983</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>469</td><td>f5_oldoff_s48</td><td class="n v">0.928991</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>470</td><td>f5_oldoff_s49</td><td class="n v">0.932071</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>471</td><td>f5_oldoff_s50</td><td class="n v">0.932000</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>472</td><td>f5_oldoff_s51</td><td class="n v">0.933357</td><td><span class="tag control">control</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>473</td><td>f5_oldon_s47</td><td class="n v">0.928496</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>474</td><td>f5_oldon_s48</td><td class="n v">0.927430</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>475</td><td>f5_oldon_s49</td><td class="n v">0.929332</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>476</td><td>f5_oldon_s50</td><td class="n v">0.928467</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>477</td><td>f5_oldon_s51</td><td class="n v">0.930265</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>478</td><td>f5_oldon_s52</td><td class="n v">0.928134</td><td><span class="tag treatment">treatment</span></td><td class=ph>block17</td></tr>
+<tr><td class=n>479</td><td>L_b96_s42</td><td class="n v">0.939223</td><td><span class="tag sweep">sweep</span></td><td class=ph>block18</td></tr>
+<tr><td class=n>480</td><td>L_b72_s42</td><td class="n v">0.928257</td><td><span class="tag sweep">sweep</span></td><td class=ph>block18</td></tr>
+<tr><td class=n>481</td><td>L_b48_s42</td><td class="n v">0.931542</td><td><span class="tag sweep">sweep</span></td><td class=ph>block18</td></tr>
+<tr><td class=n>482</td><td>L_b32_s42</td><td class="n v">0.939130</td><td><span class="tag sweep">sweep</span></td><td class=ph>block18</td></tr>
+<tr><td class=n>483</td><td>L_b48_s43</td><td class="n v">0.934343</td><td><span class="tag sweep">sweep</span></td><td class=ph>block18</td></tr>
+<tr><td class=n>484</td><td>L_b32_s43</td><td class="n v">0.937176</td><td><span class="tag sweep">sweep</span></td><td class=ph>block18</td></tr>
+<tr><td class=n>486</td><td>N_ctrl_s42</td><td class="n v">0.928251</td><td><span class="tag control">control</span></td><td class=ph>block19</td></tr>
+<tr><td class=n>487</td><td>N_m128rw_s42</td><td class="n v">0.934207</td><td><span class="tag sweep">sweep</span></td><td class=ph>block19</td></tr>
+<tr><td class=n>488</td><td>N_m256rw_s42</td><td class="n v">0.942269</td><td><span class="tag sweep">sweep</span></td><td class=ph>block19</td></tr>
+<tr><td class=n>489</td><td>N_m256_s42</td><td class="n v">0.940751</td><td><span class="tag sweep">sweep</span></td><td class=ph>block19</td></tr>
+<tr><td class=n>490</td><td>N_ctrl_s43</td><td class="n v">0.933110</td><td><span class="tag control">control</span></td><td class=ph>block19</td></tr>
+<tr><td class=n>491</td><td>N_m128rw_s43</td><td class="n v">0.935237</td><td><span class="tag sweep">sweep</span></td><td class=ph>block19</td></tr>
+<tr><td class=n>492</td><td>N_m256rw_s43</td><td class="n v">0.944679</td><td><span class="tag sweep">sweep</span></td><td class=ph>block19</td></tr>
+<tr><td class=n>493</td><td>P_b72_s44</td><td class="n v">0.929306</td><td><span class="tag sweep">sweep</span></td><td class=ph>block20</td></tr>
+<tr><td class=n>494</td><td>P_b96_s44</td><td class="n v">0.930063</td><td><span class="tag sweep">sweep</span></td><td class=ph>block20</td></tr>
+<tr><td class=n>495</td><td>P_b96_s45</td><td class="n v">0.929827</td><td><span class="tag sweep">sweep</span></td><td class=ph>block20</td></tr>
+<tr><td class=n>496</td><td>P_b72_s45</td><td class="n v">0.932614</td><td><span class="tag sweep">sweep</span></td><td class=ph>block20</td></tr>
+<tr><td class=n>497</td><td>P_b72_s46</td><td class="n v">0.930339</td><td><span class="tag sweep">sweep</span></td><td class=ph>block20</td></tr>
+<tr><td class=n>498</td><td>P_b96_s46</td><td class="n v">0.930664</td><td><span class="tag sweep">sweep</span></td><td class=ph>block20</td></tr>
+<tr><td class=n>499</td><td>P_b96_s42</td><td class="n v">0.931145</td><td><span class="tag sweep">sweep</span></td><td class=ph>block20</td></tr>
+<tr><td class=n>500</td><td>M_c_s47</td><td class="n v">0.928310</td><td><span class="tag control">control</span></td><td class=ph>block21</td></tr>
+<tr class=o><td class=n>501</td><td>M_t_s47</td><td class="n v">0.927183</td><td><span class="tag treatment">treatment</span></td><td class=ph>block21</td></tr>
+<tr><td class=n>502</td><td>M_t_s48</td><td class="n v">0.927380</td><td><span class="tag treatment">treatment</span></td><td class=ph>block21</td></tr>
+<tr><td class=n>503</td><td>M_c_s48</td><td class="n v">0.928480</td><td><span class="tag control">control</span></td><td class=ph>block21</td></tr>
+<tr><td class=n>504</td><td>M_c_s49</td><td class="n v">0.931671</td><td><span class="tag control">control</span></td><td class=ph>block21</td></tr>
+<tr><td class=n>505</td><td>M_t_s49</td><td class="n v">0.929782</td><td><span class="tag treatment">treatment</span></td><td class=ph>block21</td></tr>
+<tr><td class=n>506</td><td>M_t_s50</td><td class="n v">0.927861</td><td><span class="tag treatment">treatment</span></td><td class=ph>block21</td></tr>
+<tr><td class=n>507</td><td>M_c_s50</td><td class="n v">0.927581</td><td><span class="tag control">control</span></td><td class=ph>block21</td></tr>
+<tr><td class=n>508</td><td>F_ctrl_s51</td><td class="n v">0.928088</td><td><span class="tag control">control</span></td><td class=ph>block22</td></tr>
+<tr><td class=n>509</td><td>F_mc_s51</td><td class="n v">0.927938</td><td><span class="tag treatment">treatment</span></td><td class=ph>block22</td></tr>
+<tr><td class=n>510</td><td>F_wd_s51</td><td class="n v">0.927340</td><td><span class="tag treatment">treatment</span></td><td class=ph>block22</td></tr>
+<tr><td class=n>511</td><td>F_both_s51</td><td class="n v">0.928124</td><td><span class="tag treatment">treatment</span></td><td class=ph>block22</td></tr></tbody></table></div></details>
+</div>
+
+<p class=foot>Source: <code>campaign_log.jsonl</code>, experiments 455&ndash;511, unmodified.
+Origin provenance is weak by the campaign's own record &mdash; direct SSH on a prior host, no
+RunRecord binding. The current frame baseline is 0.931857.</p>
+
+</div></div>
+<div id=tt></div>
+<script>
+const D=[{"n":455,"name":"r_sssl_s44","v":0.935988,"role":"treatment","phase":"block16","desc":"SSSL control s44 for the TTTL pairing."},{"n":456,"name":"f2_oldcfg_dmoff_s42","v":0.930514,"role":"control","phase":"block17","desc":"2x2 FACTORIAL, OLD config (TTTL/147456/72/0.04) doc-mask OFF: 0.930514 at 1973 STEPS. Beats the adopted SOTA ("},{"n":457,"name":"f2_oldcfg_dmoff_s43","v":0.934086,"role":"control","phase":"block17","desc":"OLD config doc-mask OFF s43."},{"n":458,"name":"f2_oldcfg_dmon_s43","v":0.932944,"role":"treatment","phase":"block17","desc":"OLD config doc-mask ON s43: -0.001142 vs off. Doc-mask still helps but LESS than at the new config (-0.003209)"},{"n":459,"name":"f2_newcfg_dmoff_s42","v":0.941036,"role":"control","phase":"block17","desc":"NEW (adopted) config doc-mask OFF s42 -- factorial control."},{"n":460,"name":"f2_newcfg_dmon_s42","v":0.937827,"role":"treatment","phase":"block17","desc":"NEW config doc-mask ON s42. CONFIG MAIN EFFECT at matched doc-mask-off: old-new = -0.010522, roughly 2x the do"},{"n":461,"name":"f2_oldcfg_dmon_s42","v":0.928066,"role":"treatment","phase":"block17","desc":"OLD config + doc-mask ON, s42: 0.928066 at 2020 steps -- BEST SINGLE VALUE OF THE CAMPAIGN. Doc-masking stacks"},{"n":462,"name":"f3_oldoff_s44","v":0.930881,"role":"control","phase":"block17","desc":"old cfg, doc-mask off, s44"},{"n":463,"name":"f3_oldon_s44","v":0.929302,"role":"treatment","phase":"block17","desc":"old cfg + doc-mask, s44: -0.001579 paired"},{"n":464,"name":"f3_oldoff_s45","v":0.932445,"role":"control","phase":"block17","desc":"old cfg, doc-mask off, s45"},{"n":465,"name":"f3_oldon_s45","v":0.930189,"role":"treatment","phase":"block17","desc":"old cfg + doc-mask, s45: -0.002256 paired"},{"n":466,"name":"f3_oldoff_s46","v":0.935423,"role":"control","phase":"block17","desc":"old cfg, doc-mask off, s46"},{"n":467,"name":"f3_oldon_s46","v":0.933231,"role":"treatment","phase":"block17","desc":"old cfg + doc-mask, s46: -0.002192 paired. TWO SEPARATE VERDICTS at n=5: (1) doc-mask ON vs OFF within the old"},{"n":468,"name":"f5_oldoff_s47","v":0.929983,"role":"control","phase":"block17","desc":"old cfg doc-mask OFF s47 (paired control)"},{"n":469,"name":"f5_oldoff_s48","v":0.928991,"role":"control","phase":"block17","desc":"old cfg doc-mask OFF s48 (paired control)"},{"n":470,"name":"f5_oldoff_s49","v":0.932071,"role":"control","phase":"block17","desc":"old cfg doc-mask OFF s49 (paired control)"},{"n":471,"name":"f5_oldoff_s50","v":0.932,"role":"control","phase":"block17","desc":"old cfg doc-mask OFF s50 (paired control)"},{"n":472,"name":"f5_oldoff_s51","v":0.933357,"role":"control","phase":"block17","desc":"old cfg doc-mask OFF s51 (paired control)"},{"n":473,"name":"f5_oldon_s47","v":0.928496,"role":"treatment","phase":"block17","desc":"old cfg + doc-mask s47"},{"n":474,"name":"f5_oldon_s48","v":0.92743,"role":"treatment","phase":"block17","desc":"old cfg + doc-mask s48"},{"n":475,"name":"f5_oldon_s49","v":0.929332,"role":"treatment","phase":"block17","desc":"old cfg + doc-mask s49"},{"n":476,"name":"f5_oldon_s50","v":0.928467,"role":"treatment","phase":"block17","desc":"old cfg + doc-mask s50"},{"n":477,"name":"f5_oldon_s51","v":0.930265,"role":"treatment","phase":"block17","desc":"old cfg + doc-mask s51"},{"n":478,"name":"f5_oldon_s52","v":0.928134,"role":"treatment","phase":"block17","desc":"PAIRED n=10 COMPLETE: doc-mask ON vs OFF on the old config = mean -0.002203, 10/10 same sign, t=-9.04 -- extre"},{"n":479,"name":"L_b96_s42","v":0.939223,"role":"sweep","phase":"block18","desc":"batch ladder B=96 (TBS=196608) -- CONTENDED: step_ms read 195 mid-run (on-model) but finished 278.5 with MFU 1"},{"n":480,"name":"L_b72_s42","v":0.928257,"role":"sweep","phase":"block18","desc":"batch ladder B=72 (TBS=147456) = INCUMBENT; best arm of the ladder, MFU peak 19.32%, most tokens (295.5M)"},{"n":481,"name":"L_b48_s42","v":0.931542,"role":"sweep","phase":"block18","desc":"batch ladder B=48 (TBS=98304): +0.003285 vs B=72 -- more steps but fewer tokens (279.1M), WORSE"},{"n":482,"name":"L_b32_s42","v":0.93913,"role":"sweep","phase":"block18","desc":"batch ladder B=32 (TBS=65536): +0.010873 vs B=72 -- most steps (3897) but fewest tokens (255.4M), clearly WORS"},{"n":483,"name":"L_b48_s43","v":0.934343,"role":"sweep","phase":"block18","desc":"batch ladder B=48 seed 43 replicate: +0.006 vs B=72; 2/2 same sign that B=48 loses"},{"n":484,"name":"L_b32_s43","v":0.937176,"role":"sweep","phase":"block18","desc":"BATCH LADDER NULL -- PREREGISTERED PREDICTION FALSIFIED. Predicted optimum B=48-64 at val_bpb 0.921-0.925; mea"},{"n":486,"name":"N_ctrl_s42","v":0.928251,"role":"control","phase":"block19","desc":"n-gram capacity control mult=64 (2^19) s42"},{"n":487,"name":"N_m128rw_s42","v":0.934207,"role":"sweep","phase":"block19","desc":"mult=128 rowwise=1 s42: +0.005956 vs ctrl"},{"n":488,"name":"N_m256rw_s42","v":0.942269,"role":"sweep","phase":"block19","desc":"mult=256 (2^21) rowwise=1 s42: +0.014018 vs ctrl"},{"n":489,"name":"N_m256_s42","v":0.940751,"role":"sweep","phase":"block19","desc":"mult=256 rowwise=0 s42: +0.012500 vs ctrl; FASTER than rowwise=1 (188.5 vs 194.1 ms)"},{"n":490,"name":"N_ctrl_s43","v":0.93311,"role":"control","phase":"block19","desc":"n-gram capacity control mult=64 s43"},{"n":491,"name":"N_m128rw_s43","v":0.935237,"role":"sweep","phase":"block19","desc":"mult=128 rowwise=1 s43: +0.002127 vs ctrl"},{"n":492,"name":"N_m256rw_s43","v":0.944679,"role":"sweep","phase":"block19","desc":"N-GRAM CAPACITY RESTORATION REFUTED (5/5 arms regress, monotonic in table size) AND -- more importantly -- THE"},{"n":493,"name":"P_b72_s44","v":0.929306,"role":"sweep","phase":"block20","desc":"paired B96-vs-B72 confirm arm P_b72_s44"},{"n":494,"name":"P_b96_s44","v":0.930063,"role":"sweep","phase":"block20","desc":"paired B96-vs-B72 confirm arm P_b96_s44"},{"n":495,"name":"P_b96_s45","v":0.929827,"role":"sweep","phase":"block20","desc":"paired B96-vs-B72 confirm arm P_b96_s45"},{"n":496,"name":"P_b72_s45","v":0.932614,"role":"sweep","phase":"block20","desc":"paired B96-vs-B72 confirm arm P_b72_s45"},{"n":497,"name":"P_b72_s46","v":0.930339,"role":"sweep","phase":"block20","desc":"paired B96-vs-B72 confirm arm P_b72_s46"},{"n":498,"name":"P_b96_s46","v":0.930664,"role":"sweep","phase":"block20","desc":"paired B96-vs-B72 confirm arm P_b96_s46"},{"n":499,"name":"P_b96_s42","v":0.931145,"role":"sweep","phase":"block20","desc":"B=96 NULL at paired n=5, AND MY OWN CORRECTION IS FALSIFIED. Deltas (b96 minus b72): +0.002735 (s42), -0.00305"},{"n":500,"name":"M_c_s47","v":0.92831,"role":"control","phase":"block21","desc":"momentum-continuity confirm arm M_c_s47"},{"n":501,"name":"M_t_s47","v":0.927183,"role":"treatment","phase":"block21","desc":"momentum-continuity confirm arm M_t_s47"},{"n":502,"name":"M_t_s48","v":0.92738,"role":"treatment","phase":"block21","desc":"momentum-continuity confirm arm M_t_s48"},{"n":503,"name":"M_c_s48","v":0.92848,"role":"control","phase":"block21","desc":"momentum-continuity confirm arm M_c_s48"},{"n":504,"name":"M_c_s49","v":0.931671,"role":"control","phase":"block21","desc":"momentum-continuity confirm arm M_c_s49"},{"n":505,"name":"M_t_s49","v":0.929782,"role":"treatment","phase":"block21","desc":"momentum-continuity confirm arm M_t_s49"},{"n":506,"name":"M_t_s50","v":0.927861,"role":"treatment","phase":"block21","desc":"momentum-continuity confirm arm M_t_s50"},{"n":507,"name":"M_c_s50","v":0.927581,"role":"control","phase":"block21","desc":"MUON_MOMENTUM_CONTINUOUS=1 + WARMDOWN_RATIO=0.85, paired n=6 (4 fresh interleaved pairs s47-s50 plus s44/s45),"},{"n":508,"name":"F_ctrl_s51","v":0.928088,"role":"control","phase":"block22","desc":"2x2 momentum/warmdown arm F_ctrl_s51"},{"n":509,"name":"F_mc_s51","v":0.927938,"role":"treatment","phase":"block22","desc":"2x2 momentum/warmdown arm F_mc_s51"},{"n":510,"name":"F_wd_s51","v":0.92734,"role":"treatment","phase":"block22","desc":"2x2 momentum/warmdown arm F_wd_s51"},{"n":511,"name":"F_both_s51","v":0.928124,"role":"treatment","phase":"block22","desc":"2x2 momentum/warmdown arm F_both_s51"}];
+const W=900,H=430,L=64,R=22,T=66,B=52;
+const xs=e=>L+(e-455)/(511-455)*(W-L-R);
+const lo=0.9265,hi=0.9455;
+const ys=v=>T+(v-lo)/(hi-lo)*(H-T-B);
+const ORIG=0.927183;
+let s='';
+// y grid + labels
+for(let v=0.927;v<=0.945;v+=0.003){const y=ys(v).toFixed(1);
+ s+=`<line class=gl x1=${L} y1=${y} x2=${W-R} y2=${y}/>`;
+ s+=`<text class=ax x=${L-9} y=${(+y+4).toFixed(1)} text-anchor=end>${v.toFixed(3)}</text>`;}
+// x ticks
+for(let e=460;e<=510;e+=10){const x=xs(e).toFixed(1);
+ s+=`<text class=ax x=${x} y=${H-B+20} text-anchor=middle>${e}</text>`;}
+s+=`<text class=axl x=${L} y=${H-8}>experiment number</text>`;
+s+=`<text class=axl x=${L-9} y=${T-11} text-anchor=end>val_bpb</text>`;
+// band over the 10 points after the origin
+const bx=xs(501.5),bw=xs(511.4)-bx;
+s+=`<rect class=oband x=${bx.toFixed(1)} y=${T} width=${bw.toFixed(1)} height=${H-T-B}/>`;
+s+=`<text class=olab x=${(bx+bw/2).toFixed(1)} y=${H-B-10} text-anchor=middle>ten points after</text>`;
+// origin reference line
+const oy=ys(ORIG).toFixed(1);
+s+=`<line class=oline x1=${L} y1=${oy} x2=${W-R} y2=${oy}/>`;
+// callout
+s+=`<line class=leader x1=${xs(501).toFixed(1)} y1=${(+oy-9).toFixed(1)} x2=${xs(494).toFixed(1)} y2=${(+oy-40).toFixed(1)}/>`;
+s+=`<text class=callout x=${xs(494).toFixed(1)} y=${(+oy-46).toFixed(1)} text-anchor=middle>exp 501 — chart origin</text>`;
+s+=`<text class=calsub x=${xs(494).toFixed(1)} y=${(+oy-32).toFixed(1)} text-anchor=middle>0.927183</text>`;
+const C={control:'var(--c1)',treatment:'var(--c2)',sweep:'var(--c3)'};
+D.forEach(d=>{const r=d.n===501?7:5;
+ s+=`<circle class=pt cx=${xs(d.n).toFixed(1)} cy=${ys(d.v).toFixed(1)} r=${r} fill="${C[d.role]}"`
+  +(d.n===501?` stroke="var(--acc)" stroke-width=3`:``)
+  +` data-i="${d.n}"/>`;});
+const svg=document.querySelector('.r svg'); svg.innerHTML=s;
+const tt=document.getElementById('tt');
+svg.addEventListener('mouseover',e=>{const c=e.target.closest('circle.pt'); if(!c)return;
+ const d=D.find(x=>x.n==c.dataset.i);
+ tt.innerHTML=`<b>${d.v.toFixed(6)}</b> &middot; exp ${d.n}<br>${d.name} &middot; ${d.role}<br>`
+  +`<span style="opacity:.72">${d.phase}${d.desc?' — '+d.desc:''}</span>`;
+ tt.style.opacity=1;});
+svg.addEventListener('mousemove',e=>{
+ tt.style.left=Math.min(e.clientX+14,innerWidth-282)+'px';
+ tt.style.top=(e.clientY+16)+'px';});
+svg.addEventListener('mouseout',()=>tt.style.opacity=0);
+</script>

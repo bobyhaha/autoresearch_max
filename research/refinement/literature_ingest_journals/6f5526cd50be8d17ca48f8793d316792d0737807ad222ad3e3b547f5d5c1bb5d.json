@@ -1,0 +1,146 @@
+{
+  "durable_manifest_path": "refinement/literature_ingests/6f5526cd50be8d17ca48f8793d316792d0737807ad222ad3e3b547f5d5c1bb5d.json",
+  "durable_manifest_sha256": "6c32419fd1e990828bb51ef17da740904a9375d5264140cf6c84edff216c2efa",
+  "ingest_id": "literature_ingest_6f5526cd50be8d17ca48",
+  "ordered_target_paths": [
+    "knowledge/external/papers.jsonl",
+    "knowledge/external/claims.jsonl",
+    "knowledge/external/literature_evidence.jsonl",
+    "knowledge/LITERATURE_SYNTHESIS.md",
+    "knowledge/RESEARCH_STATE.md",
+    "refinement/literature_ingests/6f5526cd50be8d17ca48f8793d316792d0737807ad222ad3e3b547f5d5c1bb5d.json",
+    "refinement/literature_ingest_journals/6f5526cd50be8d17ca48f8793d316792d0737807ad222ad3e3b547f5d5c1bb5d.json"
+  ],
+  "recovery_policy": "This receipt is promoted last. Until then the external transaction journal is authoritative and restores every explicit target from pre-commit backups after interruption or failed postvalidation.",
+  "reviewed_payload_sha256": "6f5526cd50be8d17ca48f8793d316792d0737807ad222ad3e3b547f5d5c1bb5d",
+  "schema_version": 1,
+  "script_sha256": "fd8f26536c1333e7335e2f138fe04deac338a5839d180f0ff4d36ec78c89f4d3",
+  "staged_audit": {
+    "counts": {
+      "info": 15
+    },
+    "issues": [
+      {
+        "code": "hypothesis_without_conclusive_evidence",
+        "message": "Existing evidence is inconclusive or does not test the hypothesis; a conclusive result is still required.",
+        "record_id": "hyp_block14_attnres_walltime_paired",
+        "severity": "info"
+      },
+      {
+        "code": "hypothesis_without_conclusive_evidence",
+        "message": "Existing evidence is inconclusive or does not test the hypothesis; a conclusive result is still required.",
+        "record_id": "hyp_block14_c1_10sh_bracket",
+        "severity": "info"
+      },
+      {
+        "code": "hypothesis_without_conclusive_evidence",
+        "message": "Existing evidence is inconclusive or does not test the hypothesis; a conclusive result is still required.",
+        "record_id": "hyp_block14_c1_c3_redundancy",
+        "severity": "info"
+      },
+      {
+        "code": "hypothesis_without_conclusive_evidence",
+        "message": "Existing evidence is inconclusive or does not test the hypothesis; a conclusive result is still required.",
+        "record_id": "hyp_f5_attnres",
+        "severity": "info"
+      },
+      {
+        "code": "hypothesis_without_evidence",
+        "message": "No evidence currently tests this hypothesis.",
+        "record_id": "hyp_block14_attnres_c1weak_interaction",
+        "severity": "info"
+      },
+      {
+        "code": "hypothesis_without_evidence",
+        "message": "No evidence currently tests this hypothesis.",
+        "record_id": "hyp_block14_attnres_fixedstep_isolation",
+        "severity": "info"
+      },
+      {
+        "code": "hypothesis_without_evidence",
+        "message": "No evidence currently tests this hypothesis.",
+        "record_id": "hyp_block14_c1weak_fixedstep_alone",
+        "severity": "info"
+      },
+      {
+        "code": "hypothesis_without_evidence",
+        "message": "No evidence currently tests this hypothesis.",
+        "record_id": "hyp_block14_mhc_lite_writeback",
+        "severity": "info"
+      },
+      {
+        "code": "hypothesis_without_evidence",
+        "message": "No evidence currently tests this hypothesis.",
+        "record_id": "hyp_block14_sparse_optimizer_batched",
+        "severity": "info"
+      },
+      {
+        "code": "legacy_runs_without_challenge_binding",
+        "message": "31 completed legacy runs predate challenge IDs/selection fingerprints. They remain historical facts but cannot satisfy the new search-policy checkpoints.",
+        "record_id": "experiments/runs/runs.jsonl",
+        "severity": "info"
+      },
+      {
+        "code": "mechanism_uses_quarantined_campaign_provenance",
+        "message": "Mechanism is grounded in campaign rows without gated RunRecords and remains provisional: ['cmp_block15_direct_ssh_b', 'cmp_block16_direct_ssh', 'cmp_block17_direct_ssh']",
+        "record_id": "mech_fa3_varlen_document_isolation",
+        "severity": "info"
+      },
+      {
+        "code": "mechanism_uses_quarantined_campaign_provenance",
+        "message": "Mechanism is grounded in campaign rows without gated RunRecords and remains provisional: ['cmp_block21_direct_ssh', 'cmp_block22_direct_ssh']",
+        "record_id": "mech_token_law_as_control_variate",
+        "severity": "info"
+      },
+      {
+        "code": "mechanism_uses_quarantined_campaign_provenance",
+        "message": "Mechanism is grounded in campaign rows without gated RunRecords and remains provisional: ['cmp_block18_direct_ssh', 'cmp_block19_direct_ssh', 'cmp_block20_direct_ssh']",
+        "record_id": "mech_token_throughput_law_fixed_batch",
+        "severity": "info"
+      },
+      {
+        "code": "observation_followup_unresolved",
+        "message": "Observation is flagged followup_required but is still 'exploratory'; resolve it to 'promoted' or 'dismissed'.",
+        "record_id": "evd_obs_f5_factorial_interaction",
+        "severity": "info"
+      },
+      {
+        "code": "observation_followup_unresolved",
+        "message": "Observation is flagged followup_required but is still 'exploratory'; resolve it to 'promoted' or 'dismissed'.",
+        "record_id": "evd_obs_ngram_kernel_profile",
+        "severity": "info"
+      }
+    ]
+  },
+  "staged_validation": {
+    "counts": {
+      "audits": 0,
+      "beliefs": 5,
+      "campaign_batches": 10,
+      "capability_gaps": 2,
+      "claims": 114,
+      "contexts": 1,
+      "decisions": 25,
+      "deprecations": 0,
+      "evidence_updates": 25,
+      "experiment_proposals": 0,
+      "gated_experiments": 22,
+      "hourly_reports": 9,
+      "hypotheses": 18,
+      "idea_archive": 15,
+      "interventions": 113,
+      "literature_evidence": 117,
+      "mechanisms": 14,
+      "observables": 13,
+      "observations": 3,
+      "outcomes": 1,
+      "papers": 33,
+      "run_evidence": 34,
+      "runs": 89,
+      "setup_reconciliation": 1,
+      "tool_proposals": 0
+    },
+    "warnings": []
+  },
+  "state": "committed"
+}

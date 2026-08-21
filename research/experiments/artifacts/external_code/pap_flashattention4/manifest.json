@@ -1,0 +1,110 @@
+{
+  "schema_version": 2,
+  "classification": "external_kernel_source_reference",
+  "paper_id": "pap_flashattention4",
+  "external_role": "canonical_flashattention_fa3_fa4_source",
+  "captured_at": "2026-07-29T10:21:11Z",
+  "repository": {
+    "url": "https://github.com/Dao-AILab/flash-attention",
+    "default_branch": "main",
+    "head_resolution_method": "git ls-remote --symref <url>.git HEAD",
+    "commit": "849f660f73b176e5ad5670e7f822c7fa9f3eaf8b",
+    "tree": "dbc07053f34000ba50274ad7fbb51ff5411f9ff0",
+    "commit_time": "2026-07-28T15:13:30-07:00",
+    "commit_subject": "Numeric tweaks to fp8 (#2731)",
+    "fetch_depth": 1,
+    "tracked_paths": 1075,
+    "gitlinks": [
+      {
+        "path": "csrc/composable_kernel",
+        "url": "https://github.com/ROCm/composable_kernel.git",
+        "commit": "c56c6750d0fc54ed771d532cc92c316423449614",
+        "vendored_in_archive": false
+      },
+      {
+        "path": "csrc/cutlass",
+        "url": "https://github.com/NVIDIA/cutlass.git",
+        "commit": "7127592069c2fe01b041e174ba4345ef9b279671",
+        "vendored_in_archive": false
+      },
+      {
+        "path": "third_party/aiter",
+        "url": "https://github.com/ROCm/aiter.git",
+        "commit": "9bab8388c35936814a659b4ebd245c491e1b940a",
+        "vendored_in_archive": false
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "flash-attention-849f660f.tar.zst",
+      "role": "normalized_commit_source_archive",
+      "bytes": 13287461,
+      "sha256": "deb295841d111a2140f8e469db3997e62aa99fce08d91aa7212d7d41acc8c5db",
+      "uncompressed_tar_bytes": 22620160,
+      "archive_root": "flash-attention-849f660f/",
+      "regular_files": 1071,
+      "symlinks": 1,
+      "excluded_gitlink_entries": 3
+    }
+  ],
+  "normalization": {
+    "recipe": "git archive --format=tar --prefix=flash-attention-849f660f/ 849f660f73b176e5ad5670e7f822c7fa9f3eaf8b | zstd -19 -T1",
+    "git_version": "2.39.5 (Apple Git-154)",
+    "zstd_version": "1.5.7",
+    "deterministic_rebuild_byte_identical": true
+  },
+  "license": {
+    "path": "LICENSE",
+    "declared_family": "BSD-3-Clause",
+    "sha256": "8c9ccb96c065e706135b6cbad279b721da6156e51f3a5f27c6b3329af9416d73"
+  },
+  "verified_files": [
+    {
+      "path": "README.md",
+      "sha256": "7bcb7ca466dcb819822003c5c15a8124e4866f4d446a5c60382615128c81c3a6"
+    },
+    {
+      "path": ".gitmodules",
+      "sha256": "0c57db58f50c4c7c7aa10c7a0b14d253cb6bfab5368caee0a7ca4c7d3f003b59"
+    },
+    {
+      "path": "hopper/flash_attn_3/flash_attn_interface.py",
+      "sha256": "39f173452b4906d0ba7371e4c21947be7c7156d06825ec058364fd3fa4b0de49"
+    },
+    {
+      "path": "hopper/flash_fwd_kernel_sm90.h",
+      "sha256": "1d1e955e208b7830127573beece10d06416953b65143013a8ee7e57189967ea6"
+    },
+    {
+      "path": "flash_attn/cute/interface.py",
+      "sha256": "812a3fcc84ce0cd34401cd25c59f9dce5ef55a52b69a6e8659dca79155d8c40b"
+    },
+    {
+      "path": "flash_attn/cute/flash_fwd_sm100.py",
+      "sha256": "672d1277a50194a6eee14fee8c2fcfff904447e3a2a6ff0d90c55485bddaae26"
+    },
+    {
+      "path": "flash_attn/cute/flash_bwd_sm100.py",
+      "sha256": "19fbab30e06fdd44d9203f295fd346b512e3011ac156c6672da6a9dd607c6162"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "8c9ccb96c065e706135b6cbad279b721da6156e51f3a5f27c6b3329af9416d73"
+    }
+  ],
+  "verification": {
+    "zstd_integrity_test": true,
+    "archive_embedded_commit": "849f660f73b176e5ad5670e7f822c7fa9f3eaf8b",
+    "archive_embedded_commit_matches_resolved_head": true,
+    "archive_path_accounting_matches_git_tree_after_declared_gitlinks": true,
+    "git_lfs_pointers_detected": 0,
+    "local_sota_adoption_claimed": false
+  },
+  "scope_and_adoption_caveats": [
+    "This captures the canonical upstream FA3/FA4 source tree as an external reference; it is not a governed local OPHIS SOTA or evidence that a kernel improves the active training frame.",
+    "FA3 Hopper (SM90) and FA4 Blackwell (SM100) paths coexist in this commit. FA4's Blackwell-specific implementation must not be treated as an H200 improvement without direct, shape-matched Hopper measurements.",
+    "The normalized top-level Git archive records but does not vendor the three pinned submodule trees. A build requiring CUTLASS, Composable Kernel, or AITER must separately fetch the exact gitlink commits listed above and apply their own licenses.",
+    "Kernel compilation, CUDA/PyTorch ABI compatibility, numerical tolerances, and backward correctness remain environment-specific validation obligations."
+  ]
+}

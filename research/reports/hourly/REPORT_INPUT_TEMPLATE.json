@@ -1,0 +1,38 @@
+{
+  "created_by": "replace_with_agent_or_team",
+  "title": "Replace with the hour's research title",
+  "abstract": "Summarize what was attempted, what was learned, and what remains uncertain.",
+  "methods": "Describe idea generation, literature checks, critiques, experiments, and evidence synthesis performed during the period.",
+  "directions_explored": [],
+  "idea_ids": [],
+  "experiment_ids": [],
+  "run_ids": [],
+  "findings": [
+    {
+      "statement": "Replace with an operational fact or evidence-backed finding.",
+      "assessment": "operational",
+      "evidence_ids": [],
+      "run_ids": [],
+      "limitations": [
+        "State why this finding may not generalize or why it is not yet an effect claim."
+      ]
+    }
+  ],
+  "negative_results": [
+    "Record failed, null, stopped, or untested directions; do not omit them."
+  ],
+  "limitations": [
+    "State the most important limitation of this hour's evidence."
+  ],
+  "decisions": [
+    "Explain which ideas continue, stop, or pivot and why."
+  ],
+  "next_hour_plan": [
+    {
+      "direction": "architecture",
+      "question": "Replace with a falsifiable question.",
+      "why_now": "Explain its portfolio value and why it outranks alternatives.",
+      "stop_condition": "State the evidence or checkpoint that ends this line."
+    }
+  ]
+}

@@ -1,0 +1,100 @@
+%% Paper 021 -- ICML-style planning paper. Next Experiments leads (protocol).
+%% Compile: tectonic paper_021_the_stale_comment_20260730.tex
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\vb}{\mathrm{val\_bpb}}
+\icmltitlerunning{The Stale Comment}
+\begin{document}
+\twocolumn[
+\icmltitle{The Stale Comment: A Dormant-Frame Assumption Left \\ 19\,ms of Dead Bandwidth in Every Optimizer Step}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (planning author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, wall-clock budgets, sparse optimizers, conditional memory, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+This is a planning paper: its primary output is a ranked, scored, pre-registered experiment program, and the analysis exists to justify it. Two independent proposer agents --- one reasoning from kernels, one from architecture --- converged on the same defect without knowing of each other. The n-gram sparse RMSProp step decays its \emph{entire} state tensor on every optimizer step, and the code says why: a comment reading ``Step-time cost does not affect $\vb$\ under \texttt{STOP\_MODE=steps}.'' That comment is true of the \texttt{fixed\_steps\_2000} frame, which this campaign's protocol marks \emph{dormant}. Under the only live frame --- 300\,s of wall clock --- it is false, and the block was therefore never optimized. At $2.097\mathrm{M}\times384$ fp32 per half-table across roughly ten sites, the full-table \texttt{lerp\_} moves on the order of 32\,GB per step, which at H200 bandwidth is $\approx$19\,ms of a $\approx$150\,ms step. It is batch-independent, and the campaign's own throughput model has an unexplained batch-independent term of $15.0$\,ms. We treat that coincidence as the block's leading explanation and make it the first experiment. We also report two corrections to the campaign's own record. First, the registered baseline of $0.93493$ is contaminated: it re-measured the adopted configuration during a session in which 94\% of runs completed $\approx$1147 optimizer steps instead of $\approx$2000, and it lands $+0.00539$ worse than the same configuration measured clean. The reference points are the naive baseline $1.0301$ and the campaign SOTA $0.927183$. Second, the execution host changed; pip's default install initially resolved torch 2.13.0, under which the campaign's own record says \texttt{NGRAM\_SPARSE\_GRAD} is a $-9.3\%$ throughput win rather than the step-loss it was on 2.9.1 --- but the adopted FA3 kernel wrapper (\texttt{varunneal/flash-attention-3}) ships no prebuilt variant past torch 2.12, so the environment was pinned to torch 2.12.x instead, and the 2.13-specific throughput claim does \emph{not} apply on this host. Six mechanisms are scored on seven axes; adversarial critique kills two outright on evidence gathered while writing this paper.
+\end{abstract}
+
+\section{Next Experiments}
+Every proposal is a \textbf{MECHANISM} (new code, new causal structure). The plateau rule in \texttt{docs/EXPERIMENT\_WORKFLOW.md} forbids knob experiments here: the previous session ran eleven knobs for zero adoptions, and its own measurements showed why --- intrinsic quality effects in this architecture sit at $\sim$$10^{-3}$ against a gate of $2.4$--$4.1\times10^{-3}$.
+
+\subsection{The arithmetic every proposal is sized against}
+Token law (validated out of sample, scoped to fixed batch): $\vb = a - b\ln(\mathrm{tokens})$, $b\approx0.06$. A fractional throughput gain $f$ is worth $-0.06\ln(1+f)$. Break-even for a mechanism \emph{costing} $s$ step time is $0.06\cdot(-\ln(1-s))$. The gate is $\approx$$0.0024$; we size against $0.003$ as the safe bar. Therefore $f\approx5\%$ clears the gate on throughput alone, and \emph{any mechanism costing more than $\sim$1.5\% step time is dead on arrival} against a $\sim$$0.0007$ intrinsic ceiling.
+
+\subsection{M1 --- Exact lazy second-moment state (rank 1)}
+\textbf{Mechanism.} \texttt{train.py:2572} and \texttt{2579--2581} run \texttt{lerp\_} over the full state tensor every step, while at most $B\!\cdot\!T=147{,}456$ of $2{,}097{,}152$ rows were touched. Keep a host scalar $s_t=\beta_2^{\,t}$ and store $\tilde v = v/s_t$: global decay becomes advancing $s_t$ (no kernel), touched rows accumulate with $\alpha=(1-\beta_2)/s_t$, read-back multiplies by $s_t$, and the table is renormalized every $K{=}256$ steps to bound fp32 range. \textbf{Why we believe it works:} this is arithmetic, not a hypothesis --- the update is \emph{mathematically identical}, so it cannot cost intrinsic quality; and the predicted saving ($\approx$19\,ms) coincides with the campaign's measured, previously unexplained batch-independent term ($15.0$\,ms in $t_\mathrm{step}=15.0+1.875B$, confirmed to within 3.6\% on every uncontended arm).
+\textbf{Predicted:} $f\approx13$--$15\%$ $\Rightarrow$ $-0.0073$ to $-0.0084$, i.e. 3$\times$ the gate.
+\textbf{Falsifier (pre-registered):} (i) a CUDA-event timer on the decay block must read $\ge$8\,ms before launch, else abandon; (ii) after the change that timer must read $\le$1\,ms; (iii) reconstructed $v=\tilde v s_t$ must match the reference path to $<$$10^{-5}$ relative at steps 1, 255, 256, 257 (guards the renormalization boundary); (iv) paired $n{=}3$ improvement $\ge$$0.003$.
+\textbf{Cost:} $\sim$12-line diff, 5 GPU-min screen $+$ 55 GPU-min. \textbf{Risk:} void if the champion runs \texttt{rowwise=1} (state is then $(rows,1)$ and the sweep is $\sim$0.05\,ms) --- the 5-minute screen resolves this.
+
+\subsection{M2 --- Factorized value embeddings, $384\to96$ (rank 2)}
+\textbf{Mechanism.} Each VE table is $\texttt{nn.Embedding}(\text{rows},384)$. Replace with rank 96 plus a shared $96\!\to\!384$ up-projection (ALBERT-style factorization, \href{https://arxiv.org/abs/1909.11942}{arXiv:1909.11942}, applied here to hash-bucket tables). Gather and capture traffic drop $4\times$; optimizer state drops $4\times$; table VRAM drops $4\times$. The added op is one \emph{well-shaped} GEMM ($M{=}147456,K{=}96,N{=}384$), the opposite of the small GEMMs the profile blames.
+\textbf{Why we believe it works, grounded in our own data:} the campaign measured that \emph{bigger} tables regress monotonically across 5/5 arms, with an isolated intrinsic capacity benefit of only $\approx$$0.0007$. Per-bucket capacity is already past its optimum in this frame, so cutting per-row rank moves \emph{along} the direction our own evidence endorses while the shared projection pools statistical strength across under-trained buckets.
+\textbf{Predicted:} $f\approx8$--$28\%$ $\Rightarrow$ $-0.0046$ to $-0.0148$. Also frees $\sim$12--24\,GB, which is the specific reason CUDA graphs died earlier (\,$\sim$25\,GB of graph pools atop $\sim$30\,GB of tables\,), so it \emph{unblocks a previously VRAM-refuted lever}.
+\textbf{Falsifier:} step time must drop $\ge$8\% or abort before spending seeds; then paired $n{=}3$ $\ge$$0.003$. \textbf{Risk:} the only proposal here that changes the model, so it carries genuine intrinsic risk; retreat path is rank 192.
+
+\subsection{M3 --- Visit-count-decayed row learning rate (rank 3)}
+\textbf{Mechanism.} Give each row a visit counter and scale its update by $1/(1+n_\mathrm{row}/c)$ --- in the optimizer, not the forward pass.
+\textbf{Why we believe it works:} three separately established local facts compose. The frame sits at the 2-epoch boundary; the n-gram tables are \emph{schedule-exempt} (\texttt{NGRAM\_WARMDOWN\_RATIO}$=0$) and take full-rate steps to the last step while every other group anneals to $0.05$ of peak; and the n-gram module is the \emph{sole} source of data-limitation sensitivity ($-0.029$ at 10 shards, $+0.086$ at 5). Second-epoch updates on repeated n-grams are therefore memorization at full rate. This is distinct from the refuted \texttt{NGRAM\_BACKOFF\_KAPPA}, which shrinks the \emph{forward value} of rare rows and anneals the wrong way in time; this shrinks the \emph{update} of over-visited rows and leaves the forward path untouched.
+\textbf{Falsifier --- dose-response, the strongest available here:} the effect must be \emph{larger at 5 shards than at 10}, recovering $\ge$$0.02$ of the recorded $+0.086$ harm. If the 5-shard replication shows no recovery, the second-epoch-memorization story is falsified \emph{even if the 10-shard number is positive}. \textbf{Cost:} $\sim$10 lines once M1's per-row path exists; 55 GPU-min.
+
+\subsection{M4 --- Per-row confidence column in the n-gram gate (rank 4)}
+\textbf{Mechanism.} The gate is $2\sigma(W_g x)$ --- a function of the hidden state \emph{only}; the retrieved row never influences its own admission. Widen each table by one column, initialized to zero (exact step-0 identity), and add it pre-sigmoid. A collided or rare row can then learn a negative bias and switch \emph{itself} off, instead of the model having to suppress the row globally and destroy whatever signal it carries.
+\textbf{Provenance:} Engram (\href{https://arxiv.org/abs/2601.07372}{arXiv:2601.07372}) uses retrieved memory as key/value in its fusion gate; Engram-Nine (\href{https://arxiv.org/pdf/2601.16531}{arXiv:2601.16531}) reports that the bottleneck in this family is \emph{gating credit assignment}, not lookup precision. OPHIS has exactly the defective gate that paper diagnoses.
+\textbf{Cost:} $+0.26\%$ step time $\Rightarrow$ break-even $0.0003$. \textbf{Falsifier:} $\vb\le0.92850$ at $n{=}3$; \emph{plus} a mechanism-engagement diagnostic --- the learned column must be non-degenerate (std $>$$0.2$, $>$5\% of rows below $-1$). A degenerate column means the mechanism was never used, which is an uninformative null rather than a refutation.
+
+\subsection{M5 --- Grouped / launch-fused sparse optimizer (rank 5)}
+\textbf{Mechanism.} The block runs eager and per-parameter, issuing $\sim$15--20 kernels per param across $\sim$10 params. Group tables by size class into one contiguous block, run \emph{one} \texttt{torch.unique} over the concatenated keys, and \texttt{\_foreach\_} the rest: $\sim$150--200 launches $\to$ $\sim$15--25.
+\textbf{Falsifier:} the block timer must show $\ge$$3\times$ reduction, and parameter trajectories must match the current path to $10^{-3}$ relative (summation order may change; semantics must not). \textbf{Note:} M5 and M1 target the same block. Run M1 first --- it is exact and 12 lines --- then re-measure before committing to M5.
+
+\subsection{M6 --- Drop the V projection on short-window layers (rank 6)}
+\textbf{Mechanism.} Our confirmed structural win was halving the short-attention span, on the reasoning that the n-gram memory already covers local recall --- attention span and n-gram memory are \emph{substitutes}. The strong form of that claim: on \texttt{T} layers, delete \texttt{c\_v} and let $v = \mathrm{gate}\cdot\mathrm{ve}$ directly, removing 3 of 12 $768{\times}768$ GEMMs plus their backward. \textbf{Negative} step cost ($\approx$$-3\%$, worth $+0.0018$ before any intrinsic effect).
+\textbf{Falsifier:} $\vb\le0.92800$ at $n{=}3$; if it lands above $0.9310$ the substitution hypothesis has a hard boundary and the span result was span-specific --- itself worth knowing.
+
+\subsection{Killed by adversarial critique}
+Recording casualties is protocol; a slate with none means the critic was weak.
+\begin{itemize}\itemsep2pt
+\item \textbf{FlashAttention-4 on Hopper.} A proposer correctly found that \texttt{train.py:197--201} guards \texttt{fa4} behind SM100+ while upstream FA4 supports SM90 --- a real finding. \textbf{Killed on logistics measured while writing this paper:} \texttt{github.com} times out from this host (129\,s, connection timed out), so \texttt{flash-attn-4} and its CuTeDSL dependency cannot be installed. PyPI and \texttt{hf-mirror.com} are reachable; GitHub is not. Re-open only if a mirror is found.
+\item \textbf{Lngram latent-code memory} (\href{https://arxiv.org/abs/2605.24869}{arXiv:2605.24869}). Highest novelty on the slate, but its reference implementation is on GitHub, which is unreachable; a from-paper reimplementation is $\sim$150 lines touching hash bookkeeping, a new optimizer group, and new sparse-grad sites, and the proposer's own simplification (freezing the projection to random LSH) may destroy the learned-symbol property that makes the method work. Deferred, not refuted.
+\item \textbf{Host-side \texttt{cu\_seqlens}.} Removes a real per-step device sync, but the proposer's own estimate ($-0.0012$ to $-0.0029$) straddles the gate and it does \emph{not} fix the registered capability gap (fa3 still infers sequence count from buffer length). Demoted to a rider on whichever of M1--M2 lands.
+\item \textbf{Side-stream optimizer overlap.} Silent cross-stream races would corrupt training in a way $\vb$ alone may not reveal, and it graph-breaks under \texttt{fullgraph=True}. Same target as M1/M5 at far higher risk. Deferred.
+\end{itemize}
+
+\begin{table}[t]
+\caption{Scores, 1--5 per axis. nov=novelty, prov=provenance, val=validity, imp=expected impact, rel=reliability, feas=feasibility/cost, fals=falsifiability.}
+\label{tab:scores}
+\vskip 0.1in
+\begin{center}\begin{small}
+\begin{tabular}{lccccccc}
+\toprule
+ & nov & prov & val & imp & rel & feas & fals \\
+\midrule
+M1 lazy state      & 4 & 5 & 4 & 5 & 5 & 5 & 5 \\
+M2 factorized VE   & 4 & 5 & 4 & 5 & 3 & 3 & 5 \\
+M3 visit decay     & 4 & 4 & 4 & 4 & 3 & 5 & 5 \\
+M4 row confidence  & 4 & 5 & 4 & 4 & 3 & 4 & 4 \\
+M5 grouped optim.  & 3 & 5 & 4 & 4 & 4 & 3 & 5 \\
+M6 drop V on T     & 4 & 3 & 3 & 3 & 3 & 5 & 5 \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+\vskip -0.1in
+\end{table}
+
+\subsection{Execution order and combination logic}
+\textbf{Round 0} (5 GPU-min, not an experiment): one instrumented 60-step run with \texttt{torch.cuda.Event} around the decay block, the hash chain, backward, and the optimizer step; print \texttt{rowwise}, \texttt{NGRAM\_SPARSE\_GRAD}, and \texttt{exp\_avg\_sq.numel()}. This decides M1 vs M5 and can kill either before 55 GPU-min is spent. It is the highest expected value per minute on the list precisely because it \emph{removes} experiments.
+
+Then M1 $\to$ (M3, M4 in parallel) $\to$ M2 $\to$ M6. M3 is nearly free once M1's per-row gather path exists. M4 and M3 are the forward and backward halves of one correction --- learned admission and update braking --- and we predict the naive stack \emph{loses first}, because both suppress the same over-visited rows and double-count. The refinement path is registered in advance: (i) exempt the confidence column from the visit brake, (ii) activate the brake only after 50\% progress, (iii) re-tune $c$. Report the trajectory, not just the endpoint; which stage carries the effect is the scientific yield even if the endpoint is null.
+
+\section{Two Corrections to the Campaign Record}
+\textbf{The registered baseline is contaminated.} \texttt{reconciliation.json} records $0.93493$ ($n{=}10$) for the adopted configuration. The same configuration, same frame, measured on an uncontended host, gives $0.929541$ ($n{=}10$) --- a gap of $+0.005390$. The contaminating session completed $\approx$1147 optimizer steps in 45 of 48 runs where clean runs complete $\approx$2000; under the token law a $1147/2000$ step ratio alone predicts $+0.033$, so the direction and rough scale are accounted for. Gating future work against $0.93493$ would anchor the campaign to a number that exists only because GPUs were oversubscribed. \textbf{The reference points are the naive baseline $1.0301$ and the SOTA $0.927183$.}
+
+\textbf{The host and toolchain changed, and an initial torch-2.13 read was corrected before use.} Execution moved to a host with eight idle H200s. \texttt{pip install torch} initially resolved 2.13.0+cu130, under which the campaign's own record states \texttt{NGRAM\_SPARSE\_GRAD} was a clean $-9.3\%$ step-time win (versus a step-loss on 2.9.1) --- but the adopted FA3 wrapper (\texttt{varunneal/flash-attention-3}) publishes prebuilt variants only through torch 2.12.x/cu126/cu128/cu130, with no 2.13 build, so the environment was pinned to torch 2.12.x instead. \textbf{The 2.13-specific throughput claim is therefore inapplicable on this host} and must not be relied on when choosing whether \texttt{NGRAM\_SPARSE\_GRAD} is held on or off across the paired arms of any proposal above; the flag must simply be held \emph{identical in both arms} of every experiment, or these become knob tests in disguise.
+
+\section{Conclusion}
+The defect at the centre of this plan is not an algorithmic subtlety. It is a comment that was true when written, became false when the campaign's decision frame changed, and was never revisited --- leaving a full-table bandwidth sweep in the hot path of every optimizer step. Two agents reasoning from unrelated starting points found it independently, and its predicted cost coincides with a term this campaign had already measured and could not explain. That is the strongest prior we have had on this frontier in several blocks, and it costs twelve lines to test.
+\end{document}

@@ -1,0 +1,90 @@
+{
+  "schema_version": 2,
+  "classification": "external_evaluation_control_reference",
+  "paper_id": "pap_kernelbench_verified",
+  "external_role": "adversarial_kernel_evaluation_control",
+  "captured_at": "2026-07-29T10:21:11Z",
+  "repository": {
+    "url": "https://github.com/facebookresearch/kernel_bench_verified",
+    "default_branch": "main",
+    "head_resolution_method": "git ls-remote --symref <url>.git HEAD",
+    "commit": "3fdf6fec7372a4d0cb682635f00e7bdcbc55d50e",
+    "tree": "c93ebe7c5325d5fd13624b61c7a38190afe8a50b",
+    "commit_time": "2026-07-12T18:08:27-07:00",
+    "commit_subject": "Add memory-speedup tradeoff leaderboard figure to README",
+    "fetch_depth": 1,
+    "tracked_paths": 604,
+    "gitlinks": []
+  },
+  "artifacts": [
+    {
+      "path": "kernel-bench-verified-3fdf6fec.tar.zst",
+      "role": "normalized_commit_source_archive",
+      "bytes": 1175772,
+      "sha256": "9d3439ba947e677acd0ea12dd37f35588504f7c7c971e139b1cb5c74c403a013",
+      "uncompressed_tar_bytes": 3481600,
+      "archive_root": "kernel-bench-verified-3fdf6fec/",
+      "regular_files": 604,
+      "symlinks": 0
+    }
+  ],
+  "normalization": {
+    "recipe": "git archive --format=tar --prefix=kernel-bench-verified-3fdf6fec/ 3fdf6fec7372a4d0cb682635f00e7bdcbc55d50e | zstd -19 -T1",
+    "git_version": "2.39.5 (Apple Git-154)",
+    "zstd_version": "1.5.7",
+    "deterministic_rebuild_byte_identical": true
+  },
+  "license": {
+    "path": "LICENSE",
+    "declared_family": "MIT",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+  },
+  "verified_files": [
+    {
+      "path": "README.md",
+      "sha256": "64665eed57a62e1a25d2aff1d5123749bc3a07d81331a9a7231ad8ead681b33f"
+    },
+    {
+      "path": "src/eval.py",
+      "sha256": "30d694d24434e0c8032d5ff491a88442f30d94aca2893ec12b9faa67ec41153e"
+    },
+    {
+      "path": "src/score.py",
+      "sha256": "28e794bf8fa930cd3c6e08e6136832344d0cca3373eccc988ba3ea0a1f47a750"
+    },
+    {
+      "path": "scripts/generate_hidden_inputs.py",
+      "sha256": "5497916313cc7bbca5347711476c84c6282d46a5b055c0d259c2ff9795a57ca4"
+    },
+    {
+      "path": "scripts/generate_leaderboard.py",
+      "sha256": "76d0ef193e4ee17d2d667f55f59e4dfdde2c8783eba1911a34a29c7feda0850e"
+    },
+    {
+      "path": "docs/INPUT_BLIND_GENERATION.md",
+      "sha256": "c2ec991f6c39e91f7f8d34ed2025f21e96f94861e239f80e20fc2c2440905bc4"
+    },
+    {
+      "path": "hidden_tests/level1/1_hidden.py",
+      "sha256": "9377caa50e3653ea38e6d35c3189a4cbdad1753d0c8dd17eb8ae2f70eba74f85"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+    }
+  ],
+  "verification": {
+    "zstd_integrity_test": true,
+    "archive_embedded_commit": "3fdf6fec7372a4d0cb682635f00e7bdcbc55d50e",
+    "archive_embedded_commit_matches_resolved_head": true,
+    "archive_path_accounting_matches_git_tree": true,
+    "git_lfs_pointers_detected": 0,
+    "local_sota_adoption_claimed": false
+  },
+  "scope_and_adoption_caveats": [
+    "This is an external adversarial evaluation-control reference, not a governed local OPHIS SOTA and not an endorsement of any generated kernel.",
+    "Its hidden multi-distribution correctness tests, input-blind generation controls, TF32 baseline treatment, and memory-speed tradeoff accounting are candidate controls to adapt; OPHIS must still freeze its own shapes, hardware, tolerances, warmup, timing, and co-tenancy protocol.",
+    "The archive contains the repository's hidden-test files as published at the captured commit; calling them hidden in a new evaluation requires preventing proposal agents from reading them.",
+    "Reported benchmark rankings and speedups do not transfer automatically to the active H200 language-model training workload."
+  ]
+}

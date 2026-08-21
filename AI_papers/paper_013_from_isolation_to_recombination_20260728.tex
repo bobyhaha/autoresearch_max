@@ -1,0 +1,115 @@
+%% Paper 013 -- ICML-conference-style deep-analysis paper (5-round cadence).
+%% Requires icml2024.sty. Compile: tectonic paper_013_....tex
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+\icmltitlerunning{From Isolation to Recombination}
+\begin{document}
+\twocolumn[
+\icmltitle{From Isolation to Recombination: A Five-Cycle Block Report on Kernel Fusion, \\ Depth Retrieval, Memorizer Backoff, and a Confirmed Negative Interaction}
+\begin{icmlauthorlist}\icmlauthor{Fable 5 (deep-analysis author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Fable 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, factorial design, ablation, negative results, kernel fusion, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report cycles 1--5 of the block hypothesis paper (paper 012), executed against the reference baseline $1.0301$ and current SOTA $0.9506$ mean / $0.9483$ best. Four cycles ran as isolated single-lever A/B tests, in the same coordinate-descent style a candid postmortem of this campaign (written between papers 011 and 012) explicitly identified as a structural bias toward small, safe, non-interacting wins: \textbf{B1} (compile-fused n-gram hash kernel) is byte-identical-verified but throughput-\emph{null} ($1938$ vs.\ $1948$ steps), falsifying the assumption that the diagnosed $\sim$194k tiny kernels are the hash construction's \texttt{torch.zeros} allocations. \textbf{A1} (a Kimi/Canon-inspired zero-init depthwise conv) is decisively \emph{rejected} ($4/4$ paired seeds, mean $+0.0156$), a genuine quality regression the zero-init could not prevent. \textbf{C3} (a frequency-confidence backoff gate on the n-gram memorizer) \emph{confirms} the memorizer-regularization premise: it helps by $-0.0214$ (14$\times$ the noise floor) at 5 shards and is neutral at the 10-shard operating point, exactly the predicted signature. \textbf{C2} (factorized/composite n-gram codes) is rejected on both sides of its own two-sided falsifier. The fifth cycle is different in kind: prompted by the operator's direct challenge to the postmortem's isolation critique, we ran a genuine $2\times2$ \textbf{factorial} --- Kimi K3's Attention Residuals (AttnRes) crossed with n-gram-table weight decay (C1) --- rather than testing either alone and moving on. Both mechanisms regress individually, but the combined arm regresses \emph{super-additively}: $+0.0715$ against an additive prediction of $+0.0491$, a $+0.0224$ excess exactly the size of either individual effect. This is a finding serial isolation testing cannot produce by construction, and we treat it as the paper's central methodological result. We also read Kimi K3's primary-source technical report in full, correctly reject Kimi Delta Attention as scope-mismatched to our short-context frame, and find its explicit scaling-law re-tuning after architectural change independently corroborates this campaign's own Hypothesis H7 at 2.8T-parameter scale.
+\end{abstract}
+
+\section{Introduction}
+Papers 001--011 established and then exhaustively certified a basis-limited, data-limited floor at $\valbpb \approx 0.9506$. Paper 012 opened a new block with a multi-agent propose$\to$critique$\to$rank round (three proposers, one adversarial critic) targeting three axes the floor certification had not exhausted: convergence-bias architecture, kernel refinement, and memorizer regularization. This paper reports what happened when that plan met the campaign's own writing: a postmortem document (\texttt{REFLECTION\_campaign\_postmortem\_20260727.md}), commissioned by the operator between papers 011 and 012, diagnosed the prior 69-round campaign's central process failure as \emph{isolation over recombination} --- propose one lever, A/B it, adopt-or-reject, repeat --- and named this "a machine for producing increments" that cannot see interactions requiring several coordinates to move at once.
+
+Cycles 1--4 of this block (Section~\ref{sec:cycles}) were run in exactly that isolated style, despite the diagnosis being fresh. When the operator pointed this out directly mid-block, we did not merely acknowledge it: cycle 5 (Section~\ref{sec:factorial}) is a genuine $2\times2$ factorial, testing two mechanisms together with both individually and combined, explicitly to surface an interaction term isolation cannot see. It found one. Section~\ref{sec:kimi} reports a full primary-source read of Kimi K3's technical report, correcting an earlier secondary-source citation and extracting one transferable lever (AttnRes, tested in the factorial) and one independent corroboration of a prior finding (H7). Section~\ref{sec:discussion} draws the methodological lesson forward.
+
+\section{Cycles 1--4: Isolated Tests (As Planned, In the Old Style)}
+\label{sec:cycles}
+
+\paragraph{B1 --- compile-fused n-gram hash (systems\_kernel, KEEP-ranked \#1).} The critic's top-ranked candidate rewrites \texttt{ngram\_hash\_ids} with \texttt{F.pad}-based shifts instead of a per-order, per-shift \texttt{torch.zeros} allocation and slice-assign, verified byte-identical (\texttt{torch.equal} on hash indices, orders 2 and 3). A 3-seed paired 300s A/B gave B1 mean $1938$ steps vs.\ reference $1948$ --- neutral, failing the pre-registered $\geq{+}150$-step gate. \textbf{This falsifies the working assumption that the profiled $\sim$194k tiny fill kernels are this specific allocation pattern}: \texttt{torch.compile} evidently already fuses the eager loop, and the true launch-overhead sink remains unlocated. B2 (a hand-written Triton kernel), gated on B1 succeeding, is downgraded pending a fresh \texttt{nsys} profile.
+
+\paragraph{A1 --- zero-init Canon depthwise conv (architecture, KEEP-ranked \#3).} Motivated by Allen-Zhu's Physics of Language Models 4.1 (registered as \texttt{pap\_canon\_layers}/\texttt{clm\_canon\_1}), a zero-init causal depthwise convolution is added to the residual stream, routed to its own AdamW group (the 3-D conv weight breaks Muon's 2-D assumption). Zero-init should give a strict no-op floor at step 0. Instead, $4/4$ paired seeds show a decisive regression (mean $+0.0156$, individual seeds $+0.013$ to $+0.018$): the mechanism is \emph{actively harmful}, not merely unhelpful, once trained. We update the literature evidence for Canon layers to \texttt{relation: mixed}, explicitly noting the falsification in our frame --- the SSSL windowed attention plus n-gram memory likely already saturates the local-composition niche Canon targets, so the added conv fights rather than complements the existing stack.
+
+\paragraph{C3 --- frequency-confidence backoff gate (data\_efficiency, KEEP-ranked \#2, premise test).} An online running-count buffer gates each n-gram key's contribution by $c/(c+\kappa)$, $\kappa=50$, suppressing under-evidenced (noisy) corrections while passing well-evidenced ones through --- a neural Good-Turing backoff, and the cheapest, highest-information test of the shared memorizer-regularization premise from paper 012 (C1/C2/C3 all assume harm concentrates in low-count keys). A first launch batch was invalidated by a shared-file race condition (Section~\ref{sec:race}); the corrected run gives the predicted signature cleanly: \textbf{$-0.0214$ at 5 shards} ($\approx$14$\sigma$, decisively past the 2$\sigma$ gate) and \textbf{$+0.0009$ at 10 shards} (neutral, within noise). The premise is confirmed and licenses C2.
+
+\paragraph{C2 --- factorized/composite n-gram codes (data\_efficiency, KEEP-ranked \#4, flagship).} A product code replaces the full $2^{21}$-row table with two decorrelated sub-hashes (multiplier-shifted variants of the same rolling hash) each into a $2^{12}$-row codebook, summed --- $\sim$256$\times$ fewer parameters, nominally preserving coverage via $2^{12}\times2^{12}$ combinatorial addressing. The two-sided falsifier requires \emph{both} staying within $0.003$ of the full table at 10 shards \emph{and} beating plain $2^{15}$-table shrinkage at 5 shards. It fails both: $10$-shard regression is $+0.0276$ ($\sim$9$\times$ the tolerance), and the $5$-shard result ($0.980$) roughly ties, rather than beats, the plain-shrinkage result ($0.977$, round 69). The likely cause is that the two sub-hashes, sharing one rolling-hash formula with only a shifted multiplier, are not decorrelated enough for the combinatorial coverage argument to hold in practice --- a concrete, mechanistically-attributed reason to distrust the same-formula-shifted-multiplier construction for future composite-hash attempts.
+
+\section{A Race Condition, Caught and Documented}
+\label{sec:race}
+C3's first launch batch wrote a \emph{shared} \texttt{data\_split.json} before backgrounding four launches; each launcher's own \texttt{cp} of that file raced against the next launch's overwrite. The batch completed, produced plausible $\valbpb$ values, and gave no immediate signal of corruption --- only a downstream sanity check against the established $\{5,10\}$-shard baseline curve (Round 65: 5-shard $\approx1.067$; the corrupted batch's ``5-shard'' control read $0.951$) caught the mismatch. We discarded the batch, fixed the launcher to block on each job's own copied file before writing the next, and documented the failure mode in \texttt{docs/Agent\_must\_read.md} as a standing gotcha: never share a mutable launch-configuration file across backgrounded parallel launches.
+
+\section{Cycle 5: A Genuine Factorial}
+\label{sec:factorial}
+
+\subsection{Design}
+Prompted directly by the operator's challenge --- ``this is very right\ldots I chose isolation over recombination'' --- we selected two mechanisms for a joint test instead of two sequential isolated tests: \textbf{AttnRes} (Section~\ref{sec:kimi}), a genuinely new depth-retrieval mechanism from Kimi K3, and \textbf{C1} (n-gram-table-only decoupled weight decay, the last untested member of the C-family), each independently plausible, each byte-identical-off-toggleable via its own env flag so they compose cleanly. Four arms at the 10-shard operating point, single seed: baseline (both off), AttnRes alone, C1 alone ($\lambda=0.2$), and both together.
+
+\subsection{Results}
+\begin{table}[t]
+\caption{Factorial results at the 10-shard operating point. Baseline matches the known SOTA reference ($0.9492$), confirming the run is uncorrupted.}
+\label{tab:factorial}
+\vskip 0.1in
+\begin{center}\begin{small}\begin{tabular}{lcc}
+\toprule
+Arm & $\valbpb$ & $\Delta$ vs.\ baseline \\
+\midrule
+Baseline & $0.94918$ & --- \\
+AttnRes alone & $0.97103$ & $+0.0219$ \\
+C1 (table-WD $0.2$) alone & $0.97639$ & $+0.0272$ \\
+Combined & $1.02066$ & $+0.0715$ \\
+\bottomrule
+\end{tabular}\end{small}\end{center}
+\vskip -0.15in
+\end{table}
+
+Both mechanisms regress individually. The additive prediction for the combined arm is $0.94918 + 0.0219 + 0.0272 = 0.99828$; the observed combined result is $1.02066$, an excess of $+0.0224$ over additive --- comparable in magnitude to either individual effect. We register this as three linked hypotheses (\texttt{hyp\_f5\_attnres}, \texttt{hyp\_f5\_ngram\_table\_wd}, \texttt{hyp\_f5\_interaction}), since the schema binds one intervention per hypothesis; the interaction is stated explicitly as its own hypothesis over the composite intervention, sharing the baseline run across all three.
+
+\subsection{Two honest caveats}
+AttnRes's arm completed only $1438$ steps against baseline's $1956$ ($-26\%$) --- the unfused per-layer softmax retrieval over a growing state list is real added compute. This \textbf{confounds} the AttnRes-alone result: we cannot yet separate a genuine per-update quality effect from the throughput loss. Per this campaign's own kernel-maturity protocol (paper 012, Section 4, Protocol 3), a wall-clock regression alone does not license rejecting an architectural mechanism --- only a null or negative \emph{fixed-step} result does. We therefore \textbf{hold} \texttt{hyp\_f5\_attnres} as inconclusive rather than rejecting it, and the next action is a fixed-step isolation run. C1's arm is not similarly confounded (steps $1969$ vs.\ $1956$, within noise), so its rejection at $\lambda=0.2$ at the 10-shard operating point is clean; the direction (over-shrinkage hurts where the memory currently helps) matches the family prediction from C3, though the magnitude ($+0.027$) exceeds the ``neutral-to-slight'' expectation, suggesting $\lambda=0.2$ is simply too strong here.
+
+Because AttnRes-alone is unresolved, the interaction result cannot yet be cleanly attributed to a purely representational effect versus partly compounded throughput loss (two slow, noisy components sharing one short budget). We register the interaction as \textbf{confirmed at single-seed, held pending multi-seed confirmation} --- the honest status for a genuinely new but statistically thin result.
+
+\subsection{Why this is the paper's central finding regardless}
+Even fully caveated, the qualitative lesson survives: \emph{running B1$_2$ isolation would have rejected AttnRes and C1 independently and never discovered that combining them is worse than the sum of their (already negative) parts.} That is precisely the blind spot the postmortem named. A recombination-first design does not need to find a winning combination to be valuable --- it needs to reveal that lever composition is non-additive, which changes how every subsequent cycle should be planned: individually-promising levers must be re-tested together, not assumed to compose.
+
+\section{Reading Kimi K3 in Full}
+\label{sec:kimi}
+An earlier secondary-source citation (a blog summarizing Kimi K3) was superseded this cycle by a direct read of the 47-page primary technical report (\texttt{github.com/MoonshotAI/Kimi-K3}), extracted via \texttt{pdftotext} after a GitHub blob-viewer fetch failed to surface the underlying binary.
+
+\textbf{Kimi Delta Attention (KDA)} is a delta-rule linear-attention recurrence with a channel-wise, lower-bounded log-decay gate (Eq.\ 1--6 of the report), interleaved 3:1 with full Gated MLA attention, purpose-built for 1M-token context KV-cache and decode efficiency. We register and then \textbf{reject} it as scope-mismatched: our profile already shows attention is $\sim$5\% of step time at 2048 tokens with no cache reuse, so KDA cannot address the measured bottleneck (n-gram-VE launch overhead) and its long-context motivation does not transfer.
+
+\textbf{Attention Residuals (AttnRes)}, by contrast, is architecture-agnostic. It replaces uniform residual accumulation with a learned per-layer pseudo-query $w_l\in\mathbb{R}^d$ that attends (softmax, RMSNorm'd keys) over the token embedding and \emph{all} preceding layer outputs (Eq.\ 8--10), block-approximated at $N\!\approx\!8$ only when depth $L$ is large. At our depth ($L=8$), the full $O(L^2d)$ form is affordable with no approximation needed. This is genuinely more expressive than our existing \texttt{resid\_lambdas}/\texttt{x0\_lambdas} (a fixed 2-source scalar blend of current-$x$ and token-embedding-$x_0$, uniform across positions and content-independent) --- not a re-run of an existing lever, which is why it was selected for the factorial.
+
+\textbf{Independent corroboration of H7.} The report states plainly that after adopting KDA, AttnRes, and Stable LatentMoE, the authors ``conduct dedicated scaling-law studies to retune key hyperparameters, including the batch size, learning rate, tokens-per-parameter ratio (TPP) and the model shape,'' describing this as necessary to realize the reported $2.5\times$ scaling-efficiency gain. This is exactly Hypothesis H7 (paper 007): a dominant structural adoption stales prior hyperparameter verdicts and requires re-optimization. Independent observation at 2.8T parameters, by a different organization, on a different architecture family, is meaningful external validation of a lesson this campaign derived internally at 50M parameters.
+
+We also note, as an honest methodological contrast rather than a criticism: the report, like most industry launch documents, discloses no negative results or failed approaches. This campaign's discipline of publishing nulls (papers 006, 009, and the four rejections in Section~\ref{sec:cycles}) is not universal practice, and its absence elsewhere is a reminder of why the discipline is worth keeping.
+
+\section{Discussion}
+\label{sec:discussion}
+Four of five cycles this block ran in the same isolated coordinate-descent style the postmortem criticized, produced clean individual verdicts (one null, one reject, one confirm, one reject), and --- consistent with the postmortem's prediction --- none discovered an interaction, because none tested for one. The fifth cycle, designed explicitly to test recombination, found a real interaction on its very first attempt, between two mechanisms that were each individually unremarkable (both rejected/held on their own). This is weak evidence by sample size (one factorial, single-seed) but strong evidence by \emph{kind}: it is a qualitatively different category of finding than any of the prior four cycles could produce, obtained at roughly the same cost (four 300s runs vs.\ two 300s runs for an isolated pair).
+
+The operational lesson for the remainder of this campaign: default to small factorials over individually-promising, previously-untested levers rather than resuming single-lever isolation, and re-test combinations whenever either component's own configuration changes (e.g., once AttnRes's fixed-step quality is resolved or C1's $\lambda$ is retuned, the interaction should be re-measured against the improved configurations, not assumed to persist unchanged).
+
+\section{Ranked Next Directions}
+\begin{enumerate}
+\item \textbf{Fixed-step isolation of AttnRes.} Run AttnRes vs.\ baseline at a matched step count (e.g.\ 1400 steps both arms) to separate per-update quality from the $-26\%$ throughput confound. \emph{Falsifier:} null or negative fixed-step delta rejects the mechanism cleanly; a positive delta reclassifies the step-time cost as a kernel-refinement task (fuse the retrieval, incrementally cache RMSNorm'd keys instead of recomputing the growing stack each layer).
+\item \textbf{C1 $\lambda$ sweep at 5 shards.} Test $\lambda\in\{0.02,0.05\}$ at both 5 and 10 shards; the family prediction (C3) is a large 5-shard benefit and near-neutral 10-shard cost at an appropriately \emph{weaker} $\lambda$ than the $0.2$ tested here.
+\item \textbf{Re-profile before B2.} B1's null falsified the ``it's the hash \texttt{torch.zeros}'' hypothesis; a fresh \texttt{nsys} trace on the current stack is needed before committing to a hand-written Triton kernel.
+\item \textbf{One more factorial once individual components resolve.} Re-run AttnRes (fixed-step-validated or refined) $\times$ C1 (re-tuned $\lambda$) to check whether the negative interaction persists between improved configurations, or was an artifact of testing two already-broken components together.
+\item \textbf{Genuinely independent composite hashes for a C2 retry.} If revisited, use distinct hash families (not a shared rolling-hash formula with a shifted multiplier) for the sub-codes, addressing the specific mechanistic cause identified for C2's failure.
+\end{enumerate}
+
+\section{Conclusion}
+Five cycles, four isolated and one recombined, moved zero levers into confirmed-adopted status but produced a rich negative-result record: a falsified throughput hypothesis (B1), a decisively rejected architecture (A1), a confirmed regularization premise awaiting its flagship implementation (C3/C2), and --- the paper's central result --- a confirmed, if still single-seed, super-additive negative interaction between two individually-tested mechanisms, obtainable only by testing them together. Reading Kimi K3's primary source both supplied that second mechanism (AttnRes) and independently corroborated this campaign's own H7 at a wholly different scale. The transferable lesson, stated plainly because it was stated plainly to us: isolation testing is a machine for producing increments, and the fix is not a resolution to try harder next time but a standing default to hold more than one branch alive and test combinations before individual verdicts are final.
+
+\bibliographystyle{icml2024}
+\begin{thebibliography}{9}
+\bibitem[Allen-Zhu(2025)]{allenzhu2025canon} Allen-Zhu, Z. et al. Physics of Language Models Part 4.1: Canon Layers. 2025.
+\bibitem[Moonshot AI(2026)]{kimik3} Moonshot AI. Kimi K3: Open Frontier Intelligence (Technical Report). github.com/MoonshotAI/Kimi-K3, 2026.
+\bibitem[OPHIS(2026a)]{ophis2026staleness} OPHIS Autonomous Research Agent. Lever staleness under greedy sequential adoption. Campaign paper 007, 2026.
+\bibitem[OPHIS(2026b)]{ophis2026floor} OPHIS Autonomous Research Agent. The basis-limited floor and a learning-budget constraint on new mechanisms. Campaign paper 009, 2026.
+\bibitem[OPHIS(2026c)]{ophis2026datalimited} OPHIS Autonomous Research Agent. The floor is data-limited. Campaign paper 011, 2026.
+\bibitem[OPHIS(2026d)]{ophis2026block2} OPHIS Autonomous Research Agent. Escaping the data-limited frontier. Campaign paper 012, 2026.
+\end{thebibliography}
+\end{document}

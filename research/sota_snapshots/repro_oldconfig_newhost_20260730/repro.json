@@ -1,0 +1,130 @@
+{
+ "code_sha256": {
+  "lib.py": "05691d87f253b0f7692d2da40a909d6fed6ec83ea37f3e890a687f874ebf49c4",
+  "train.py": "61a1385376bf3b8e4bafca5d3adc0d7c433093d3d295b6ed94cd4e9425fbfc6f"
+ },
+ "config": {
+  "ATTN_BACKEND": "fa3",
+  "COMPILE_MODE": "max-autotune-no-cudagraphs",
+  "DEVICE_BATCH_SIZE": 72,
+  "DOC_MASK": true,
+  "DOC_MASK_IMPL": "varlen",
+  "MATRIX_LR": 0.04,
+  "NGRAM_SPARSE_GRAD": false,
+  "STOP_MODE": "time",
+  "TIME_BUDGET": 300,
+  "TOTAL_BATCH_SIZE": 147456,
+  "WINDOW_PATTERN": "TTTL",
+  "note": "one GPU per run (CUDA_VISIBLE_DEVICES pinned), 300s wall-clock budget"
+ },
+ "environment": {
+  "fa3_build": "varunneal/flash-attention-3 @ torch212-cxx11-cu130-x86_64-linux",
+  "host": "zp-nc71 (new; prior host key rotated / unreachable)",
+  "note": "torch pinned to 2.12.x because the FA3 wrapper publishes no 2.13 build",
+  "torch": "2.12.0+cu130"
+ },
+ "gap_investigation": {
+  "gap_vs_historical_mean": 0.002487,
+  "ruled_out": {
+   "broken_fa3_gradients": "Direct gradcheck vs an SDPA reference: dq/dk/dv agree to 0.60%/0.60%/0.15% relative (bf16 rounding). The out-param fix is semantically correct.",
+   "config_mismatch": "RESOLVED_CONFIG verified identical (TTTL/72/147456/0.04/fa3+varlen)",
+   "gpu_contention": "clean n=10 at ~1993 steps, 149ms/step, MFU 19.6% (historical signature)"
+  },
+  "sdpa_control_verdict": "INCONCLUSIVE, reported rather than spun. SDPA n=2 clean gave 0.959029 at 1384 steps vs FA3 0.932028 at 1993 steps; token-law correction (b=0.06) predicts +0.0219 of the +0.0270 observed, leaving a +0.0051 residual that EXCEEDS the +0.0025 effect under test. The control is confounded because DOC_MASK_IMPL had to change dense<->varlen alongside the backend (varlen requires fa3), so it is not a one-variable swap, and 2 of 4 seeds were contention-hit (654/664 steps) and quarantined.",
+  "still_open": {
+   "kernel_build_numerics": "Different FA3 prebuilt variant (torch212-cu130) than the dead host resolved. Forward differs from SDPA by 0.0039 absolute per call; compounding over ~2000 steps is plausible but unquantified.",
+   "tokenizer_drift": "see tokenizer_provenance above; structurally unpinnable today"
+  }
+ },
+ "interpretation": "Validates the new host + the FA3 backward-op fix by reproducing the known old-config operating point. NOT a new SOTA and NOT an adoption: +0.0025 vs the historical n=10 reference (~2.4 sd of this run), consistent with seed/environment variation across a kernel-build and tokenizer change. Supersedes the flagged-contaminated 0.934930 as the best current estimate of this config on this host.",
+ "kind": "reproduction_not_new_sota",
+ "n_seeds": 10,
+ "name": "repro_oldconfig_newhost_20260730",
+ "per_seed": {
+  "44": 0.934179,
+  "45": 0.933339,
+  "46": 0.932097,
+  "47": 0.931029,
+  "52": 0.930853,
+  "53": 0.931923,
+  "54": 0.932249,
+  "55": 0.93137,
+  "56": 0.931745,
+  "57": 0.931492
+ },
+ "per_seed_steps": {
+  "44": 1963,
+  "45": 1987,
+  "46": 2001,
+  "47": 2020,
+  "52": 2020,
+  "53": 2020,
+  "54": 2020,
+  "55": 2020,
+  "56": 2020,
+  "57": 2020
+ },
+ "quarantined_runs": {
+  "reason": "another tenant saturated GPUs 2/3 mid-run; step time degraded 150ms->336ms, MFU 19%->8.6%, run reached only ~956 steps vs ~2000. Discarded, not averaged in.",
+  "seeds": [
+   42,
+   43
+  ],
+  "steps": [
+   957,
+   956
+  ],
+  "val_bpb": [
+   0.989283,
+   0.994612
+  ]
+ },
+ "references": {
+  "gap_vs_historical": 0.002487,
+  "historical_oldconfig_n10": 0.929541,
+  "naive_baseline": 1.0301,
+  "registered_contaminated_baseline": 0.93493
+ },
+ "seeds": [
+  44,
+  45,
+  46,
+  47,
+  52,
+  53,
+  54,
+  55,
+  56,
+  57
+ ],
+ "tokenizer_provenance": {
+  "WHY_THIS_MATTERS": "val_bpb normalizes by BYTES, and token_bytes.pt IS that byte denominator. The reconciliation's frozen_files pins train.py/lib.py/observable.py/prepare.py/data_split.json but NOT the tokenizer artifact, so a host rebuild silently redefines the metric. This is a real reproducibility hole in the campaign setup, recorded here because it is a leading candidate for the +0.0025 gap vs the historical reference and cannot currently be ruled out.",
+  "builder_versions": {
+   "rustbpe": "0.1.0",
+   "tiktoken": "0.13.0"
+  },
+  "determinism_note": "text_iterator() iterates shards and row-groups in fixed order with no sampling, so training is deterministic GIVEN the same rustbpe version. The rustbpe version used for the historical reference runs was never recorded, so byte-identity with the historical tokenizer cannot be verified.",
+  "sha256": {
+   "token_bytes.pt": "d66ac4efb63037cf580f4630836fa1bcc873c580ab76639617a87fa88bfad385",
+   "token_bytes.version": "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+   "tokenizer.pkl": "b41ae182bdc6201c8130b3f1274fc710a4b2e6af79d6d97d041a5a069f401118",
+   "tokenizer_train_split.json": "88bebc9c44d12b79ccde491b60ce5ab83697fda99b2e6173ed546f78d9fb61dd"
+  },
+  "trained_on_shards": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10
+  ],
+  "vocab_size": 8192
+ },
+ "val_bpb_best": 0.930853,
+ "val_bpb_mean": 0.932028,
+ "val_bpb_sd": 0.001032
+}

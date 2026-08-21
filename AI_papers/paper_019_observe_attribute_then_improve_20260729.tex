@@ -1,0 +1,488 @@
+%% Prospective preregistration. Results must be appended only after governed execution.
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage[accepted]{icml2024}
+
+\newcommand{\bpb}{\mathrm{bpb}}
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+\newcommand{\keepx}{\textcolor{blue}{keep}}
+\newcommand{\killx}{\textcolor{red}{kill}}
+\newcommand{\deferx}{\textcolor{orange}{defer}}
+\newcommand{\offline}{\textcolor{purple}{offline}}
+\icmltitlerunning{Observe, Attribute, Then Improve}
+
+\begin{document}
+\twocolumn[
+\icmltitle{Observe, Attribute, Then Improve:
+A Critic-Ranked Five-Mechanism Program for an Autoresearch Plateau}
+\begin{icmlauthorlist}
+\icmlauthor{GPT Research Coordinator}{ophis}
+\icmlauthor{Independent Architecture, Memory, Optimization, and Systems Proposers}{ophis}
+\icmlauthor{Independent Adversarial Critic}{ophis}
+\end{icmlauthorlist}
+\icmlaffiliation{ophis}{OPHIS governed autoresearch campaign}
+\icmlcorrespondingauthor{GPT Research Coordinator}{baiyuzhu@mit.edu}
+\icmlkeywords{automated research, failure attribution, preregistration, multiagent criticism, language-model pretraining}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+This paper prospectively freezes the next five rounds of a 300-second,
+single-H200 language-model autoresearch campaign after a control-transport
+failure and a performance plateau.  The campaign minimum, $0.927183$
+validation bits per byte (BPB), remains a quarantined historical treatment
+observation, not an executable control or a new evidence contribution.
+Three independent proposal agents read primary 2025--2026 work across
+normalization, initialization, conditional memory, data order, optimization,
+and kernels.  A separate adversarial critic rescored every candidate on
+novelty, provenance, causal validity, local impact, transfer reliability,
+feasibility, falsifiability, and program coherence.  The resulting connected
+program is: (1) exact packer-sourced FA3 boundary metadata, conditional on a
+robust throughput gate; (2) canonicalized Engram hash keys; (3) conditioned
+per-head Q/K initialization plus an explicitly local full-rank V adaptation;
+(4) attention-output Peri-RMSNorm, conditional on gradient-safety mediators;
+and (5) a pack-preserving compression curriculum.  The highest experimental
+score belongs to canonicalized keys; the boundary sidecar is sequenced first
+because it is exact-semantics infrastructure whose accepted gain would
+increase charged update exposure for every subsequent round.  Each accepted
+mechanism becomes the comparator for the next, producing one attributed model
+rather than a bag of additions.  A fresh same-seed recovered-recipe
+comparator is permitted only within each new causal question.  This paper
+authorizes no endpoint claim by itself: every round must first clear its
+offline mediator, parity, source, clock, and isolation gates.  The governing
+principle is that before a system can improve itself, it must be able to
+observe and attribute its failures.
+\end{abstract}
+
+\section{Status, Evidence Labels, and Non-Claims}
+
+This is the new prospective paper 019.  It follows the retrospective
+\texttt{GPT\_paper\_attempt\_1}, which superseded the former papers 019--022.
+It may authorize at most five sequential research rounds after typed registry
+binding, code reconciliation, and green setup checks.  It contains no new
+experimental result.
+
+The public chart starts at experiment 501 and its recorded timestamp, with
+$\valbpb=0.927183$.  That scalar was produced by one historical seed-47
+treatment under a recovered six-coordinate recipe.  It is a provenance and
+visualization anchor only.  A later governed four-pair transport wave was
+terminally invalid because a foreign process occupied one assigned GPU; the
+watchdog attributed the exact PID and exited 79.  Three completed recovered
+endpoints---0.927454, 0.930124, and 0.927999---are descriptive only.  Thus:
+\[
+\boxed{\begin{gathered}
+\text{no transport verdict or control rebind,}\\[-2pt]
+\text{no new SOTA}
+\end{gathered}}
+\]
+The failed wave cannot be retried, remapped, repaired, or subsetted.  The new
+questions below use fresh seeds beginning at 63 and do not estimate recipe
+transport.
+
+\section{Scientific Frame and Comparator Contract}
+
+The active challenge is one physical H200 per arm,
+\texttt{STOP\_MODE=time}, \texttt{TIME\_BUDGET=300}, FA3, varlen document
+isolation, a frozen tokenizer/split/evaluator, and
+\texttt{max-autotune-no-cudagraphs}.  The primary estimand is raw,
+same-seed, concurrent treatment-minus-comparator endpoint BPB.  The effective
+standard deviation $\sigma=0.001198$ fixes the minimum useful effect
+\[
+                         2\sigma=0.002396.
+\]
+Moving compilation, packing, metadata construction, prefetch, or queue
+priming outside the charged clock is forbidden unless both arms perform the
+same work there and the intervention is explicitly defined as changing the
+producer interface.
+
+\paragraph{Recipe comparator.}
+The within-experiment comparator is current canonical source with
+\texttt{WINDOW\_PATTERN=TTTL}, device/global batch $72/147456$, matrix LR
+.04, warmdown .85, continuous Muon momentum, FA3 varlen/both document
+isolation, 64$\times$ n-gram tables, and every remaining frozen setting.
+Fresh concurrent execution makes this a valid comparator for
+\[
+Y(\text{recipe}+M)-Y(\text{recipe}),
+\]
+where $M$ is one new mechanism.  It does \emph{not} make the recipe a
+qualified global control, validate the invalid transport wave, or turn
+$0.927183$ into a contemporaneous observation.
+
+\section{Multiagent Generation and Independent Critique}
+
+Architecture, memory/optimization/data, and systems/kernel agents generated
+frozen slates independently.  They could inspect the repository and primary
+sources but could not edit the live experiment graph.  A fourth agent then
+checked source faithfulness, local code fit, arithmetic, causal contrasts,
+mediator observability, novelty duplication, dependencies, clock placement,
+and reward-hack surfaces.  The critic was told that the ordinary governed
+scheduler executes exactly two roles per experiment; proposed four-arm
+designs therefore required decomposition or rejection.
+
+Every vector is scored from 1 (weak) to 5 (strong) in the fixed order:
+novelty (N), primary-source provenance (P), causal validity (V), expected
+local impact (I), transfer reliability (R), feasibility/cost (F), numerical
+falsifiability (X), and connected-program coherence (C).  A veto overrides a
+high sum.  Prestige affects P only; it cannot repair weak scope match or
+arithmetic.
+
+\begin{table}[t]
+\caption{Primary provenance of the connected program.  Organization and
+venue raise provenance, never local validity.}
+\label{tab:provenance}
+\centering\tiny
+\setlength{\tabcolsep}{1.5pt}
+\begin{tabular}{p{0.23\linewidth}p{0.28\linewidth}p{0.37\linewidth}}
+\toprule
+source & organization/venue & exact local boundary\\
+\midrule
+FA3 & Tri Dao et al.; NeurIPS 2024 & kernel semantics only; sidecar efficacy is local\\
+DSE/Engram & DeepSeek-AI, Peking University; ACL 2026 + updated code & canonical keys only; 128k-to-8k transfer unproven\\
+Conditioned init & Australian Institute for Machine Learning, Adelaide; ICLR 2026 & Q/K faithful; disjoint V is local\\
+Peri-LN & NAVER Cloud, KAIST, NAVER AI Lab; ICML 2025 & missing attention arm; local scale fixed\\
+curriculum & École Polytechnique, MBZUAI; EACL 2026 & exact-pack local order only\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table*}[t]
+\caption{Architecture and systems slates.  ``Proposer $\rightarrow$ critic''
+vectors are N/P/V/I/R/F/X/C.  All proposed ideas retain explicit scores.}
+\label{tab:archsystems}
+\centering\tiny
+\setlength{\tabcolsep}{2.7pt}
+\begin{tabular}{p{0.245\linewidth}p{0.22\linewidth}r p{0.345\linewidth}}
+\toprule
+candidate & proposer $\rightarrow$ critic & critic sum & verdict and principal reason\\
+\midrule
+Peri attention-output RMSNorm &
+3/5/5/4/4/5/5/5 $\rightarrow$ 3/5/4/3/3/4/5/5 & 32 &
+\keepx; strong ICML evidence, but zero-\texttt{c\_proj} makes gradient safety a hard gate\\
+Conditioned Q/K + disjoint-V extrapolation &
+4/4/3/3/2/5/5/5 $\rightarrow$ 4/4/3/3/2/5/5/5 & 31 &
+\keepx; zero runtime cost; V differs explicitly from the repeated-head paper construction\\
+TTTL local-RoPE/global-NoPE &
+4/5/3/2/1/5/5/5 $\rightarrow$ 3/4/2/1/1/5/5/4 & 25 &
+\killx; long-context scope mismatch and sub-gate short-context prediction\\
+full Differential Attention &
+5/4/3/3/2/3/5/5 $\rightarrow$ 4/5/2/2/1/1/5/3 & 23 &
+\killx; 6--12\% optimized-kernel penalty and overlap with current head normalization\\
+Memory+ &
+5/5/3/4/1/2/5/4 $\rightarrow$ 4/5/2/3/1/1/5/3 & 24 &
+\deferx; bootstrap, runtime, and scale dependencies exceed this block\\
+mHC &
+5/4/3/4/2/2/5/4 $\rightarrow$ 4/4/2/2/1/1/5/3 & 22 &
+\killx/\deferx; duplicates an unexecuted local direction and source-faithful scope is large\\
+Q/K spectral correction &
+3/5/3/2/2/5/5/3 $\rightarrow$ 3/4/2/1/1/5/5/2 & 23 &
+\killx; dominated by zero-runtime conditioned initialization and conflicts with local QK norm\\
+\midrule
+FA3 packer boundary sidecar &
+4/4/5/3/4/4/5/5 $\rightarrow$ 4/4/5/3/3/4/5/5 & 33 &
+\keepx; exact semantics, conditional on robust isolated-H200 throughput\\
+physical packing of 14 n-gram tables &
+4/4/5/4/3/4/5/5 $\rightarrow$ 4/3/4/2/2/3/5/4 & 27 &
+\deferx; profile-dependent child, not a first mechanism\\
+radix/segmented sparse RMSProp &
+5/4/4/5/2/1/5/5 $\rightarrow$ 4/3/2/2/1/1/5/3 & 21 &
+\deferx; kernel dependency and adjacent archived idea\\
+shape-aware HiMuon &
+4/3/4/4/3/3/5/4 $\rightarrow$ 4/3/2/2/1/3/4/3 & 22 &
+\killx; throughput-quality arithmetic is below the BPB gate\\
+stack-backed Muon layout &
+4/3/5/2/4/2/5/5 $\rightarrow$ 3/2/4/1/3/2/5/4 & 24 &
+\deferx; profile bundle only after a measured bottleneck\\
+persistent end-to-end FP8 &
+3/5/3/5/2/2/5/4 $\rightarrow$ 1/5/2/1/1/2/5/2 & 19 &
+\killx; dependency and numerical-risk veto\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[t]
+\caption{Memory, optimizer, and data-order slate.  Vectors are
+N/P/V/I/R/F/X/C.}
+\label{tab:memory}
+\centering\tiny
+\setlength{\tabcolsep}{2.7pt}
+\begin{tabular}{p{0.245\linewidth}p{0.22\linewidth}r p{0.345\linewidth}}
+\toprule
+candidate & proposer $\rightarrow$ critic & critic sum & verdict and principal reason\\
+\midrule
+small batch + token clocks &
+3/5/5/4/5/4/5/5 $\rightarrow$ 3/3/2/3/2/2/4/4 & 23 &
+\killx; source supports Adam $\beta_2$, not the bundled Muon/RMSProp extrapolation; four-arm scheduler mismatch\\
+mass-conserving memory router &
+5/5/4/4/4/4/5/5 $\rightarrow$ 3/3/3/2/2/3/4/4 & 24 &
+\killx; synthesis, adjacent gate history, and 1.5\% cost consume the low forecast\\
+pack-preserving compression curriculum &
+3/5/4/4/5/4/5/5 $\rightarrow$ 3/5/4/3/3/3/5/5 & 31 &
+\keepx; source-grounded ordering mechanism with exact-pack isolation required\\
+per-row hit-clock RMSProp &
+5/4/4/4/3/3/5/5 $\rightarrow$ 4/2/3/2/1/1/3/4 & 20 &
+\deferx; sparse-kernel and bias-correction dependencies\\
+canonicalized Engram keys &
+4/5/4/3/5/5/5/5 $\rightarrow$ 4/5/4/3/3/5/5/5 & 34 &
+\keepx; highest experimental score; local key-collapse mediator is mandatory\\
+curriculum $\times$ LR &
+4/5/4/4/4/3/5/5 $\rightarrow$ 3/4/3/3/2/4/3/4 & 26 &
+\deferx; conditional child only after the ordering mediator is supported\\
+blockwise sharpness diagnostic &
+3/5/3/4/4/3/5/4 $\rightarrow$ 3/4/3/1/2/3/3/5 & 24 &
+\offline; useful failure attribution, but not a model-improvement round\\
+Memory Grafting &
+5/4/2/5/2/1/4/4 $\rightarrow$ 5/4/2/3/1/1/1/4 & 21 &
+\deferx; donor construction must be charged end to end; current form has a clock/reward-hack veto\\
+MeCo metadata conditioning &
+3/5/2/2/4/3/4/3 $\rightarrow$ 3/5/1/1/2/4/3/2 & 21 &
+\killx; source validation PPL loses to its longer baseline and the target mismatches local BPB\\
+CLIMB mixture optimization &
+4/5/2/4/3/1/4/3 $\rightarrow$ 3/5/1/2/2/1/1/2 & 17 &
+\killx/\deferx; data already use climbmix; iterative selection is heavy and exposes validation leakage\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Final Ranking and Why Rank 1 Is Plausible}
+
+\begin{table}[t]
+\caption{Connected execution order after critic review.  The raw critic sum is
+not the only dependency criterion.}
+\label{tab:finalrank}
+\centering\small
+\begin{tabular}{r l r}
+\toprule
+round & mechanism & score / 40\\
+\midrule
+1 & FA3 boundary sidecar & 33\\
+2 & canonicalized Engram keys & 34\\
+3 & conditioned Q/K + local V & 31\\
+4 & attention Peri-RMSNorm & 32\\
+5 & compression curriculum & 31\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Canonicalized keys have the highest standalone score.  The sidecar is placed
+first for a dependency reason: current \texttt{\_compact\_doc\_boundaries}
+scans the packed CUDA tensor, clones it, calls data-dependent
+\texttt{nonzero}, and concatenates the terminal offset inside every charged
+training step.  The packer already knows the same literal boundaries.
+Transporting immutable, pinned \texttt{int32} offsets with the batch could
+remove this synchronization and allocation without changing a single model
+input, attention segment, target, parameter, or optimizer update.  If the
+measured token-rate gain is large enough, the 300-second frame executes more
+updates and tokens.  For token-law slope $b$,
+\[
+\Delta\bpb_{\mathrm{speed}}\approx-b\log r.
+\]
+With measured uncertainty $b\in[0.046,0.086]$, central break-even is
+$r=\exp(0.002396/0.06)=1.04074$, but robust break-even at the low slope is
+\[
+                     r_{\rm robust}=1.05347.
+\]
+Therefore the earlier $r=1.045$ forecast is insufficient under uncertainty:
+it predicts only $-0.002025$ at $b=0.046$.  Rank 1 is plausible only because
+its semantics can be proven identical and because a strict profile can kill
+it before a BPB run.
+
+\section{Candidate-Specific Offline Gates}
+
+\subsection{Round 1: packer-sourced FA3 boundary metadata}
+
+Before scoring, 1000 literal packed batches must match bitwise on inputs,
+targets, epochs, \texttt{cu\_seqlens}, maximum sequence length, boundary
+counts, and a boundary digest.  Storage must be pinned \texttt{int32};
+producer lifetime must extend through a consumer-stream event.  Variable
+boundary counts must produce exactly one compiled graph after warmup.
+A 20-step equal-step comparison must leave model parameters and optimizer
+state bitwise equal.  On a fresh isolated H200, the point token/s ratio must
+be at least 1.054 and its 95\% lower bound at least 1.041.  Failure kills the
+round without an endpoint score.
+
+\subsection{Round 2: canonicalized Engram keys}
+
+DeepSeek's Engram demo maps token strings through NFKC, NFD, accent stripping,
+lowercasing, and whitespace normalization before n-gram hashing
+\cite{deepseek2026engram,deepseek2026engramcode}.  The proposed arm changes \emph{memory keys
+only}; model input IDs, targets, bytes, document boundaries, and token order
+remain fixed.  Special, BOS, and replacement-character IDs remain one-to-one.
+At least 10\% of local key cardinality and 10\% of observed n-gram
+occurrences must be affected; at least 95\% of alias sets must be explained by
+the declared transformations.  Non-memory initialization and global RNG must
+match bitwise, charged slowdown must be at most 0.5\%, and compiled graph
+count must be unchanged.  The intrinsic prediction is $-0.0030$ BPB; a
+0.5\% cost gives an approximate net $-0.002699$.  In the pilot, affected-token
+byte-weighted BPB must improve by at least .003 while unaffected-token BPB
+regresses by no more than .0015.
+
+\subsection{Round 3: conditioned attention initialization}
+
+The ICLR 2026 source uses independent semi-orthogonal per-head Q/K maps and
+the same rectangular-identity V construction for every head
+\cite{saratchandran2026conditioned}.  The local fused full-rank identity
+instead gives disjoint V coordinate blocks across heads.  It is therefore
+named and scored as an extrapolation, not a paper-faithful V replication.
+Required preflight conditions are: Q/K row-orthogonality residual at most
+$10^{-5}$; V $\sigma_{\min}/\sigma_{\max}\geq0.99$; every non-Q/K/V parameter
+and global RNG bitwise equal; initialized attention-Jacobian surrogate down
+at least 20\% in every layer; attention entropy change at most .05; finite,
+nonzero step-2 Q/K/V gradients; and median step time within .5\%.  The raw
+paired prediction is at most $-0.0030$ BPB.  Failure of the mediator kills
+the arm before scoring.
+
+\subsection{Round 4: attention-output Peri-RMSNorm}
+
+Peri-LN reports consistent larger-scale loss improvements and attributes
+them to normalizing both sides of residual sublayers
+\cite{kim2025periln}.  OPHIS already implements the MLP-side form; this round
+adds fixed, scale-free RMS normalization only after attention
+\texttt{c\_proj}.  The local \texttt{c\_proj} is zero initialized.  Step-0
+value parity is thus uninformative: after the first update, RMS normalization
+could amplify a tiny branch.  We require step-0 residual output exactly zero,
+step-1 \texttt{c\_proj} gradient-norm ratio in $[0.5,2.0]$, no layer above
+2.5$\times$ control, and no non-finite value.  Across a 32-step diagnostic,
+residual-norm coefficient of variation and max/min layer-gradient ratio must
+both fall at least 20\%.  Slowdown must be at most 1\%.  The distinction
+between fixed OPHIS RMS normalization and the source's generally learned
+scale is part of the claim record, not hidden in implementation.
+
+\subsection{Round 5: pack-preserving compression curriculum}
+
+The EACL 2026 study trained more than 200 models and reports 18--45\% earlier
+or mid-training step savings, with compression ratio among the strongest
+difficulty signals \cite{zhang2026curriculum}.  The local arm isolates order:
+one immutable prepacked cache must give identical whole-epoch pack-ID, token,
+target, crop, BOS, byte, and boundary multisets.  Compression score must
+separate top and bottom deciles by at least 0.5 pooled SD.  A complete ten-bin
+interleaving schedule is frozen and hashed before launch; adaptive checkpoint
+selection is forbidden.  Loader/step-time difference must be at most .5\%.
+The final prediction is raw $\Delta\bpb\leq-0.0040$; the 25\%-budget probe
+must improve by at least .002 and the final endpoint must still clear the
+main gate.  An early-only win rejects transfer to the actual objective.
+
+\section{Sequential Funnel, Combination Rule, and GPU Policy}
+
+For each eligible round, stage 1 is one new pair.  Promotion requires raw
+$\Delta\bpb\leq-0.002396$, every integrity invariant, and the
+candidate-specific mediator.  It remains a screen, not an effect claim.
+At $n=3$, require mean $\leq-0.002396$, $3/3$ helping, and a one-sided 95\%
+upper bound below zero.  At $n=6$, require mean $\leq-0.002396$, at least
+$5/6$ helping, and upper bound $\leq-0.001198$.  At $n=10$, require mean
+$\leq-0.002396$, at least $9/10$ helping, and upper bound
+$\leq-0.002396$, followed by one never-used test evaluation.  Candidates are
+never ranked by their stage-1 means.
+
+An accepted mechanism becomes the comparator for the next round.  A rejected
+mechanism leaves the cumulative comparator unchanged.  Thus:
+\[
+R_0 \rightarrow R_0{+}M_1 \rightarrow
+R_0{+}M_1{+}M_2 \rightarrow \cdots ,
+\]
+with every arrow prospectively attributed.  Interaction tests require a
+later paper; no accidental combination is interpreted.
+
+GPU occupancy is subordinate to causal integrity.  Stage 1 uses one pair and
+keeps the protocol's one-to-two-GPU reserve.  A promoted $n=3$ stage can use
+three concurrent pairs across six tenant-free GPUs.  No unrelated
+four-question/all-eight wave is allowed merely to maximize utilization:
+doing so would recreate Q1's attribution exposure and violate the sequential
+combination rule.  Two clean UUID/PID inventories, immutable assignments,
+continuous co-tenancy sampling, and fail-closed per-arm watchdogs are
+mandatory.
+
+\section{Reproducibility and Failure Attribution}
+
+For every selected source, the campaign must preserve the official paper or
+landing-page identity, retrieval metadata, SHA-256, atomic claims, claim
+scope, limitations, evidence assessment, and official code snapshot when
+available.  DeepSeek's Engram demo is code provenance for canonicalization,
+not proof of a local BPB effect.  Conditioned initialization and Peri-LN have
+archived official proceedings PDFs.  Curriculum uses the official ACL
+Anthology artifact.  The sidecar is a local systems mechanism and must bind
+its equivalence harness and profiler rather than borrow efficacy from
+FlashAttention-3 \cite{dao2024fa3}.
+
+Every code change is default-inert, fail-closed, echoed in
+\texttt{RESOLVED\_CONFIG}, bound to the intervention record, tested locally,
+synced to the governed remote runtime, SHA-matched, and reconciled before a
+new challenge-selection event.  Each endpoint closes through RunRecords,
+EvidenceRecords, EvidenceUpdates, and Decisions.  Failure reports must name
+which link broke: source, config, initialization, mediator, compile graph,
+clock, device/PID isolation, completion, or statistical gate.
+
+\section{Explicit Casualties and Limits}
+
+The critic hard-vetoes every Q1 retry or ``qualified 0.927 control'' claim.
+RoPE/NoPE, Differential Attention, mHC, FP8, HiMuon, and the current
+mass-router formulation fail scope, runtime, arithmetic, duplication, or
+dependency checks.  The small-batch source directly supports Adam
+second-moment token half-life, including
+$0.95^{147456/262144}=0.9715597802$, but does not support simultaneously
+transporting that rule to Muon and sparse RMSProp \cite{marek2025smallbatch}.
+Its proposed four-arm form is also not executable by the ordinary scheduler.
+Physical table packing, sparse kernels, stack layouts, per-row clocks,
+curriculum$\times$LR, and Memory+ remain deferred children.  Blockwise
+sharpness remains an offline attribution diagnostic.
+
+Ratings are judgments, not outcomes.  Canonicalized keys may collapse too few
+of an 8192-token vocabulary.  Sidecar bookkeeping may be too small to clear
+robust break-even.  Conditioned initialization may be neutral under
+zero-\texttt{c\_proj}; Peri normalization may destabilize that same bootstrap.
+Curriculum gains may vanish at the final rather than early endpoint.  These
+are not caveats to explain away afterward; they are the preregistered
+falsifiers.
+
+\section{Conclusion}
+
+The plateau response is broad but not indiscriminate.  Independent agents
+generated ideas from strong 2025--2026 primary work; an adversarial agent
+penalized extrapolation, duplication, weak local scope, and impossible
+scheduling.  The result is a five-round dependency body with explicit scores,
+mechanisms, mediators, kill gates, and a valid concurrent recipe comparator.
+The system will first prove that it can observe what changed and attribute
+why a round failed.  Only then may a lower BPB become evidence of improvement.
+
+\clearpage
+{\footnotesize
+\begin{thebibliography}{20}
+
+\bibitem[Dao et al.(2024)]{dao2024fa3}
+T. Dao et al. FlashAttention-3: Fast and Accurate Attention with
+Asynchrony and Low-precision. NeurIPS, 2024.
+
+\bibitem[Cheng et al.(2026)]{deepseek2026engram}
+X. Cheng et al. Conditional Memory via Scalable Lookup: A New Axis of Sparsity
+for Large Language Models. ACL, 2026. doi:10.18653/v1/2026.acl-long.226.
+
+\bibitem[DeepSeek-AI(2026)]{deepseek2026engramcode}
+DeepSeek-AI. Engram Architecture Demo Implementation.
+\url{https://github.com/deepseek-ai/Engram/blob/fb7f84a21f91223715394a33a1dc24bbfb7f788e/engram_demo_v1.py}, 2026.
+
+\bibitem[Kim et al.(2025)]{kim2025periln}
+J. Kim et al. Peri-LN: Revisiting Normalization Layer in the Transformer
+Architecture. ICML, 2025.
+
+\bibitem[Marek et al.(2025)]{marek2025smallbatch}
+M. Marek, S. Lotfi, A. Somasundaram, A. G. Wilson, and M. Goldblum.
+Small Batch Size Training for Language Models: When Vanilla SGD Works, and
+Why Gradient Accumulation Is Wasteful. NeurIPS, 2025.
+
+\bibitem[Saratchandran and Lucey(2026)]{saratchandran2026conditioned}
+H. Saratchandran and S. Lucey. Conditioned Initialization for Attention.
+ICLR, 2026.
+
+\bibitem[Zhang et al.(2026)]{zhang2026curriculum}
+Y. Zhang, A. Mohamed, H. Abdine, G. Shang, and M. Vazirgiannis.
+Beyond Random Sampling: Efficient Language Model Pretraining via Curriculum
+Learning. EACL, 2026.
+
+\end{thebibliography}
+}
+
+\end{document}

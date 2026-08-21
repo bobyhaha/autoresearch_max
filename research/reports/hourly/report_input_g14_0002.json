@@ -1,0 +1,120 @@
+{
+  "report_id": "hrp_g14_0002",
+  "version": 1,
+  "challenge_id": "walltime_5min_h200",
+  "challenge_selection_fingerprint": "a03b4cb9ec15a5f6",
+  "period_started_at": "2026-07-29T13:49:58.985016+00:00",
+  "period_ended_at": "2026-07-29T15:08:59+00:00",
+  "created_at": "2026-07-29T15:08:59+00:00",
+  "created_by": "codex-gpt5-autoresearch-coordinator",
+  "title": "A scored five-mechanism plateau program is frozen before implementation",
+  "abstract": "Three independent proposal agents generated 23 architecture, memory/data/optimizer, and systems candidates from primary 2025-2026 mechanisms; a fourth adversarial agent rescored every candidate and applied causal, arithmetic, dependency, runtime, and scheduler vetoes. The resulting connected program is FA3 packer-sourced boundary metadata, canonicalized Engram keys, conditioned per-head Q/K plus explicitly extrapolated disjoint-head V initialization, attention-output Peri-RMSNorm, and a pack-preserving compression curriculum. Canonicalized keys have the highest experimental critic score, 34/40; the boundary sidecar is sequenced first because exact-semantics infrastructure and its profiler inform all later rounds. Prospective ICML-format paper 019 freezes all proposer and critic score vectors, explicit provenance limits, local mechanisms, mediators, kill gates, sequential-comparator rule, stage funnel, and GPU policy. Its six pages passed Poppler rendering and page-by-page visual inspection. No experiment was launched: the first mechanism still owes 1000-batch equivalence, state parity, compile-graph, governed diagnostic, and robust isolated-H200 profile gates. The prior Q1 transport verdict remains terminally invalid, 0.927183 remains only the historical chart anchor, and there is no new SOTA.",
+  "methods": "Architecture, memory/optimizer/data, and systems agents independently read repository mechanisms/evidence and primary work, froze candidate slates, and supplied explicit novelty, primary-source provenance, causal validity, expected local impact, transfer reliability, feasibility/cost, numerical falsifiability, and connected-program coherence ratings. A separate critic checked local code fit, score arithmetic, source faithfulness, mediators, dependencies, charged-clock placement, two-role scheduler compatibility, and reward-hack surfaces. The coordinator reconciled the frozen vectors, corrected one memory-slate F/X axis-label mismatch without changing sums, and compiled paper 019 with Tectonic. The PDF was rendered at 144 DPI and every page was visually inspected for clipping, overflow, overlap, table readability, and citation integrity. DeepSeek Engram code was pinned at commit fb7f84a21f91223715394a33a1dc24bbfb7f788e with archive, Git bundle, paper, manifest, and SHA-256 inventory. The first proposed systems round remains offline because the protocol requires source registration, a default-inert implementation, bitwise boundary equivalence, optimizer-state parity, one compiled graph, and a throughput profile whose point estimate is at least 1.054 and one-sided 95 percent lower bound is at least 1.041 before a BPB pair is authorized.",
+  "directions_explored": [
+    "architecture",
+    "attention",
+    "data_order",
+    "evaluation_method",
+    "initialization",
+    "memory_retrieval",
+    "normalization",
+    "optimizer",
+    "systems_kernel",
+    "tokenization",
+    "training_schedule"
+  ],
+  "idea_ids": [],
+  "experiment_ids": [],
+  "run_ids": [],
+  "findings": [
+    {
+      "statement": "The independently critiqued execution sequence is one connected cumulative body: sidecar, canonical keys, conditioned attention initialization, attention-output normalization, then compression curriculum; accepted mechanisms become the next concurrent comparator and rejected mechanisms leave it unchanged.",
+      "assessment": "operational",
+      "evidence_ids": [],
+      "run_ids": [],
+      "limitations": [
+        "This is a frozen research design and ranking, not experimental support for any mechanism.",
+        "Interaction claims are deferred; each round changes exactly one newly attributed mechanism."
+      ]
+    },
+    {
+      "statement": "Canonicalized Engram keys score highest experimentally at 34/40, while the FA3 boundary sidecar is operationally first because its exact-semantics and throughput evidence changes the feasibility calculation for every later 300-second round.",
+      "assessment": "preliminary_observation",
+      "evidence_ids": [],
+      "run_ids": [],
+      "limitations": [
+        "Scores are explicit judgments, not measured outcomes.",
+        "The Engram source uses a much larger tokenizer and does not establish local 8192-token-vocabulary BPB transfer.",
+        "FA3 specifies cumulative-offset semantics but does not establish the local packer-sidecar speedup."
+      ]
+    },
+    {
+      "statement": "Paper 019 is a six-page ICML-format prospective authority with all 23 proposer-to-critic vectors, provenance boundaries, why-rank-one reasoning, exact mediators and kill gates, and a sequential 1-to-3-to-6-to-10 funnel.",
+      "assessment": "operational",
+      "evidence_ids": [],
+      "run_ids": [],
+      "limitations": [
+        "Its authorization remains conditional on typed registry binding, source reconciliation, and green setup checks.",
+        "It contains no new experimental result."
+      ]
+    },
+    {
+      "statement": "No GPU run was authorized during this period because the boundary-sidecar mechanism has not yet cleared its offline equivalence, state-parity, compile, governed-diagnostic, and robust-profile gates.",
+      "assessment": "operational",
+      "evidence_ids": [],
+      "run_ids": [],
+      "limitations": [
+        "Idle GPUs reflect a protocol gate, not evidence that the candidate is infeasible.",
+        "A promoted n=3 stage may use six tenant-free GPUs; stage 1 intentionally uses one concurrent pair and retains the required reserve."
+      ]
+    }
+  ],
+  "negative_results": [
+    "The critic killed or deferred 18 of 23 proposals; high-prestige provenance did not rescue scope mismatch, weak arithmetic, missing kernels, or non-attributable bundles.",
+    "A simultaneous four-question or all-eight-GPU launch was vetoed because the ordinary scheduler supports two causal roles and repeating Q1's coupled wave would recreate its attribution failure.",
+    "The FA3 sidecar's earlier central 1.045 throughput forecast is below the robust 1.05347 break-even ratio, so it cannot advance on an informal speed impression.",
+    "The conditioned-initialization paper repeats the same rectangular-identity V in each head; the local disjoint-head V construction is explicitly an extrapolation, not a paper-faithful reproduction.",
+    "No Q1 retry, control rebind, new prospective global control, or SOTA claim is permitted."
+  ],
+  "limitations": [
+    "The first mechanism still lacks a protocol-governed short diagnostic path; direct invocation of the lower-level runner is forbidden.",
+    "Most 2025-2026 source evidence is at larger scale or in a different architecture, so local transfer must be mediated and falsifiable.",
+    "The 0.927183 endpoint is a historical single-seed treatment observation and chart anchor, not a contemporary control.",
+    "No new endpoint entered the chart during this reporting period."
+  ],
+  "decisions": [
+    "Freeze the five-round connected order in paper 019 and execute sequentially, never as unrelated additions.",
+    "Place the FA3 boundary sidecar first for dependency information despite canonicalized keys having the highest standalone score.",
+    "Require default-inert exact semantics and robust throughput profiling before spending a scored BPB pair on the sidecar.",
+    "Use a fresh same-seed recovered-recipe comparator for each materially new estimand without relabeling it a qualified global control.",
+    "Keep one to two GPUs reserved at stage 1; use up to six tenant-free GPUs only when a candidate promotes to n=3.",
+    "Preserve official source code and papers with exact commits and hashes; do not infer efficacy from provenance alone.",
+    "Retain the no-new-SOTA verdict and the chart anchored at 0.927183."
+  ],
+  "next_hour_plan": [
+    {
+      "direction": "evaluation_method",
+      "question": "Can paper 019 and the DeepSeek Engram source reading be bound to typed literature, claim, evidence, decision, and authority records with zero strict-audit debt?",
+      "why_now": "The paper may not authorize implementation or GPU work until its source and decision chain are machine-checkable.",
+      "stop_condition": "Do not proceed on duplicate IDs, hand-edited ledgers, weak claim scope, missing hashes, stale generated state, or any validation/audit finding."
+    },
+    {
+      "direction": "systems_kernel",
+      "question": "Can the packer emit immutable cumulative document boundaries without changing packed inputs, targets, epochs, boundary digests, optimizer state, compiled graph count, or charged-clock semantics?",
+      "why_now": "This is the first ranked dependency and the system must observe and attribute exact equivalence before it can claim speed.",
+      "stop_condition": "Kill the mechanism on any 1000-batch mismatch, interior-BOS mismatch, state divergence, extra graph, unsafe lease lifetime, or scanner/sidecar semantic difference."
+    },
+    {
+      "direction": "systems_kernel",
+      "question": "Does the exact sidecar clear a fresh isolated-H200 token-rate ratio of at least 1.054 with a one-sided 95 percent lower bound of at least 1.041 under the same charged work?",
+      "why_now": "Only a robust gain above BPB break-even makes a 300-second endpoint experiment rational.",
+      "stop_condition": "Kill without a BPB run if the profile bound misses, fewer than 20 steady bootstrap blocks exist, integrity fails, or work moves outside the clock."
+    },
+    {
+      "direction": "memory_retrieval",
+      "question": "If the sidecar is killed offline or completes its first causal round, can canonicalized Engram keys affect enough local keys and occurrences to make the preregistered local BPB prediction plausible?",
+      "why_now": "Canonical keys have the highest critic score and are next in the connected body.",
+      "stop_condition": "Kill before scoring if key cardinality falls by less than 10 percent, affected occurrences are below 10 percent, alias provenance is unexplained, or non-memory inputs and initialization drift."
+    }
+  ]
+}

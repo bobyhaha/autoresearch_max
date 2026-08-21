@@ -1,0 +1,348 @@
+% !TeX program = pdflatex
+%
+% A report on the vibeautoresearch_reimplementation campaign.
+% Sources: SOTA_LOG.md, research/setup/reconciliation.json,
+%          research/sota_snapshots/*/repro.json, train.py
+%
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{siunitx}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{caption}
+\usepackage{enumitem}
+
+\sisetup{
+  detect-weight       = true,
+  detect-inline-weight= math,
+  group-digits        = false,
+  round-mode          = places,
+  round-precision     = 6,
+}
+
+\newcommand{\bpb}{\texttt{val\_bpb}}
+\newcommand{\gate}{\ensuremath{2\sigma}}
+
+\title{\bfseries A Fixed-Time Language-Model Search That Adopted Nothing:\\
+\large Twenty-Eight Closed Directions, One Adoption, and Its Retraction by
+Disjoint-Seed Verification}
+
+\author{\texttt{vibeautoresearch\_reimplementation}\\[2pt]
+\small reporting scope \texttt{walltime\_5min\_h200}}
+
+\date{Compiled \today\ from campaign records through 2026-08-04}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+This campaign searched for architectural and optimisation improvements to a byte-level
+language model under a fixed \SI{300}{\second} wall-clock budget on a single H200, scoring
+held-out \bpb{} on a pinned validation shard. Over roughly three weeks and 388 recorded runs
+it closed \textbf{28 directions}, produced \textbf{one adoption}, and \textbf{retracted that
+adoption one block later} when it was verified on seeds disjoint from those used to select
+it. The retraction is the campaign's principal result: the effect proved real
+($-0.002139$ pooled over 20 pairs, $t=-7.18$, 20/20 seeds favouring treatment) but
+\emph{sub-gate}, and the margin that had carried it over the adoption floor is best
+explained as selection bias. The campaign's standing state is \textbf{no adopted result},
+and its registered scope baseline is flagged \textbf{contaminated} after a session in which
+45 of 48 runs completed $\sim$1147 optimizer steps against an expected $\sim$2000 under GPU
+contention. We report the ledger, the retraction in full, a provenance grading of every
+headline figure, and the conditions under which comparison with sibling campaigns is and is
+not meaningful.
+\end{abstract}
+
+\section{The frame}
+
+All results are scored on one metric under one frame. Deviations from it are not comparable
+and are marked as such throughout.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Element} & \textbf{Value} \\
+\midrule
+Scope identifier      & \texttt{walltime\_5min\_h200} \\
+Stopping rule         & \texttt{STOP\_MODE=time}, \texttt{TIME\_BUDGET=300} \\
+Hardware              & one NVIDIA H200, one run per GPU \\
+Objective             & held-out \bpb{}, lower is better \\
+Validation data       & pinned shard 6542 \\
+Training data         & shards 1--10, frozen \\
+Context length        & 2048 \\
+Typical step count    & $\sim$2000 optimizer steps per run \\
+Adoption gate         & paired mean must clear \num{0.002614} (\gate{}) \\
+Funnel                & $1 \rightarrow 3 \rightarrow 6 \rightarrow 10$ seeds \\
+\bottomrule
+\end{tabular}
+\caption{The reporting scope. The gate and the funnel are preregistered.}
+\end{table}
+
+Because the budget is wall-clock rather than tokens or FLOPs, throughput is part of the
+objective: a change that costs optimizer steps must repay them in quality. This coupling is
+central to Section~\ref{sec:contamination}.
+
+\section{Ledger}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lS[table-format=1.6]lc@{}}
+\toprule
+\textbf{Quantity} & {\textbf{\bpb}} & \textbf{Provenance} & \textbf{Status} \\
+\midrule
+Naive baseline (day-one reference) & 1.030100 & reconciled, $n=10$ & current \\
+Best historically observed         & 0.927183 & direct-SSH, weak     & best-known, \emph{not} adoption-grade \\
+Best $n\!\geq\!10$ paired mean     & 0.929541 & direct-SSH, weak     & best-known, \emph{not} adoption-grade \\
+Registered scope baseline          & 0.934930 & contaminated         & \textbf{rejected} \\
+Old-config reproduction (new host) & 0.932028 & snapshot, $n=10$     & reproduction, not a SOTA \\
+Best measured configuration        & 0.929508 & E28, $n=10$          & \textbf{retracted adoption} \\
+\bottomrule
+\end{tabular}
+\caption{Every headline figure with its provenance grade. Two of the three best numbers are
+disowned by the campaign's own records.}
+\label{tab:ledger}
+\end{table}
+
+The improvement from the day-one reference to the best observed configuration is
+$1.030100 - 0.927183 = \num{0.102917}$, or \SI{10.0}{\percent}. That figure is
+\emph{historical}: it was accumulated early from a small number of large mechanisms
+(hashed $n$-gram memory at $2^{20}$, \texttt{swin4}, fp8, FA3 varlen document masking), and
+the campaign has not adopted anything since.
+
+\subsection{Adopted snapshots}
+
+Six configurations were formally adopted over the campaign's history:
+
+\begin{enumerate}[nosep,leftmargin=*]
+  \item \texttt{sota\_reoptimized\_ffn4\_mlr03}
+  \item \texttt{sota\_reoptimized\_final}
+  \item \texttt{sota\_ngram\_2p20}
+  \item \texttt{sota\_swin4}
+  \item \texttt{sota\_fp8\_ngram}
+  \item \texttt{sota\_fa3\_varlen\_docmask} --- paired $n=10$, mean $-0.005222$,
+        10/10 same sign, $t=-10.20$
+\end{enumerate}
+
+\section{The contaminated baseline}
+\label{sec:contamination}
+
+The registered scope baseline of \num{0.934930} ($n=10$) was measured during a session in
+which \textbf{45 of 48 runs completed $\sim$1147 optimizer steps against an expected
+$\sim$2000} for the same \SI{300}{\second} budget. The cause was GPU contention from another
+tenant.
+
+The measured penalty was $+\num{0.005390}$ relative to the same configuration measured
+clean. Note the magnitude: contention cost roughly \textbf{twice} the campaign's entire
+adoption gate. In a wall-clock frame, a co-tenant does not add noise --- it removes
+optimizer steps, and the metric follows.
+
+The baseline was downgraded to \texttt{pending} in \texttt{reconciliation.json} v32 and
+\texttt{authorize-run} is correctly blocked in this scope until a genuine
+$\geq\!10$-seed remeasurement replaces it.
+
+A second instance appears in the 2026-07-30 reproduction: seeds 42 and 43 were
+\textbf{quarantined} after another tenant saturated their GPUs mid-run (step time
+$150 \rightarrow \SI{336}{\milli\second}$, MFU $19\% \rightarrow 8.6\%$, $\sim$956 of
+$\sim$2000 steps). They scored \num{0.989} and \num{0.995} and were discarded rather than
+averaged in. Had they been included, the reproduction's mean would have been corrupted by
+approximately \num{0.012} --- five gates --- by two runs out of ten.
+
+\section{The adoption, and its retraction}
+
+\subsection{E28: the campaign's first adoption}
+
+After \textbf{28 closed directions}, block 48 adopted \texttt{DEPTH=6} (dim 640 via
+\texttt{ASPECT\_RATIO}) with \texttt{MATRIX\_LR=0.03}, against frozen defaults
+\texttt{DEPTH=8} (dim 768) and \texttt{MATRIX\_LR=0.04}.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}lS[table-format=-1.6]@{}}
+\toprule
+\textbf{Statistic} & {\textbf{Value}} \\
+\midrule
+Paired mean                     & -0.002715 \\
+Adoption gate (\gate{})         &  0.002614 \\
+Gates cleared                   &  1.040000 \\
+Clean pairs                     & {10 / 10} \\
+Seeds favouring treatment       & {10 / 10} \\
+$t$                             & -5.870000 \\
+95\% CI lower                   & -0.003761 \\
+95\% CI upper                   & -0.001669 \\
+In-tranche control mean         &  0.932223 \\
+Treatment mean                  &  0.929508 \\
+\bottomrule
+\end{tabular}
+\caption{E28 as recorded. The preregistered rule is a point-estimate rule and it is
+satisfied.}
+\end{table}
+
+The record itself flags three reservations at the time of adoption, before any verification
+was run:
+
+\begin{itemize}[nosep,leftmargin=*]
+  \item \textbf{The margin is thin.} The point estimate exceeds the floor by \SI{4}{\percent},
+        and the upper end of the 95\% CI ($-0.001669$) lies \emph{below} the floor in
+        magnitude, so the true effect may not clear.
+  \item \textbf{Against the registered baseline} (\num{0.931857}) rather than the in-tranche
+        control, the delta is $-0.002349 = 0.90$ gates, which does \emph{not} clear. Both
+        numbers were recorded so the discrepancy was visible rather than buried.
+  \item \textbf{The prediction was that it would fail.} The launcher recorded an expected
+        $\sim$0.88 gates. The result came in \num{0.000415} above the sum of its parts
+        ($-0.002002$ for depth 6 at $n=12$; $-0.000298$ for the LR at $n=4$), and that
+        super-additivity was explicitly logged as \emph{measured, not explained}.
+\end{itemize}
+
+\subsection{E29: verification on disjoint seeds}
+
+The adoption was verified on seeds 52--61, disjoint from every arm the campaign had ever
+run.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}llS[table-format=-1.6]S[table-format=1.2]c@{}}
+\toprule
+\textbf{Tranche} & \textbf{Seeds} & {\textbf{Mean}} & {\textbf{Gates}} & \textbf{$n$} \\
+\midrule
+E28 (original)      & 42--51 \emph{(include the selection seeds)} & -0.002715 & 1.04 & 10 \\
+E29 (verification)  & 52--61 \emph{(disjoint)}                    & -0.001562 & 0.60 & 10 \\
+\textbf{Pooled}     & 42--61                                      & -0.002139 & 0.82 & 20 \\
+\bottomrule
+\end{tabular}
+\caption{Neither the verification nor the pooled estimate clears the \num{0.002614} floor.
+The adoption was withdrawn.}
+\end{table}
+
+\subsection{Diagnosis: winner's curse, predicted in advance}
+
+The configuration was \emph{selected} from sweeps run on seeds 42--45 (depth 6 from E10;
+\texttt{MATRIX\_LR=0.03} from E26/E27) and then \emph{evaluated} on seeds 42--51, which
+contain all four selection seeds. Selection and evaluation on overlapping draws inflates the
+estimate.
+
+This was named in the reading log \textbf{one block before the verification ran}, with a
+predicted regression toward the additive estimate of $\sim$0.88 gates. The measured
+regression was $+\num{0.001153}$, from 1.04 gates to 0.60 --- close to the prediction.
+
+The \num{0.000415} super-additive residual that carried E28 over the floor, recorded at the
+time as \emph{measured, not explained}, is now best explained as selection bias.
+
+\subsection{What survives}
+
+\begin{quote}
+\textbf{The effect is real and it is sub-gate.} Pooled over 20 pairs:
+$-\num{0.002139}$, $t=-7.18$, 20/20 seeds better, 95\% CI
+$[-\num{0.002762},\,-\num{0.001515}]$ --- excludes zero, does not reach the floor.
+\end{quote}
+
+Depth 6 with \texttt{MATRIX\_LR=0.03} genuinely beats the frozen defaults by about
+\num{0.0021} \bpb{}; the gate asks for \num{0.002614}. The snapshot is retained as the
+best-known configuration with \texttt{repro.json} marked retracted. \textbf{It is not a
+SOTA.}
+
+\section{Comparison with sibling campaigns}
+
+Two sibling campaigns optimise the same objective on the same host against the same
+validation shard. Comparison is meaningful only where the model and the batch size match.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}llS[table-format=1.6]lll@{}}
+\toprule
+\textbf{Campaign} & \textbf{Best} & {\textbf{\bpb}} & \textbf{Model} & \textbf{Tokens/step} & \textbf{Grade} \\
+\midrule
+\texttt{reimplementation} & best-known & 0.927183 & dim 768 & $2^{18}$ & weak provenance \\
+\texttt{v4}               & promoted   & 0.969952 & dim 512 & $2^{19}$ & single run \\
+\texttt{v1}               & SOTA       & 0.962288 & dim 512 & $2^{19}$ & confirmation, $n=7$ paired \\
+\bottomrule
+\end{tabular}
+\caption{The two campaigns at dim 512 / $2^{19}$ are directly comparable to each other.
+Neither is directly comparable to this one.}
+\label{tab:siblings}
+\end{table}
+
+Two observations follow, and the second is the more useful.
+
+\paragraph{Step counts are not a unit of work.} This campaign runs $\sim$2000 optimizer
+steps per \SI{300}{\second} frame against $\sim$975 for the dim-512 campaigns, which invites
+the reading that it is twice as fast. At $2^{18}$ versus $2^{19}$ tokens per step, the
+throughputs are \num{524} million and \num{511} million tokens respectively ---
+within \SI{3}{\percent}. The step-count difference is entirely batch size.
+
+\paragraph{The width--batch interaction is unexplored on both sides.} This campaign operates
+at dim 768 with batch $2^{18}$. Campaign \texttt{v1} tested dim 768 \emph{at batch $2^{19}$}
+and measured $+\num{0.078976}$ --- one of its largest negatives --- while never varying
+\texttt{TOTAL\_BATCH\_SIZE} in 189 experiments. Those two facts are jointly consistent only
+if width and batch size interact strongly. Neither campaign has probed that diagonal.
+
+\section{Discussion}
+
+Three properties of this campaign's record are worth stating plainly, because they are
+unusual and they are what make the negative result credible.
+
+\paragraph{The verification was run against interest.} E29 was executed on disjoint seeds
+immediately after an adoption the campaign had every incentive to keep --- its first in 28
+directions. The retraction was published one block later.
+
+\paragraph{The failure mode was predicted before it was measured.} The reading log named the
+overlap between selection and evaluation seeds, and estimated the regression, before E29
+ran. The measured regression matched. A campaign that can predict its own errors in advance
+is calibrated in a way that a campaign reporting only successes cannot demonstrate.
+
+\paragraph{Contamination is treated as invalidity, not as noise.} Both the rejected baseline
+and the two quarantined seeds were removed rather than averaged. In a wall-clock frame this
+is not fastidiousness: contention removed roughly half the optimizer steps in the affected
+runs and cost \num{0.005390} \bpb{}, about twice the adoption gate. Averaging contaminated
+runs into a mean does not add variance --- it moves the mean.
+
+\paragraph{The cost.} The same discipline produces one adoption in three weeks, and then
+withdraws it. The campaign's headline \SI{10}{\percent} improvement is historical, earned
+early from a handful of large mechanisms, and its recent record is a plateau punctuated by a
+retraction. Whether that is a well-calibrated search or an over-tight gate is not settled by
+the record: a floor of \num{0.002614} rejects a real, 20/20-consistent effect of
+\num{0.002139}, and no analysis in the campaign asks whether the floor is correctly placed.
+
+\section{Reproducibility}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Artefact} & \textbf{Location} \\
+\midrule
+Authoritative operating baseline & \texttt{research/setup/reconciliation.json} \\
+Per-adoption code and config     & \texttt{research/sota\_snapshots/*/repro.json} \\
+Human-readable ledger            & \texttt{SOTA\_LOG.md} \\
+Retracted adoption               & \texttt{research/sota\_snapshots/sota\_depth6\_lr03\_20260801/} \\
+Old-config reproduction          & \texttt{research/sota\_snapshots/repro\_oldconfig\_newhost\_20260730/} \\
+Run-level records                & \texttt{results.tsv}, \texttt{campaign\_log.jsonl} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+Reproduction configuration (2026-07-30, old config on new host):
+\texttt{WINDOW\_PATTERN=TTTL}, \texttt{DEVICE\_BATCH\_SIZE=72},
+\texttt{TOTAL\_BATCH\_SIZE=147456}, \texttt{MATRIX\_LR=0.04}, FA3 + varlen.
+Clean $n=10$: mean \num{0.932028}, sd \num{0.001032}, best \num{0.930853}.
+
+\vspace{1em}
+\noindent
+\textbf{Provenance caveat.} Every tranche in this campaign is recorded as direct-SSH behind
+the probe gate with no \texttt{authorize-run} binding, and the campaign batch is marked
+\texttt{quarantined} on provenance even where the science funnel is satisfied. Figures in
+Table~\ref{tab:ledger} marked \emph{weak} should be read as observed, not as established.
+
+\end{document}

@@ -1,0 +1,115 @@
+%% Paper 029 -- ICML-style. The campaign's first gate-clearing lever, and a
+%% self-audit of the token law that withdrew the explanation of it.
+%% Proposed experiments follow the required Claim / Mechanism / Hypothesis /
+%% Reasoning structure (docs/EXPERIMENT_WORKFLOW.md).
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\vb}{\mathrm{val\_bpb}}
+\icmltitlerunning{The First Lever, and an Audit That Withdrew Its Explanation}
+\begin{document}
+\twocolumn[
+\icmltitle{The First Lever, and an Audit That Withdrew Its Explanation}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, scaling laws, self-audit, negative results, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+After sixteen closed directions we report the first intervention to exceed this frame's adoption gate: reducing model depth from 8 to 6 (with width following the aspect ratio, $768\!\to\!640$) gives a paired $-0.003252\,\vb$ at $n{=}4$, $4/4$ seeds, $t=-4.70$, against a gate of $0.002614$. \textbf{We do not claim adoption here}: the frame requires $n{=}10$, and the campaign's own E2 precedent read $-0.000772$ with $t=-1.96$ at $n{=}4$ before collapsing to null at $n{=}9$. We also report, and this is the paper's more useful half, an audit of the \emph{token law} $\vb = a - b\ln(\text{tokens})$ that the campaign has used for eight blocks as a break-even calculator, a control variate, and a decomposition tool. Fitted on $n{=}50$ identical-configuration control arms it returns $b = 0.0710 \pm 0.0034$ with $R^2 = 0.972$ --- but the clean arms all cluster at 2000--2030 steps, so essentially all slope information comes from two contention-damaged arms; deleting one point takes $R^2$ to $0.676$, and restricting to the clean cluster gives $R^2 = 0.380$. Its validity window is $1131$--$2032$ steps, and outside it the relation does not lose accuracy but \textbf{inverts}: at the same configuration a $2\times$-budget run completes 3918 steps and scores $0.9870$ where the fit predicts $0.8854$, an error of $+0.102$ ($39$ gates). Depth 6 runs at 3279 steps, $1.61\times$ beyond the fitted range. \textbf{We therefore withdraw our own decomposition of the depth-6 result} --- a $-0.0292$ token credit against a $+0.0259$ intrinsic cost --- as unsupported extrapolation, while the raw paired measurement, which invokes no law, stands.
+\end{abstract}
+
+\section{Why Depth Was the Sixteen-Failure Prediction}
+Papers 026--028 measured two magnitudes in this frame: intrinsic quality effects $\approx$1e-3, throughput effects $\approx$1e-2. That pair is not merely discouraging, it is a \emph{selection rule}. An intervention can clear a 2.6e-3 gate only if it moves a 1e-2-scale term, and every lever tested moved at most one such term --- refinements moved only the intrinsic term, kernel work moved only the throughput term and was mostly already captured by \texttt{torch.compile}.
+
+Model shape moves both at 1e-2. It was the only untested class with that property, and the dense parameters are just $\approx$5\% of this model --- the hashed $n$-gram tables hold $\approx$1.61e9 and are untouched by depth --- so the capacity surrendered is a small slice while the throughput bought is large.
+
+\section{Result}
+Depth $\in\{5,6,7,8\}$, width following \texttt{ASPECT\_RATIO}, 4 seeds, fixed 300\,s, 16/16 arms clean on the duty-cycle screen.
+
+\begin{center}\begin{small}
+\begin{tabular}{rrrrr}
+\toprule
+depth & dim & $\vb$ & steps & vs d8 (paired) \\
+\midrule
+8 & 768 & 0.932703 & 2016 & --- \\
+7 & 768 & 0.931571 & 2245 & $-0.001132$ \\
+\textbf{6} & \textbf{640} & \textbf{0.929451} & \textbf{3279} & $\mathbf{-0.003252}$ \\
+5 & 512 & 0.978424 & 4528 & $+0.045880$ \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+Depth 6: $1.24$ gates, $4/4$ seeds, $t = -4.70$. \textbf{Not adopted}; E11 extends to $n{=}10$.
+
+\textbf{The depth floor is the data wall, not capacity.} We initially read depth 5's collapse as lost capacity. The logged \texttt{epoch} field says otherwise: depth 5 is the \emph{only} arm reaching a third pass over the frozen corpus, and its $0.9784$ sits beside the recorded epoch-3 collapse (\texttt{exp347}, $0.987$). Depth 6 sits just under the wall at 484M tokens. We noticed only because \texttt{epoch} was pulled alongside $\vb$ rather than after it.
+
+\section{The Audit, and What It Cost Us}
+The token law has been load-bearing for eight blocks. Prompted by the depth-6 numbers we audited it against $n{=}50$ control arms --- identical configuration, identical data, differing only in how many steps contention allowed, so the intrinsic term is exactly zero by construction.
+
+\begin{center}\begin{small}
+\begin{tabular}{lrr}
+\toprule
+data & $b$ & $R^2$ \\
+\midrule
+all 50 & 0.0710 & 0.972 \\
+drop the 1131-step point & 0.0745 & 0.676 \\
+clean cluster only (48) & 0.0993 & 0.380 \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+\textbf{The $R^2$ is carried by one point.} The clean arms occupy a single $x$-value; this is two $x$-values with 48 replicates, not a designed sweep.
+
+\textbf{The validity window is hard-edged.} Fitted range 1131--2032 steps. At the same depth-8 configuration, \texttt{exp347\_sota2x} runs 3918 steps and scores $0.9870$ against a predicted $0.8854$: error $+0.102$, $39$ gates, and the \emph{sign of the token effect has flipped}. Past two passes, more tokens make the model worse.
+
+\textbf{The intercept does not transport.} Predicting depth 6 from the depth-8 fit gives $0.8976$ against an observed $0.9295$ --- a $+0.0318$ (12-gate) shift, which is precisely the intrinsic term the law cannot see.
+
+\textbf{What we withdraw.} One block ago we reported depth 6 as a $-0.0292$ token credit against a $+0.0259$ intrinsic cost, and concluded ``the shallower model is $\approx$10 gates worse per token and wins only because throughput overpays.'' Depth 6 runs at 3279 steps, $1.61\times$ past the fitted range and inside the region where the same-configuration $2\times$ run shows the relation already inverted. \textbf{That decomposition is withdrawn.} It also resolves a discrepancy we flagged but could not explain: the $-0.029$ credit versus a recorded $-0.022$ ceiling on all throughput work. Neither number was wrong about the world; the credit was an invalid quantity.
+
+\textbf{What survives.} $\vb$(d6) $-$ $\vb$(d8) $= -0.003252$, $4/4$, $t=-4.70$: a direct equal-wall-clock paired A/B invoking no law. E11 measures the same raw quantity at $n{=}10$. The belief record is downgraded to \texttt{challenged} with the window, the leverage structure, and the valid/invalid uses written into it.
+
+\section{Next Experiments}
+Per \texttt{docs/EXPERIMENT\_WORKFLOW.md}, each states Claim, Mechanism, Hypothesis, Reasoning, then ratings (1--5 on novelty / provenance / validity / impact / reliability / feasibility / falsifiability).
+
+\subsection{E12 --- Designed token sweep at fixed configuration}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} \texttt{blf\_token\_law\_fixed\_batch\_provisional}, now \texttt{challenged}. Internal, self-proposed; no external claim is invoked. Its recorded evidence strength is \emph{weak} and its coefficient was fit post hoc.
+\item \textbf{Mechanism.} \emph{Observed phenomenon:} $\vb$ tracks $\ln(\text{steps})$ tightly among damaged arms, yet a same-configuration $2\times$-budget run lands $+0.102$ above the extrapolation. \emph{Proposed cause:} two regimes with opposite signs superposed --- a data-acquisition regime where fresh tokens reduce loss logarithmically, and a repetition regime where re-reading a frozen corpus increases val loss. The observed curve is their sum, so it is monotone decreasing until re-reads dominate and then turns up. \emph{Rival account:} a single smooth log law plus contention noise, with \texttt{exp347} explained by something incidental to the $2\times$ budget. \emph{Separating observable:} the \emph{shape} between 2000 and 3900 steps --- superposition predicts a minimum inside that interval, the single-law account predicts monotone decrease throughout.
+\item \textbf{Hypothesis.} Vary only \texttt{TIME\_BUDGET} at fixed depth 8 and fixed batch over 5 points spanning $\approx$1000--3800 steps, 3 seeds each. \emph{Estimand:} $\vb$ as a function of $\ln(\text{steps})$ within one configuration. \emph{Prediction:} a minimum at $2600 \pm 500$ steps, and $b$ estimated on the pre-minimum points within $[0.046, 0.086]$. \emph{Decision rule:} if $\vb$ is monotone decreasing to 3800 steps, the superposition mechanism is refuted and \texttt{exp347} must be re-examined for a confound. \emph{Trap-check:} none needed; every point is informative. \emph{Analysis rule:} no control variate --- this experiment \emph{is} the control variate's calibration.
+\item \textbf{Reasoning.} Every throughput decision for eight blocks has used a slope whose $R^2$ rests on one contention-damaged arm, and the depth-6 interpretation already broke on it. \emph{Evidence for:} three same-configuration $2\times$ runs agree closely ($0.9870$, $0.9860$, and $0.980$ at a slightly different config). \emph{Evidence against:} the minimum may sit outside the reachable range, leaving the boundary bracketed rather than located --- which would still be more than we have now. This is infrastructure, not a win, and should be judged as such.
+\item \textbf{Ratings.} 1 / 5 / 5 / 4 / 5 / 5 / 5.
+\end{itemize}
+
+\subsection{E13 --- Quality-per-token at depth 6}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} Internal and self-proposed, derived from E10's own epoch field; no external claim.
+\item \textbf{Mechanism.} \emph{Observed phenomenon:} depth 6 reaches 484M tokens, just under the third-pass boundary; depth 5 crosses it and loses $17.6$ gates. \emph{Proposed cause:} at depth 6 the binding constraint has switched from compute to \emph{data}, so marginal tokens are re-reads and carry little new signal. \emph{Consequence:} the throughput channel, which paid for every gain up to here, is exhausted at this operating point. \emph{Rival account:} depth 6 is still compute-bound and more speed would still pay. \emph{Separating observable:} apply any throughput-only lever at depth 6 --- superposition predicts $\approx$0 or negative, compute-bound predicts the usual token-law credit.
+\item \textbf{Hypothesis.} At depth 6, run a throughput-only change against a depth-6 control, $n{=}10$ paired. \emph{Prediction, registered:} the gain is $\le$0, in contrast to the same change at depth 8. \emph{Decision rule:} a gain $\ge$1 gate at depth 6 refutes the data-wall reading of E10 and reopens throughput. \emph{Analysis rule:} RAW is the decision metric (the treatment's mechanism is throughput); the control variate must not be applied.
+\item \textbf{Reasoning.} This is the falsifier for the story we are about to tell about depth 6, and it is cheap. \emph{Evidence for:} depth 5's collapse coincides exactly with the epoch-3 crossing rather than with any capacity threshold. \emph{Evidence against:} the epoch counter is coarse (integer passes), so ``just under the wall'' is a claim about a boundary we have located only to within one pass --- E12 sharpens exactly this.
+\item \textbf{Ratings.} 3 / 4 / 4 / 4 / 4 / 5 / 5.
+\end{itemize}
+
+\subsection{E14 --- Depth 6 with the freed memory spent on batch}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} Internal; adjacent to the recorded Block-17 factorial finding that batch/step-count dominates prior levers. Scope match \emph{adequate} (same frame), evidence class internal-quarantined.
+\item \textbf{Mechanism.} \emph{Observed phenomenon:} depth 6 uses 44\,GB against depth 8's 52.6\,GB, and its step is 91.3\,ms against 149.6\,ms. \emph{Proposed cause:} shape reduction frees both memory and time, and in a data-limited regime the useful way to spend freed memory is a larger batch, which raises tokens per step without raising re-reads per token --- unlike more steps, which is what E13 predicts is now worthless. \emph{Rival account:} batch and depth interact only through total tokens, in which case a larger batch is just another throughput lever and E13's prediction applies to it too.
+\item \textbf{Hypothesis.} Depth 6 at \texttt{DEVICE\_BATCH\_SIZE} $\in \{72, 96\}$, $n{=}10$ paired against depth-6 baseline. \emph{Prediction:} if batch is a distinct axis, $\ge$1 gate; if it is only throughput, $\le$0 per E13. \emph{Decision rule:} standard funnel at the $0.002614$ gate. \emph{Trap-check:} confirm the larger batch fits in memory and does not reduce step count more than proportionally.
+\item \textbf{Reasoning.} \emph{Evidence for:} the recorded token law is explicitly \emph{not} sufficient across batch sizes --- the paired $B{=}96$ rows falsified that extrapolation (mean $-0.000406$, $2/5$ same sign), which is precisely the signature of batch being a separate axis rather than a token proxy. \emph{Evidence against:} that same result showed no benefit at depth 8, so the proposal rests entirely on the interaction with the freed memory at depth 6, which is untested.
+\item \textbf{Ratings.} 3 / 3 / 4 / 4 / 3 / 4 / 5.
+\end{itemize}
+
+\subsection{E15 --- Extend the hash-prime families and test depth 9--12}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} Internal; no external claim. Motivated by a known implementation limit rather than by a hypothesis about the world.
+\item \textbf{Mechanism.} \emph{Observed phenomenon:} the depth sweep is one-sided --- depths above 8 raise \texttt{IndexError} because the per-layer decorrelated hash-prime families are hardcoded lists of 4 (bigram) and 3 (trigram) tuples. \emph{Consequence:} we have bracketed the optimum from below (depth 5 collapses) but not from above, so ``depth 6 is optimal'' is an inference from three points on one side.
+\item \textbf{Hypothesis.} Extend the prime families, then run depths $\{9, 10, 12\}$ at 4 seeds. \emph{Prediction:} all are worse than depth 8, since they are slower and the token law's decreasing branch still holds below 2000 steps. \emph{Decision rule:} if any deeper model beats depth 8, the shape story is not monotone and the whole sweep needs re-reading.
+\item \textbf{Reasoning.} \emph{Evidence for:} cheap, and it removes a limitation we have had to state in every record since E10. \emph{Evidence against:} low expected value --- deeper means fewer steps, and the token law's decreasing branch is the one regime we \emph{are} confident about. Listed for completeness of the optimum claim, not because we expect a win. Adding prime families also changes the hashing structure for existing depths, so it must be verified byte-identical at depth 8 before use.
+\item \textbf{Ratings.} 1 / 5 / 4 / 2 / 4 / 3 / 5.
+\end{itemize}
+
+\section{Conclusion}
+Sixteen failures produced a selection rule, the selection rule produced the campaign's first gate-clearing candidate, and auditing that candidate's explanation cost us the explanation. Depth 6 is real at $n{=}4$ and pending at $n{=}10$; the account of \emph{why} it works is now open, because the tool we used to build that account turns out to be valid only inside a window the result sits outside of. We regard reporting the surviving measurement and the withdrawn interpretation separately as the substance of the result, not an aside to it.
+\end{document}

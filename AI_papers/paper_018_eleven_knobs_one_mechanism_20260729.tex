@@ -1,0 +1,65 @@
+%% Paper 018 -- ICML-conference-style block report, blocks 18-23.
+%% Next Experiments leads, per docs/EXPERIMENT_WORKFLOW.md. Compile: tectonic paper_018_....tex
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+\icmltitlerunning{Eleven Knobs, One Mechanism}
+\begin{document}
+\twocolumn[
+\icmltitle{Eleven Knobs, One Mechanism, Zero Adoptions: \\ A Measurement Improvement Worth More Than the Levers It Killed}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (deep-analysis author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, variance reduction, control variates, wall-clock budgets, negative results, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report six blocks that adopted nothing, and argue that the session's measurement work is worth more than any lever it tested. Twelve interventions were run against the \texttt{walltime\_5min\_h200} frame: eleven were \emph{knobs} (existing environment flags) and one was a \emph{mechanism} (new code). All twelve failed. The session's own measurements explain why the eleven could not have succeeded: the intrinsic quality effect of a lever, isolated as the residual against a fitted token-throughput law, is $\approx 0.0007$, while throughput effects are $\approx 0.01$ and the adoption gate is $0.004072$. No knob in this architecture can clear that gate, and we launched six more knobs after establishing this. The positive contribution is a variance reduction. Contention on the shared host perturbs step count, step count determines tokens, and tokens determine $\valbpb$\ through a law we measured; that path is therefore \emph{predictable and subtractable} rather than something to average away. Used as a control variate on an intervention that provably cannot affect throughput, it cut the paired-delta standard deviation $6.5\times$, from $0.001469$ to $0.000226$, moving $5/6$ same-sign to $6/6$ ($t$ from $-2.53$ to $-6.51$). It then \emph{overturned three prior readings}, including two of our own apparent wins: a lever that looked like $-0.0016$ became a null of $-0.000125$, and an effect attributed to Muon momentum-continuity was reassigned to the warmdown ratio. Since the recorded single-seed noise floor is $\sigma = 0.00061$, i.e.\ $72\%$ of the gate, this changes what the frame can resolve at all: at $\mathrm{sd} = 0.000226$ the standard error at $n{=}3$ is $0.00013$. Finally, the one mechanism attempted --- a static-shape \texttt{cu\_seqlens} to delete a per-step host synchronization from the adopted attention path --- was verified byte-identical over 200 randomized trials and then \emph{rejected by the kernel} with an illegal memory access, yielding a registered capability gap and a sharper lesson: content equivalence and kernel-contract compatibility are separate properties, and only the first is testable off-GPU.
+\end{abstract}
+
+\section{Next Experiments}
+This section leads by protocol. Every proposal below is a \textbf{MECHANISM}; the plateau rule now in \texttt{docs/EXPERIMENT\_WORKFLOW.md} forbids knob experiments until a mechanism clears the noise band, and \S\ref{sec:knobs} is the worked justification.
+
+\subsection{M1 --- FlashAttention-4 varlen with explicit \texttt{num\_seqs}}
+\textbf{Mechanism.} Block 23 established that fa3 varlen infers its sequence count from \texttt{cu\_seqlens.numel()-1}, so a fixed-capacity padded buffer schedules work for sequences whose rows do not exist. A kernel accepting \texttt{num\_seqs} \emph{separately} from the buffer length admits the static-shape construction unchanged, deleting a per-step \texttt{cudaStreamSynchronize} and removing the unbacked symbolic shape that hard-disables CUDA-graph capture. FA4 is shipped (\texttt{flash-attn-4} v4.0.0b23) and Hopper-supported; PyTorch's published H200 FlexAttention$+$FA4 figures give $1.41$--$1.89\times$ forward and $1.48$--$2.01\times$ backward \emph{on document masking specifically}, our exact adopted lever.
+\textbf{Predicted:} gate is reachable at $+7.0\%$ tokens ($0.06\ln r = 0.004072$). Tempered strongly by our own profile: attention is not the measured bottleneck, so the realized share is likely well below the kernel-level speedup.
+\textbf{Falsifier:} if end-to-end ms/step improves by ${<}2\%$, attention is off the critical path at this span and the direction is exhausted --- stop, do not spend seeds.
+\textbf{Risk:} beta package, requires CuTeDSL and a recent toolchain; the install itself may destabilize the frozen harness. Install into a \emph{separate} environment and reconcile before any scored run.
+
+\subsection{M2 --- Narrow the n-gram value embedding ($384 \to 192$)}
+\textbf{Mechanism.} The refuted lever was table \emph{rows}; the untested dimension is width. The dominant batch-independent cost is plausibly \texttt{embedding\_dense\_backward} zero-filling a $3.22\mathrm{M}\times384$ gradient per table per step ($\approx$2.5\,GB bf16), corroborated by the recorded \texttt{NGRAM\_TABLE\_MULT}$=512 \to$ OOM. Halving width halves that memset, the scatter, and the optimizer traffic.
+\textbf{Why it is the critical path:} it is the \emph{shared unblocker} for two levers that both died on VRAM this session --- CUDA-graph capture ($\approx$25\,GB of graph pools) and $B{\ge}144$ (CUDA OOM). Neither can be retried without it.
+\textbf{Risk: HIGH on quality} --- this cuts capacity of the one module carrying the data-limitation signal. Treat as a capacity experiment, not free throughput.
+
+\subsection{M3 --- Re-analyze the session's nulls under the control variate}
+\textbf{Mechanism.} If the correction of \S\ref{sec:cv} reduces resolvable effect size by $6.5\times$, then levers previously recorded as null may carry real intrinsic effects that the raw frame could not see. This is a \emph{zero-GPU} re-analysis of data already collected.
+\textbf{Falsifier:} if no recorded null moves outside $\pm0.0007$ intrinsic, the nulls are genuine and the control variate buys sensitivity without changing any verdict.
+\textbf{Caveat:} valid only for interventions that cannot themselves change throughput; otherwise the correction removes signal along with noise and the decomposition is not identified.
+
+\section{Why the Eleven Knobs Could Not Have Worked}
+\label{sec:knobs}
+Break-even for a mechanism costing $s$ step time is $0.06\cdot(-\ln(1-s))$: $1\% \to 0.00060$, $5\% \to 0.00308$. Against a measured intrinsic ceiling of $\approx 0.0007$ and a gate of $0.004072$, the admissible set is $\{$zero-cost, negative-cost$\}$ and the achievable intrinsic gain is an order of magnitude short. We derived this ratio mid-session and then launched six further knobs, which is the failure the plateau rule now blocks. The classification --- eleven knobs, one mechanism, zero adoptions --- is recorded because the drift was invisible from inside: each null felt like ruling something out.
+
+\section{The Control Variate}
+\label{sec:cv}
+Applied to \texttt{MUON\_MOMENTUM\_CONTINUOUS}, which is host-side scalar arithmetic and provably cannot change throughput, every step-count difference between arms is contention. Subtracting the predicted component gives:
+\begin{center}\begin{small}
+\begin{tabular}{lrrrr}
+\toprule
+ & mean & sd & sign & $t$ \\
+\midrule
+raw & $-0.001518$ & $0.001469$ & $5/6$ & $-2.53$ \\
+intrinsic & $-0.000600$ & $\mathbf{0.000226}$ & $\mathbf{6/6}$ & $-6.51$ \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+Three prior readings were then overturned: \texttt{MUON\_NS\_STEPS}$=4$ from ambiguous to intrinsically worse ($+0.0022$, matching the theoretical cost of a dropped Newton--Schulz iteration), \texttt{NGRAM\_VE\_LR\_SCALE}$=0.5$ from an apparent $-0.0016$ win to a null ($-0.000125$), and the momentum effect reassigned to the warmdown ratio by a $2\times2$ factorial. Two of the three were our own claims.
+
+\section{A Mechanism Rejected by Its Kernel}
+The static-shape \texttt{cu\_seqlens} construction was verified byte-identical to the \texttt{torch.nonzero} version over 200 randomized trials before any GPU time, then died on all three treatment arms with an illegal memory access while all three controls completed normally --- confirming both the diagnosis and that flag-gating protected the adopted path. The lesson generalizes: a local equivalence test establishes \emph{content} correctness and is silent on \emph{contract} compatibility. For kernel-facing changes the second property is the binding one and cannot be tested off-device.
+
+\section{Conclusion}
+Six blocks, twelve interventions, zero adoptions, and a best configuration still $-0.0033$ from the pre-session baseline --- inside the gate, i.e.\ not an improvement. The durable output is a scoped law validated out of sample, a $6.5\times$ measurement improvement that has already corrected three conclusions, a registered capability gap that converts a vague kernel aspiration into a specific requirement, and two protocol rules that make the session's own failure modes structurally harder to repeat. We record this because a campaign that reports only its wins learns slowly, and because the most valuable artifact this session produced was a better instrument rather than a better model.
+\end{document}

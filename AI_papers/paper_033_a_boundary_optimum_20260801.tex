@@ -1,0 +1,180 @@
+%% Paper 033 -- ICML-style. Campaign synthesis: what a 646-experiment autonomous
+%% search of one training frame found, and what it could not resolve.
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\vb}{\mathrm{val\_bpb}}
+\icmltitlerunning{A Boundary Optimum}
+\begin{document}
+\twocolumn[
+\icmltitle{A Boundary Optimum: 646 Experiments Against a Five-Minute Training Frame}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, negative results, boundary optima, measurement, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report the synthesis of an autonomous research campaign: 646 logged experiments across 31 closed directions against a single frozen frame --- 300 steady-state seconds on one H200, validation bits-per-byte, ten frozen data shards, a $2\sigma$ adoption floor of $0.002614$ and a minimum of ten paired seeds. \textbf{The campaign produced no adopted result.} It produced one real effect, three confirmed mechanisms, two refuted explanations of its own, one adoption that was claimed and retracted within two blocks, and a measurement apparatus that had to be rebuilt four times. We argue the null pattern has a single structural cause: \textbf{the frame is token-saturated and its optimum is a boundary optimum.} Sorting every closed direction by its effect on tokens consumed collapses the campaign into four rows --- interventions that do not move tokens land within $\pm$1.3e-3 against a 2.6e-3 floor, and interventions that do move tokens either are already captured by \texttt{torch.compile} or push training past a data-repetition cliff worth 16--18 gates. The best configuration sits just under that cliff at 1.9 passes and is locally optimal in depth, width, $n$-gram capacity, window pattern and Muon learning rate. Its advantage over the frozen defaults is real --- $-0.002431$ at $n{=}97$, \textbf{91/97 seeds better}, $t=-15.62$ --- and its 95\% confidence interval, $[-0.002736, -0.002126]$, \textbf{straddles the adoption floor}. Following the standard convention for a threshold test, that is a \emph{third} outcome, distinct from both clearing and not clearing: the threshold test is \textbf{inconclusive}. The registered adoption rule is a one-sided point-estimate rule and is unambiguous --- $-0.002431$ does not satisfy $-0.002614$, so \textbf{no adoption} --- but the interval does not exclude a true effect above the floor. Four further tranches were run to settle it. Adding data made the threshold test \emph{harder}: at $n{=}78$ the mean was $-0.002311$ and 97 pairs would have excluded the floor, but the better-determined mean at $n{=}97$ is $-0.002431$ --- closer to the floor --- so the requirement rose to 269 pairs. That is not a measurement failure but what happens when a true effect sits beside a decision boundary.
+\end{abstract}
+
+\section{The Frame, and the Four Rows}
+The frame fixes everything except the intervention: \texttt{STOP\_MODE=time}, 300\,s, one H200, ten frozen shards ($\approx$250M unique tokens), \texttt{fa3} attention, a compiled production path. Adoption requires a paired mean $\le -0.002614$ over $\ge$10 clean seeds.
+
+Sorted by what each lever does to \emph{tokens consumed}, 31 closed directions fit in four rows:
+
+\begin{center}\begin{small}
+\begin{tabular}{lll}
+\toprule
+lever class & tokens & outcome \\
+\midrule
+intrinsic refinements & none & all within $\pm$1.3e-3 \\
+compile-captured & none & 8 killed pre-implementation \\
+depth $8{\to}6$ & $+62$\% & $-0.0024$, 0.90 gates \\
+depth 5 / dim 512 / $2\times$ & $+100$--$140$\% & collapse, 16--18 gates \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+There is essentially \textbf{one free parameter} --- how many tokens the budget buys before the repetition cliff --- and the baseline already sits near its optimum. At a boundary optimum, local search reports zero gradient in every feasible direction and a cliff in the one that matters. That is the campaign's null pattern, and it is a property of the frame rather than of the interventions.
+
+\section{The Cliff Is About Tokens}
+Three configurations spanning 39.8M--94.4M dense parameters and three different shapes cross the same boundary:
+
+\begin{center}\begin{small}
+\begin{tabular}{lrrr}
+\toprule
+configuration & tokens & passes & $\vb$ \\
+\midrule
+depth 6, dim 640 & 483M & 1.9 & \textbf{0.9295} \\
+$2\times$ budget, depth 8 & 578M & 2.3 & 0.9870 \\
+depth 6, dim 512 & 623M & 2.5 & 0.9729 \\
+depth 5, dim 512 & 668M & 2.7 & 0.9784 \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+Shuffling row-group order at depth 5 moves the endpoint by $0.0022$ --- 4.7\% of the $0.0464$ cliff --- against preregistered thresholds of $<$0.003 for a repetition cause and $>$0.01 for a corpus-region cause. \textbf{The cause is repetition.} This mattered because shard order is fixed, so ``the third pass'' and ``the tail of the corpus for the third time'' had been perfectly confounded in every prior run.
+
+\section{Three Mechanisms That Held}
+\textbf{Fill-flood.} A profile attributes the step's 19\% MFU to $\approx$194k tiny fill launches in the $n$-gram backward: autograd zero-fills a gradient the size of the whole table while a step touches $\sim$1e-4 of its rows. The discriminating prediction --- that a sparse-gradient replacement improves as tables grow, which a bandwidth account forbids --- was registered before the data existed and confirmed: the penalty fell from $+12.95$\% to $+3.22$\% as tables grew $4\times$, and an out-of-sample third point at $m{=}128$ landed at $+15.8$\,ms against $+14.9$ predicted ($R^2{=}0.995$). The direction is nonetheless closed: break-even sits near $m{\approx}343$ and $m{=}256$ already costs 4.2 gates of quality.
+
+\textbf{The memoriser is the model.} Depth 5 reaches the \emph{lowest} training loss of any depth (2.4927) and the \emph{worst} validation loss (2.7722). Decaying the $n$-gram tables closes that gap by 93\% ($+0.2795 \to +0.0201$) and the endpoint \emph{still} degrades at both depths --- in a hashed $n$-gram memory the memorising rows and the signal-carrying rows are the same rows, and a norm penalty cannot separate them.
+
+\textbf{The capacity lever changes sign.} Cutting hash rows costs $+0.0079$ below the cliff and gains $-0.0163$ (6.2 gates) above it. Crossing depth showed the flip tracks the \emph{train/val gap}, not the pass count: it helps where the model overfits and nowhere else.
+
+\section{Two Explanations We Refuted, Both Ours}
+Paper 027 explained the null refinements by \emph{duration} --- they ``accrue over many more updates than 2000''. Depth 6 supplies 3276 steps, 63\% more, and all arms stayed within $\pm$1.3e-3, alone and stacked. \textbf{Retracted}, with a correction notice on the original.
+
+Its replacement, \emph{dilution} --- refinements act on a dense path that is 3.2\% of parameters --- was refuted one block later by turning the dilution factor into a knob: an $11\times$ change in dense share moved the effect from $+0.000079$ to $-0.000149$, both noise. \textbf{The null is recorded as unexplained}, rather than adopting the last surviving guess.
+
+\section{The One Real Effect, and Why We Do Not Resolve It}
+Depth 6 with \texttt{MATRIX\_LR} 0.03, against frozen defaults, across three disjoint seed blocks:
+
+\begin{center}\begin{small}
+\begin{tabular}{lrrr}
+\toprule
+block & seeds & mean & gates \\
+\midrule
+E28 & 42--51 & $-0.002715$ & 1.04 \\
+E29 & 52--61 & $-0.001562$ & 0.60 \\
+E31 & 72--81 & $-0.002794$ & 1.07 \\
+E32 & 82--111 & $-0.002159$ & 0.83 \\
+E33 & 112--129 & $-0.002489$ & 0.95 \\
+E34 & 144 & --- & --- \\
+E35 & 162--179 & $-0.002837$ & 1.09 \\
+\midrule
+\textbf{pooled $n{=}97$} & & $\mathbf{-0.002431}$ & \textbf{0.93} \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+91/97 seeds better, $t=-15.62$, 95\% CI $[-0.002736, -0.002126]$. The effect is unambiguously real and the interval \textbf{straddles the floor}.
+
+\textbf{We tried twice to settle it and the box would not allow it.} Reaching a CI that excludes the floor required $n{=}97$; two tranches of 30 and 20 pairs were launched behind a probe gate and returned 18 and 1 usable pairs, because sustained co-tenant bursts ran every GPU at 143--354\,ms against clean medians of 91.8 and 149.9. The probe gate protects the launch instant, not the run. \textbf{On a shared box this question is not settleable inside a 24-hour window}; it needs an uncontended machine, and we record that as the reason rather than as a result.
+
+\textbf{An adoption was claimed on the first block and retracted two blocks later.} E28 cleared at 1.04 gates on seeds that overlapped the selection sweeps; verification on disjoint seeds read 0.60. The retraction rule was fixed before the data and executed. We first attributed the regression to winner-selection bias --- and then E31, equally disjoint, read 1.07, refuting that account too. Between-block sd is $0.000690$ against $0.000459$ expected from $n{=}10$ sampling. \textbf{The spread is noise.}
+
+The honest lesson is about resolution, not bias: \textbf{at $n{=}10$ this frame cannot distinguish 0.60 gates from 1.07.} The registered \texttt{min\_seeds=10} is adequate for rejecting large effects and inadequate for resolving marginal ones. Settling whether this effect clears requires the CI lower bound above $-G$, i.e.\ $\approx$200 paired seeds; $n{=}122$ sits exactly at the boundary. We also note against our own interest that the paired sd measured here (0.001451) exceeds the registered $\sigma$ (0.001307) by $1.11\times$; on a recomputed floor the effect would sit at 0.81 gates, \emph{further} from clearing.
+
+\section{The Apparatus Was Wrong Four Times}
+Every measurement rule in this campaign was replaced after it let something through.
+
+\begin{center}\begin{small}
+\begin{tabular}{ll}
+\toprule
+version & blind spot found in use \\
+\midrule
+step floor $\ge$1950 & assumes one operating point \\
+median step time & misses lost wall clock \\
+duty cycle & scale-invariant; uniform slowdown \\
+two-sided + pair-match & current \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+Separately: GPU selection by \texttt{nvidia-smi} was replaced by a 40-second training probe after all five candidate GPUs reported 0\% utilisation while running $1.58\times$ slow; hand-authored registry records were replaced by an enum-checking atomic writer after four invented enum values and two half-written ledgers. \textbf{Each recurring error was fixed twice --- once with a written rule that failed, once with a mechanism that worked.}
+
+\section{What Would Move This Frame}
+The wall is repetition; raising it requires either more unique data (out of scope --- the corpus is frozen and part of the scope key) or making repetition less harmful. Weight-space regularisation is closed by the memoriser-is-the-model result. Capacity reduction helps only above the cliff, where the configuration is already uncompetitive. Training-time augmentation is the untested route: the one method our architecture admits (label-only offset prediction, since masking and permutation corrupt the token-ID hashes that are 96.8\% of the model) failed in our instantiation, but the source omits whether offsets are sampled per token or per sequence, and we chose per token --- which makes the target unidentifiable and the Bayes-optimal output a mixture. \textbf{That is an untested method, not a refuted one.}
+
+\section{Next Experiments}
+Three experiments survive the campaign. Each is stated as claim, mechanism, hypothesis, reasoning and kill criterion, because the campaign's most expensive errors came from experiments whose reasoning was never written down before launch --- E14 swept a knob reaching 3.2\% of parameters while blaming the 96.8\%, and E28 selected and confirmed on overlapping seeds.
+
+\subsection{N1 --- Unfreeze the corpus}
+\begin{itemize}
+\item \textbf{Claim.} The frozen 250M-token corpus, not any architectural or optimisation choice, is the binding constraint on this frame.
+\item \textbf{Mechanism.} \texttt{mech\_data\_repetition\_cliff}. Under a time budget, tokens $=$ throughput $\times$ 300\,s; with a fixed corpus more tokens means more \emph{passes}; past $\approx$2.3 passes repetition inverts the token law and costs 16--18 gates. Unique tokens are the only quantity that buys throughput without buying passes.
+\item \textbf{Hypothesis.} At a corpus $\ge 3\times$ larger, the token law $\vb = a - b\ln(\text{tokens})$ holds with $b\approx0.06$ out to at least $2\times$ the current budget, and the cliff does not appear.
+\item \textbf{Reasoning.} Every closed direction in this campaign is explained by the four-row table, and three of the four rows exist only because passes are coupled to tokens. Breaking that coupling is the only intervention that changes the \emph{shape} of the feasible region rather than moving within it. It also converts the campaign's central claim from an explanation into a prediction.
+\item \textbf{Kill criterion.} If the cliff reappears at the same \emph{pass} count on the larger corpus, repetition is not the cause and \texttt{mech\_data\_repetition\_cliff} is refuted despite the shuffle test --- which would mean the shuffle test's single draw was unrepresentative.
+\item \textbf{Cost and blocker.} $\approx$3 GPU-h. Out of frame as stated: the corpus is part of the scope key, so this requires a \emph{new} registered frame rather than an experiment inside this one.
+\end{itemize}
+
+\subsection{N2 --- Count-conditioned $n$-gram decay}
+\begin{itemize}
+\item \textbf{Claim.} A penalty that can distinguish memorising rows from statistic-carrying rows closes the train/val gap \emph{and} improves the endpoint, where uniform decay closes the gap and hurts the endpoint.
+\item \textbf{Mechanism.} \texttt{mech\_memoriser\_is\_the\_model}. In a hashed table a rare-key memorisation and a frequent-key statistic occupy rows drawn from one hash space, and an $L_2$ penalty is indifferent between them. Visit frequency is the one signal that separates the populations, and it is already available at zero cost --- the gather indices are computed every step.
+\item \textbf{Hypothesis.} Decay applied only to rows below a visit-count threshold $c^*$ produces $\Delta\vb < 0$ at some $c^*$, with an interior optimum: too small and it is a no-op, too large and it degenerates to uniform decay, which is measured and harmful.
+\item \textbf{Reasoning.} This is the only member of the weight-space family the campaign's own result does not already close. The result closed \emph{norm-based} penalties by showing the two row populations are inseparable \emph{by norm}; it says nothing about separating them by count. An interior optimum is the discriminating signature --- a monotone curve in $c^*$ would mean the count signal is doing nothing and the effect is just a weaker uniform decay.
+\item \textbf{Kill criterion.} If the $c^*$ curve is monotone, or if the best $c^*$ is null at $n{=}10$, the weight-space family is closed on evidence rather than on argument.
+\item \textbf{Cost.} $\approx$1.7 GPU-h for a 4-point $c^*$ sweep at $n{=}4$, then $n{=}10$ on the winner with \emph{disjoint} seeds.
+\end{itemize}
+
+\subsection{N3 --- Per-sequence offset augmentation}
+\begin{itemize}
+\item \textbf{Claim.} Our null on label-offset augmentation is evidence about our sampling choice, not about the method.
+\item \textbf{Mechanism.} \texttt{mech\_label\_offset\_augmentation\_identifiability}. With the offset drawn per \emph{token}, the model cannot infer which offset it is scored on, so the Bayes-optimal output is a mixture over offsets --- a blur, by construction, independent of whether the method has merit. Drawn once per \emph{sequence}, the offset is inferable from context and the target stays identifiable.
+\item \textbf{Hypothesis.} Per-sequence offsets are flat in the offset temperature $T$ over $T\in\{2,4\}$, where per-token offsets degrade monotonically in $T$.
+\item \textbf{Reasoning.} Augmentation is the only admissible route left: the corpus is frozen, and masking or permutation corrupt the token-ID hashes that are 96.8\% of the model, so label-only methods are the entire admissible set. The source omits the per-token/per-sequence detail and we guessed; a guess that makes the target unidentifiable is a specification error on our side, not a refutation. \textbf{Recorded against our own interest:} we reported this direction as failed before noticing the identifiability problem.
+\item \textbf{Kill criterion.} If per-sequence is also null at $n{=}10$, the augmentation family is closed for this frame, and N1 becomes the only remaining move.
+\item \textbf{Cost.} $\approx$1.7 GPU-h.
+\end{itemize}
+
+\subsection{Ratings}
+Scored 1--5. \emph{Provenance} is low for N1 and N2 because both rest on this campaign's own measurements rather than an external result; \emph{feasibility} is low for N1 because it needs a new frame.
+
+\begin{center}\begin{small}
+\begin{tabular}{lccc}
+\toprule
+criterion & N1 corpus & N2 count-decay & N3 per-seq \\
+\midrule
+novelty        & 2 & 4 & 3 \\
+provenance     & 2 & 2 & 4 \\
+validity       & 5 & 4 & 4 \\
+impact         & 5 & 3 & 3 \\
+reliability    & 4 & 3 & 4 \\
+feasibility    & 1 & 5 & 5 \\
+falsifiability & 5 & 5 & 5 \\
+\midrule
+\textbf{mean}  & \textbf{3.4} & \textbf{3.7} & \textbf{4.0} \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+N3 scores highest and N1 matters most. That is the honest tension: the best-scoring experiment is the cheapest one, and the experiment that would actually change the answer is the one this frame forbids. Running N2 and N3 first is defensible only because they are cheap and both have real kill criteria; if both die, the campaign's recommendation is not a 32nd direction but a new frame.
+
+\section{Conclusion}
+A campaign of null results is not necessarily a campaign of bad ideas. Here it was a boundary optimum: one free parameter, a baseline already at its edge, and a cliff in the only direction with headroom. The single lever that moved the cliff was found not by a new idea but by noticing that a cell of the campaign's own grid was empty. The single real effect is real, sub-gate at its point estimate, and unresolved at its interval --- and we report it that way, because 450 experiments bought the right to state a number precisely and not the right to round it in our favour.
+\end{document}

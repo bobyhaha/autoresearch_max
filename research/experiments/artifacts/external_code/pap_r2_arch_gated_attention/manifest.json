@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "classification": "external_mechanism_source_reference",
+  "paper_id": "pap_r2_arch_gated_attention",
+  "external_role": "ranked_elementwise_gate_source",
+  "captured_at": "2026-07-29T10:21:11Z",
+  "repository": {
+    "url": "https://github.com/qiuzh20/gated_attention",
+    "default_branch": "main",
+    "head_resolution_method": "git ls-remote --symref <url>.git HEAD",
+    "commit": "f4c2a5f6ffd6ec709e0c60072c95ed4f5ce5b5d2",
+    "tree": "354de26ef46fb57d418ff98e85fefae2de6d5323",
+    "commit_time": "2025-12-20T10:58:55+08:00",
+    "commit_subject": "Merge pull request #8 from missflash/shkim_fix_251207",
+    "fetch_depth": 1,
+    "tracked_paths": 14,
+    "gitlinks": []
+  },
+  "artifacts": [
+    {
+      "path": "gated-attention-f4c2a5f6.tar.zst",
+      "role": "normalized_commit_source_archive",
+      "bytes": 532998,
+      "sha256": "ac9e5d5d4270ca88071500343b525be2116dbfd68c0c422411d35f2a078270fb",
+      "uncompressed_tar_bytes": 1044480,
+      "archive_root": "gated-attention-f4c2a5f6/",
+      "regular_files": 14,
+      "symlinks": 0
+    }
+  ],
+  "normalization": {
+    "recipe": "git archive --format=tar --prefix=gated-attention-f4c2a5f6/ f4c2a5f6ffd6ec709e0c60072c95ed4f5ce5b5d2 | zstd -19 -T1",
+    "git_version": "2.39.5 (Apple Git-154)",
+    "zstd_version": "1.5.7",
+    "deterministic_rebuild_byte_identical": true
+  },
+  "license": {
+    "path": "LICENSE",
+    "declared_family": "MIT",
+    "sha256": "e7ad7da3894829cde8c6476ceb790bae394d4de11223f1eaebb0cef4da24a136"
+  },
+  "verified_files": [
+    {
+      "path": "README.md",
+      "sha256": "08aaf4e86de641e3076649c776f56810366c59aeca079fb2c5fc67e82931f140"
+    },
+    {
+      "path": "modeling_qwen3.py",
+      "sha256": "fd1eff3afaeff708f8506d6952655ee834af3c97054ca124633ff3536548ff0d"
+    },
+    {
+      "path": "configuration_qwen3.py",
+      "sha256": "899072d90e611ff24c4e6d6689b745385a931d85ff81a851f4dc52ee614ef2ad"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "e7ad7da3894829cde8c6476ceb790bae394d4de11223f1eaebb0cef4da24a136"
+    }
+  ],
+  "verification": {
+    "zstd_integrity_test": true,
+    "archive_embedded_commit": "f4c2a5f6ffd6ec709e0c60072c95ed4f5ce5b5d2",
+    "archive_embedded_commit_matches_resolved_head": true,
+    "archive_path_accounting_matches_git_tree": true,
+    "git_lfs_pointers_detected": 0,
+    "local_sota_adoption_claimed": false
+  },
+  "scope_and_adoption_caveats": [
+    "This is an immutable external source reference for the ranked elementwise/headwise gating mechanism, not a governed local OPHIS SOTA.",
+    "The implementation targets Qwen3 and derives gate values by widening and splitting the query projection; transfer to the local model requires an explicit shape-, initialization-, and no-op-equivalence design rather than copy-paste adoption.",
+    "The archive includes code and small published analysis assets but no pretrained model weights."
+  ]
+}

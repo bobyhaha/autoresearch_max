@@ -1,0 +1,88 @@
+{
+ "claim": "RETRACTED -- see retraction. Retained as the campaign's best-known configuration, NOT a SOTA.",
+ "code": {
+  "lib.py": "05691d87f253b0f7692d2da40a909d6fed6ec83ea37f3e890a687f874ebf49c4",
+  "train.py": "6dc22cc5351dd37d9473d74bbbb2402b61c2db6477e302be5f87017a62b37906"
+ },
+ "control_env": {
+  "DEPTH": "8 (default)",
+  "MATRIX_LR": "0.04"
+ },
+ "env": {
+  "ATTN_BACKEND": "fa3",
+  "COMPILE_MODE": "max-autotune-no-cudagraphs",
+  "DEPTH": "6",
+  "DEVICE_BATCH_SIZE": "72",
+  "MATRIX_LR": "0.03",
+  "STOP_MODE": "time",
+  "TIME_BUDGET": "300",
+  "TOTAL_BATCH_SIZE": "147456",
+  "WINDOW_PATTERN": "TTTL"
+ },
+ "frame": {
+  "gate": 0.002614,
+  "min_seeds": 10,
+  "registered_baseline": 0.931857,
+  "scope_id": "walltime_5min_h200",
+  "stop_mode": "time",
+  "time_budget_s": 300
+ },
+ "honest_caveats": [
+  "MARGIN IS THIN. The point estimate exceeds the floor by 4% (0.002715 vs 0.002614). The preregistered rule is a point-estimate rule and it is satisfied, but the 95% CI is [-0.003761, -0.001669] and its upper end lies BELOW the floor in magnitude, so the true effect may not clear. This is an adoption by the registered rule, not a comfortable margin.",
+  "AGAINST THE REGISTERED BASELINE rather than the in-tranche control the delta is -0.002349 (0.90 gates), which does NOT clear. The paired in-tranche control is the frame's specified comparison and is what the rule uses, but both numbers are recorded so the difference is visible.",
+  "INTERIM REGRESSION IS THE STANDING WARNING: depth 6 alone read 1.24 gates at n=4 and finished at 0.77 at n=12. This tranche was taken to n=10 in one round with an in-tranche control precisely to avoid that failure mode, but no interim was reported and none should be inferred.",
+  "PROVENANCE: direct-SSH launch behind the probe gate, no authorize-run binding, consistent with every other tranche in this campaign. The campaign batch is recorded 'quarantined' on provenance for that reason even though the science funnel is satisfied.",
+  "THE PREREGISTERED PREDICTION WAS THAT THIS WOULD FALL SHORT at about 0.88 gates. It did not. The combination is 0.000415 MORE than the sum of its parts (-0.002002 depth 6 at n=12, -0.000298 LR at n=4), i.e. mildly super-additive. That super-additivity is measured, not explained."
+ ],
+ "recorded_at": "2026-08-01T06:05:00Z",
+ "reproduce": "cd ~/ophis/repo && env HF_ENDPOINT=https://hf-mirror.com CUDA_VISIBLE_DEVICES=<gpu> STOP_MODE=time TIME_BUDGET=300 ATTN_BACKEND=fa3 COMPILE_MODE=max-autotune-no-cudagraphs WINDOW_PATTERN=TTTL DEVICE_BATCH_SIZE=72 TOTAL_BATCH_SIZE=147456 DEPTH=6 MATRIX_LR=0.03 SEED=<seed> python3 -u train.py",
+ "result": {
+  "ci95": [
+   -0.003761,
+   -0.001669
+  ],
+  "control_mean": 0.932223,
+  "gates": 1.04,
+  "n_clean_pairs": 10,
+  "paired_mean": -0.002715,
+  "per_seed_delta": {
+   "42": -0.001864,
+   "43": -0.006127,
+   "44": -0.003018,
+   "45": -0.002353,
+   "46": -0.002355,
+   "47": -0.002645,
+   "48": -0.000781,
+   "49": -0.004022,
+   "50": -0.001849,
+   "51": -0.002136
+  },
+  "sd": 0.001463,
+  "seeds_better": 10,
+  "sem": 0.000463,
+  "t": -5.87,
+  "treatment_mean": 0.929508
+ },
+ "retraction": {
+  "block": "block50",
+  "experiment": "E29",
+  "predicted": "The reading log one block earlier named the winner's curse: the configuration was SELECTED on seeds 42-45 and EVALUATED on seeds 42-51, which contain them. Regression toward the additive ~0.88 gates was the stated expectation. Measured regression +0.001153, from 1.04 to 0.60 gates.",
+  "reason": "Verification on seeds 52-61, disjoint from every prior arm, measured -0.001562 (0.60 gates), and the preregistered pooled 20-pair headline is -0.002139 (0.82 gates). Neither clears the 0.002614 floor.",
+  "retracted_at": "2026-08-01T08:10:00Z",
+  "supersedes_explanation": "The 0.000415 super-additive residual recorded as 'measured, not explained' is now best explained as selection bias, not as a real interaction.",
+  "what_remains_true": {
+   "ci95": [
+    -0.002762,
+    -0.001515
+   ],
+   "gates": 0.82,
+   "n_pairs": 20,
+   "pooled_mean": -0.002139,
+   "seeds_better": "20/20",
+   "statement": "The effect is REAL and SUB-GATE. Depth 6 + MATRIX_LR 0.03 beats the frozen defaults by about 0.0021 val_bpb; the floor is 0.002614.",
+   "t": -7.18
+  }
+ },
+ "sota_id": "sota_depth6_lr03_20260801",
+ "status": "RETRACTED"
+}

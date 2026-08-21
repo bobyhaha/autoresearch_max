@@ -1,0 +1,569 @@
+%% Prospective mechanism-block preregistration. It contains no new scored result.
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{seqsplit}
+\usepackage{xcolor}
+\usepackage{icml2024}
+\makeatletter
+\gdef\isaccepted{1}
+\renewcommand{\Notice@String}{\textit{Internal OPHIS preregistration in ICML
+two-column format. Not peer reviewed, submitted to, or accepted by ICML.}}
+\makeatother
+\hypersetup{
+  pdfauthor={GPT Research Coordinator, mechanism proposers, and independent adversarial critic},
+  pdfsubject={Internal OPHIS preregistration; not an ICML submission or acceptance}
+}
+
+\newcommand{\bpb}{\mathrm{bpb}}
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+\newcommand{\sg}{\operatorname{sg}}
+\newcommand{\silu}{\operatorname{SiLU}}
+\newcommand{\hashx}[1]{{\ttfamily\seqsplit{#1}}}
+\newcommand{\passx}{\textcolor{blue}{pass}}
+\newcommand{\killx}{\textcolor{red}{kill}}
+\newcommand{\holdx}{\textcolor{orange}{hold}}
+\icmltitlerunning{Paper 020: From Failed Attribution to Local Mechanism Assays}
+
+\begin{document}
+\twocolumn[
+\icmltitle{Paper 020: From Failed Attribution to Local Mechanism Assays\\
+Residual Transport and Hash Independence on the OPHIS Plateau}
+\begin{icmlauthorlist}
+\icmlauthor{GPT Research Coordinator}{ophis}
+\icmlauthor{Independent Mechanism Proposers}{ophis}
+\icmlauthor{Independent Adversarial Critic and Implementation Auditor}{ophis}
+\end{icmlauthorlist}
+\icmlaffiliation{ophis}{OPHIS governed autoresearch campaign}
+\icmlcorrespondingauthor{GPT Research Coordinator}{baiyuzhu@mit.edu}
+\icmlkeywords{automated research, preregistration, causal attribution, residual scaling, conditional memory}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+The preceding block did not establish either of its proposed mechanisms.
+Its boundary-sidecar diagnostic was invalid because the scanner/scanner null
+diverged in model, optimizer, and loss state before treatment activation; its
+canonicalized n-gram keys were killed by their frozen offline mediator.  We
+therefore restart from the unchanged current recipe and preregister at most
+five mechanism questions, linked by a single thesis: useful sublayer and
+memory signals must remain distinguishable as they are transported into the
+residual stream.  Three independent proposer/critic passes rank
+gradient-preserving activation scaling (GPAS) first, followed by balanced
+prime moduli, a conditional constant-parameter four-hash child, conditioned
+attention initialization, and a conditional attention-side Peri-RMSNorm.
+Every rating is printed explicitly.  The top choice is plausible because the
+NeurIPS 2025 source isolates stop-gradient as the difference between forward
+downscaling that fails and gradient-preserving scaling that improves
+perplexity; nevertheless, OPHIS is only eight layers and already contains
+per-head normalization, normalized MLP output, learned residual/$x_0$ paths,
+zero output projections, and hashed memory.  A baseline applicability assay
+must therefore show the source mechanism locally before any endpoint is
+allowed.  Accepted-only comparator succession, same-seed concurrent controls,
+mechanism mediators, compiler and throughput gates, and a
+$1\!\rightarrow\!3\!\rightarrow\!6\!\rightarrow\!10$ evidence funnel are
+frozen.  Historical experiment 501 at 0.927183 remains only the chart origin.
+This paper reports no new SOTA and authorizes no run until its typed records,
+source capsules, and setup reconciliation pass.
+\end{abstract}
+
+\section{Authority, Closures, and Comparator}
+
+This paper prospectively supersedes only the unexecuted experimental authority
+of Paper-019 Rounds 3--5 and defines a new block of at most five mechanism
+questions.  It neither alters nor reinterprets the two terminal Paper-019
+closures \cite{paper019a}.  Round 1 is
+\texttt{INVALID\_DIAGNOSTIC}: its exact cross-device scanner/scanner null
+failed before sidecar activation, so the proposed sidecar mechanism was never
+tested.  Round 2 is \texttt{KILL\_BEFORE\_GPU\_SCORING}: the conservative
+affected trigram share was 3.7155\%, below its frozen 10\% mediator.  This
+rejects only that keys-only canonicalization retrofit, not Engram, distinct
+moduli, or conditional memory generally.
+
+Neither closure supports adoption, mechanism rejection beyond its stated
+scope, comparator replacement, or SOTA.  The cumulative comparator begins at
+$R_0$, the current canonical recipe bound by setup reconciliation v31.  V31
+differs from v30 only by the default-off GPAS implementation; $R_0$ explicitly
+uses \texttt{GPAS\_ENABLE=0}.  Its 0.934930 mean and effective
+$\sigma=0.001198$ are operational setup
+references, not substitutes for concurrent controls.  The active
+two-$\sigma$ magnitude is
+\[
+2\sigma=0.002396.
+\]
+Every causal estimand uses a fresh same-seed concurrent control on the current
+recipe.  Historical experiment 501 at 0.927183 remains the chart origin and a
+provenance observation.  It is forbidden as a control, comparator
+qualification target, effect denominator, arm configuration, or SOTA claim.
+
+The prior diagnostic's source hashes were bound, but both RunRecords state
+\texttt{git\_dirty=true}; we therefore do not describe it as a clean-tree
+execution.  Its cross-device exact-state criterion is also not reused:
+\texttt{train.py} explicitly warns that the fixed-seed CUDA pipeline is not
+bitwise deterministic.  Future zero-effect equivalence is performed as
+same-physical-device replay before an arm contrast.
+
+\section{Connected Thesis and Attribution Rule}
+
+The model already combines full in-document attention with token and
+hashed n-gram values.  Its plateau can therefore arise even when useful
+features exist: a residual shortcut may dominate deeper transformations,
+multiple hash heads may alias the same contexts together, or an attention
+branch may begin in a poorly conditioned or badly scaled state.  The proposed
+body is
+\[
+\begin{gathered}
+\text{gradient-preserving residual depth}\\
+\Downarrow\\
+\text{independent conditional-memory evidence}\\
+\Downarrow\\
+\text{conditioned and balanced attention injection}.
+\end{gathered}
+\]
+This is a connected cumulative program, not permission to bundle additions.
+Each treatment differs from its current comparator by exactly one mechanism.
+A mechanism joins the comparator only after the full preregistered acceptance
+funnel, not after an offline pass, a diagnostic, or one paired screen.
+Rejection, invalidity, or a failed mediator leaves the comparator unchanged.
+A conditional child cannot execute unless its named parent was accepted.
+
+The governing principle is:
+\begin{quote}
+\emph{Before a system can improve itself, it must be able to observe and
+attribute its failures.}
+\end{quote}
+Consequently, an observed endpoint without its predicted mediator is evidence
+against the stated explanation, even when numerically favorable.  It is not
+silently relabeled as a success.
+
+\section{Multiagent Ranking and Selection}
+
+All vectors use novelty (N), primary-source provenance (P), causal validity
+(V), expected local impact (I), transfer reliability (R), feasibility/cost
+(F), falsifiability (X), and connected-program coherence (C), each on a
+1--5 scale.  Institutional or conference prestige can strengthen provenance;
+it cannot establish local transfer.  Table~\ref{tab:ratings} records both
+proposer and independent critic scores rather than only a total.
+
+\begin{table*}[t]
+\caption{Prospective ratings in N/P/V/I/R/F/X/C order.  The implementation
+audit found a stale width and a non-reproducible serialized definition in the
+first prime-modulus draft; Round 2 therefore remains blocked until a separately
+versioned corrected authority passes exact equality checks.}
+\label{tab:ratings}
+\centering\scriptsize
+\setlength{\tabcolsep}{3.6pt}
+\begin{tabular}{p{0.31\linewidth}p{0.21\linewidth}p{0.21\linewidth}p{0.18\linewidth}}
+\toprule
+candidate & proposer & independent critic & verdict\\
+\midrule
+source-faithful GPAS shared residual gate &
+4/5/5/4/4/5/5/5 = 37 &
+4/5/4/3/2/5/5/5 = 33 & rank 1\\
+distinct balanced prime moduli for raw-ID n-gram heads &
+4/5/5/3/3/5/5/5 = 35 &
+4/4/2/2/2/3/2/5 = 24 & hold / blocked\\
+source-faithful conditioned Q/K/V initialization &
+4/5/4/3/3/5/5/5 = 34 &
+3/5/3/3/2/5/5/5 = 31 & rank 3\\
+constant-parameter $K=4$ hash ensemble &
+4/5/4/3/3/4/5/5 = 33 &
+3/4/4/2/2/4/5/5 = 29 & conditional child\\
+attention post-$c_{\rm proj}$ Peri-RMSNorm &
+3/5/5/4/4/5/5/5 = 36 &
+2/5/3/2/2/4/5/4 = 27 & conditional final round\\
+full Engram key-query contextual gate &
+5/5/4/4/3/3/5/5 = 34 &
+4/5/3/2/2/2/5/4 = 27 & defer to next paper\\
+sidecar retry &
+-- &
+1/5/1/2/1/1/5/1 = 17 & hard veto\\
+canonical-key retry &
+-- &
+1/5/4/1/2/5/5/2 = 25 & hard veto\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\paragraph{Why GPAS is ranked first.}
+An initial portfolio critic scored GPAS
+4/5/4/3/3/5/5/5 = 34/40.  The deeper source/code transfer audit lowered
+reliability by one point, producing the authoritative 33/40 shown above.
+GPAS makes an unusually sharp causal prediction.  In a Pre-LN residual
+sublayer with post-sum activation $z$, it applies
+\[
+z' = z-\silu(\alpha_\ell)\sg(z).
+\]
+The forward scale is $1-\silu(\alpha_\ell)$, while
+$\partial z'/\partial z=I$.  The official implementation uses one
+zero-initialized scalar per layer and reuses it after both the attention and
+FFN residual sums \cite{gpas2025,gpascode}.  Across 71M, 130M, 250M, 350M,
+and 1B Pre-LN models, the paper reports evaluation perplexity changes
+33.98$\rightarrow$33.38, 26.61$\rightarrow$26.25,
+21.54$\rightarrow$21.34, 20.71$\rightarrow$19.77, and
+16.53$\rightarrow$16.11.  More importantly for attribution, the 350M
+ablation reports 20.35 with stop-gradient, 21.34 without it, and 21.35 with no
+GPAS, while forward variance is still reduced without stop-gradient.
+This isolates gradient preservation from mere downscaling.
+
+The selection is still a transfer hypothesis, not a replication claim.
+The source reports no error bars or multi-seed significance, and its models
+are 12 layers or deeper.  OPHIS has eight layers, learned residual and $x_0$
+paths, per-head Q/K normalization and gating, normalized MLP output,
+zero-initialized $c_{\rm proj}$ weights, Muon/AdamW/RMSProp optimizer
+partitioning, and hashed value memory.  Those differences lower the critic's
+impact and reliability scores and make the baseline applicability mediator
+mandatory.
+
+\section{Round 1: Source-Faithful GPAS}
+
+\paragraph{Intervention.}
+Add one parameter $\alpha_\ell=0$ for each of eight layers.  Reuse that
+scalar after both the attention and MLP residual sums, exactly as in the
+official implementation.  The gate joins the same local AdamW class used for
+learned residual scalars: paper-frozen learning rate 0.005, betas
+$(0.8,0.95)$, epsilon $10^{-10}$, no weight decay, and no momentum-decay
+flag.  This value is a constant, not a derivation from current $R_0$'s
+\texttt{scalar\_lr}$=0.8$ (the ratio is 0.00625).  This optimizer mapping is
+an OPHIS-specific extrapolation; the source uses Adam at $5\times10^{-4}$ for
+all parameters.  This wording was corrected prospectively before any
+Round-1 GPU execution or result.
+
+\paragraph{Zero-effect replay.}
+Before a mechanism assay, one physical H200 runs same-device control replay
+and an $\alpha=0$ treatment replay from separately constructed but
+source-identical states.  At step 0, logits, loss, all pre-existing parameter
+gradients, data IDs/targets/bytes, packer boundaries, RNG identity, and
+compiler identity must match exactly.  The new gate gradients must be finite
+and nonzero.  All \texttt{PACKER\_*} diagnostic flags are zero.  A mismatch is
+\texttt{INVALID\_DIAGNOSTIC}; it cannot be repaired by relaxing equality
+after seeing the value.
+
+\paragraph{Applicability mediator.}
+The first execution after replay is one eager, training-only 256-step
+treatment/control mediator pair; residual probes require compilation to be
+disabled.  Its control rows 1--32 define post-MLP residual variance at layer
+$\ell$ as
+\[
+v_{\ell,t} =
+\operatorname*{mean}_{b,s}
+\operatorname*{Var}_{d}\!\left[z_{\ell,t}(b,s,d)\right],
+\]
+computed in FP64 outside the scored endpoint.  In at least 24 of 32 control
+steps, Spearman correlation between layer index and $\log v_{\ell,t}$ must be
+at least 0.60 and $v_{7,t}/v_{0,t}\ge1.25$.  Otherwise the local model lacks
+the source mechanism and the round is killed before endpoint work.
+Post-attention statistics are recorded but cannot replace the registered
+post-MLP statistic.
+
+\paragraph{Treatment mediation and safety.}
+Across that eager 256-step pair, the treatment/control ratio of
+$v_7/v_0$ must be at most 0.85 and the treatment's deepest-layer variance
+must be at most 0.90 of control.  Setting the learned gates to zero at the
+assay endpoint must restore at least 50\% of the variance-ratio gap, tying the
+effect to GPAS rather than incidental drift.  Every
+$1-\silu(\alpha_\ell)$ must stay finite in $[0.5,1.5]$; all gate and
+pre-existing gradients must remain finite; and the deepest four layers must
+contribute at least half of the aggregate variance-ratio reduction.
+
+Only after the eager pair passes, two separate no-probe compiled 256-step
+pairs run on the same two frozen H200 UUIDs with roles swapped.  Every arm in
+each placement must have exactly one Dynamo graph, zero recompiles, and zero
+CUDA-graph recordings; timing uses steps 33--256.  The counterbalanced
+treatment/control token-rate point ratio must be at least 0.99 with a
+one-sided 95\% lower bound of at least 0.985.  Each arm's clean steps 33--256
+are partitioned into 28 ordered, nonoverlapping eight-step blocks.  With
+\texttt{random.Random(19019063)}, each of 10,000 replicates draws 28 block
+indices with replacement independently per placement, reusing that placement's
+index vector for its control and treatment, and takes the geometric mean of
+the two aggregate treatment/control token-rate ratios.  The lower bound is
+ascending order statistic 499 (zero based); any missing, nonfinite, or
+nonpositive block or replicate invalidates the diagnostic.  This bootstrap
+specification was corrected prospectively before any Round-1 GPU execution.
+Thus one registered seed/pair
+has exactly three governed pair executions---one eager mediator and two clean
+timing placements---not three endpoint-funnel pairs.  Replay is judged before
+the eager pair, mediation immediately afterward, and later phases are skipped
+on any failure.  This separation was corrected prospectively before any
+Round-1 GPU execution.  A pass authorizes only drafting and registering a
+separate ordinary paired endpoint proposal.  The predicted raw paired endpoint effect is
+$\Delta\bpb\le-0.0030$; ordinary promotion still requires the registered
+$-0.002396$ magnitude and confidence gates.
+
+\section{Rounds 2--3: Hash Independence}
+
+\paragraph{Source and local extrapolation.}
+Engram uses layer/head-specific odd mixers and distinct prime table moduli
+\cite{engram2026,engramcode}.  OPHIS already uses disjoint multiplier tuples
+but applies the same composite modulus
+$8192\times64=524288$ to all fourteen active bigram/trigram tables.
+Round 2 changes only these moduli while preserving raw token IDs;
+canonicalized IDs are forbidden.  Prime bracketing around 524288 is a local
+constant-sum extrapolation, not an Engram result.
+
+\paragraph{Distinct-prime reserve: definition v1 withdrawn.}
+The proposer score was 35/40 and the earlier critic score was 31/40.  After
+implementation audit, the authoritative critic vector is
+4/4/2/2/2/3/2/5 = 24/40, with verdict \holdx{}.  The first proposed capsule
+serialized a width of 256 and claimed
+1,879,048,192 active memory parameters.  Direct inspection instead gives
+\texttt{n\_embd}=768, six KV heads, \texttt{kv\_dim}=768, and a
+$K=2$ half-width of 384, so the same 7,340,032 rows contain
+2,818,572,288 active parameters.  Its stated canonical payload was also
+not independently reproducible from the initial stated serialization.
+These are prospective design failures, not experiment results.  V1 is
+\texttt{WITHDRAWN\_INVALID\_SPECIFICATION}; no collision, throughput, BPB,
+adoption, or mechanism conclusion may be drawn from it.
+
+Round 2 remains a research slot but has no execution authority until a
+separately versioned, append-only v2 is frozen.  V2 must bind exact canonical
+JSON bytes and an independently reproduced digest; live source and config
+hashes; the complete fourteen-table inventory; runtime-derived width;
+parameter membership, shapes, dtypes, counts, and bytes; and the actual
+optimizer state keys, tensor shapes, dtypes, counts, and bytes under the bound
+\texttt{NGRAM\_STATE\_ROWWISE} and \texttt{NGRAM\_SPARSE\_GRAD} flags.
+Arithmetic equality alone is insufficient.  V1 remains preserved and cannot
+be overwritten or used as v2 evidence.  If v2 is not frozen when this slot is
+reached, Round 2 is skipped and Round 3 remains blocked.  The replacement may
+not alter the following metrics after observing corpus values.
+
+\paragraph{Frozen offline census.}
+Aggregate raw n-gram frequency counters from exactly eight pinned training
+shards; validation data are forbidden.  For every order $n$, layer $\ell$,
+head $k$, and unordered distinct key pair $g<g'$, let $C_{n\ell k}(g,g')$
+indicate a bucket collision and weight it by $f_gf_{g'}$.  The double
+collision is $J_{n\ell}=C_{n\ell0}C_{n\ell1}$.  The authoritative aggregate
+collision lift is
+\[
+L_n^w =
+\frac{Q_n^w\sum_\ell D_{n\ell}^w}
+{\sum_\ell B_{n\ell0}^w B_{n\ell1}^w},
+\quad
+Q_n^w=\sum_{g<g'}f_gf_{g'}.
+\]
+The control premise requires unweighted expected support at least 100 and a
+weighted lift point estimate and one-sided 95\% bootstrap lower bound at
+least 1.25.  The treatment must have lift at most 1.10 and at most 0.80 of
+control; weighted double-collision burden must be at most 0.75 of control
+with one-sided 95\% upper bound at most 0.90; unweighted burden must be at
+most 0.80; and at least six of seven layer sites may not regress.
+
+Marginal weighted collision burden must be at most 1.005 of control overall
+and 1.01 in every layer.  Repeated full aliases across layer pairs must be at
+most 0.85 of control.  Occurrence-weighted R\'enyi-2 joint entropy deficit
+must be at most 0.80 of control, while no individual marginal entropy may
+fall by more than $5\times10^{-4}$.  The paired bootstrap uses whole-shard
+resampling, seed 19019063, 10,000 replicates, and the same eight-index vector
+for both arms.  Zero denominators or any non-finite replicate fail closed.
+This offline pass is necessary but never sufficient for adoption.
+
+The runtime treatment must preserve exact total embedding parameters,
+optimizer-state elements, data, targets, byte counts, ordering, BOS
+positions, boundaries, non-memory initialization, and global RNG.  It must
+compile to one graph with zero recompiles and slow charged token rate by at
+most 0.5\%.  Its predicted endpoint effect is
+$\Delta\bpb\le-0.0030$.
+
+\paragraph{Conditional $K=4$ child.}
+Round 3 is eligible only after full Round-2 acceptance.  It uses four
+distinct prime tables per injection, each with one quarter of the accepted
+$K=2$ concatenated width.  Total embedding parameters and every RMSProp state
+element must match exactly; initial concatenated memory-output variance must
+be within 2\%; non-memory parameters, data, and RNG must be exact.  Its joint
+collision burden must be at most 0.75 of the accepted $K=2$ comparator on the
+same census, graph count must be unchanged, and slowdown must be at most
+1.0\%.  The predicted paired effect is
+$\Delta\bpb\le-0.0026$.  Engram uses eight hash heads; $K=4$ is a local
+intermediate, not source-faithful replication.
+
+\section{Rounds 4--5: Attention Transport}
+
+\paragraph{Conditioned Q/K/V initialization.}
+Round 4 uses the ICLR 2026 paper's joint construction: independent
+semi-orthogonal per-head Q/K maps and rectangular-identity V maps
+\cite{conditioned2026}.  It does not revive Paper 019's disjoint-V
+extrapolation.  Before training, each Q/K row-orthogonality residual must be
+at most $10^{-5}$, every V map must satisfy
+$\sigma_{\min}/\sigma_{\max}\ge0.99$, and all non-Q/K/V tensors plus global
+RNG must match control exactly.  The registered attention-Jacobian surrogate
+must fall at least 20\% in every layer, while attention entropy changes by at
+most 0.05.
+
+Because OPHIS initializes $c_{\rm proj}=0$, the first backward must produce a
+finite nonzero $c_{\rm proj}$ gradient, and the backward after the first
+update must produce finite nonzero Q/K/V gradients.  One compiled graph and
+timing within 0.1\% are required.  The prediction is
+$\Delta\bpb\le-0.0030$.  The source reports TinyStories
+2.39$\rightarrow$2.20 and WikiText-103
+44.2$\rightarrow$42.7 at 472M parameters, but no local seed variance; the
+surrogate is a bound, not the true condition number.
+
+\paragraph{Conditional attention Peri-RMSNorm.}
+Round 5 first asks whether the current accepted comparator has the proposed
+problem.  Across 32 fixed diagnostic steps, the post-$c_{\rm proj}$ attention
+branch must have max/min layer RMS at least 1.25 or layerwise coefficient of
+variation at least 0.20.  Otherwise the round is killed offline.  If eligible,
+apply a fixed scale-free RMS normalization only to the attention output after
+$c_{\rm proj}$; the MLP already has an analogous normalization.  This is an
+OPHIS-specific partial placement, not the full learned-scale Peri-LN
+architecture \cite{periln2025}.
+
+Step-0 attention output must remain exactly zero.  At step 1, each
+$c_{\rm proj}$ gradient ratio must lie in $[0.5,2.0]$ and no layer may exceed
+2.5 times control.  Across the 32-step diagnostic, residual-norm coefficient
+of variation and max/min layer-gradient ratio must each fall at least 20\%.
+No non-finite value is allowed; slowdown is at most 1.0\%; the predicted
+paired effect is $\Delta\bpb\le-0.0030$.
+
+\section{Execution, Statistics, and Resource Use}
+
+\begin{table}[t]
+\caption{Frozen order.  A failed conditional round is skipped, never replaced
+post hoc.  A substitute requires a new paper.}
+\label{tab:order}
+\centering\scriptsize
+\setlength{\tabcolsep}{2.2pt}
+\begin{tabular}{cll}
+\toprule
+round & mechanism & dependency\\
+\midrule
+1 & GPAS shared gate & local applicability\\
+2 & balanced prime moduli & corrected authority\\
+3 & constant-parameter $K=4$ & Round 2 accepted\\
+4 & conditioned Q/K/V init & none; cumulative $R$\\
+5 & attention Peri-RMSNorm & local imbalance\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each endpoint follows a one-pair screen, then cumulative $n=3$, $n=6$, and
+$n=10$ paired same-seed evidence.  A stage-1 value is never a belief,
+adoption, SOTA, or cross-candidate ranking statistic.  Full acceptance
+requires the current registered mean-effect threshold, sign consistency,
+confidence gate, and the candidate-specific mediator.  Role order is
+counterbalanced, and a fresh control runs concurrently at every stage.
+Round 1's three diagnostic executions precede and do not consume this funnel.
+
+Causal isolation overrides occupancy.  The coordinator may run independent
+CPU literature, paper, census, or verification work while a registered GPU
+assay runs, and may occupy multiple tenant-free H200s with independent
+same-stage pairs.  It may not fill free GPUs with unregistered experiments,
+run a child before its parent, or create competing unsynchronized schedulers.
+PID/UUID/device watchdogs, source-hash bindings, and the one-to-two-GPU
+attribution reserve remain mandatory.  Analysis performed outside the
+charged clock must be symmetric or explicitly diagnostic-only.
+
+Before any launch: preserve the primary paper and exact code commit; register
+paper, atomic claims, evidence, mechanism, hypothesis, intervention, and
+experiment; freeze the source diff and resolved arm configuration; require
+all \texttt{PACKER\_*} flags to be zero; render generated state; run
+\texttt{validate}, strict \texttt{audit}, setup, and gate checks; inventory
+tenant-free GPUs; and commit the authority.  Any source, setup, or artifact
+drift returns the proposal to \holdx{}.
+
+\section{Falsification and Non-Claims}
+
+The block is successful as research even if no candidate is adopted, provided
+each failure is attributed to a preregistered mediator.  GPAS can fail because
+depthwise variance growth is absent, the gate does not mediate it, or the
+cost exceeds its limit.  Prime moduli can fail because the control has no
+cross-head dependence, independence does not improve, or marginal entropy
+regresses.  Conditioned initialization can fail its spectral surrogate,
+gradient-onset, or endpoint prediction.  Peri-RMSNorm can fail because no
+branch imbalance exists or normalization amplifies the zero-output path.
+
+No offline metric, mechanism assay, one-pair value, historical chart point, or
+paper-reported improvement is a local SOTA.  A new SOTA requires a terminal
+governed result whose preregistered comparator, full funnel, evidence update,
+decision, snapshot, chart point, and reproducibility code all pass.  Until
+then, the best displayed value remains historical experiment 501 at
+0.927183, with its original timestamp and its restricted provenance role.
+
+\section{Reproducibility Binding}
+
+The GPAS source capsule binds official repository commit
+\hashx{31980688f4cbb1b0cff59bca9077e6fc52dab3f0}, tree
+\hashx{076a1d81a48f4d03dbd455d4197345480bd818bb}, deterministic source
+archive SHA-256
+\hashx{1177e6766f53cf0bc59b880a96ca09d7732984db62f8d54b9bf5083b1b45acf0},
+Git bundle SHA-256
+\hashx{8e2abb5ba02b16639d92cb532b3134c5fa4bcce0f43156585fa2e591294edaf1},
+and proceedings PDF SHA-256
+\hashx{d644ed31e31a693fa889e01655e94cfea1cdb0c312901ee11b001af68b14a35e}.
+The pre-intervention hashes preserved in Git commit
+\hashx{16d8fae959b67f45ed1f6338aaa554a6fbb91f07} are:
+
+\noindent\texttt{train.py}\\
+\hashx{e2d4ac9e91c6ef716a8fdab35ab72da3e0e4bb23cbbecee04cc528b66d172b8b}
+
+\noindent\texttt{lib.py}\\
+\hashx{13de28bcb398866be65cfca489413818d75dc2fcd2461e367be06198f879123d}
+
+\noindent\texttt{research/setup/reconciliation.json}\\
+\hashx{526dcdf38f90c83ca097776c69ec2d9610c6f39091c307f1d60f8403ce698acd}.
+The invalid sidecar pair artifact is preserved with SHA-256
+\hashx{4c26aa74b020b093740e099abc50510be23cd9d353789aee049f42bcebaa4dca};
+its preservation prevents it from being rediscovered or relabeled.
+
+\section{Conclusion}
+
+Paper 020 replaces plateau knob-search with five falsifiable mechanism
+questions.  Its first question is deliberately local: does OPHIS even exhibit
+the depthwise residual-variance mechanism that GPAS is designed to correct?
+Its second asks whether existing n-gram heads provide independent evidence
+rather than correlated aliases, but remains blocked after the implementation
+auditor caught a stale width and incomplete equality contract.  Later rounds
+condition and scale the attention path only through measured applicability.
+The accepted-only chain turns separate architectural ideas into one connected
+body while keeping every causal increment identifiable.
+
+\begin{thebibliography}{9}
+\bibitem[GPT Research Coordinator et al.(2026)]{paper019a}
+GPT Research Coordinator et al.
+\newblock Paper 019a: Observe Before Optimizing---An Attribution Addendum for
+Packer-Sourced FA3 Boundaries.
+\newblock Internal OPHIS preregistration, 2026.
+
+\bibitem[Chen et al.(2025)]{gpas2025}
+Tianhao Chen, Xin Xu, Zijing Liu, Pengxiang Li, Xinyuan Song, Ajay Kumar
+Jaiswal, Fan Zhang, Jishan Hu, Yang Wang, Hao Chen, Shizhe Diao, Shiwei Liu,
+Yu Li, Lu Yin, and Can Yang.
+\newblock GPAS: Accelerating Convergence of LLM Pretraining via
+Gradient-Preserving Activation Scaling.
+\newblock \emph{NeurIPS}, 2025.
+
+\bibitem[Chen et al.(2026)]{gpascode}
+Chen et al.
+\newblock GPAS official implementation, commit
+\texttt{31980688f4cbb1b0cff59bca9077e6fc52dab3f0}.
+\newblock \url{https://github.com/dandingsky/GPAS}, captured 2026.
+
+\bibitem[Cheng et al.(2026)]{engram2026}
+Xin Cheng, Wangding Zeng, Damai Dai, Qinyu Chen, Bingxuan Wang, Zhenda Xie,
+Kezhao Huang, Xingkai Yu, Zhewen Hao, Han Zhang, Yu-Kun Li, Huishuai Zhang,
+Dongyan Zhao, and Wenfeng Liang.
+\newblock Conditional Memory via Scalable Lookup: A New Axis of Sparsity for
+Large Language Models.
+\newblock \emph{ACL}, 2026.
+
+\bibitem[DeepSeek-AI(2026)]{engramcode}
+DeepSeek-AI.
+\newblock Engram official demonstration, commit
+\texttt{fb7f84a21f91223715394a33a1dc24bbfb7f788e}.
+\newblock \url{https://github.com/deepseek-ai/Engram}, captured 2026.
+
+\bibitem[Saratchandran \& Lucey(2026)]{conditioned2026}
+Hemanth Saratchandran and Simon Lucey.
+\newblock Conditioned Initialization for Attention.
+\newblock \emph{ICLR}, 2026.
+
+\bibitem[Kim et al.(2025)]{periln2025}
+Jeonghoon Kim, Byeongchan Lee, Cheonbok Park, Yeontaek Oh, Beomjun Kim,
+Taehwan Yoo, Seongjin Shin, Dongyoon Han, Jinwoo Shin, and Kang Min Yoo.
+\newblock Peri-LN: Revisiting Normalization Layer in the Transformer
+Architecture.
+\newblock \emph{ICML}, 2025.
+\end{thebibliography}
+
+\end{document}

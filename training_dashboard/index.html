@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Autoresearch Training Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="status-strip" aria-label="Training status">
+        <div class="action-cell">
+          <label class="log-file-button">
+            <input id="logFile" type="file" accept=".log,.txt" />
+            Load log
+          </label>
+        </div>
+        <div>
+          <span>Step</span>
+          <strong id="statStep">-</strong>
+        </div>
+        <div>
+          <span>Progress</span>
+          <strong id="statProgress">-</strong>
+        </div>
+        <div>
+          <span>Train loss</span>
+          <strong id="statTrain">-</strong>
+        </div>
+        <div>
+          <span>Val loss</span>
+          <strong id="statVal">-</strong>
+        </div>
+        <div>
+          <span>Throughput</span>
+          <strong id="statTok">-</strong>
+        </div>
+        <div>
+          <span>MFU</span>
+          <strong id="statMfu">-</strong>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="left-column">
+          <section id="training-panel" class="panel training-panel">
+            <div class="panel-head">
+              <div>
+                <h2>Training curve</h2>
+                <p>Train and validation loss over steps</p>
+              </div>
+              <div class="legend">
+                <span><i class="train"></i> Train</span>
+                <span><i class="val"></i> Val</span>
+              </div>
+            </div>
+            <canvas id="trainingChart" width="1200" height="520"></canvas>
+          </section>
+
+          <section id="log-panel" class="panel log-panel">
+            <div class="panel-head">
+              <div>
+                <h2>Command log</h2>
+                <p><span class="console-dot"></span>Live bash console</p>
+              </div>
+              <button id="scrollLog" type="button">Stick to bottom</button>
+            </div>
+            <pre id="commandLog"></pre>
+          </section>
+        </div>
+
+        <aside id="observables-panel" class="panel observables-panel">
+          <div class="panel-head">
+            <div>
+              <h2>Observables</h2>
+              <p>Train, validation, and probe evolution</p>
+            </div>
+            <div class="source-row">
+              <input id="logUrl" type="text" spellcheck="false" />
+              <button id="loadUrl" type="button">Load</button>
+            </div>
+          </div>
+          <canvas id="overviewChart" width="1200" height="320"></canvas>
+          <div class="observable-filter-bar" aria-label="Observable filters">
+            <input id="observableSearch" type="search" placeholder="Filter observables" spellcheck="false" />
+            <select id="observableScope">
+              <option value="all">All scopes</option>
+              <option value="global">Global</option>
+              <option value="train">Train</option>
+              <option value="val">Val</option>
+            </select>
+            <select id="observableLayer">
+              <option value="all">All layers</option>
+            </select>
+            <select id="observableMetric">
+              <option value="all">All metrics</option>
+            </select>
+            <span id="observableCount">0 series</span>
+          </div>
+          <div id="observableGrid" class="observable-grid"></div>
+        </aside>
+      </section>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>

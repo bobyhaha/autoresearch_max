@@ -1,0 +1,124 @@
+{
+  "created_by": "codex-gpt5-autoresearch-coordinator",
+  "title": "Invalid attribution closes cleanly; Paper 020 restarts from source-bound mechanism assays",
+  "abstract": "The consumed Paper-019 boundary-sidecar placement is terminally INVALID_DIAGNOSTIC, not a negative mechanism result: its 1,000-batch semantic preclock matched, but model, optimizer, and loss hashes diverged during the scanner/scanner prefix before treatment activation. Zero timing blocks and no BPB values are admissible, so the comparator, chart, and SOTA remain unchanged. The campaign then used independent proposal, source/code, implementation, and adversarial-critic agents to define Paper 020, a connected accepted-only five-round mechanism program. GPAS ranks first and is now grounded in the official NeurIPS 2025 proceedings paper plus exact official code commit, with four typed claims and four typed literature-evidence records. A six-page ICML-format preregistration freezes its local applicability, mediation, safety, compiler, timing, and evidence-funnel gates. An implementation audit caught the prime-modulus reserve's width-256 and optimizer-state errors before corpus or GPU work, lowering its critic score to 24/40 and preserving v1 as WITHDRAWN_INVALID_SPECIFICATION. A corrected width-384 v2 arithmetic preflight exists but remains blocked on actual optimizer materialization. There is no new SOTA; historical experiment 501 at 0.927183 remains only the chart origin.",
+  "methods": "The coordinator closed the immutable sidecar pair through typed run evidence, evidence update, and decision records, copied and hash-verified both remote logs, and refused post-hoc tolerance, remapping, relaunch, or use of diagnostic BPB/timing fields. Independent agents then proposed and criticized 2025-2026 mechanisms, audited Paper-020 protocol language, implemented a fail-closed raw-ID prime-modulus CPU reference, and independently checked live table dimensions. The coordinator read the official GPAS paper's method, main results, ablations, dynamics, limitations, and code at the exact captured commit. A registration tool verifies the proceedings PDF, deterministic archive, complete Git bundle, manifest, license, selected code-member hashes, and inventory before idempotently appending the paper, claims, and evidence. Paper 020 records explicit N/P/V/I/R/F/X/C vectors and an accepted-only causal chain, then was compiled and visually inspected on all six rendered pages. Registry validation, strict audit, setup verification, GPAS replay verification, 14 v1 CPU tests, eight v2 CPU tests, and Ruff all passed. The named Notion research-documentation workflow fresh-fetched, appended, and fresh-fetched the campaign page to verify the milestone.",
+  "directions_explored": [
+    "architecture",
+    "attention",
+    "evaluation_method",
+    "initialization",
+    "memory_retrieval",
+    "normalization",
+    "optimizer",
+    "systems_kernel"
+  ],
+  "idea_ids": [
+    "idea_paper019_fa3_boundary_sidecar"
+  ],
+  "experiment_ids": [
+    "exp_paper019_fa3_boundary_sidecar_s1"
+  ],
+  "run_ids": [
+    "run_exp_paper019_fa3_bou_scanner_control_s63_76e04bcbbda5a5c4",
+    "run_exp_paper019_fa3_bou_sidecar_treatmen_s63_f7ce53ac6fc4e2e8"
+  ],
+  "findings": [
+    {
+      "statement": "The Paper-019 boundary-sidecar pair is invalid because exact model, optimizer, and loss parity failed in the scanner/scanner A/A phase before sidecar activation; neither sidecar speed nor modeling quality was tested.",
+      "assessment": "operational",
+      "evidence_ids": [
+        "evd_run_paper019_fa3_boundary_sidecar_s1_invalid"
+      ],
+      "run_ids": [
+        "run_exp_paper019_fa3_bou_scanner_control_s63_76e04bcbbda5a5c4",
+        "run_exp_paper019_fa3_bou_sidecar_treatmen_s63_f7ce53ac6fc4e2e8"
+      ],
+      "limitations": [
+        "The exact CUDA source of pre-activation numerical divergence was not isolated.",
+        "The result establishes only diagnostic invalidity; all timing and BPB fields are inadmissible."
+      ]
+    },
+    {
+      "statement": "The official GPAS source defines one zero-initialized scalar per decoder layer, shared after attention and FFN residual sums, using h minus SiLU(alpha) times stopgrad(h), and the paper's 350M ablation isolates stop-gradient from forward downscaling.",
+      "assessment": "supported",
+      "evidence_ids": [
+        "evd_lit_gpas_method_contract",
+        "evd_lit_gpas_mechanism_ablations"
+      ],
+      "run_ids": [],
+      "limitations": [
+        "The source uses deeper Pre-LN LLaMA-family models rather than the eight-layer normalized OPHIS architecture.",
+        "The cited paper tables report no error bars or multi-seed aggregation and do not authorize local implementation, launch, adoption, or SOTA."
+      ]
+    },
+    {
+      "statement": "Paper 020 prospectively freezes GPAS as rank 1 with proposer 37/40 and authoritative source/code critic 33/40, followed by a blocked prime-modulus reserve and three conditional attention/memory children.",
+      "assessment": "operational",
+      "evidence_ids": [
+        "evd_lit_gpas_multiscale_pretraining",
+        "evd_lit_gpas_dynamics"
+      ],
+      "run_ids": [],
+      "limitations": [
+        "The paper is an internal preregistration, not an ICML submission or acceptance.",
+        "It contains no new local mechanism or endpoint result and authorizes no launch until typed source-bound implementation records pass."
+      ]
+    },
+    {
+      "statement": "The distinct-prime mechanism remains plausible, but its v1 prospective definition is invalid: active K=2 width is 384 rather than 256 and actual optimizer-state equality was not bound; corrected v2 arithmetic is preflight-only.",
+      "assessment": "preliminary_observation",
+      "evidence_ids": [],
+      "run_ids": [],
+      "limitations": [
+        "No corpus census, optimizer materialization, GPU assay, throughput measurement, or BPB endpoint has run.",
+        "V2 cannot execute until actual state keys, tensor shapes, dtypes, counts, and bytes are attested under the resolved optimizer flags."
+      ]
+    }
+  ],
+  "negative_results": [
+    "The exact Paper-019 sidecar placement is closed INVALID_DIAGNOSTIC with zero admitted timing blocks and cannot be relaunched or reinterpreted.",
+    "Paper-019 canonicalized keys remain killed before GPU scoring; the 3.7155 percent strict trigram mediator rejects only that frozen keys-only retrofit.",
+    "Prime-modulus v1 is WITHDRAWN_INVALID_SPECIFICATION after an independent implementation audit found a wrong live width and incomplete optimizer-state equality; this is not evidence against the mechanism.",
+    "No endpoint, adoption, control rebind, chart point, or SOTA claim occurred."
+  ],
+  "limitations": [
+    "GPAS has not yet been implemented or assayed locally, and OPHIS may not exhibit the source paper's depthwise variance-growth mechanism.",
+    "The historical 0.927183 recipe is not a qualified concurrent control; every new estimand still needs its own fresh same-seed control.",
+    "Paper 020's later rounds are conditional and may be skipped if their parent or applicability mediator fails.",
+    "The prime v2 preflight proves source-derived arithmetic only, not actual runtime optimizer-state equivalence."
+  ],
+  "decisions": [
+    "Leave the cumulative comparator unchanged after both Paper-019 closures.",
+    "Use GPAS as Paper-020 rank 1 because stop-gradient supplies a specific source-backed causal discriminator, but require a local baseline applicability assay before endpoint scoring.",
+    "Preserve prime v1 immutably as withdrawn and require separately versioned v2 runtime materialization plus a fresh critic review before corpus census or GPU work.",
+    "Retain accepted-only succession: a failed or invalid round leaves the comparator unchanged, and a conditional child cannot bypass its parent.",
+    "Retain 0.927183 only as the historical chart origin and report no new SOTA."
+  ],
+  "next_hour_plan": [
+    {
+      "direction": "architecture",
+      "question": "Can a default-off source-faithful GPAS port preserve exact alpha-zero same-device behavior and expose the preregistered post-MLP residual-variance mediator without contaminating the charged endpoint path?",
+      "why_now": "It is the highest-ranked mechanism, has exact official code provenance, and is falsifiable before spending a full endpoint pair.",
+      "stop_condition": "Stop on any off-path parameter/RNG/operation drift, alpha-zero logits/loss/pre-existing-gradient mismatch, nonfinite or zero gate gradient, PACKER diagnostic flag leakage, extra compile, or missing source-hash binding."
+    },
+    {
+      "direction": "evaluation_method",
+      "question": "Does the current control exhibit depth-correlated residual-variance growth in at least 24 of 32 fixed steps with Spearman at least 0.60 and deepest/first ratio at least 1.25?",
+      "why_now": "A negative applicability result would kill GPAS locally before any endpoint and would attribute the failure to scope transfer rather than implementation.",
+      "stop_condition": "Kill the GPAS round before endpoint work if either registered baseline applicability threshold fails."
+    },
+    {
+      "direction": "normalization",
+      "question": "If the applicability premise passes, does source-faithful GPAS reduce the depth-variance ratio to at most 0.85 of control while preserving gradient safety, one graph, and charged token rate?",
+      "why_now": "This directly tests the paper's mechanism and its stop-gradient discriminator before asking whether validation BPB improves.",
+      "stop_condition": "Kill on failed zero-gate mediation, scale outside 0.5 to 1.5, nonfinite gradient, treatment deepest variance above 0.90 of control, timing LCB below 0.985, or any recompile."
+    },
+    {
+      "direction": "memory_retrieval",
+      "question": "Can prime-modulus v2 bind actual control/treatment parameter and optimizer-state materialization exactly under the live resolved flags?",
+      "why_now": "This CPU/setup work can proceed in parallel without stealing causal attention from the rank-1 GPAS assay.",
+      "stop_condition": "Keep Round 2 blocked on any state-key, shape, dtype, element-count, byte-count, group-membership, or source/config mismatch."
+    }
+  ]
+}

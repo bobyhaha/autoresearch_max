@@ -1,0 +1,77 @@
+%% Paper 027 -- ICML-style. Batch result: three zero-cost structural levers,
+%% all with adequate scope-match, all fail. Evidence about the frame.
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\vb}{\mathrm{val\_bpb}}
+\icmltitlerunning{Three Levers, One Frame}
+\begin{document}
+\twocolumn[
+\icmltitle{Three Levers, One Frame: When Nearest-Scale Evidence Fails to Transfer}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, transfer, scope match, negative results, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+\textbf{CORRECTION (2026-08-01, added after publication).} Section~\ref{sec:frame} of this paper explains the three null results by the \emph{frame}: that these refinements ``act on \emph{asymptotic} optimisation quality \ldots whose benefit accrues over many more updates than 2000.'' \textbf{That explanation has since been refuted by our own data.} Experiment E23 re-ran two of these refinements, alone and stacked, at depth 6, which completes 3276 optimizer steps against the 2016 of the runs reported here --- 63\% more updates at the same wall-clock budget. All arms landed inside $\pm$1.3e-3, indistinguishable from their values at depth 8: conditioned init $+0.000355$, Peri-LN $+0.000652$, both stacked $+0.000311$. More updates changed nothing, and two nulls composed to a null. The \emph{results} reported below stand as measured; the duration-based \emph{explanation} in Section~\ref{sec:frame} does not, and is superseded by paper~032. The registered prediction in that section --- that other architectural candidates would also fail --- has so far held, but for a reason this paper got wrong.
+\end{abstract}
+
+\begin{abstract}
+Paper 026 argued that the campaign's escape from a five-block plateau was \emph{zero-cost structural change}: interventions with no step-time cost, for which the measured $>$1.5\%-of-step break-even is vacuous and \texttt{torch.compile} --- which had already captured six throughput proposals --- is not a competitor. It ranked three such candidates, each with a scope-match our own literature assessment judged \emph{adequate}. We ran all three at paired $n{=}10$ on an uncontended box. \textbf{All three failed.} Conditioned attention initialization (source: perplexity $2.39\!\to\!2.20$ at 472M) is null at $-0.000157$, 7\% of gate. Peri-LN on the attention sublayer output (source: $3.43\!\to\!3.34$ at 400M/30B) is null at $-0.000092$, 4\% of gate. GPAS is \emph{negative}: intrinsic $+0.001269$, $7/8$ pairs against, $t=+2.53$. The GPAS result is the load-bearing one, because its source reports improvement at \emph{every} scale it tested --- \textbf{including 71M, below ours} --- making it the nearest-scale claim in the campaign's entire 123-claim corpus. A mechanism validated below our parameter count, in a paper whose headline is scale-generality, still does not transfer into a 300-second, two-epoch frame. We argue this is evidence about \textbf{the frame}, not about three unrelated mechanisms: it converts the campaign's previously-inferred $\approx$1e-3 intrinsic ceiling into a prospectively demonstrated property, and it predicts that the remaining architectural candidates in the corpus will also fail. We also report a screen defect found and corrected mid-experiment, and note that its correction moved the data \emph{against} the hypothesis under test.
+\end{abstract}
+
+\section{The Filter That Selected These Three}
+Paper 026 derived an admissibility rule from measurement rather than taste. Intrinsic quality effects in this architecture measure $\approx$1e-3; throughput effects $\approx$1e-2; the adoption gate is $0.002396$. Break-even for a mechanism costing $s$ of step time is $0.06\cdot(-\ln(1-s))$, so anything above $\approx$1.5\% cannot pay for itself. That leaves one broadly viable class: \textbf{zero-cost change} --- initialization, normalization placement, weight-decay masking, data order --- which is also, not coincidentally, the class \texttt{torch.compile} cannot absorb, because it alters semantics rather than scheduling.
+
+Three candidates cleared that filter with \emph{adequate} scope-match. This paper reports what happened to all three.
+
+\section{Results}
+\begin{center}\begin{small}
+\begin{tabular}{llrr}
+\toprule
+lever & source scale & intrinsic & verdict \\
+\midrule
+E1 cond.\ init & 472M TinyStories & $-0.000157$ & null (7\%) \\
+E2 Peri-LN attn & 400M / 30B tok & $-0.000092$ & null (4\%) \\
+E3 GPAS & \textbf{71M} & $+0.001269$ & \textbf{negative} \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+All figures are paired, screened for contention, and corrected with the token-law control variate ($-0.06\ln(\mathrm{steps}_t/\mathrm{steps}_c)$).
+
+\textbf{E1 (conditioned initialization).} Semi-orthogonal per-head Q/K, rectangular-identity V. \emph{The mechanism was verified at step 0 before any outcome run}: per-head Q/K rows orthonormal to $1.3\times10^{-6}$, V an exact rectangular identity, and the QK logit-map condition number improved $3.4 \to 1.0$. This matters for interpreting the null --- it is a null for a \emph{correctly implemented} intervention that demonstrably achieved its stated step-0 property, not for a broken one. Clean $n{=}6$ (4 pairs quarantined under heavy contention): $-0.000157$, $3/6$ negative, $t=-0.48$.
+
+\textbf{E2 (Peri-LN attention arm).} Our MLP path already computes $x + \mathrm{norm}(\mathrm{mlp}(\mathrm{norm}(x)))$ while attention did only $x + \mathrm{attn}(\mathrm{norm}(x))$; our own assessment localised the missing arm precisely. Cost was \emph{measured, not assumed}: $+0.302$\,ms $=+0.20\%$ of step, break-even $0.00012$ --- nearly free, because inductor fuses the RMSNorm into the adjacent residual add. Clean $n{=}9$: $-0.000092$, $5/9$ negative, $t=-0.23$.
+
+\textbf{E2's interim is worth preserving.} At $n{=}4$ it read $-0.000772$, $3/4$ negative, $t=-1.96$ --- 32\% of gate, and we described it in situ as the best signal the campaign had produced. By $n{=}7$ it was $-0.000054$; by $n{=}9$, $-0.000092$. \textbf{Adhering to the preregistered $n$ is the only reason this is a null rather than a retracted adoption.} We record the trajectory rather than letting the final number silently replace it.
+
+\textbf{E3 (GPAS).} $h - \mathrm{SiLU}(\alpha_l)\cdot\mathrm{sg}(h)$: the forward activation is scaled while the hidden-state Jacobian remains the identity, with $\alpha$ zero-initialised so the step-0 function is unchanged. Clean $n{=}8$: RAW $+0.001437$ ($t=+2.23$), INTRINSIC $+0.001269$ (sd $0.001415$, $1/8$ negative, $t=+2.53$). At 53\% of gate we do \emph{not} claim harm; the defensible statement is that GPAS \textbf{fails to help and trends harmful}.
+
+\section{Why GPAS Is the Load-Bearing Result}
+E1 and E2 draw on sources at 472M and 400M --- 4--5$\times$ our dense parameter count, at far longer horizons. A transfer failure there is unsurprising and weakly informative.
+
+GPAS is different in three ways. First, its source reports improvement at \emph{every} scale it tested, from 71M to 1B --- the claim is explicitly about scale-generality, not a single operating point. Second, \textbf{71M is below our 94M dense count}, so we are not extrapolating downward from a larger model; the nearest evidence in the corpus brackets us. Third, the mechanism carries a built-in falsifier we could check: the source's own ablation shows that removing the stop-gradient destroys the effect ($20.35$ vs $21.34$), confirming the effect is attributed to the identity-Jacobian property rather than to generic activation scaling --- so the thing we implemented is the thing the paper credits.
+
+A mechanism with that provenance failing to transfer is not well explained by ``wrong scale.'' The remaining difference is the frame: 300 seconds, $\approx$2 epochs of a frozen corpus, $\approx$2000 optimizer steps.
+
+\section{Evidence About the Frame}\label{sec:frame}
+The campaign previously \emph{inferred} an intrinsic ceiling of $\approx$1e-3, as the residual of the token law against an n-gram capacity sweep. That was a single-lever, retrospective estimate. Three prospective, preregistered, zero-cost interventions now land at $-0.000157$, $-0.000092$, and $+0.001269$ --- all within $\pm$1.3e-3, none clearing a 2.4e-3 gate.
+
+We take the operative claim to be: \emph{in a 300-second, two-epoch frame, architectural refinements validated at longer horizons do not pay, largely independent of the parameter scale at which they were validated.} The plausible mechanism is that such refinements act on \emph{asymptotic} optimisation quality --- conditioning, gradient flow, activation scale --- whose benefit accrues over many more updates than 2000, while this frame is dominated by how many tokens are consumed. That is consistent with the token law's dominance in every prior block and with the measured 1e-2 vs 1e-3 split between throughput and intrinsic effects.
+
+\textbf{Prediction, registered here.} The corpus's remaining architectural candidates of this type --- nGPT step-efficiency, MUDD/hyperconnections, paired-head attention --- should also fail to clear the gate in this frame. If any one of them clears it at $n\ge10$, this section is wrong and the ``frame'' explanation must be replaced by a per-mechanism account.
+
+\section{Methodological Notes}
+\textbf{A screen defect, found in use and corrected against our own interest.} The contention screen was \texttt{steps}$\ge$1950 \textbf{and} \texttt{MFU}$\ge$18.5, but the MFU read was the \emph{last sample} --- a point value. Seed 44's control showed last-sample MFU $8.94$ yet completed 1964 steps: contention had struck only the final samples. Step count is the integral of throughput and is the sounder criterion; the screen is now steps-primary with \emph{median} MFU secondary. Re-deriving under the fix recovered a pair carrying the second-largest intrinsic value --- i.e.\ \textbf{the correction moved the data against GPAS}, the hypothesis then under test. E1 and E2 were re-checked and unaffected, their quarantines having been step-count-driven or two-sided.
+
+\textbf{Asymmetric contention is the unusable case.} Of E3's two quarantines, s47 lost its treatment arm (1188 steps) and s50 its \emph{control} (1131 steps). Their raw deltas were opposite-signed ($+0.039$, $-0.040$), so excluding both removes a symmetric distortion rather than a convenient tail. A pair where both arms degrade equally is merely noisy; a pair where one arm collapses is uninterpretable.
+
+\textbf{Cost.} The three verdicts cost $\approx$3 GPU-hours total.
+
+\section{Conclusion}
+Paper 026 identified zero-cost structural change as the campaign's escape route and ranked three candidates by its own measured filter. Running all three to their preregistered $n$ refuted the route. The most informative failure is GPAS, whose source validated it \emph{below} our scale and reported gains at every scale tested; its non-transfer is difficult to attribute to scale mismatch and points instead at the 300-second, two-epoch budget itself. The campaign's 1e-3 intrinsic ceiling is no longer an inference from one lever family --- it is a prospectively demonstrated property of this frame, and it now carries a registered prediction that the remaining architectural candidates will share the same fate.
+\end{document}

@@ -1,0 +1,180 @@
+{
+  "schema_version": 2,
+  "classification": "external_kernel_api_source_reference",
+  "paper_id": "pap_flash_attention_3_neurips2024",
+  "external_role": "official_fa3_hopper_varlen_cumulative_offset_contract",
+  "captured_at": "2026-07-29T15:26:42Z",
+  "paper": {
+    "title": "FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision",
+    "venue": "Advances in Neural Information Processing Systems 37 (NeurIPS 2024), Main Conference Track",
+    "landing_page": "https://papers.nips.cc/paper_files/paper/2024/hash/7ede97c3e082c6df10a8d6103a2eebd2-Abstract-Conference.html",
+    "pdf_url": "https://papers.nips.cc/paper_files/paper/2024/file/7ede97c3e082c6df10a8d6103a2eebd2-Paper-Conference.pdf",
+    "doi": "10.52202/079017-2193",
+    "access_caveat": "The official proceedings PDF is retained for research provenance. Public access does not by itself establish unrestricted redistribution or modification rights."
+  },
+  "repository": {
+    "url": "https://github.com/Dao-AILab/flash-attention",
+    "default_branch": "main",
+    "resolution_method": "requested exact commit fetched from the official origin and verified by Git object identity",
+    "commit": "c75d019dea9d910312974417bc28f190dfdda6d9",
+    "tree": "be7da1c32fdca738d4d27f96d9e365e87d9f6658",
+    "commit_time": "2026-07-29T07:31:18-04:00",
+    "commit_subject": "Remove SM100 Functions from Hopper (#2746)",
+    "history_commits_through_commit": 1542,
+    "tracked_paths": 1075,
+    "gitlinks": [
+      {
+        "path": "csrc/composable_kernel",
+        "url": "https://github.com/ROCm/composable_kernel.git",
+        "commit": "c56c6750d0fc54ed771d532cc92c316423449614",
+        "vendored_in_archive": false
+      },
+      {
+        "path": "csrc/cutlass",
+        "url": "https://github.com/NVIDIA/cutlass.git",
+        "commit": "7127592069c2fe01b041e174ba4345ef9b279671",
+        "vendored_in_archive": false
+      },
+      {
+        "path": "third_party/aiter",
+        "url": "https://github.com/ROCm/aiter.git",
+        "commit": "9bab8388c35936814a659b4ebd245c491e1b940a",
+        "vendored_in_archive": false
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "FlashAttention-3_NeurIPS_2024.pdf",
+      "role": "official_neurips_2024_proceedings_paper",
+      "bytes": 697391,
+      "sha256": "73e785a3dc6e378d8940dbc2f682f06e1fa9b0ed26295aeb0a6e7ce6bb2f8291",
+      "pages": 28
+    },
+    {
+      "path": "flash-attention-c75d019d.tar.zst",
+      "role": "normalized_exact_commit_source_archive",
+      "bytes": 13287191,
+      "sha256": "89a16aa92cb9b84bcf6c8abab576e3304216092f15ee3e0340f734ff1970d9e8",
+      "uncompressed_tar_bytes": 22609920,
+      "archive_root": "flash-attention-c75d019d/",
+      "regular_files": 1071,
+      "symlinks": 1,
+      "excluded_gitlink_entries": 3
+    },
+    {
+      "path": "flash-attention-c75d019d.bundle",
+      "role": "complete_git_history_through_exact_commit",
+      "bytes": 20308909,
+      "sha256": "d5d096b964a66625b178a19e044c36a4fdbdcbe83720ac5f5976ee3221dc5e99",
+      "ref": "refs/heads/capsule-fa3",
+      "head": "c75d019dea9d910312974417bc28f190dfdda6d9"
+    }
+  ],
+  "normalization": {
+    "archive_recipe": "git archive --format=tar --prefix=flash-attention-c75d019d/ c75d019dea9d910312974417bc28f190dfdda6d9 | zstd -19 -T1",
+    "bundle_recipe": "git bundle create flash-attention-c75d019d.bundle capsule-fa3 after fetching complete history",
+    "git_version": "2.39.5 (Apple Git-154)",
+    "zstd_version": "1.5.7",
+    "deterministic_archive_rebuild_byte_identical": true,
+    "bundle_complete_history_verified": true
+  },
+  "license": {
+    "path": "LICENSE",
+    "declared_family": "BSD-3-Clause",
+    "sha256": "8c9ccb96c065e706135b6cbad279b721da6156e51f3a5f27c6b3329af9416d73"
+  },
+  "verified_files": [
+    {
+      "path": "README.md",
+      "sha256": "7bcb7ca466dcb819822003c5c15a8124e4866f4d446a5c60382615128c81c3a6"
+    },
+    {
+      "path": ".gitmodules",
+      "sha256": "0c57db58f50c4c7c7aa10c7a0b14d253cb6bfab5368caee0a7ca4c7d3f003b59"
+    },
+    {
+      "path": "hopper/flash_attn_interface.py",
+      "sha256": "887eb85ea5380707a78cd15dc04169e654f4dee58f9bddab49a2ce71f1680e35"
+    },
+    {
+      "path": "hopper/test_flash_attn.py",
+      "sha256": "61c61341e2a871cb65934d503e252a2ba023a2c11703e1558a61adff020c71cf"
+    },
+    {
+      "path": "hopper/setup.py",
+      "sha256": "e3d9e67d1ec2bc61e4dec5591b46072f1b86ca7a185bd5dac7ec5e3cdce0933a"
+    },
+    {
+      "path": "hopper/generate_kernels.py",
+      "sha256": "99b1d47053befd7cc4ca7e4c5c5a81c72e6f108979ccadd036f2b802ebb982eb"
+    },
+    {
+      "path": "hopper/flash_fwd_kernel_sm90.h",
+      "sha256": "1d1e955e208b7830127573beece10d06416953b65143013a8ee7e57189967ea6"
+    },
+    {
+      "path": "hopper/flash_bwd_kernel_sm90.h",
+      "sha256": "2e0052006b2733373709cdeed0af32edcaea69958936c748275dfb61ed115feb"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "8c9ccb96c065e706135b6cbad279b721da6156e51f3a5f27c6b3329af9416d73"
+    }
+  ],
+  "api_contract": {
+    "public_entrypoint": {
+      "path": "hopper/flash_attn_interface.py",
+      "lines": "890-934",
+      "name": "flash_attn_varlen_func",
+      "required_sequence_arguments": [
+        "cu_seqlens_q",
+        "cu_seqlens_k",
+        "max_seqlen_q",
+        "max_seqlen_k"
+      ]
+    },
+    "custom_op_forward": {
+      "path": "hopper/flash_attn_interface.py",
+      "lines": "59-121",
+      "fact": "The CUDA custom-op wrapper forwards cumulative Q/K offsets and maximum sequence lengths to flash_attn_3_gpu.fwd."
+    },
+    "autograd_lifetime": {
+      "path": "hopper/flash_attn_interface.py",
+      "lines": "642-740",
+      "fact": "The varlen autograd function saves cumulative Q/K offsets in forward and reuses them in backward."
+    },
+    "official_tests": [
+      {
+        "path": "hopper/test_flash_attn.py",
+        "lines": "404-660",
+        "fact": "The parameterized varlen test obtains cumulative offsets from unpadding, calls flash_attn_varlen_func, and compares forward and backward results with padded reference attention."
+      },
+      {
+        "path": "hopper/test_flash_attn.py",
+        "lines": "1226-1251",
+        "fact": "The split-combine test constructs CUDA int32 cumulative offsets with cumsum and arange, then calls flash_attn_varlen_func."
+      }
+    ]
+  },
+  "verification": {
+    "zstd_integrity_test": true,
+    "git_bundle_verify": true,
+    "archive_embedded_commit": "c75d019dea9d910312974417bc28f190dfdda6d9",
+    "archive_path_accounting_matches_git_tree_after_declared_gitlinks": true,
+    "paper_pdf_magic_valid": true,
+    "paper_pdfinfo_valid": true,
+    "paper_title_text_match": true,
+    "git_lfs_pointers_detected": 0,
+    "local_sidecar_generation_tested": false,
+    "local_end_to_end_speed_tested": false,
+    "local_sota_adoption_claimed": false
+  },
+  "scope_and_adoption_caveats": [
+    "The NeurIPS 2024 paper establishes FlashAttention-3's Hopper-oriented algorithm and reported H100 kernel measurements; the cumulative-offset API evidence comes from the later exact official code commit and must not be back-projected into the paper text.",
+    "The official API accepts cumulative offsets but does not prescribe how a local document packer must generate, pin, transfer, synchronize, or validate them.",
+    "The official tests exercise upstream unpadding-derived and synthetic int32 cumulative offsets. They do not test the OPHIS packed-document sidecar, sample-order parity, stream lifetime, graph stability, or optimizer-state parity.",
+    "No local end-to-end H200 throughput or validation-BPB effect is established by this capsule.",
+    "The normalized archive excludes three pinned gitlink submodules. Any build requiring those trees must capture their exact commits and licenses separately."
+  ]
+}

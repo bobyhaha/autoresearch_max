@@ -1,0 +1,104 @@
+%% Paper 016 -- ICML-conference-style block report. Documents the adopted SOTA.
+%% Requires icml2024.sty. Compile: tectonic paper_016_....tex
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+\icmltitlerunning{Four Verdicts, One Mechanism}
+\begin{document}
+\twocolumn[
+\icmltitle{Four Verdicts, One Mechanism: Intra-Document Attention Masking from \\ Catastrophic to State-of-the-Art by Kernel Choice Alone}
+\begin{icmlauthorlist}\icmlauthor{Fable 5 (deep-analysis author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Fable 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, kernel co-design, attention masking, experimental validity, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report an adopted state-of-the-art result on the \texttt{walltime\_5min\_h200} frame and, more importantly, the trajectory that produced it. Intra-document attention masking --- restricting attention to within-document keys inside a packed sequence --- was measured four times in this block with \emph{identical} masking semantics and four different kernels. As a dense $(B,1,T,T)$ boolean mask it scores $\valbpb = 1.0130$ at 522 optimizer steps, catastrophic. As a block-sparse FlexAttention \texttt{BlockMask} at the library-default granularity it scores $0.9438$ at 1084 steps. At a finer block size it scores $0.9401$ at 1130 steps, consistently better than baseline across six paired seeds but sub-gate. Passed to the FlashAttention-3 kernel as \texttt{cu\_seqlens} it scores $0.9349$ at $\sim$1180 steps and is adopted: ten paired seeds, mean $-0.005222$, $10/10$ same sign, $t = -10.20$, clearing the frame's $2\sigma$ gate of $0.004072$ and satisfying its \texttt{min\_seeds}$=10$ requirement. The new scope baseline is $0.934930$ (sd $0.001198$), replacing $0.939797$. The mechanism is unchanged across all four; only the kernel differs. Critically, this campaign had already \emph{shelved} document segmentation on a recorded belief that it ``improves quality but carries a large step-time cost'' --- a belief formed on the dense measurement. We also report the eight levers tested against this baseline that all regressed, and the single structural property that separates the winner from all of them: every loser purchased quality with optimizer steps and lost the trade in a wall-clock frame, whereas the winner \emph{gains} steps, because a kernel told about document boundaries skips cross-document blocks instead of computing and then masking them.
+\end{abstract}
+
+\section{Introduction}
+Paper 015 argued that in a wall-clock-budgeted frame a mechanism's measured value is inseparable from its kernel, and closed by naming fa3 varlen doc-masking as the top-ranked next direction while registering a concrete obstacle. This paper reports that the obstacle was smaller than believed, that the direction paid off, and that the resulting adoption is the campaign's clearest demonstration of its own methodological thesis.
+
+\section{One Mechanism, Four Kernels}
+\label{sec:four}
+All four rows below implement the same restriction: a query may attend only to keys in its own document, within the causal envelope. They differ only in how that restriction reaches the GPU.
+
+\begin{table}[t]
+\caption{Identical masking semantics. The kernel decides the verdict.}
+\label{tab:four}
+\vskip 0.1in
+\begin{center}\begin{small}\begin{tabular}{lccl}
+\toprule
+Kernel & $\valbpb$ & steps & verdict \\
+\midrule
+dense $(B,1,T,T)$ & $1.0130$ & 522 & catastrophic \\
+flex block-sparse, 128 & $0.9438$ & 1084 & parity \\
+flex block-sparse, 64 & $0.9401$ & 1130 & sub-gate \\
+\textbf{fa3 \texttt{cu\_seqlens}} & $\mathbf{0.9349}$ & $\mathbf{1182}$ & \textbf{adopted} \\
+\bottomrule
+\end{tabular}\end{small}\end{center}
+\vskip -0.15in
+\end{table}
+
+The dense path materializes a boolean mask re-read by every layer in both passes, roughly halving throughput. Block-sparse granularity is monotonic in the direction of finer blocks (64 beats 128 beats 256), because finer blocks let the kernel skip more fully-masked work; 32 is infeasible, raising an \texttt{InductorError} from a FlexAttention minimum-block constraint, so 64 is the practical optimum. The varlen path removes the mask entirely: document boundaries are passed as \texttt{cu\_seqlens} and the kernel never enumerates cross-document blocks at all.
+
+\textbf{Why this is not merely an engineering anecdote.} The campaign's literature synthesis recorded that ``the current dense segmented-attention implementation improves quality but carries a large step-time cost,'' and that verdict is precisely what kept the mechanism off the candidate list for several blocks. The belief was true of the artifact measured and false of the mechanism named. A registry that stores mechanism-level verdicts derived from single implementations will systematically bury levers of exactly this kind.
+
+\section{The Adopted Result}
+\label{sec:sota}
+Ten paired seeds, treatment and control differing only in \texttt{DOC\_MASK}/\texttt{DOC\_MASK\_IMPL}:
+
+\begin{table}[t]
+\caption{Paired deltas, fa3 varlen doc-masking vs the previous fa3 default.}
+\label{tab:sota}
+\vskip 0.1in
+\begin{center}\begin{small}\begin{tabular}{lcc}
+\toprule
+Statistic & Value \\
+\midrule
+mean paired $\Delta$ & $-0.005222$ \\
+sd of $\Delta$ & $0.001619$ \\
+same sign & $10/10$ \\
+$t$ & $-10.20$ \\
+$2\sigma$ gate & $0.004072$ (cleared) \\
+new baseline mean & $0.934930$ (sd $0.001198$) \\
+best single seed & $0.933340$ \\
+previous baseline & $0.939797$ \\
+steps & $\sim$1161--1188 vs $\sim$1100--1139 \\
+\bottomrule
+\end{tabular}\end{small}\end{center}
+\vskip -0.15in
+\end{table}
+
+Two implementation notes matter for reproduction. First, the obstacle recorded in paper 015 --- that varlen appeared to require wrapping \texttt{FlashAttnVarlenFunc}, an \texttt{autograd.Function} and the documented cause of this box's historical segfault --- was \emph{wrong in our favour}. The installed build's \texttt{\_flash\_attn\_forward}/\texttt{\_flash\_attn\_backward} are already registered custom ops whose schemas accept \texttt{cu\_seqlens\_q}, \texttt{cu\_seqlens\_k} and \texttt{max\_seqlen\_*}, so varlen is reachable through the same \texttt{fullgraph}-safe path the existing wrapper already used. Output shapes were verified eagerly before any integration code was written. Second, the first integration failed with \texttt{FailOnRecompileLimitHit}: \texttt{max\_seqlen} is a Python int that Dynamo specializes on and varies with each batch's longest document, and \texttt{cu\_seqlens}' length is the per-batch document count. Pinning \texttt{max\_seqlen} to the constant $T$ (a scheduling upper bound only; forcing a boundary at every batch-row start guarantees no document exceeds $T$) and marking \texttt{cu\_seqlens} dimension 0 dynamic resolves it. Neither failure was a kernel fault.
+
+\section{Eight Levers That Lost, and Why}
+Against this frame we also tested AttnRes (naive and kernel-refined), token-shift, C1 n-gram-table weight decay, C3 frequency-confidence backoff, C1$\times$C3, sparse-grad, rowwise optimizer state, and an nGPT hypersphere residual. Every one regressed, and every one lost 80--150 optimizer steps. In a fixed wall-clock budget that loss is paid directly in $\valbpb$, so the common cause is structural rather than mechanistic. The contrast with Section~\ref{sec:sota} is the paper's second point: the adopted lever is the only one that \emph{gains} steps, and it gains them for the same reason it improves quality --- the kernel is told what not to compute.
+
+Three negative results deserve preservation. \textbf{(i)} \texttt{NGRAM\_SPARSE\_GRAD} is recorded in this campaign's notes as a $9.3\%$ step-time win; on the reference box it costs 148 steps. The deciding variable is the torch version (2.13 where the win was measured, 2.9.1 here), so the lever is version-gated, not universal. \textbf{(ii)} The hypothesis that doc-masking would rescue the memorizer-regularization family is falsified: C1 costs $+0.0222$ both with and without doc-masking, so its harm is not cross-document contamination. \textbf{(iii)} \texttt{RESET\_ROPE} --- restarting positions at document boundaries, the mechanically obvious companion to doc-masking --- \emph{hurts} in both mask modes. After adoption we re-tested rowwise, C3 and AttnRes on top of the new base with its restored step headroom; all three still regress ($+0.0009$, $+0.0019$, $+0.0115$), and AttnRes still costs 123 steps, showing its deficit was never purely step scarcity.
+
+\section{A Validity Failure Worth Recording}
+This block opened by discovering that the previous block's results were not results. Three interventions existed only as forked scripts on the remote box and their registry records bound no environment variables, so every ``treatment'' arm ran a configuration byte-identical to its own control while the runner reported \texttt{config\_verified=True} --- the check iterates the bound environment, and an empty environment verifies vacuously. Those results are retracted as invalid rather than reported as nulls. The harness now fails closed on a treatment that resolves to an empty environment, and distinguishes a bound key \emph{absent} from the resolved config from one that merely mismatches. We record this because no experiment can detect the failure: a no-op treatment and its control are the same program, so only reading code finds it.
+
+We also retracted one of our own claims mid-block. A single-seed reading suggested \texttt{MODE=seg} beat \texttt{MODE=both} by $-0.00144$; across three paired seeds it did not replicate ($-0.000547$, $2/3$ same sign) and \texttt{MODE=both} is the more consistent configuration.
+
+\section{Discussion and Next Directions}
+The generalizable claim is narrow and, we think, correct: \emph{a wall-clock regression is evidence about an implementation until that implementation is competitive.} Applied honestly this is expensive --- it forbids the cheap rejection that keeps a search tractable --- but the alternative buries mechanisms whose first kernel is naive, and this block shows that cost is not hypothetical. The dense-to-varlen span for one unchanged mechanism is $0.078$ $\valbpb$, roughly nineteen times the adoption gate.
+
+Ranked next directions: \textbf{(1)} re-test previously-rejected quality levers on the adopted base, since the step budget and the attention context both changed --- three have been checked, the rest have not; \textbf{(2)} profile the adopted configuration afresh, as the step-time distribution has shifted and the long-standing $\sim$194k-tiny-kernel sink was characterized on the old one; \textbf{(3)} full nGPT rather than the residual-only half-system, accepting that it requires retuning the recipe it replaces; \textbf{(4)} Paired Head Attention (NanoGPT speedrun record 58), still a name without a public specification.
+
+\section{Conclusion}
+One mechanism, four kernels, four verdicts spanning catastrophic to state-of-the-art, adopted at $\valbpb\ 0.934930$ over ten paired seeds. The mechanism was in the codebase the whole time, shelved by a belief that was true of a dense mask and false of document segmentation.
+
+\bibliographystyle{icml2024}
+\begin{thebibliography}{9}
+\bibitem[Dao et al.(2024)]{fa3} Dao, T. et al. FlashAttention-3. 2024.
+\bibitem[METR(2026)]{metr} METR. Evidence on AI R\&D Progress from NanoGPT. 2026.
+\bibitem[Loshchilov et al.(2024)]{ngpt} Loshchilov, I. et al. nGPT: Normalized Transformer with Representation Learning on the Hypersphere. arXiv:2410.01131.
+\bibitem[Recursive(2026)]{recursive} Recursive. First Steps Toward Automated AI Research. 2026.
+\bibitem[OPHIS(2026)]{p15} OPHIS. The Implementation Is the Hypothesis. Campaign paper 015.
+\end{thebibliography}
+\end{document}

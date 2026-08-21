@@ -1,0 +1,228 @@
+%% Paper 007 -- ICML-conference-style LaTeX version.
+%% NOTE: Requires the ICML 2024 style file (icml2024.sty) from the ICML author kit
+%% (https://icml.cc/ -> Author Instructions) to be placed alongside this file to compile.
+%% Compile with: pdflatex paper_007_lever_interaction_reoptimization_20260727.tex
+
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+% Use the accepted (camera-ready) option so author names and affiliations render.
+\usepackage[accepted]{icml2024}
+
+% Convenience macro for validation bits-per-byte.
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+
+\icmltitlerunning{Lever Staleness Under Greedy Sequential Adoption}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Lever Staleness Under Greedy Sequential Adoption: \\ Re-Optimizing the Full Stack After a Dominant Structural Lever}
+
+\begin{icmlauthorlist}
+\icmlauthor{Autonomous Research Agent (OPHIS)}{ophis}
+\end{icmlauthorlist}
+
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+
+\icmlcorrespondingauthor{Autonomous Research Agent (OPHIS)}{baiyuzhu@mit.edu}
+
+\icmlkeywords{hyperparameter optimization, greedy search, lever interaction, autonomous research, ablation, wall-clock training, Machine Learning}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+Autonomous hyperparameter campaigns typically adopt improvements \emph{greedily and sequentially}: each lever is A/B-tested against the current best stack and, if it clears a statistical gate, frozen into the reference forever. We report rounds 37--44 of such a campaign (nanochat-style GPT, $\sim$50M parameters, single H200, fixed 5-minute wall-clock budget, metric $\valbpb$, seed noise $\sigma \approx 0.0015$) in which this default protocol is shown to leave early levers \emph{stale}. The round-37 stack --- batch $2^{18}$ $\rightarrow$ FFN $6\times$ $\rightarrow$ n-gram$(2,3)$@$2^{20}$ $\rightarrow$ max-autotune, $\valbpb \approx 0.9546$ --- was subjected to a leave-one-out ablation. Removing the FFN $6\times$ widening (reverting to $4\times$) left quality unchanged ($0.9536$ vs.\ $0.9538$) while completing $+16\%$ more steps: the FFN-capacity gain, real when adopted (paper 002), had been silently absorbed by the later, dominant n-gram value-embedding lever. A GPU-interleaved, GPU-swapped 6-seed paired test confirmed FFN $4\times$ at mean $0.9538$ vs.\ $0.9546$ (4/6 wins, paired $\Delta = -0.0007$), a strict simplification win. A re-sweep of the full knob stack on the new FFN$4\times$ configuration then flipped a second verdict: \texttt{matrix\_lr} $= 0.03$, rejected 3-seed pre-n-gram, now wins 3/3 interleaved seeds ($0.9533$ vs.\ $0.9540$). Three further single-seed flashes (\texttt{embedding\_lr} $0.8$, \texttt{matrix\_lr} $0.025$, weight decay $0.1$) were all rejected under GPU-controlled multi-seed A/B, confirming that near the floor only paired designs resolve real effects (a same-config control differed by $0.0014$ from GPU placement alone). The re-optimized stack reaches a 9-seed mean of $\approx 0.9532$ (best single $0.9504$), improving on $0.9546$ with a \emph{smaller} model. We formalize the lesson as Hypothesis H7: a dominant structural lever makes previously adopted levers stale and previously rejected levers viable, so a re-optimization pass after any structural adoption is necessary and typically both improves and simplifies.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+The default control loop of automated machine-learning research is \emph{greedy sequential adoption}: propose a lever, A/B it against the current best stack, keep it if it clears a gate, and move on. Every kept lever is thereafter treated as settled --- part of the background against which all future levers are judged. This protocol is attractive because it is simple, incremental, and cheap: each round costs one comparison, and the reference is always a single well-characterized configuration.
+
+Its hidden assumption is that lever verdicts are \emph{stable} under composition: that a lever which won (or lost) against stack $S$ retains that verdict against stack $S \cup \{L\}$ for later levers $L$. This paper documents, in a controlled autonomous campaign, that the assumption fails exactly when it matters most --- after a \emph{dominant structural} lever that changes what the model computes:
+
+\begin{enumerate}
+    \item \textbf{A previously adopted lever went stale (Section~\ref{sec:staleness}).} FFN $6\times$ widening was a genuine 6-seed win when adopted (paper 002 \cite{ophis2026ffn}), but after n-gram hash value-embeddings \cite{ophis2026ngram} were layered on top, a leave-one-out ablation showed its quality benefit had vanished while its step-time cost remained. Reverting to FFN $4\times$ matched or beat the incumbent with $+16\%$ more steps and fewer parameters.
+    \item \textbf{A previously rejected lever became viable (Section~\ref{sec:reopt}).} \texttt{matrix\_lr} $= 0.03$ was rejected under a 3-seed test on the pre-n-gram stack (round 7), but wins 3/3 interleaved seeds on the FFN$4\times$+n-gram stack. The same lever, the same test, the opposite verdict --- direct evidence that the later structural lever moved the optimum of an earlier knob.
+\end{enumerate}
+
+Together these constitute what we call \emph{lever staleness}: under greedy sequential adoption, the recorded verdict of every lever is implicitly conditioned on the stack at the time of its test, and a dominant structural adoption silently invalidates those conditions. The remedy demonstrated here --- a leave-one-out ablation followed by a full re-sweep after the structural lever --- recovered $-0.0014$ $\valbpb$ (from $0.9546$ to $\approx 0.9532$) while \emph{simplifying} the model. The methodological contribution is transferable to any greedy AutoML or agentic research loop: treat structural adoptions as re-optimization triggers, not as permanent context.
+
+\section{Experimental Setup}
+\label{sec:setup}
+
+\paragraph{Frame.} Identical to papers 001--006: a nanochat-style GPT \cite{karpathy2025nanochat} of $\sim$50M parameters (depth 8, sliding-window attention), Muon for matrix parameters \cite{jordan2024muon} and AdamW elsewhere, trained for a fixed 5-minute wall-clock budget on a single H200 of a shared $8\times$H200 node. Metric: validation bits per byte ($\valbpb$), lower is better. Steps completed are an outcome, not a control. Single-seed noise floor $\sigma \approx 0.0015$.
+
+\paragraph{Incumbent stack at round 37.} The greedy-sequentially adopted SOTA: \texttt{TOTAL\_BATCH\_SIZE} $= 2^{18}$ (paper 001), FFN widening $4\times \rightarrow 6\times$ (paper 002), bigram+trigram hash value-embeddings with a $2^{20}$-entry table (paper 003), and \texttt{torch.compile} max-autotune (paper 004); FFN$6\times$ reference mean $\valbpb \approx 0.9546$.
+
+\paragraph{GPU-contention discipline.} Paper 006 \cite{ophis2026retraction} retracted an fp8 ``win'' that was in fact a GPU-contention artifact. All comparisons in rounds 37--44 therefore use \emph{GPU-controlled} designs: arms of an A/B are interleaved across the same GPUs within a wave, and multi-seed confirmations additionally \emph{swap} GPU assignments between arms across waves. A same-configuration control run on two GPUs in round 37 differed by $0.0014$ ($0.9531$ on gpu0 vs.\ $0.9545$ on gpu5) --- comparable to the entire effect sizes at stake --- so unpaired comparisons are uninterpretable at this resolution.
+
+\paragraph{Keep/discard gate.} Single-seed results are screening pilots only. Adoption requires a multi-seed paired comparison (interleaved and/or GPU-swapped) with a consistent sign; near-zero paired deltas are rejected as neutral. In rounds 41--44, throughput-neutral arms (learning-rate and weight-decay variants) completed an identical 1890 steps, making those comparisons pure modeling A/Bs with no step-count confound.
+
+\section{The Staleness Phenomenon (Round 37)}
+\label{sec:staleness}
+
+Rather than proposing a new lever, round 37 audited the existing stack with a \emph{leave-one-out ablation}: remove each adopted lever individually from the incumbent and measure the damage. Three of the four levers behaved as their adoption records promised. Reverting batch size to $2^{19}$ cost $+0.008$ ($0.9614$, 850 steps); disabling max-autotune cost $+0.003$ ($0.9572$, 1590 steps). One did not:
+
+\begin{quote}
+Reverting FFN $6\times \rightarrow 4\times$ gave $\valbpb = 0.9536$ against a full-stack control mean of $0.9538$ ($0.9531$/gpu0 and $0.9545$/gpu5) --- \emph{indistinguishable quality} --- while completing 1971 steps vs.\ 1705, a $+16\%$ step-count advantage from the smaller FFN's faster step.
+\end{quote}
+
+The FFN$6\times$ adoption was not a false positive: paper 002 confirmed it at 6 seeds on the pre-n-gram stack. It went \emph{stale}. The mechanistic reading is substitution: the n-gram value-embeddings inject hashed bigram/trigram features directly into the residual stream, offloading precisely the local-feature and local-statistics computation that the extra FFN width had been providing. Once that work is done by a cheap table lookup, the marginal $4\times \rightarrow 6\times$ capacity is redundant --- but under a fixed wall-clock budget its step-time cost still bites, so the lever's net value flips from positive to negative. Consistent with substitution of the \emph{marginal} capacity only, further shrinking is sharply bad (Section~\ref{sec:reopt}): FFN$3\times$ costs $+0.006$ and FFN$2\times$ $+0.016$ even with many more steps, so the n-gram path substitutes for the top slice of FFN capacity, not for the FFN itself.
+
+Rounds 38--39 promoted the anomaly to a verdict with the strictest design of the campaign: six paired seeds (s71--s76), interleaved across GPUs in round 38 and GPU-swapped in round 39. FFN$4\times$: mean $0.9538$ (best single $0.9510$), 4/6 seed wins, mean paired $\Delta = -0.0007$, mean 1943 vs.\ 1680 steps ($+16\%$). FFN$6\times$: mean $0.9546$. FFN$4\times$ was adopted --- an unusual adoption in that it \emph{removes} parameters and step time while matching or improving quality.
+
+\section{Re-Optimization Recovers Gains (Rounds 40--41)}
+\label{sec:reopt}
+
+If one adopted lever went stale, every other recorded verdict --- including rejections --- is suspect. Round 40 therefore re-swept the knob stack on the new FFN$4\times$ reference. Most verdicts survived: FFN$3\times$ ($0.9594$, 2113 steps) and FFN$2\times$ ($0.9702$, 2334 steps) confirm $4\times$ as the capacity floor; batch $2^{17}$ ($0.9599$, 3720 steps) confirms $2^{18}$ as still optimal; \texttt{matrix\_lr} $= 0.05$ regressed ($0.9556$); warmdown $0.6$ was neutral ($0.9539$). One verdict flipped: \texttt{matrix\_lr} $= 0.03$ flashed $0.9529$, below the interleaved reference.
+
+This flash is the clean case, because \texttt{matrix\_lr} $= 0.03$ has a rejection on record. On the pre-n-gram batch-$2^{18}$ stack (round 7) it flashed $0.9776$ and then failed 3-seed confirmation ($0.9825$, $0.9790$ vs.\ reference $\approx 0.9797$) and was discarded. Round 41 re-ran the same test on the new stack: three interleaved paired seeds (s71--s73), identical 1890 steps per arm. \texttt{matrix\_lr} $0.03$ won 3/3 seeds, mean $0.9533$ vs.\ $0.9540$ for the incumbent $0.04$, paired $\Delta = -0.0007$, best single $0.9504$. Adopted.
+
+The same lever was tested twice with the same multi-seed protocol and returned opposite verdicts on opposite sides of the structural adoption. This is not a statistical accident to be averaged away; it is the signature of lever interaction. A plausible mechanism: with the n-gram table absorbing rote local statistics and the FFN narrowed, the matrix parameters face a smoother residual task and complete more optimizer steps within the budget, shifting the optimal Muon learning rate downward (more steps at lower rate reach the same total displacement with less late-training noise). We do not claim to have isolated which of the two stack changes (n-gram vs.\ FFN$4\times$) drives the shift --- only that the shift is real and gate-clearing.
+
+\section{Discipline Near the Floor (Rounds 42--44)}
+\label{sec:discipline}
+
+The re-sweep also manufactured temptations. Round-42 single-seed screens on the new stack produced three sub-reference flashes: \texttt{embedding\_lr} $0.8$ at $0.9504$, \texttt{matrix\_lr} $0.025$ at $0.9506$, and weight decay $0.1$ at $0.9504$ (with \texttt{embedding\_lr} $0.45$ at $0.9515$, warmdown $0.4$ at $0.9536$, and \texttt{scalar\_lr} $0.3$ at $0.9529$ neutral). Every flash died under GPU-controlled confirmation:
+
+\begin{itemize}
+    \item \texttt{embedding\_lr} $0.8$: $0.9514$ vs.\ matched reference $0.9503$ (s74) --- worse; the flash was noise. Rejected.
+    \item \texttt{matrix\_lr} $0.025$: $0.9553$ vs.\ matched reference $0.9533$ (s76) --- worse; $0.03$ is the learning-rate floor. Rejected.
+    \item Weight decay $0.1$: an encouraging matched screen ($-0.0016$ on s75) but a 3-seed paired test (s77--s79, rounds 43--44) gave mean $\Delta = -0.00008$ --- neutral at two orders of magnitude below the gate. Rejected.
+\end{itemize}
+
+This replicates, at the new and lower floor, the central lesson of papers 002 and 006: single-seed screens near $\sigma \approx 0.0015$ have a high false-flash rate, and with $0.0014$ of same-config spread available from GPU placement alone, only interleaved/swapped paired designs are admissible evidence. A re-optimization pass is precisely the setting where this discipline pays: it generates many candidate flips at once, most of which are noise, and an undisciplined loop would have adopted three phantom levers alongside the two real ones.
+
+The re-optimized stack --- n-gram$(2,3)$@$2^{20}$ + FFN$4\times$ + \texttt{matrix\_lr} $0.03$ + batch $2^{18}$ + max-autotune --- ends the pass at a 9-seed reference mean of $\approx 0.9532$ (best single $0.9504$), vs.\ $0.9546$ for the pre-audit incumbent, with a smaller FFN.
+
+\section{Results}
+\label{sec:results}
+
+Table~\ref{tab:results} summarizes rounds 37--44. Data: \texttt{campaign\_log.jsonl}, exp230--exp277.
+
+\begin{table*}[t]
+\caption{Rounds 37--44: leave-one-out audit, re-sweep, and GPU-controlled confirmations. All multi-seed tests are interleaved and/or GPU-swapped paired designs (round-36 contention discipline). Negative $\Delta$ favors the candidate.}
+\label{tab:results}
+\vskip 0.15in
+\begin{center}
+\begin{scriptsize}
+\setlength{\tabcolsep}{1.7pt}
+\begin{tabular}{llccccl}
+\toprule
+Round & Comparison & Candidate & Reference & $\Delta$ & Seeds & Verdict \\
+\midrule
+37 & LOO: FFN $6\times \rightarrow 4\times$ (1971 vs.\ 1705 steps) & 0.9536 & 0.9538 & $\approx 0$, $+16\%$ steps & 1 & anomaly: FFN6 stale \\
+37 & LOO: batch $2^{18} \rightarrow 2^{19}$ (850 steps) & 0.9614 & 0.9538 & $+0.0076$ & 1 & still load-bearing \\
+37 & LOO: $-$max-autotune (1590 steps) & 0.9572 & 0.9538 & $+0.0034$ & 1 & still load-bearing \\
+37 & same config, gpu0 vs.\ gpu5 & 0.9531 & 0.9545 & $0.0014$ & 1{+}1 & GPU-placement spread \\
+\midrule
+38--39 & \textbf{FFN$4\times$ vs.\ FFN$6\times$} (intl.\ $+$ swapped) & \textbf{0.9538} & 0.9546 & $-0.0007$, 4/6 & \textbf{6 paired} & \textbf{adopt (simplifies)} \\
+40 & FFN$3\times$ (2113 steps) & 0.9594 & 0.9538 & $+0.0056$ & 1 & discard: $4\times$ is floor \\
+40 & FFN$2\times$ (2334 steps) & 0.9702 & 0.9538 & $+0.0164$ & 1 & discard \\
+40 & batch $2^{17}$ on FFN$4\times$ (3720 steps) & 0.9599 & 0.9538 & $+0.0061$ & 1 & discard: $2^{18}$ optimal \\
+40 & \texttt{matrix\_lr} $0.05$ & 0.9556 & 0.9538 & $+0.0018$ & 1 & discard \\
+40 & \texttt{matrix\_lr} $0.03$ (interleaved flash) & 0.9529 & 0.9538 & $-0.0009$ & 1 & promote to round 41 \\
+40 & warmdown $0.6$ & 0.9539 & 0.9538 & $\approx 0$ & 1 & neutral \\
+\midrule
+41 & \textbf{\texttt{matrix\_lr} $0.03$ vs.\ $0.04$} (intl., 1890 steps) & \textbf{0.9533} & 0.9540 & $-0.0007$, 3/3 & \textbf{3 paired} & \textbf{adopt (flipped verdict)} \\
+\midrule
+42 & screens: \texttt{emb\_lr} $0.8$ / \texttt{mlr} $0.025$ / wd $0.1$ & 0.9504/0.9506/0.9504 & --- & flash & 1 each & confirm required \\
+43 & \texttt{embedding\_lr} $0.8$ vs.\ matched ref (s74) & 0.9514 & 0.9503 & $+0.0011$ & 1 paired & reject: flash was noise \\
+43 & \texttt{matrix\_lr} $0.025$ vs.\ matched ref (s76) & 0.9553 & 0.9533 & $+0.0019$ & 1 paired & reject: $0.03$ is LR floor \\
+43--44 & weight decay $0.1$ vs.\ ref (s77--s79) & 0.9539 & 0.9540 & $-0.00008$ & 3 paired & reject: neutral \\
+\midrule
+44 & \textbf{re-optimized SOTA} (9-seed mean, best 0.9504) & \textbf{$\approx$0.9532} & 0.9546 & $-0.0014$ & 9 & \textbf{new reference} \\
+\bottomrule
+\end{tabular}
+\end{scriptsize}
+\end{center}
+\vskip -0.1in
+\end{table*}
+
+Three features stand out. First, the two adopted changes are exactly the two that had \emph{prior verdicts on the old stack} --- one adoption (FFN$6\times$) and one rejection (\texttt{matrix\_lr} $0.03$) --- and both verdicts inverted; every genuinely new flash was noise. The re-optimization pass did not discover new physics; it corrected conditioning. Second, each real effect is individually $\sim 0.5\sigma$ ($-0.0007$) and detectable only through paired seed-matched design with 3--6 replicates; the combined $-0.0014$ recovery equals the GPU-placement spread of a single unpaired comparison. Third, the recovery is free at inference: the re-optimized model is strictly smaller and takes $16\%$ more optimizer steps in the same wall-clock budget.
+
+\section{Discussion: Hypothesis H7}
+\label{sec:discussion}
+
+The campaign's greedy loop treats each adopted lever as a permanent fact. Rounds 37--44 show the facts are conditional. We state the generalization:
+
+\begin{quote}
+\textbf{Hypothesis H7} \emph{(lever staleness under greedy sequential adoption).} In greedy multi-lever search, adoption of a dominant structural lever $L$ (one that changes what the model computes, not merely how fast) makes the recorded verdicts of other levers unreliable: previously adopted levers can become stale (their benefit absorbed by $L$, leaving only their cost) and previously rejected levers can become viable. A re-optimization pass --- leave-one-out ablation of the stack plus a re-sweep of key knobs --- after any structural adoption is therefore necessary, and because staleness specifically strands \emph{capacity} whose function $L$ now performs, the pass typically both improves the metric and simplifies the model.
+
+\textbf{Confidence: 0.8.}
+\end{quote}
+
+The evidence here is one clean instance with both predicted signatures: FFN$6\times$ stale after n-gram adoption (benefit vanished, $+16\%$ step cost remained), and \texttt{matrix\_lr} $0.03$ flipping from 3-seed rejection to 3/3 adoption across the same boundary. Confidence is held at $0.8$ rather than higher because (i) it is a single structural lever in a single campaign; (ii) the \texttt{matrix\_lr} flip is not attributed between the n-gram and FFN$4\times$ components of the stack change; and (iii) ``typically simplifies'' is inferred from the substitution mechanism plus one example, not from a distribution over campaigns.
+
+The transferable methodology is cheap and generic. A leave-one-out audit of a $k$-lever stack costs $k{+}1$ runs and directly measures each lever's \emph{current} marginal value, independent of its adoption-time record; any lever whose removal is quality-neutral but throughput-positive is stale by construction. The audit is also the right trigger discipline: run it after every structural adoption, not on a timer, because staleness is caused by landscape shifts, not by time. Finally, the pass must inherit the campaign's noise discipline --- it generates many small candidate flips at once, and (Section~\ref{sec:discipline}) most single-seed flips near the floor are false.
+
+\section{Ranked Next Directions}
+\label{sec:directions}
+
+\begin{enumerate}
+    \item \textbf{Structural-adoption-triggered re-sweeps as standing policy.} \emph{Mechanism:} staleness is caused by structural levers redistributing computation, so audits should be event-triggered. \emph{Prediction:} the next structural adoption (e.g., any new embedding or attention pathway) will flip at least one existing verdict when followed by a leave-one-out audit plus re-sweep. \emph{Falsifier:} two consecutive structural adoptions whose audits find every lever's marginal value unchanged within the paired gate.
+    \item \textbf{Full joint re-optimization vs.\ greedy.} \emph{Mechanism:} greedy sequential adoption is coordinate descent with each coordinate visited once; H7 says the objective's coordinates interact, so iterating passes should reach a better fixed point. \emph{Prediction:} a second full re-sweep of the current stack (all knobs, paired designs) flips at least one more verdict before reaching a pass with zero flips. \emph{Falsifier:} an immediate zero-flip pass, showing one re-optimization round sufficed.
+    \item \textbf{Order-independence test.} \emph{Mechanism:} if re-optimization to a fixed point washes out adoption order, the final stack is a property of the search space, not the trajectory. \emph{Prediction:} adopting the same levers in a different order (e.g., n-gram before the FFN sweep) followed by re-optimization converges to the same terminal stack (FFN$4\times$, \texttt{matrix\_lr} $0.03$, batch $2^{18}$) within the noise gate. \emph{Falsifier:} a different terminal stack that the re-optimization pass cannot escape, implying history-dependence and motivating population-based search.
+    \item \textbf{Attribute the \texttt{matrix\_lr} flip.} \emph{Mechanism:} the flip could be driven by the n-gram pathway, the FFN narrowing, or their interaction. \emph{Prediction:} a $2\times2$ factorial (FFN$\{4\times, 6\times\}$ $\times$ \texttt{matrix\_lr} $\{0.03, 0.04\}$, paired seeds) will show the $0.03$ advantage concentrated in the FFN$4\times$ cells. \emph{Falsifier:} an advantage of similar size in the FFN$6\times$ cells, implicating the n-gram lever alone.
+    \item \textbf{Exploit the stranded step budget.} \emph{Mechanism:} FFN$4\times$ buys $+16\%$ steps; some of that could be re-spent on capacity the n-gram path does \emph{not} substitute for (e.g., attention or depth) rather than banked as steps. \emph{Prediction:} at least one re-spend beats the pure-steps allocation; \emph{falsifier:} all re-spends regress, confirming the update-count-limited regime of paper 001 still binds.
+\end{enumerate}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Greedy sequential adoption left the campaign's own SOTA stack carrying a stale lever: FFN $6\times$ widening, adopted on solid 6-seed evidence, had its benefit silently absorbed by the later n-gram value-embedding lever and survived only as a step-time tax. A leave-one-out audit exposed it, GPU-controlled paired tests confirmed the reversion (FFN$4\times$: $0.9538$ vs.\ $0.9546$, 4/6, $+16\%$ steps), and a full re-sweep on the corrected stack flipped a second verdict (\texttt{matrix\_lr} $0.03$: 3/3 wins, $0.9533$ vs.\ $0.9540$) that had been legitimately rejected pre-n-gram. The re-optimized reference stands at a 9-seed mean of $\approx 0.9532$ (best $0.9504$), down from $0.9546$, on a smaller model --- while three seductive single-seed flashes were correctly rejected under the paired-design discipline inherited from the round-36 contention retraction. The portable lesson (H7, confidence $0.8$): in any greedy autonomous research loop, a dominant structural adoption is not a milestone to build past but a trigger to audit behind.
+
+\bibliographystyle{icml2024}
+
+\begin{thebibliography}{7}
+
+\bibitem[Jordan et~al.(2024)]{jordan2024muon}
+Jordan, K., Jin, Y., Boza, V., You, J., Cesista, F., Newhouse, L., and Bernstein, J.
+\newblock Muon: An optimizer for hidden layers in neural networks.
+\newblock 2024.
+\newblock URL \url{https://kellerjordan.github.io/posts/muon/}.
+
+\bibitem[Karpathy(2025)]{karpathy2025nanochat}
+Karpathy, A.
+\newblock nanochat: The best ChatGPT that \$100 can buy.
+\newblock 2025.
+\newblock URL \url{https://github.com/karpathy/nanochat}.
+
+\bibitem[McCandlish et~al.(2018)]{mccandlish2018empirical}
+McCandlish, S., Kaplan, J., Amodei, D., and the OpenAI Dota Team.
+\newblock An empirical model of large-batch training.
+\newblock \emph{arXiv preprint arXiv:1812.06162}, 2018.
+
+\bibitem[OPHIS(2026{\natexlab{a}})]{ophis2026ffn}
+OPHIS Autonomous Research Agent.
+\newblock The single-seed noise-floor trap and an FFN-capacity optimum in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 002, \texttt{AI\_papers/}, 2026{\natexlab{a}}.
+
+\bibitem[OPHIS(2026{\natexlab{b}})]{ophis2026ngram}
+OPHIS Autonomous Research Agent.
+\newblock N-gram hash value-embeddings and a hash-table scaling law in fixed-wall-clock LLM pretraining.
+\newblock Campaign paper 003, \texttt{AI\_papers/}, 2026{\natexlab{b}}.
+
+\bibitem[OPHIS(2026{\natexlab{c}})]{ophis2026retraction}
+OPHIS Autonomous Research Agent.
+\newblock Throughput levers and a retracted false positive: GPU-contention confounds in shared-cluster A/B testing.
+\newblock Campaign paper 006, \texttt{AI\_papers/}, 2026{\natexlab{c}}.
+
+\bibitem[OPHIS(2026{\natexlab{d}})]{ophis2026capstone}
+OPHIS Autonomous Research Agent.
+\newblock A 25-round autonomous pretraining campaign under a fixed wall-clock budget: levers, saturation frontier, and kernel profile.
+\newblock Campaign capstone (paper 005), \texttt{AI\_papers/}, 2026{\natexlab{d}}.
+
+\end{thebibliography}
+
+\end{document}

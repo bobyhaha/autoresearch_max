@@ -1,0 +1,90 @@
+{
+  "schema_version": 2,
+  "classification": "external_mechanism_source_reference",
+  "paper_id": "pap_gpas_neurips2025",
+  "external_role": "gradient_preserving_residual_activation_scaling_source",
+  "captured_at": "2026-07-29T17:14:25Z",
+  "repository": {
+    "url": "https://github.com/dandingsky/GPAS",
+    "default_branch": "main",
+    "head_resolution_method": "git ls-remote followed by a full clone and exact checkout",
+    "commit": "31980688f4cbb1b0cff59bca9077e6fc52dab3f0",
+    "tree": "076a1d81a48f4d03dbd455d4197345480bd818bb",
+    "commit_time": "2025-07-04T00:25:54+08:00",
+    "commit_subject": "Initial commit",
+    "tracked_paths": 30,
+    "gitlinks": []
+  },
+  "artifacts": [
+    {
+      "path": "gpas-31980688.tar.zst",
+      "role": "normalized_commit_source_archive",
+      "bytes": 92641,
+      "sha256": "1177e6766f53cf0bc59b880a96ca09d7732984db62f8d54b9bf5083b1b45acf0",
+      "uncompressed_tar_bytes": 225280,
+      "archive_root": "gpas-31980688/",
+      "regular_files": 30,
+      "symlinks": 0
+    },
+    {
+      "path": "gpas-31980688.bundle",
+      "role": "complete_git_history_bundle",
+      "bytes": 98272,
+      "sha256": "8e2abb5ba02b16639d92cb532b3134c5fa4bcce0f43156585fa2e591294edaf1",
+      "resolved_ref": "refs/heads/archive-31980688"
+    },
+    {
+      "path": "GPAS_NeurIPS_2025.pdf",
+      "role": "official_neurips_2025_proceedings_paper",
+      "bytes": 1407649,
+      "sha256": "d644ed31e31a693fa889e01655e94cfea1cdb0c312901ee11b001af68b14a35e",
+      "pages": 26
+    }
+  ],
+  "normalization": {
+    "archive_recipe": "git archive --format=tar --prefix=gpas-31980688/ 31980688f4cbb1b0cff59bca9077e6fc52dab3f0 | zstd -19 -T1",
+    "bundle_recipe": "git bundle create gpas-31980688.bundle refs/heads/archive-31980688",
+    "git_version": "2.39.5 (Apple Git-154)",
+    "zstd_version": "1.5.7",
+    "deterministic_archive_rebuild_byte_identical": true
+  },
+  "license": {
+    "path": "LICENSE",
+    "declared_family": "Apache-2.0",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+  },
+  "verified_files": [
+    {
+      "path": "peft_pretraining/modeling_llama.py",
+      "sha256": "5d108c750a8753c365845ee4b1807dda2517a1f0363d7f159ee9a433b5c4b702"
+    },
+    {
+      "path": "peft_pretraining/custom_activations.py",
+      "sha256": "15a5c6bec1d92761686672f35b57821ad20b115f7eec3a9112b5a84091d46b24"
+    },
+    {
+      "path": "torchrun_main.py",
+      "sha256": "0c439151847fc0c2ad2ed91f52bfbcb7a164eb78e06dd033b31b894b5d593962"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    }
+  ],
+  "verification": {
+    "zstd_integrity_test": true,
+    "bundle_verification_passed": true,
+    "bundle_records_complete_history": true,
+    "archive_commit_matches_resolved_head": true,
+    "archive_path_accounting_matches_git_tree": true,
+    "git_lfs_pointers_detected": 0,
+    "local_sota_adoption_claimed": false
+  },
+  "scope_and_adoption_caveats": [
+    "This is immutable external paper and code provenance, not a governed local OPHIS SOTA or adoption result.",
+    "The source studies 12-layer-and-deeper Pre-LN LLaMA-family models, whereas OPHIS has eight layers, learned residual/x0 mixing, hashed memory, zero-initialized output projections, and Peri-style normalization.",
+    "The paper reports no error bars or statistical significance for the cited perplexity and mechanism ablations.",
+    "A source-faithful local component must preserve the stop-gradient contract; generic residual scaling is not equivalent.",
+    "Any local port requires prospective activation-variance, gradient, mediation, compiled-parity, and throughput gates before endpoint scoring."
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "schema_version": 2,
+  "classification": "external_mechanism_source_reference",
+  "paper_id": "pap_deepseek_engram_2026",
+  "external_role": "canonicalized_ngram_key_and_conditional_memory_source",
+  "captured_at": "2026-07-29T14:37:25Z",
+  "repository": {
+    "url": "https://github.com/deepseek-ai/Engram",
+    "default_branch": "main",
+    "head_resolution_method": "git clone --filter=blob:none followed by rev-parse HEAD",
+    "commit": "fb7f84a21f91223715394a33a1dc24bbfb7f788e",
+    "tree": "9d4076466f3651aca4a8da8181c2f1ffa5b181db",
+    "commit_time": "2026-01-14T09:13:02+08:00",
+    "commit_subject": "Merge pull request #1 from study8677/main",
+    "tracked_paths": 10,
+    "gitlinks": []
+  },
+  "artifacts": [
+    {
+      "path": "engram-fb7f84a2.tar.zst",
+      "role": "normalized_commit_source_archive",
+      "bytes": 1784714,
+      "sha256": "789b81408ab98b4cb90a2b00f4f6a15ded1651f13972cd4498edcd5b52ac1061",
+      "uncompressed_tar_bytes": 2099200,
+      "archive_root": "engram-fb7f84a2/",
+      "regular_files": 10,
+      "symlinks": 0
+    },
+    {
+      "path": "engram-fb7f84a2.bundle",
+      "role": "complete_git_history_bundle",
+      "bytes": 2352059,
+      "sha256": "03114f299985aba9267b79299a2331d96194c0d50eb89a5f6e6b5eec3d40c0f0",
+      "resolved_ref": "refs/heads/archive-fb7f84a2"
+    },
+    {
+      "path": "Engram_paper.pdf",
+      "role": "upstream_commit_primary_paper",
+      "bytes": 770776,
+      "sha256": "1e8ae53dc527d4db264b40a7996780b0044914443c0ce5fd54f898c405cab94f",
+      "pages": 33
+    }
+  ],
+  "normalization": {
+    "archive_recipe": "git archive --format=tar --prefix=engram-fb7f84a2/ fb7f84a21f91223715394a33a1dc24bbfb7f788e | zstd -19 -T0",
+    "bundle_recipe": "git bundle create engram-fb7f84a2.bundle refs/heads/archive-fb7f84a2",
+    "git_version": "2.39.5 (Apple Git-154)",
+    "zstd_version": "1.5.7"
+  },
+  "license": {
+    "path": "LICENSE",
+    "declared_family": "Apache-2.0",
+    "sha256": "9debfe045c2a2755a52d0ae1087605d15770fe6636798c09efd93c1dc732ef28",
+    "caveat": "The README calls this a model license, while the captured LICENSE text is Apache License 2.0; the exact text and hash are authoritative."
+  },
+  "verified_files": [
+    {
+      "path": "README.md",
+      "sha256": "add722a04bae899360017a6e12a8fac3e93135857e20325e464a2b586dbefda8"
+    },
+    {
+      "path": "engram_demo_v1.py",
+      "sha256": "9d082070654df217e21bbca9926a4267bdf2cce7777aa6739747c24de30d2044"
+    },
+    {
+      "path": "Engram_paper.pdf",
+      "sha256": "1e8ae53dc527d4db264b40a7996780b0044914443c0ce5fd54f898c405cab94f"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "9debfe045c2a2755a52d0ae1087605d15770fe6636798c09efd93c1dc732ef28"
+    }
+  ],
+  "verification": {
+    "zstd_integrity_test": true,
+    "bundle_verification_passed": true,
+    "bundle_records_complete_history": true,
+    "archive_commit_matches_resolved_head": true,
+    "local_sota_adoption_claimed": false
+  },
+  "scope_and_adoption_caveats": [
+    "This is immutable external code and paper provenance, not governed local OPHIS evidence or a local SOTA.",
+    "The upstream repository labels engram_demo_v1.py as a demonstration that omits or mocks production attention, MoE, hyper-connection, CUDA-kernel, and distributed-training components.",
+    "The canonicalized-token lookup is source code for a key-addressing mechanism. It does not establish that the 8192-token OPHIS vocabulary will collapse enough keys or improve local BPB.",
+    "The selected local arm changes n-gram memory keys only; it must not alter model input IDs, targets, byte accounting, document boundaries, or token order."
+  ]
+}

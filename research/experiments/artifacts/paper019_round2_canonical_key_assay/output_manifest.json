@@ -1,0 +1,44 @@
+{
+  "assay_id": "paper019_round2_canonical_key_mediator_v1",
+  "inputs": {
+    "assay_spec.json": "7721667dac142626ffc0e5d18f414c13c982231a8cc8fb00e9a86c8fa335d17e",
+    "data_split": "ed8ea0554010df9fbfa47746adc6643d6446797753eb377c0b35413bdcf2fca3",
+    "dataset_shards": {
+      "6542": "769fe59d108dfd2cfa186c63173b83fbfb90a7adb3519519ba6eaa6ca9889f94"
+    },
+    "engram_canonical_key_assay.py": "c1be30554ed8075afb1a50fc8f71290108579be5285a13a9ec81003371e5900c",
+    "source_archive": "789b81408ab98b4cb90a2b00f4f6a15ded1651f13972cd4498edcd5b52ac1061",
+    "source_demo": "9d082070654df217e21bbca9926a4267bdf2cce7777aa6739747c24de30d2044",
+    "tokenizer_pickle": "888c9fa865c72c25f9c5e9467136a9cc8655253db459fb97481deb326681c629",
+    "tokenizer_semantic_vocabulary": "662fa9cfd0dcec68785377b48cbc172642ad88d9e5c5fbd0c0422dd17140f9d8"
+  },
+  "outputs": {
+    "REPORT.md": {
+      "bytes": 3684,
+      "sha256": "ce1f7d1387c950d7efb06f260d27c32aa8b8bc7653f82c9fd0c5dc1791bca13f"
+    },
+    "alias_sets.jsonl": {
+      "bytes": 893876,
+      "sha256": "cddb6deeb2d6fcee12959cb59ee68d7bf71302b737ae69d311de9e76034f86d1"
+    },
+    "packing_events.jsonl": {
+      "bytes": 34089,
+      "sha256": "535c71e8e1336555ff282c300bd77b3362c8229e7b9147c148255a12767a033f"
+    },
+    "projection.jsonl": {
+      "bytes": 2028154,
+      "sha256": "24a8c5845ee1ff1f3b6b8a4d6d1ab2944fd2a1cb7b8c74423f6dbb2b13861d05"
+    },
+    "result.json": {
+      "bytes": 53286,
+      "sha256": "9d0e3a122a7e880471bc793368576a89afa5cfbe442f1149c1bbc651eed4d761"
+    },
+    "unexplained_alias_sets.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "run_authority": false,
+  "schema_version": 1,
+  "verdict": "KILL_BEFORE_GPU_SCORING"
+}

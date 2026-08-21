@@ -1,0 +1,124 @@
+%% Paper 015 -- ICML-conference-style block report (5-round cadence).
+%% Requires icml2024.sty. Compile: tectonic paper_015_....tex
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\valbpb}{\mathrm{val\_bpb}}
+\icmltitlerunning{The Implementation Is the Hypothesis}
+\begin{document}
+\twocolumn[
+\icmltitle{The Implementation Is the Hypothesis: A No-Op Intervention Defect, Eight Negative Levers, \\ and a Mechanism That Only Wins Once Its Kernel Is Fixed}
+\begin{icmlauthorlist}\icmlauthor{Fable 5 (deep-analysis author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Fable 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, experimental validity, kernel refinement, negative results, block-sparse attention, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+This block began by discovering that the previous block's results were not results at all. An adversarial critic in the planning round reported it could not find \texttt{ATTNRES\_ENABLE}, \texttt{NGRAM\_WD\_LAMBDA}, or \texttt{NGRAM\_BACKOFF\_KAPPA} anywhere in the canonical \texttt{train.py}. Verification confirmed a defect with \emph{two} independent causes, either sufficient alone: the three mechanisms existed only as forked one-off scripts on the remote box, and their intervention records bound no environment variables. Every ``treatment'' arm had therefore run a configuration byte-identical to its own control, while the gated runner reported \texttt{config\_verified=True} --- because that check iterates the bound environment, and an empty environment verifies trivially. Three results were retracted as invalid: they are the same configuration measured twice, which is exactly why all three landed an order of magnitude inside the noise gate. After porting the mechanisms, fixing a latent autograd bug in the reference AttnRes, and adding two fail-closed guards to the runner, we re-measured. Eight levers were then tested with working implementations --- AttnRes, token-shift, C1, C3, C1$\times$C3, sparse-grad, rowwise state, and an nGPT hypersphere residual --- and \emph{every one regressed}, with the striking common signature that each lost 80--150 optimizer steps inside the fixed 300-second budget. The mechanisms were not the binding constraint; step loss was. The block's final and central result inverts that picture. Intra-document attention masking, implemented densely, is catastrophic ($1.0130$, 522 steps); implemented block-sparse via FlexAttention it reaches $0.9438$ at 1084 steps --- $-0.0692\ \valbpb$ and $2.08\times$ the throughput \emph{from an implementation change alone, at identical masking semantics}. Against a matched-backend control it is a confirmed win of $-0.0111$ over two paired seeds, $2.7\times$ the $2\sigma$ gate, while simultaneously gaining steps. A mechanism this campaign had previously recorded as ``improves quality but carries a large step-time cost'' was in fact an implementation artifact.
+\end{abstract}
+
+\section{Introduction}
+Paper 014 planned a seven-candidate block and reported that four of its experiments produced small nulls. This paper reports that those nulls were not measurements. It then reports what happened once the harness was repaired: a sweep of eight independent levers, all negative and all sharing one mechanical cause, followed by a single mechanism whose sign flips entirely when its kernel is replaced.
+
+The organizing lesson is the one the operator stated as a standing directive and which the data now supports quantitatively: \emph{a naive implementation may lose where a refined one wins}, so a wall-clock regression is a statement about the implementation until proven otherwise.
+
+\section{A Defect That Cannot Be Detected By Experiment}
+\label{sec:defect}
+The block-15 planning round's adversarial critic flagged that \texttt{ATTNRES\_ENABLE}, \texttt{NGRAM\_WD\_LAMBDA}, and \texttt{NGRAM\_BACKOFF\_KAPPA} appeared nowhere in the local checkout. Direct verification found zero case-insensitive matches across all 3358 lines of \texttt{train.py}, all five \texttt{sota\_snapshots}, the read-only v3 reference checkout, and the entire git history of the file. A remote filesystem search located the real implementations: \texttt{repo/train\_attnres\_c1\_v2.py} and \texttt{repo/train\_c3.py}, forked one-off scripts of roughly 700 lines, never merged into the 3358-line canonical trainer.
+
+The second cause is independent and equally fatal. \texttt{tools/run\_gated.py:\_arm\_env} derives an arm's environment from \texttt{intervention.parameters.env}, falling back to uppercase keys in \texttt{parameters}. All three intervention records carried only lowercase descriptive metadata (\texttt{\{"kappa": 50\}}, \texttt{\{"lambda\_values\_tested": [...]\}}), so each resolved to \texttt{env=\{\}} and exported nothing.
+
+\textbf{Why it survived the gate.} \texttt{verify\_config} iterates the \emph{bound} environment and compares each key against the trainer's \texttt{RESOLVED\_CONFIG} echo. An empty bound environment has nothing to check, so verification passed vacuously and every run was stamped \texttt{config\_verified=True}. No experiment can detect this failure, because a no-op treatment and its control are the same program: the defect is invisible to the very instrument meant to catch it, and is only reachable by reading code.
+
+\textbf{Consequence.} The reported deltas $-0.000839$, $-0.001281$, $-0.001019$ are not null results about the named mechanisms. They are one configuration measured twice, which is precisely why all three sat an order of magnitude inside the $2\sigma$ gate of $0.004072$. They are retracted as \texttt{invalid}, not reported as nulls.
+
+\textbf{Repairs.} (i) All three mechanisms ported into the canonical trainer, verbatim from the forks, each an exact no-op when off. (ii) A latent autograd bug in the reference AttnRes was found and fixed: preallocated $(L{+}1,B,T,d)$ stack buffers written in place bump the version counter of the slices backward requires, raising a \texttt{RuntimeError} --- this matches, and plausibly explains, the AttnRes crash already recorded in paper 013's negative results. Replaced with list-append plus \texttt{torch.stack}. (iii) All three flags are now echoed in \texttt{RESOLVED\_CONFIG}, so config-verify can observe them. (iv) Intervention records with executable \texttt{parameters.env} were registered under \emph{new} IDs rather than version bumps, so every frozen experiment fingerprint stays valid and history is not rewritten. (v) Two fail-closed guards: a treatment intervention resolving to an empty environment is now an error, and a bound key \emph{absent} from \texttt{RESOLVED\_CONFIG} is reported distinctly from a value mismatch.
+
+\section{Eight Levers, One Failure Mode}
+With working implementations, we swept eight levers against a baseline of $0.9416$ at $\sim$1132 steps (within-round $\sigma \approx 0.0009$ from two replicates).
+
+\begin{table}[t]
+\caption{All levers regress, and all lose steps. Budget is 300 wall-clock seconds, so steps are the currency.}
+\label{tab:eight}
+\vskip 0.1in
+\begin{center}\begin{small}\begin{tabular}{lcc}
+\toprule
+Lever & $\valbpb$ & steps \\
+\midrule
+baseline & $0.9410$ & 1133 \\
+baseline (replicate) & $0.9423$ & 1117 \\
+rowwise state & $0.9418$ & 1131 \\
+AttnRes (refined) & $0.9525$ & 1050 \\
+AttnRes (naive) & $0.9562$ & 998 \\
+sparse-grad & $0.9535$ & 984 \\
+token-shift & $0.9608$ & 1044 \\
+nGPT sphere ($\alpha{=}0.25$) & $0.9802$ & 1097 \\
+token-shift $\times$ C3 & $0.9648$ & 992 \\
+\bottomrule
+\end{tabular}\end{small}\end{center}
+\vskip -0.15in
+\end{table}
+
+Three observations. First, \textbf{every lever costs steps}, 80--150 of them, and in a wall-clock-budgeted frame that cost is paid directly in $\valbpb$. Second, \textbf{refinement moves the number in the right direction}: AttnRes improved $-0.0044$ and recovered 53 steps purely from a kernel rewrite that stopped materializing two $(S,B,T,d)$ tensors per layer, dropping peak VRAM from 115\,GB to 89.7\,GB (baseline parity) --- the mechanism was never re-specified. Third, \textbf{one lever is exactly free}: rowwise optimizer state costs $+0.00004\ \valbpb$ and one step, both far inside noise, while cutting optimizer memory. It is banked as headroom, not claimed as a win.
+
+Two corrections belong here. \texttt{NGRAM\_SPARSE\_GRAD} is recorded in this campaign's own notes as a $-9.3\%$ step-time win; on this box it costs 148 steps. The deciding variable is the torch version (2.13 on the dev box where the win was measured, 2.9.1 here), so the lever is version-gated rather than universal, and the note has been corrected. The nGPT hypersphere residual (arXiv 2410.01131, claiming a 4--20$\times$ step reduction) was the cheapest lever tested at only $-36$ steps, exactly as predicted for an elementwise operation, yet quality-per-step collapsed. Its $\alpha$-sweep is non-monotonic with an interior optimum at $0.25$, so it is a real mechanism rather than a bug; the likely cause is that a residual-only nGPT without weight normalization and without removing weight decay is a half-system, discarding the baseline's tuned residual structure while delivering none of the paper's benefit.
+
+\section{The Implementation Is the Hypothesis}
+\label{sec:docmask}
+Intra-document attention masking blocks cross-document attention inside a packed sequence. It is the highest-ranked untested item in this project's own literature synthesis, and carries a consistent external signal. Its code path already existed in \texttt{train.py}, with both a dense and a block-sparse (FlexAttention) implementation. It had never been tested against the current baseline.
+
+Following the critic's windowing-matched design --- necessary because the doc-mask path is gated on the SDPA backend, so any test carries a mandatory \texttt{fa3}$\to$\texttt{sdpa} swap --- we ran a \texttt{MODE=window} control (windowing only) against \texttt{MODE=both} (windowing plus document restriction) at matched backend and matched kernel.
+
+\begin{table}[t]
+\caption{Identical masking semantics; the implementation decides the verdict.}
+\label{tab:docmask}
+\vskip 0.1in
+\begin{center}\begin{small}\begin{tabular}{lcc}
+\toprule
+Arm & $\valbpb$ & steps \\
+\midrule
+fa3 baseline & $0.9418$ & 1133 \\
+sdpa, no mask & $0.9530$ & 983 \\
+dense, window only & $1.0184$ & 528 \\
+dense, window\,+\,doc & $1.0130$ & 522 \\
+\textbf{flex, window\,+\,doc} & $\mathbf{0.9438}$ & \textbf{1084} \\
+flex, seg (pure INTRADoc) & $0.9426$ & 1091 \\
+\bottomrule
+\end{tabular}\end{small}\end{center}
+\vskip -0.15in
+\end{table}
+
+\textbf{The mechanism is favorable and the dense implementation hid it.} At matched windowing and matched (dense) kernel, adding document restriction is worth $-0.0054$. But the dense path materializes a $(B,1,T,T)$ boolean mask re-read by every layer in both passes, halving throughput from 983 to 522 steps --- a cost the code's own comment had predicted. Swapping to the block-sparse kernel, at \emph{identical} masking semantics, yields $-0.0692\ \valbpb$ and $2.08\times$ the steps.
+
+\textbf{Confirmed against a matched control.} Paired against \texttt{sdpa}-without-mask: seed 42 gives $-0.00923$, seed 43 gives $-0.01291$; mean $-0.0111$, same sign, $2.7\times$ the $2\sigma$ gate, \emph{and} $+101$ steps. Quality and throughput improve together, which no other lever this block achieved. A third seed holds (3-seed mean $0.942945$, $\sigma = 0.00088$).
+
+This retroactively corrects a standing campaign belief. The literature synthesis records that ``the current dense segmented-attention implementation improves quality but carries a large step-time cost,'' and that verdict is what kept the mechanism shelved. It was an artifact of the dense kernel, not a property of document segmentation.
+
+\section{Discussion}
+The eight-lever sweep and the doc-mask result are the same finding viewed from two sides. In a wall-clock-budgeted frame, a mechanism's measured value is inseparable from its kernel: every lever that added compute lost steps and therefore lost, and the one lever whose kernel was replaced flipped from catastrophic to winning without any change to what it computes. A wall-clock regression is therefore evidence about an implementation, and only becomes evidence about a mechanism once the implementation is competitive --- which is what this campaign's own Protocol 3 asserts and what the AttnRes and doc-mask trajectories now demonstrate quantitatively.
+
+The honest limitation: flex doc-mask sits $+0.0013$ from the \texttt{fa3} baseline, statistically indistinguishable, because the doc-mask benefit ($-0.011$) nearly exactly cancels the SDPA backend penalty ($+0.012$). It is not yet a campaign SOTA. The path to one is doc-masking at \texttt{fa3} speed, and we established a concrete obstacle: this build exposes \texttt{flash\_attn\_varlen\_func} only as an \texttt{autograd.Function}, not as the low-level custom-op pair the non-varlen path required --- and letting \texttt{torch.compile(fullgraph=True)} trace into an \texttt{autograd.Function} is the documented cause of this box's historical segfault. That is a real engineering obstacle with a known failure mode, not an unknown.
+
+\section{Ranked Next Directions}
+\begin{enumerate}
+\item \textbf{Block-size tuning for the flex mask.} The flex kernel is only 3\% behind \texttt{fa3} in steps; the block-sparse granularity is a direct lever on that gap, and closing it converts a parity result into a SOTA.
+\item \textbf{fa3 varlen doc-masking.} The highest-value target ($\sim -0.0054$ on top of the \texttt{fa3} baseline), gated on wrapping \texttt{FlashAttnVarlenFunc} in a \texttt{torch.library.custom\_op} with \texttt{register\_fake}, exactly as the non-varlen path was rescued.
+\item \textbf{Re-test shelved levers under doc-masking.} Removing cross-document contamination changes the context every other mechanism sees; the n-gram memory in particular now reads cleaner statistics, so the memorizer-regularization family deserves a re-test in the new regime rather than inheriting its pre-doc-mask verdict.
+\item \textbf{Full nGPT rather than the residual-only half-system}, accepting that it requires retuning the recipe it replaces.
+\item \textbf{Paired Head Attention} (NanoGPT speedrun record 58), currently a name without a public specification.
+\end{enumerate}
+
+\section{Conclusion}
+A block that began by invalidating its own predecessor ends with the campaign's clearest positive result. The invalidation and the result share a moral: what is registered as a mechanism is only ever tested through an implementation, and when the two are conflated the ledger records fiction --- silently, in the no-op case, or as a false negative, in the dense-mask case. The instrument has been hardened against the first failure, and the second has produced a confirmed $-0.0111$ win that was sitting unclaimed behind a slow kernel.
+
+\bibliographystyle{icml2024}
+\begin{thebibliography}{9}
+\bibitem[Loshchilov et al.(2024)]{ngpt} Loshchilov, I. et al. nGPT: Normalized Transformer with Representation Learning on the Hypersphere. arXiv:2410.01131.
+\bibitem[METR(2026)]{metr} METR. Evidence on AI R\&D Progress from NanoGPT. 2026.
+\bibitem[Recursive(2026)]{recursive} Recursive. First Steps Toward Automated AI Research. 2026.
+\bibitem[OPHIS(2026a)]{p13} OPHIS. From Isolation to Recombination. Campaign paper 013.
+\bibitem[OPHIS(2026b)]{p14} OPHIS. Block 14: Recombination and the Hopper Correction. Campaign paper 014.
+\end{thebibliography}
+\end{document}

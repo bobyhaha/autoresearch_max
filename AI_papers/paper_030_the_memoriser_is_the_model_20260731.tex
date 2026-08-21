@@ -1,0 +1,120 @@
+%% Paper 030 -- ICML-style. Two rejections and one mechanism: in a hashed n-gram
+%% memory the memorising rows and the signal-carrying rows are the same rows.
+\documentclass{article}
+\usepackage{amsmath}\usepackage{amssymb}\usepackage{booktabs}\usepackage{graphicx}\usepackage{hyperref}
+\usepackage[accepted]{icml2024}
+\newcommand{\vb}{\mathrm{val\_bpb}}
+\icmltitlerunning{The Memoriser Is the Model}
+\begin{document}
+\twocolumn[
+\icmltitle{The Memoriser Is the Model: Why a Data-Repetition Cliff Resists Regularisation}
+\begin{icmlauthorlist}\icmlauthor{Claude Opus 5 (author), OPHIS}{ophis}\end{icmlauthorlist}
+\icmlaffiliation{ophis}{Autoresearch reimplementation campaign}
+\icmlcorrespondingauthor{Claude Opus 5 (OPHIS)}{baiyuzhu@mit.edu}
+\icmlkeywords{autonomous research, data-constrained pretraining, memorisation, negative results, Machine Learning}
+\vskip 0.3in]
+\printAffiliationsAndNotice{}
+
+\begin{abstract}
+We report a mechanism that explains why the largest measured cliff in this campaign --- a $17.6$-gate collapse when training crosses from a second to a third pass over a frozen corpus --- cannot be removed by regularisation. Reducing model depth from 8 to 5 at a fixed $300$\,s budget buys $62$\% more steps and pushes training into a third pass; the resulting model attains the \emph{lowest} training loss of any depth tested ($2.4927$ vs $2.6171$ at depth 6) and the \emph{worst} validation loss ($2.7722$ vs $2.5508$), a train/val gap of $+0.2795$ against $-0.0663$. That is a memorisation signature, not a capacity failure. Two regularisation attempts follow. Global weight decay $\{0.1, 0.3, 0.6\}$ fails monotonically ($0.9791 \to 0.9905 \to 1.0031$); reading the optimizer groups shows why --- \texttt{WEIGHT\_DECAY} reaches only the dense matrices, $3.2$\% of parameters, while the $2.82$e9-parameter hashed $n$-gram tables ($96.8$\% of the model) are decayed by a separate coefficient defaulting to zero. Correcting that, decay applied to the tables themselves \textbf{closes the gap by 93\%} ($+0.2795 \to +0.0201$) --- confirming the tables are the memoriser --- and the \textbf{endpoint still worsens at both depths} ($+0.0128$ at depth 5, $+0.0349$ at depth 6), because training loss rises further than validation loss falls. We conclude that in a hashed $n$-gram memory the memorising rows and the signal-carrying rows are the same rows, so a norm penalty cannot separate them. This is the second result in this campaign where a mechanism was supported while the intervention derived from it was refuted.
+\end{abstract}
+
+\section{The Cliff}
+This frame trains for $300$ steady-state seconds on one H200 over ten frozen shards ($\approx$250M unique tokens). At the default depth 8 a run consumes $\approx$297M tokens --- just over one pass. Reducing depth buys throughput: depth 6 reaches 484M tokens, depth 5 reaches 668M. Depth 5 is the only configuration that crosses into a \emph{third} pass, and it collapses:
+
+\begin{center}\begin{small}
+\begin{tabular}{rrrrr}
+\toprule
+depth & steps & train & val & $\vb$ \\
+\midrule
+8 & 2029 & 2.6010 & 2.5997 & 0.9313 \\
+6 & 3266 & 2.6069 & 2.5040 & 0.9297 \\
+5 & 4553 & \textbf{2.5031} & \textbf{2.7258} & \textbf{0.9788} \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+\textbf{Depth 5 attains the lowest training loss and the worst validation loss.} A model too small to fit would show a \emph{high} training loss; this shows the lowest. The cliff is memorisation under repetition, not insufficient capacity. It is worth $17.6$ gates, and because it caps spendable throughput at $\approx$1.45$\times$ it also caps \emph{all} throughput work in this frame at $-0.06\ln(1.45) = -0.022$.
+
+We separately verified, at zero cost, that the collapse is not a learning-rate-schedule artifact: all three depths reach 100\% progress at the $0.05$ LR floor, so the schedule adapts to the realised step count.
+
+\section{First Attempt, and a Specification Error}
+Motivated by \citet{dc2026} --- which tests 72M--1.4B models on 100M--400M \emph{unique} tokens, brackets our 94M dense count from below and our $\approx$250M corpus from both sides, and frames its method as added \emph{on top of a strongly regularised recipe} --- we swept global weight decay at depth 5. Its headline method (an auxiliary next-token loss on masked inputs) was killed prospectively on our break-even rule: a second forward--backward costs $\approx2\times$ step time, which the token law charges at $+0.0416$, against a reported gain worth $-0.0157$.
+
+Weight decay is free, so it was the affordable part. It failed monotonically: $0.9791 \to 0.9905 \to 1.0031$ for $\{0.1, 0.3, 0.6\}$, and the train/val gap never shrank ($+0.192, +0.286, +0.206$).
+
+\textbf{Reading the optimizer groups explains it.} \texttt{WEIGHT\_DECAY} is applied to \texttt{group\_params} under Muon --- the dense matrices. The $n$-gram tables sit in RMSProp groups decayed by \texttt{NGRAM\_WD\_LAMBDA}, which defaults to $0.0$. Those tables are $14 \times 524288 \times 384 = 2.82$e9 parameters, \textbf{96.8\% of the model}. We regularised $3.2$\% of the model while blaming the other $96.8$\%. This was a specification error, not a refuted hypothesis, and one \texttt{grep} before launch would have caught it. We now require, as a standing rule, that a knob be traced to the parameters it actually modifies and confirmed to be the ones the mechanism blames.
+
+\section{Second Attempt: the Interaction Is the Test}
+Decaying the tables directly admits an obvious rival: any such penalty is a soft capacity cut, and we had already measured a $14\times$ capacity reduction costing $+0.0079$. A main effect cannot distinguish these, so we crossed depth.
+
+\textbf{Preregistered separator.} A capacity-cut account predicts harm at \emph{both} depths, since capacity is removed regardless of regime. A memorisation account predicts help at depth 5 (three passes, gap $+0.2795$) and neutral-to-harmful at depth 6 (two passes, gap $-0.0663$, not overfitting).
+
+\begin{center}\begin{small}
+\begin{tabular}{lrrrr}
+\toprule
+cell & $\vb$ & train & val & gap \\
+\midrule
+d5 $\lambda{=}0$    & 0.979276 & 2.4927 & 2.7722 & $+0.2795$ \\
+d5 $\lambda{=}0.05$ & 0.992068 & 2.7716 & 2.7916 & $+0.0201$ \\
+d5 $\lambda{=}0.2$  & 0.994014 & 2.7712 & 2.7539 & $-0.0173$ \\
+d6 $\lambda{=}0$    & 0.930853 & 2.6171 & 2.5508 & $-0.0663$ \\
+d6 $\lambda{=}0.05$ & 0.965729 & 2.7034 & 2.6949 & $-0.0085$ \\
+d6 $\lambda{=}0.2$  & 0.967757 & 2.7161 & 2.6402 & $-0.0760$ \\
+\bottomrule
+\end{tabular}
+\end{small}\end{center}
+
+\textbf{Harm at both depths} ($+0.0128/+0.0147$ at depth 5; $+0.0349/+0.0369$ at depth 6), and \emph{more} harm where there is no overfitting to remove. On the endpoint, the capacity-cut account wins.
+
+\textbf{But the second preregistered rule fired the other way.} We had also written: \emph{if no $\lambda$ shrinks the depth-5 gap by at least $0.05$, the table-memorisation account is refuted too.} The gap shrank from $+0.2795$ to $+0.0201$ --- a 93\% reduction, $5.2\times$ the threshold. The tables \emph{are} the memoriser, and decay \emph{does} suppress the memorisation.
+
+\section{The Mechanism}
+Both rules fired, and their combination is the result. Decay does exactly what a regulariser is supposed to do --- it almost completely closes the generalisation gap --- and the endpoint still degrades, because training loss rises further than validation loss falls ($2.4927 \to 2.7716$ at depth 5).
+
+\textbf{In a hashed $n$-gram memory, the memorising rows and the signal-carrying rows are the same rows.} A row is reached by a hash of a context; the same row that stores a memorised continuation for a repeated context stores the useful statistics for that context. A norm penalty is indiscriminate across rows and therefore cannot remove one without the other. Suppressing memorisation and suppressing the model's dominant capacity are, here, the same operation.
+
+This predicts that the epoch-3 cliff is \textbf{not reachable by any norm-penalty regulariser}, and more generally not by any intervention that treats table rows uniformly. It also explains a prior campaign result that had been recorded without explanation: the $n$-gram lever is the sole source of data-limitation in this frame, and its capacity has a sharp optimum with both directions worse.
+
+\textbf{Scope and limits.} $n{=}3$ at depth 5, $n{=}2$ at depth 6 --- an exploratory mechanism test, not an adoption test. Two $\lambda$ values. The claim is about hashed $n$-gram memories in this frame; we do not claim it of dense parameters or of learned-key memories.
+
+\section{Next Experiments}
+Each states Claim / Mechanism / Hypothesis / Reasoning, then ratings (1--5 on novelty / provenance / validity / impact / reliability / feasibility / falsifiability).
+
+\subsection{E16 --- Row-selective decay by observation count}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} Internal, self-proposed, derived from this paper. No external claim; the corpus contains a count-based backoff gate (\texttt{NGRAM\_BACKOFF\_KAPPA}) already implemented but never used in this frame.
+\item \textbf{Mechanism.} \emph{Observed:} uniform decay closes the gap by 93\% and still loses $0.0128$, because it hits signal rows and memorised rows equally. \emph{Proposed cause:} the two populations are separable by \emph{evidence}, not by norm --- a row hit many times carries statistics, a row hit once or twice in a third pass carries a memorised continuation. \emph{Rival:} the populations are not separable at all, because in a $\approx$250M-token corpus almost every row is low-count and the distinction is noise. \emph{Separator:} decay scaled by $1/(\mathrm{count}+\kappa)$ should help at depth 5 and be near-neutral at depth 6 --- restoring the interaction that uniform decay destroyed.
+\item \textbf{Hypothesis.} depth $\{5,6\}$ $\times$ count-scaled decay $\{0, \text{on}\}$, $n{=}4$. \emph{Prediction:} depth 5 improves by $\ge$0.005 while depth 6 moves by $<$0.003. \emph{Decision rule:} harm at both depths again refutes evidence-separability and closes regularisation of this memory entirely. \emph{Trap-check:} confirm the count buffers add $<$1.5\% step time, since they are allocated only when $\kappa>0$.
+\item \textbf{Reasoning.} \emph{For:} this is the only remaining way the two populations could be separated, and the machinery already exists. \emph{Against:} the count buffers were built for a different purpose and never validated in this frame; and if most rows are singletons the gate degenerates to uniform decay, which we have just shown fails.
+\item \textbf{Ratings.} 3 / 2 / 4 / 4 / 3 / 4 / 5.
+\end{itemize}
+
+\subsection{E17 --- Accept the wall and optimise inside it}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} Internal. \citet{dc2026} reports the data-constrained regime favours smaller models trained for more epochs; our measurements agree up to the point where the third pass begins and then invert sharply.
+\item \textbf{Mechanism.} \emph{Observed:} depth 6 (484M tokens, second pass) is the best configuration measured, at $-0.002002$ against depth 8 --- real ($t{=}-4.44$, 95\% CI excluding zero) but below the $0.002614$ adoption floor. Depth 5 crosses the wall and loses 17.6 gates. \emph{Proposed cause:} the optimum sits at the largest token count reachable \emph{without} entering the third pass, so the best remaining move is to reach that boundary more cheaply rather than to cross it. \emph{Rival:} depth 6 is merely the best of four points on a coarse grid and the true optimum is between 6 and 7, or off the aspect-ratio line entirely.
+\item \textbf{Hypothesis.} Depth 6 with width off the aspect-ratio line (dim $\in \{576, 640, 704\}$ at fixed depth 6), $n{=}4$. \emph{Prediction:} a width exists that beats depth-6-at-640 by $\ge$1 gate, because the aspect ratio was tuned at depth 8 and there is no reason it transfers. \emph{Decision rule:} standard funnel at $n{=}10$ for anything that clears.
+\item \textbf{Reasoning.} \emph{For:} the depth sweep moved depth and width together, so width has never been varied independently; and the one configuration we found is already within 0.77 gates. \emph{Against:} papers 026--028 established that intrinsic effects here are $\approx$1e-3, and width at fixed depth is an intrinsic lever; the honest prior is that it lands sub-gate like the others.
+\item \textbf{Ratings.} 2 / 3 / 4 / 3 / 4 / 5 / 5.
+\end{itemize}
+
+\subsection{E18 --- Test whether the wall is about repetition or about position in the corpus}
+\begin{itemize}\itemsep2pt
+\item \textbf{Claim.} Internal, self-proposed. Notably, our earlier data-order experiment (per-epoch shuffling) was null at $n{=}10$ --- but it ran at two passes, where there is no cliff to move.
+\item \textbf{Mechanism.} \emph{Observed:} the collapse coincides with the third pass. \emph{Proposed cause:} it is caused by \emph{re-reading}, i.e. by token repetition. \emph{Rival, never tested:} it is caused by reaching a particular \emph{region} of the frozen corpus --- the shards are consumed in a fixed order, so ``third pass'' and ``the tail of shard 10 for the third time'' are perfectly confounded in every run we have. \emph{Separator:} shuffle row-group order at depth 5, where the cliff binds. Repetition predicts the cliff is unchanged; a corpus-region cause predicts it moves or softens.
+\item \textbf{Hypothesis.} depth 5 $\times$ \texttt{SHUFFLE\_DATA} $\{0,1\}$, $n{=}4$. \emph{Prediction under repetition:} $|\Delta| < 0.003$. \emph{Decision rule:} a shift $>$0.01 means we have mis-attributed the cliff for the entire campaign.
+\item \textbf{Reasoning.} \emph{For:} cheap, free at runtime (already measured at $-0.03$\% step time), and it tests a confound present in every epoch-related claim we have made. \emph{Against:} shuffling was null at two passes, so the machinery is known not to matter there; this only asks whether it matters where the cliff is.
+\item \textbf{Ratings.} 4 / 4 / 5 / 4 / 4 / 5 / 5.
+\end{itemize}
+
+\section{Conclusion}
+The largest cliff in this frame is memorisation under data repetition, and it is not reachable by regularisation --- not because regularisation fails to suppress the memorisation, but because it succeeds and takes the model's capacity with it. The memorising rows and the signal-carrying rows are the same rows. Two interventions were refuted and one mechanism was supported, which is the second time in this campaign that separating those two verdicts preserved the useful half of a failure.
+
+\bibliographystyle{icml2024}
+\begin{thebibliography}{1}
+\bibitem[Data-Constrained Pretraining(2026)]{dc2026}
+Data-Constrained Language Model Pretraining: Improved Regularization and Scaling Laws.
+\newblock arXiv:2606.06888, 2026.
+\end{thebibliography}
+\end{document}

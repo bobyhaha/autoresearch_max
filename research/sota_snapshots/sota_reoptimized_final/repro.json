@@ -1,0 +1,4 @@
+{"name":"sota_reoptimized_final","val_bpb_mean":0.9508,"val_bpb_best":0.9494,"vs_naive":"+0.079 (~7.7%)",
+ "levers":["warm torch.compile","batch 2^18","n-gram(2,3)@2^21","FFN 4x","matrix_lr 0.03","max-autotune"],
+ "reoptimization_chain":"iterated GPU-controlled coordinate descent, 3 passes: (1) FFN6->4 + mlr0.04->0.03; (2) n-gram 2^20->2^21; (3) null (converged). Smaller model than the pre-reopt SOTA.",
+ "converged":true,"frame":"walltime_5min_h200","date":"2026-07-27"}

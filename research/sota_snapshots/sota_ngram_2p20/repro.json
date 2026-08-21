@@ -1,0 +1,4 @@
+{"name":"sota_ngram_2p20","val_bpb_mean":0.9548,"val_bpb_best":0.9526,"n_seeds":13,"vs_naive_baseline":"+0.076 (~7.4%)",
+ "config":{"TOTAL_BATCH_SIZE":"2**18","FFN_ratio":"6x","NGRAM_ORDERS":"(2,3)","NGRAM_TABLE_SIZE":"2**20","compile":"max-autotune-no-cudagraphs","DEPTH":8,"seq":2048,"vocab":8192},
+ "levers":["warm torch.compile","batch 2^19->2^18 (critical batch)","FFN 4x->6x","n-gram(2,3) value-embeddings @2^20","max-autotune"],
+ "frame":"walltime_5min_h200","date":"2026-07-27"}

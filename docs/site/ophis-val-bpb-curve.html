@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>html,body{margin:0;padding:0}*{box-sizing:border-box}</style>
+</head>
+<body>
+<title>OPHIS — val_bpb across 42 experiments</title>
+
+<style>
+.viz-root{
+  color-scheme:light;
+  --surface-1:#fcfcfb; --surface-2:#f4f4f1;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7873;
+  --line:#e0dfda; --grid:#ebeae6;
+  --pole-win:#2a78d6;      /* diverging cool pole — cleared the 2σ floor */
+  --pole-hurt:#eb6834;     /* diverging warm pole — regressed past the floor */
+  --mid:#b9b7b1;           /* diverging neutral midpoint — sub-floor / indistinguishable */
+  --band:#e8e7e3;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])) .viz-root{
+    color-scheme:dark;
+    --surface-1:#1a1a19; --surface-2:#212120;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8e8d85;
+    --line:#33332f; --grid:#2a2a27;
+    --pole-win:#3987e5; --pole-hurt:#d95926; --mid:#6f6e68; --band:#2c2c29;
+  }
+}
+:root[data-theme="dark"] .viz-root{
+  color-scheme:dark;
+  --surface-1:#1a1a19; --surface-2:#212120;
+  --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8e8d85;
+  --line:#33332f; --grid:#2a2a27;
+  --pole-win:#3987e5; --pole-hurt:#d95926; --mid:#6f6e68; --band:#2c2c29;
+}
+
+.viz-root{background:var(--surface-1);color:var(--text-primary);font-family:var(--sans);
+  margin:0;padding:30px 26px 60px;line-height:1.6}
+*{box-sizing:border-box}
+.wrap{max-width:1080px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--text-muted);font-weight:600;margin-bottom:10px}
+h1{font-size:clamp(25px,3.6vw,34px);line-height:1.12;letter-spacing:-.028em;margin:0 0 12px;
+  font-weight:700;text-wrap:balance;max-width:24ch}
+.sub{font-size:16px;color:var(--text-secondary);max-width:70ch;margin:0 0 22px}
+.sub strong{color:var(--text-primary)}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;
+  background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:22px 0}
+.tile{background:var(--surface-1);padding:13px 15px}
+.tile .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--text-muted);margin-bottom:6px}
+.tile .v{font-family:var(--mono);font-size:20px;font-weight:600;letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums}
+.tile .m{font-size:11px;color:var(--text-muted);margin-top:3px}
+
+.chartbox{background:var(--surface-1);border:1px solid var(--line);border-radius:10px;
+  padding:18px 14px 10px;margin:18px 0;position:relative}
+.legend{display:flex;flex-wrap:wrap;gap:16px;align-items:center;padding:0 6px 12px;
+  font-size:12.5px;color:var(--text-secondary)}
+.legend .item{display:flex;align-items:center;gap:6px}
+.sw{width:11px;height:11px;border-radius:50%;flex:0 0 auto;border:2px solid var(--surface-1)}
+.swline{width:16px;height:0;border-top:2px solid var(--text-primary);flex:0 0 auto}
+.swband{width:16px;height:10px;background:var(--band);border:1px solid var(--line);flex:0 0 auto}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.gl{stroke:var(--grid);stroke-width:1}
+.axl{fill:var(--text-muted);font-family:var(--mono);font-size:10px}
+.axt{fill:var(--text-secondary);font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase}
+.sota{fill:none;stroke:var(--text-primary);stroke-width:2;stroke-linejoin:round}
+.baseline{stroke:var(--text-muted);stroke-width:1.5;stroke-dasharray:5 4}
+.pt{stroke:var(--surface-1);stroke-width:2;cursor:pointer}
+.pt:hover{stroke:var(--text-primary)}
+.dlab{fill:var(--text-secondary);font-family:var(--mono);font-size:9.5px}
+.hit{fill:transparent;cursor:pointer}
+
+.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;
+  background:var(--surface-2);border:1px solid var(--line);border-radius:7px;
+  padding:10px 12px;font-size:12.4px;max-width:290px;z-index:9;
+  box-shadow:0 6px 22px rgba(0,0,0,.16)}
+.tip .t{font-weight:660;margin-bottom:5px;line-height:1.35}
+.tip .r{display:flex;justify-content:space-between;gap:14px;font-family:var(--mono);font-size:11.4px;
+  color:var(--text-secondary);margin-top:2px}
+.tip .r b{color:var(--text-primary);font-weight:600}
+.tip .verdict{margin-top:7px;padding-top:6px;border-top:1px solid var(--line);font-size:11.6px}
+
+details{margin:22px 0;border:1px solid var(--line);border-radius:9px;background:var(--surface-1)}
+summary{cursor:pointer;padding:12px 16px;font-size:13.5px;font-weight:600;user-select:none}
+summary::marker{color:var(--text-muted)}
+.tw{overflow-x:auto;border-top:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:12.6px;min-width:660px}
+th{text-align:left;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--text-muted);font-weight:600;padding:9px 12px;border-bottom:1px solid var(--line);
+  background:var(--surface-2);position:sticky;top:0}
+td{padding:7px 12px;border-bottom:1px solid var(--grid);vertical-align:top}
+td.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font-family:var(--mono);font-size:9.5px;padding:1px 6px;border-radius:10px;
+  font-weight:600;border:1px solid currentColor}
+.tag.win{color:var(--pole-win)} .tag.hurt{color:var(--pole-hurt)} .tag.sub{color:var(--text-muted)}
+.note{border:1px solid var(--line);border-left:3px solid var(--text-muted);background:var(--surface-2);
+  padding:13px 16px;border-radius:0 8px 8px 0;margin:20px 0;font-size:13.8px;max-width:74ch}
+.note p{margin:0 0 8px}.note p:last-child{margin:0}
+.note .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  font-weight:700;color:var(--text-muted);display:block;margin-bottom:6px}
+code{font-family:var(--mono);font-size:.87em;background:var(--surface-2);border:1px solid var(--line);
+  padding:1px 4px;border-radius:3px}
+.foot{color:var(--text-muted);font-size:12.4px;max-width:74ch;margin-top:26px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="viz-root">
+<div class="wrap">
+
+  <div class="eyebrow">OPHIS · frozen 2000-step challenge · val_bpb</div>
+  <h1>42 experiments, 4 adopted wins, and a lot of noise</h1>
+  <p class="sub">Every in-scope gated experiment in campaign order, showing the treatment's mean <code>val_bpb</code> against its own concurrent baseline. The black staircase is the running best. <strong>29 of 42 experiments (69%) landed inside the noise floor</strong> — real work, no detectable effect.</p>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">Baseline</div><div class="v">0.930647</div><div class="m">seeds 42/43/44</div></div>
+    <div class="tile"><div class="k">Best reached</div><div class="v" style="color:var(--pole-win)">0.922710</div><div class="m">exp 38, 6 hold-out seeds</div></div>
+    <div class="tile"><div class="k">Total gain</div><div class="v" style="color:var(--pole-win)">−0.007937</div><div class="m">≈9.4× the 2σ floor</div></div>
+    <div class="tile"><div class="k">Cleared 2σ</div><div class="v">9<span style="color:var(--text-muted);font-size:14px">/42</span></div><div class="m">|Δ| ≥ 0.001694</div></div>
+    <div class="tile"><div class="k">Sub-floor</div><div class="v" style="color:var(--text-muted)">29<span style="font-size:14px">/42</span></div><div class="m">indistinguishable</div></div>
+    <div class="tile"><div class="k">Regressed</div><div class="v" style="color:var(--pole-hurt)">4<span style="color:var(--text-muted);font-size:14px">/42</span></div><div class="m">past the floor</div></div>
+  </div>
+
+  <div class="chartbox">
+    <div class="legend">
+      <div class="item"><span class="sw" style="background:var(--pole-win)"></span> Beat baseline past 2σ</div>
+      <div class="item"><span class="sw" style="background:var(--mid)"></span> Sub-floor (|Δ| &lt; 2σ)</div>
+      <div class="item"><span class="sw" style="background:var(--pole-hurt)"></span> Regressed past 2σ</div>
+      <div class="item"><span class="swline"></span> Running best (SOTA)</div>
+      <div class="item"><span class="swband"></span> ±2σ noise floor</div>
+    </div>
+    <div id="chart"></div>
+    <div class="tip" id="tip"></div>
+  </div>
+
+  <div class="note">
+    <span class="lbl">Reading the chart honestly</span>
+    <p>A point <em>below</em> the dashed baseline is not a result. Only a point outside the grey ±2σ band is distinguishable from run-to-run seed variance — which is why the gate is a floor, not a sign test. Experiment 24 (<code>+ WARMDOWN 0.75</code>, Δ −0.00052) sits below baseline and was still <strong>rejected</strong>: sub-floor best-of-N is exactly the multiplicity trap.</p>
+    <p><strong>Experiment 28 is off-scale.</strong> Tying input/output embeddings gave <code>val_bpb</code> 2.723 (Δ +1.798) — the tuned separate embedding/unembedding learning rates plus logit softcap require untied weights, so the run effectively diverged. Plotting it would flatten every other point into a line, so it is marked with an arrow at the top edge.</p>
+  </div>
+
+  <details>
+    <summary>All 42 experiments — what changed, and what it did</summary>
+    <div class="tw"><table>
+      <thead><tr><th class="n">#</th><th>What changed</th><th class="n">val_bpb</th><th class="n">Δ vs baseline</th><th class="n">seeds</th><th>stage</th><th>verdict</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table></div>
+  </details>
+
+  <p class="foot">Source: 272 complete runs across 45 gated experiments in <code>research/experiments/runs/runs.jsonl</code>, ordered by first run start. Three experiments are excluded for having no in-scope treatment arm with a recorded <code>val_bpb</code>; runs tagged <code>diagnostic_offbudget</code> are excluded because they ran at a different compute budget. Δ is the treatment mean minus its own concurrent baseline mean, so each point is a paired comparison at identical <code>MAX_STEPS</code>. The 2σ floor is 0.001694 (σ_seed 0.000847).</p>
+
+</div>
+</div>
+
+<script>
+var DATA = [{"i":1,"eid":"exp_warmdown_075","iv":"int_warmdown_075","lever":"WARMDOWN_RATIO 0.95\u21920.75","t":0.929588,"b":0.930284,"d":-0.000696,"n":6,"stage":"discovery","cls":"sub","best":0.929588,"off":false},{"i":2,"eid":"exp_ngram_capacity_256_pilot","iv":"int_ngram_table_mult_256","lever":"n-gram tables 64\u00d7\u2192256\u00d7","t":0.926295,"b":0.929925,"d":-0.00363,"n":1,"stage":"pilot","cls":"win","best":0.926295,"off":false},{"i":3,"eid":"exp_ngram_capacity_256_discovery","iv":"int_ngram_table_mult_256","lever":"n-gram tables 64\u00d7\u2192256\u00d7","t":0.927018,"b":0.931064,"d":-0.004046,"n":3,"stage":"discovery","cls":"win","best":0.926295,"off":false},{"i":4,"eid":"exp_ngram_capacity_128_discovery","iv":"int_ngram_table_mult_128","lever":"n-gram tables 64\u00d7\u2192128\u00d7","t":0.928385,"b":0.931091,"d":-0.002706,"n":3,"stage":"discovery","cls":"win","best":0.926295,"off":false},{"i":5,"eid":"exp_ngram256_velr_150_discovery","iv":"int_ngram256_velr_150","lever":"VE-LR \u00d71.5 on 256\u00d7","t":0.92693,"b":0.930983,"d":-0.004052,"n":3,"stage":"discovery","cls":"win","best":0.926295,"off":false},{"i":6,"eid":"exp_ngram_capacity_256_validation","iv":"int_ngram_table_mult_256","lever":"n-gram tables 64\u00d7\u2192256\u00d7","t":0.925318,"b":0.92933,"d":-0.004012,"n":3,"stage":"validation","cls":"win","best":0.925318,"off":false},{"i":7,"eid":"exp_ngram_bigram_256_discovery","iv":"int_ngram_bigram_mult_256","lever":"bigram-only 256\u00d7","t":0.928634,"b":0.930992,"d":-0.002358,"n":3,"stage":"discovery","cls":"win","best":0.925318,"off":false},{"i":8,"eid":"exp_ngram_trigram_256_discovery","iv":"int_ngram_trigram_mult_256","lever":"trigram-only 256\u00d7","t":0.928474,"b":0.930964,"d":-0.00249,"n":3,"stage":"discovery","cls":"win","best":0.925318,"off":false},{"i":9,"eid":"exp_ngram_bigram_512_discovery","iv":"int_ngram_bigram_mult_512","lever":"bigram 512\u00d7","t":0.928231,"b":0.93125,"d":-0.003019,"n":3,"stage":"discovery","cls":"win","best":0.925318,"off":false},{"i":10,"eid":"exp_shuffle_data_discovery","iv":"int_shuffle_data","lever":"reshuffle data order each epoch","t":0.929974,"b":0.930915,"d":-0.000941,"n":3,"stage":"discovery","cls":"sub","best":0.925318,"off":false},{"i":11,"eid":"exp_ngram_fourgram_pilot","iv":"int_ngram_fourgram_mult_256","lever":"add 4-gram VE @256\u00d7 (pre-fix)","t":0.928049,"b":0.930384,"d":-0.002335,"n":1,"stage":"pilot","cls":"win","best":0.925318,"off":false},{"i":12,"eid":"exp_demon_beta1_040_discovery","iv":"int_demon_beta1_040","lever":"Demon \u03b21 0.55\u21920.40","t":0.931153,"b":0.931161,"d":-8e-06,"n":3,"stage":"discovery","cls":"sub","best":0.925318,"off":false},{"i":13,"eid":"exp_ngram256_shared_trigram_discovery","iv":"int_ngram256_shared_trigram","lever":"share trigram VE across layers","t":0.928212,"b":0.926843,"d":0.001369,"n":1,"stage":"discovery","cls":"sub","best":0.925318,"off":false},{"i":14,"eid":"exp_ngram128_fourgram_discovery","iv":"int_ngram128_plus_fourgram256","lever":"128\u00d7 + 4-gram@256\u00d7","t":0.926534,"b":0.926767,"d":-0.000234,"n":4,"stage":"discovery","cls":"sub","best":0.925318,"off":false},{"i":15,"eid":"exp_doc_mask_seg_discovery","iv":"int_doc_mask_seg","lever":"intra-doc attention mask (seg)","t":0.92917,"b":0.930598,"d":-0.001427,"n":3,"stage":"discovery","cls":"sub","best":0.925318,"off":false},{"i":16,"eid":"exp_ngram256_docmask_seg_discovery","iv":"int_ngram256_docmask_seg","lever":"256\u00d7 + seg mask","t":0.925341,"b":0.926803,"d":-0.001462,"n":3,"stage":"discovery","cls":"sub","best":0.925318,"off":false},{"i":17,"eid":"exp_ngram256_docmask_seg_validation","iv":"int_ngram256_docmask_seg","lever":"256\u00d7 + seg mask","t":0.92393,"b":0.925285,"d":-0.001355,"n":3,"stage":"validation","cls":"sub","best":0.92393,"off":false},{"i":18,"eid":"exp_ngram256_seg_resetrope_discovery","iv":"int_ngram256_seg_resetrope","lever":"+ per-doc RoPE reset","t":0.925475,"b":0.925437,"d":3.9e-05,"n":3,"stage":"discovery","cls":"sub","best":0.92393,"off":false},{"i":19,"eid":"exp_ngram256_seg_swiglu_discovery","iv":"int_ngram256_seg_swiglu","lever":"MLP sqReLU\u2192SwiGLU","t":0.929448,"b":0.925363,"d":0.004084,"n":3,"stage":"discovery","cls":"hurt","best":0.92393,"off":false},{"i":20,"eid":"exp_ngram256_seg_residscale_discovery","iv":"int_ngram256_seg_residscale","lever":"+ residual scaling","t":0.939561,"b":0.925327,"d":0.014234,"n":3,"stage":"discovery","cls":"hurt","best":0.92393,"off":false},{"i":21,"eid":"exp_ngram256_seg_cautupd_discovery","iv":"int_ngram256_seg_cautupd","lever":"+ cautious Adam update","t":0.936552,"b":0.925415,"d":0.011137,"n":3,"stage":"discovery","cls":"hurt","best":0.92393,"off":false},{"i":22,"eid":"exp_ngram256_docmask_both_discovery","iv":"int_ngram256_docmask_both","lever":"seg + sliding window","t":0.926448,"b":0.925408,"d":0.00104,"n":3,"stage":"discovery","cls":"sub","best":0.92393,"off":false},{"i":23,"eid":"exp_ngram256_seg_velr050_discovery","iv":"int_ngram256_seg_velr050","lever":"VE-LR \u00d70.5","t":0.925416,"b":0.925438,"d":-2.2e-05,"n":3,"stage":"discovery","cls":"sub","best":0.92393,"off":false},{"i":24,"eid":"exp_ngram256_seg_warmdown075_discovery","iv":"int_ngram256_seg_warmdown075","lever":"+ WARMDOWN 0.75","t":0.924844,"b":0.925366,"d":-0.000522,"n":3,"stage":"discovery","cls":"sub","best":0.92393,"off":false},{"i":25,"eid":"exp_ngram256_seg_warmdown075_validation","iv":"int_ngram256_seg_warmdown075","lever":"+ WARMDOWN 0.75","t":0.923901,"b":0.924007,"d":-0.000106,"n":3,"stage":"validation","cls":"sub","best":0.923901,"off":false},{"i":26,"eid":"exp_ngram256_seg_wd015_discovery","iv":"int_ngram256_seg_wd015","lever":"weight decay 0.1\u21920.15","t":0.925006,"b":0.925144,"d":-0.000138,"n":3,"stage":"discovery","cls":"sub","best":0.923901,"off":false},{"i":27,"eid":"exp_ngram256_seg_flf000_discovery","iv":"int_ngram256_seg_flf000","lever":"FINAL_LR_FRAC 0.05\u21920.0","t":0.926563,"b":0.92535,"d":0.001213,"n":3,"stage":"discovery","cls":"sub","best":0.923901,"off":false},{"i":28,"eid":"exp_ngram256_seg_tieembed_discovery","iv":"int_ngram256_seg_tieembed","lever":"tie input/output embeddings","t":2.723352,"b":0.925383,"d":1.797969,"n":3,"stage":"discovery","cls":"hurt","best":0.923901,"off":true},{"i":29,"eid":"exp_ngram256_seg_lmhead0_discovery","iv":"int_ngram256_seg_lmhead0","lever":"zero-init lm_head","t":0.924701,"b":0.925404,"d":-0.000702,"n":3,"stage":"discovery","cls":"sub","best":0.923901,"off":false},{"i":30,"eid":"exp_ngram256_seg_warmdown075_validation2","iv":"int_ngram256_seg_warmdown075","lever":"+ WARMDOWN 0.75","t":0.923467,"b":0.923933,"d":-0.000467,"n":3,"stage":"validation","cls":"sub","best":0.923467,"off":false},{"i":31,"eid":"exp_ngram256_seg_wd060_discovery","iv":"int_ngram256_seg_wd060","lever":"WARMDOWN 0.6","t":0.925724,"b":0.92528,"d":0.000444,"n":3,"stage":"discovery","cls":"sub","best":0.923467,"off":false},{"i":32,"eid":"exp_ngram256_seg_adamwd050_discovery","iv":"int_ngram256_seg_adamwd050","lever":"ADAM_WARMDOWN 0.65\u21920.5","t":0.925426,"b":0.9253,"d":0.000126,"n":3,"stage":"discovery","cls":"sub","best":0.923467,"off":false},{"i":33,"eid":"exp_ngram256_seg_warmup002_discovery","iv":"int_ngram256_seg_warmup002","lever":"WARMUP_RATIO 0\u21920.02 (dead knob)","t":0.925376,"b":0.925441,"d":-6.5e-05,"n":3,"stage":"discovery","cls":"sub","best":0.923467,"off":false},{"i":34,"eid":"exp_ngram256_seg_rowwise_equivalence","iv":"int_ngram256_seg_rowwise","lever":"row-wise 2nd moment (VRAM)","t":0.925629,"b":0.925422,"d":0.000207,"n":3,"stage":"discovery","cls":"sub","best":0.923467,"off":false},{"i":35,"eid":"exp_ngram384_capacity_discovery","iv":"int_ngram384_seg_wd_rowwise","lever":"n-gram tables 256\u00d7\u2192384\u00d7","t":0.924524,"b":0.925135,"d":-0.000611,"n":3,"stage":"discovery","cls":"sub","best":0.923467,"off":false},{"i":36,"eid":"exp_pk_memory_screen","iv":"int_pk_memory_default","lever":"product-key learned memory (4.84B)","t":0.925598,"b":0.925371,"d":0.000227,"n":6,"stage":"discovery","cls":"sub","best":0.923467,"off":false},{"i":37,"eid":"exp_fourgram_remeasure","iv":"int_sota_fourgram256_fixed","lever":"4-gram @256\u00d7 (gate bug FIXED)","t":0.924078,"b":0.925284,"d":-0.001206,"n":3,"stage":"discovery","cls":"sub","best":0.923467,"off":false},{"i":38,"eid":"exp_fourgram_holdout","iv":"int_sota_fourgram256_fixed","lever":"4-gram @256\u00d7 (gate bug FIXED)","t":0.92271,"b":0.924018,"d":-0.001307,"n":6,"stage":"validation","cls":"sub","best":0.92271,"off":false},{"i":39,"eid":"exp_fourgram_capacity_sweep","iv":"int_sota004_fg384","lever":"4-gram capacity 256\u00d7\u2192384\u00d7","t":0.923909,"b":0.923852,"d":5.7e-05,"n":6,"stage":"discovery","cls":"sub","best":0.92271,"off":false},{"i":40,"eid":"exp_base_capacity_x_fourgram","iv":"int_sota004_base384","lever":"base capacity 256\u00d7\u2192384\u00d7 on SOTA#4","t":0.923654,"b":0.923894,"d":-0.00024,"n":3,"stage":"discovery","cls":"sub","best":0.92271,"off":false},{"i":41,"eid":"exp_fivegram_order","iv":"int_sota004_fivegram256","lever":"add 5-gram VE @256\u00d7","t":0.923527,"b":0.923997,"d":-0.00047,"n":3,"stage":"discovery","cls":"sub","best":0.92271,"off":false},{"i":42,"eid":"exp_gappy_fourgram_dose","iv":"int_sota004_gappy4","lever":"4-gram contiguous\u2192gappy","t":0.924136,"b":null,"d":null,"n":3,"stage":"discovery","cls":"sub","best":0.92271,"off":false}];
+(function(){
+  var FLOOR=0.001694, BASE=0.930647;
+  var W=1040,H=430,L=64,R=26,T=22,B=62;
+  var iw=W-L-R, ih=H-T-B;
+  var y0=0.9212, y1=0.9408;                     // clipped: exp 28 (2.723) is annotated instead
+  var xs=function(i){return L+(i-1)/(DATA.length-1)*iw;};
+  var ys=function(v){return T+(1-(v-y0)/(y1-y0))*ih;};
+  var col=function(c){return c==='win'?'var(--pole-win)':c==='hurt'?'var(--pole-hurt)':'var(--mid)';};
+  var esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+
+  var s=['<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Validation bits-per-byte across 42 experiments in campaign order">'];
+
+  // ±2σ noise band around the frozen baseline
+  s.push('<rect x="'+L+'" y="'+ys(BASE+FLOOR)+'" width="'+iw+'" height="'+(ys(BASE-FLOOR)-ys(BASE+FLOOR))+'" fill="var(--band)"/>');
+
+  // y grid + labels
+  for(var v=0.922; v<=0.940+1e-9; v+=0.002){
+    var yy=ys(v);
+    s.push('<line class="gl" x1="'+L+'" y1="'+yy+'" x2="'+(L+iw)+'" y2="'+yy+'"/>');
+    s.push('<text class="axl" x="'+(L-9)+'" y="'+(yy+3.5)+'" text-anchor="end">'+v.toFixed(3)+'</text>');
+  }
+  // x ticks every 5
+  for(var i=1;i<=DATA.length;i++){
+    if(i===1||i%5===0){
+      s.push('<text class="axl" x="'+xs(i)+'" y="'+(T+ih+18)+'" text-anchor="middle">'+i+'</text>');
+    }
+  }
+  s.push('<text class="axt" x="'+(L+iw/2)+'" y="'+(T+ih+44)+'" text-anchor="middle">experiment # (campaign order)</text>');
+  s.push('<text class="axt" transform="translate(15,'+(T+ih/2)+') rotate(-90)" text-anchor="middle">val_bpb  ·  lower is better</text>');
+
+  // frozen baseline
+  s.push('<line class="baseline" x1="'+L+'" y1="'+ys(BASE)+'" x2="'+(L+iw)+'" y2="'+ys(BASE)+'"/>');
+  s.push('<text class="dlab" x="'+(L+iw-2)+'" y="'+(ys(BASE)-7)+'" text-anchor="end">frozen baseline 0.930647</text>');
+
+  // running-best staircase
+  var d='';
+  DATA.forEach(function(p,k){
+    var x=xs(p.i), y=ys(p.best);
+    d += k===0 ? 'M'+x+','+y : 'L'+x+','+ys(DATA[k-1].best)+'L'+x+','+y;
+  });
+  s.push('<path class="sota" d="'+d+'"/>');
+
+  // points
+  DATA.forEach(function(p){
+    var x=xs(p.i);
+    if(p.off){
+      s.push('<path d="M'+x+','+(T+13)+'l-5,9h10z" fill="var(--pole-hurt)"/>');
+      s.push('<text class="dlab" x="'+x+'" y="'+(T+9)+'" text-anchor="middle" fill="var(--pole-hurt)">2.723</text>');
+      s.push('<rect class="hit" data-i="'+p.i+'" x="'+(x-14)+'" y="'+T+'" width="28" height="30"/>');
+      return;
+    }
+    var y=ys(p.t), r=p.cls==='sub'?4.5:6;
+    s.push('<circle class="pt" data-i="'+p.i+'" cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+col(p.cls)+'"/>');
+    s.push('<rect class="hit" data-i="'+p.i+'" x="'+(x-11)+'" y="'+(y-11)+'" width="22" height="22"/>');
+  });
+
+  // selective direct labels: the four adopted wins only
+  [{i:6,t:'256× capacity'},{i:17,t:'+ seg mask'},{i:30,t:'+ warmdown 0.75'},{i:38,t:'+ 4-gram → best'}].forEach(function(a){
+    var p=DATA[a.i-1]; if(!p) return;
+    s.push('<text class="dlab" x="'+(xs(p.i)+9)+'" y="'+(ys(p.t)+13)+'">'+esc(a.t)+'</text>');
+  });
+
+  s.push('</svg>');
+  document.getElementById('chart').innerHTML=s.join('');
+
+  // table
+  var vd={win:'cleared 2σ',hurt:'regressed',sub:'sub-floor'};
+  document.getElementById('tbody').innerHTML=DATA.map(function(p){
+    return '<tr><td class="n">'+p.i+'</td><td>'+esc(p.lever)+'</td>'+
+      '<td class="n">'+p.t.toFixed(6)+'</td>'+
+      '<td class="n">'+(p.d===null?'—':(p.d>0?'+':'')+p.d.toFixed(5))+'</td>'+
+      '<td class="n">'+p.n+'</td><td>'+esc(p.stage)+'</td>'+
+      '<td><span class="tag '+p.cls+'">'+vd[p.cls]+'</span></td></tr>';
+  }).join('');
+
+  // hover
+  var tip=document.getElementById('tip'), box=document.querySelector('.chartbox');
+  function show(e,i){
+    var p=DATA[i-1]; if(!p) return;
+    tip.innerHTML='<div class="t">'+p.i+'. '+esc(p.lever)+'</div>'+
+      '<div class="r"><span>val_bpb</span><b>'+p.t.toFixed(6)+'</b></div>'+
+      (p.b!==null?'<div class="r"><span>concurrent baseline</span><b>'+p.b.toFixed(6)+'</b></div>':'')+
+      (p.d!==null?'<div class="r"><span>Δ paired</span><b style="color:'+col(p.cls)+'">'+(p.d>0?'+':'')+p.d.toFixed(6)+'</b></div>':'')+
+      '<div class="r"><span>seeds · stage</span><b>'+p.n+' · '+esc(p.stage)+'</b></div>'+
+      '<div class="verdict">'+(p.cls==='win'?'Cleared the 2σ floor.':p.cls==='hurt'?'Regressed past the 2σ floor.':'Inside ±2σ — not distinguishable from seed noise.')+'</div>';
+    var r=box.getBoundingClientRect();
+    var x=e.clientX-r.left+14, y=e.clientY-r.top+14;
+    if(x+300>r.width) x=e.clientX-r.left-300;
+    tip.style.left=x+'px'; tip.style.top=y+'px'; tip.style.opacity=1;
+  }
+  box.addEventListener('mousemove',function(e){
+    var t=e.target.closest('[data-i]');
+    if(t) show(e,+t.getAttribute('data-i')); else tip.style.opacity=0;
+  });
+  box.addEventListener('mouseleave',function(){tip.style.opacity=0;});
+})();
+</script>
+
+</body>
+</html>

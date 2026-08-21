@@ -1,0 +1,142 @@
+{
+  "created_by": "codex-autoresearch",
+  "title": "Campaign handoff: recombination findings, weak table decay, and execution-integrity reset",
+  "abstract": "The recorded campaign tested systems-kernel, architecture, and memory-regularization directions. Fused n-gram hash construction was throughput-null, Canon convolution regressed quality, factorized n-gram codes failed their two-sided falsifier, and the AttnRes plus table-decay factorial revealed a super-additive negative interaction. Weak n-gram table decay produced a large preliminary benefit only in the five-shard diagnostic regime. No new GPU work is authorized in this reporting period because the local executable setup has drifted and the H200 SSH endpoint is not currently reachable.",
+  "methods": "This synthesis reads the structured experiment, run-evidence, refinement-decision, and setup registries. It separates multi-seed evidence from single-seed pilots and keeps five-shard diagnostic results distinct from the active ten-shard wall-time decision frame. The historical runs were registered post hoc from a remote-SSH launcher and lack the active challenge tag required for top-level hourly-paper run references, so this report cites their structured evidence records while explicitly recording that provenance limitation. Startup validation, setup reconciliation checks, hourly-report status, local process inventory, and bounded SSH connectivity checks were also performed.",
+  "directions_explored": [
+    "systems_kernel",
+    "architecture",
+    "memory_retrieval"
+  ],
+  "idea_ids": [],
+  "experiment_ids": [
+    "exp_b1_fused_ngram_ab",
+    "exp_a1_canon_ab",
+    "exp_c3_backoff_gate_premise_test",
+    "exp_c2_composite_codes_test",
+    "exp_f5_attnres_test",
+    "exp_f5_ngram_wd_test",
+    "exp_f5_interaction_test",
+    "exp_c1_weak_lambda_sweep"
+  ],
+  "run_ids": [],
+  "findings": [
+    {
+      "statement": "The byte-identical fused n-gram hash construction did not improve throughput across three paired seeds.",
+      "assessment": "null",
+      "evidence_ids": [
+        "evd_run_b1_fused_ngram"
+      ],
+      "run_ids": [],
+      "limitations": [
+        "The evidence rejects the tested allocation-fusion diagnosis, not all n-gram kernel optimization."
+      ]
+    },
+    {
+      "statement": "The tested zero-initialized Canon depthwise convolution regressed endpoint validation BPB on all four paired seeds.",
+      "assessment": "contradicted",
+      "evidence_ids": [
+        "evd_run_a1_canon"
+      ],
+      "run_ids": [],
+      "limitations": [
+        "This verdict applies to the tested kernel size, learning rate, and integration point."
+      ]
+    },
+    {
+      "statement": "The backoff-gate diagnostic supports the premise that n-gram memorization harm concentrates in the lower-data regime, while remaining neutral at ten shards.",
+      "assessment": "supported",
+      "evidence_ids": [
+        "evd_run_c3_backoff_gate"
+      ],
+      "run_ids": [],
+      "limitations": [
+        "The helping result is a single-seed five-shard diagnostic and is not an adoption result in the active ten-shard frame."
+      ]
+    },
+    {
+      "statement": "Factorized n-gram codes failed both sides of their preregistered falsifier.",
+      "assessment": "contradicted",
+      "evidence_ids": [
+        "evd_run_c2_composite_codes"
+      ],
+      "run_ids": [],
+      "limitations": [
+        "The result rejects the implemented paired-hash construction, not every possible factorized code."
+      ]
+    },
+    {
+      "statement": "AttnRes remains unresolved because its wall-time arm completed substantially fewer steps than control.",
+      "assessment": "preliminary_observation",
+      "evidence_ids": [
+        "evd_run_f5_attnres"
+      ],
+      "run_ids": [],
+      "limitations": [
+        "A fixed-step isolation test is required before separating architectural quality from naive-kernel cost."
+      ]
+    },
+    {
+      "statement": "AttnRes combined with strong n-gram table decay produced a super-additive negative interaction in the single-seed factorial.",
+      "assessment": "supported",
+      "evidence_ids": [
+        "evd_run_f5_interaction"
+      ],
+      "run_ids": [],
+      "limitations": [
+        "The interaction is single-seed and both component settings are themselves non-adopted."
+      ]
+    },
+    {
+      "statement": "Weak n-gram table decay at 0.02 and 0.05 produced large preliminary five-shard improvements.",
+      "assessment": "supported",
+      "evidence_ids": [
+        "evd_run_c1_weak_lambda_sweep"
+      ],
+      "run_ids": [],
+      "limitations": [
+        "The result needs multi-seed confirmation and a ten-shard paired check before it can inform the active frame."
+      ]
+    }
+  ],
+  "negative_results": [
+    "B1 fused n-gram hash allocation was throughput-null.",
+    "A1 Canon convolution regressed validation BPB on four paired seeds.",
+    "C2 factorized n-gram codes failed at both five and ten shards.",
+    "Strong n-gram table decay at 0.2 regressed the ten-shard operating point.",
+    "The first AttnRes kernel-refinement attempt crashed because an in-place buffer invalidated autograd views."
+  ],
+  "limitations": [
+    "The eight historical experiments were registered post hoc from an informal remote launcher, omit formal search-policy bindings, and cannot be treated as provenance-complete active-challenge runs.",
+    "Several findings use five-shard diagnostics outside the active ten-shard decision frame.",
+    "The local train.py bytes do not match the reconciliation record, the named baseline artifact is absent locally, and check-setup therefore blocks execution.",
+    "The supplied H200 SSH endpoint timed out during bounded connectivity checks, so GPU occupancy could not be verified."
+  ],
+  "decisions": [
+    "Do not authorize new GPU work until the exact executable training code and baseline provenance are restored or re-measured and check-setup is green.",
+    "Reject the tested B1, A1, C2, and strong table-decay settings.",
+    "Keep AttnRes on hold pending a fixed-step mechanism-isolation test.",
+    "Promote weak table decay only to a current-scope ten-shard, multi-seed proposal after setup repair and novelty-gate completion.",
+    "Require the formal staged scheduler, challenge tags, physical-GPU binding, and complete ledger chain for all new runs."
+  ],
+  "next_hour_plan": [
+    {
+      "direction": "systems_kernel",
+      "question": "Can the exact executable training tree and baseline provenance be restored and verified on the supplied H200 endpoint?",
+      "why_now": "All effect work is invalid until the setup drift, missing artifact, and unreachable SSH path are resolved.",
+      "stop_condition": "Stop and report a blocking failure if the endpoint remains unreachable or the reconciled baseline cannot be tied to exact code and artifacts; otherwise require validate, check-setup, audit, and GPU inventory to pass."
+    },
+    {
+      "direction": "memory_retrieval",
+      "question": "Does weak n-gram table decay improve the active ten-shard wall-time frame under fresh concurrent controls?",
+      "why_now": "It is the strongest open mechanistic lead, but its observed benefit is currently confined to the five-shard diagnostic regime.",
+      "stop_condition": "Stop the line if the first paired stage misses the preregistered endpoint and throughput boundaries; promote only through the unchanged 1-to-3-to-6-to-10 funnel."
+    },
+    {
+      "direction": "architecture",
+      "question": "Does AttnRes improve quality per update when control and treatment are matched at a fixed step count?",
+      "why_now": "The existing wall-time result cannot separate architectural value from a 26 percent step-count penalty.",
+      "stop_condition": "Reject the mechanism if fixed-step quality is null or worse; if positive, treat kernel fusion as a separate refinement rather than an effect conclusion."
+    }
+  ]
+}
