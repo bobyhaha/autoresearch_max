@@ -36,7 +36,6 @@ budget confirming it can measure, and never measures anything.
 from __future__ import annotations
 
 import argparse
-import json
 import pathlib
 import sys
 import time
@@ -46,6 +45,7 @@ sys.path.insert(0, str(REPO / "tools"))
 
 import direction        # noqa: E402
 import make_variant     # noqa: E402
+import queue_store      # noqa: E402
 
 SWEEP = REPO / "runs" / "sweep"
 
@@ -117,32 +117,37 @@ def main() -> int:
     (SWEEP / "variants" / vid).write_text(src)
 
     qf = SWEEP / "queue.json"
-    existing = json.loads(qf.read_text()) if qf.exists() else []
-    have = {q["name"] for q in existing}
     stamp = time.time()
 
     new = []
-    for w in range(a.count):
-        group = f"{a.wave}{chr(ord('a') + w)}"
-        for i in range(a.width):
-            name = f"{group}_{i+1}_control"
-            if name in have:
-                continue
-            new.append({
-                "name": name, "cfg": cfg, "variant": vid, "label": direction.label(cfg),
-                "rationale": a.rationale,
-                "falsifier": "if the within-wave spread of these concurrent controls is "
-                             "as large as the 0.019990 sequential range of C03-C06, then "
-                             "pairing buys nothing on this host and the band is "
-                             "irreducible at this budget",
-                "expected": "within-wave spread materially smaller than the sequential "
-                            "range, because concurrent runs share the host contention "
-                            "that moves step count",
-                "wave_group": group, "created_at": stamp,
-                "source_round": "instrument", "vram_est": 50,
-            })
 
-    qf.write_text(json.dumps(existing + new, indent=1))
+    def merge(existing):
+        nonlocal new
+        have = {q["name"] for q in existing}
+        additions = []
+        for w in range(a.count):
+            group = f"{a.wave}{chr(ord('a') + w)}"
+            for i in range(a.width):
+                name = f"{group}_{i+1}_control"
+                if name in have:
+                    continue
+                additions.append({
+                    "name": name, "cfg": cfg, "role": "ctrl", "variant": vid,
+                    "label": direction.label(cfg), "rationale": a.rationale,
+                    "falsifier": "if the within-wave spread of these concurrent controls is "
+                                 "as large as the 0.019990 sequential range of C03-C06, then "
+                                 "pairing buys nothing on this host and the band is "
+                                 "irreducible at this budget",
+                    "expected": "within-wave spread materially smaller than the sequential "
+                                "range, because concurrent runs share the host contention "
+                                "that moves step count",
+                    "wave_group": group, "created_at": stamp,
+                    "source_round": "instrument", "vram_est": 50,
+                })
+        new = additions
+        return existing + additions
+
+    queue_store.update_queue(qf, merge)
     print(f"queued {len(new)} control(s) in {a.count} wave(s) of {a.width} "
           f"[variant {vid}]")
     for e in new:

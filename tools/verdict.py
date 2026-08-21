@@ -141,7 +141,7 @@ def _variant_of(name, cfg=None):
 
 
 def _slot(r):
-    """The GPU INDEX, which is what actually carries the offset.
+    """The physical GPU UUID, which is what actually carries the offset.
 
     This keyed on the taskset core block until a crosstab settled the question. Holding
     the GPU fixed and changing the core block moves nothing; holding the core block fixed
@@ -159,7 +159,8 @@ def _slot(r):
     anything -- it adds an unknown offset to a known one. So the pair is part of the
     identity of a wave, and counterbalancing means the SAME pair with the roles swapped.
     """
-    return f"gpu{r.get('gpu')}"
+    uuid = r.get("gpu_uuid")
+    return uuid if uuid else f"gpu{r.get('gpu')}"
 
 
 def _pair(arms):
@@ -188,6 +189,19 @@ def waves(rows):
         pass
     out, orphans = {}, []
     for r in rows:
+        # A SCREEN IS NOT EVIDENCE. Screening runs are n=1, width-1, launched by the
+        # explore lane to keep the fleet busy while deliberation happens, and they are
+        # exempt from the decision cutoff precisely BECAUSE they decide nothing. If one
+        # could reach a verdict it would be the worst of both: unpaired, uncounterbalanced
+        # data that skipped the freeze, carrying the authority of data that did not.
+        #
+        # Dropped here rather than relied upon to be unpairable. A screen carries no
+        # wave_group today, so the name-recovery path below is what would catch it -- and
+        # that path exists exactly to resurrect a wave from a name after its queue entry
+        # was cut. Leaving the exclusion implicit would make it one rename away from
+        # failing silently.
+        if r.get("screen"):
+            continue
         g = r.get("wave_group") or qmap.get(r["name"])
         if not g:
             m = _re.match(r"^(.*)_s\d+_(?:treat|ctrl|control)$", r["name"])
@@ -368,9 +382,9 @@ def main():
             # so the total data is lower. Same observation, opposite mechanism. A verdict line
             # should report what was observed and leave the cause to whoever reads the step
             # counts, which are printed immediately above it.
-            print(f"    The cause is not asserted: the same epoch gap arises both from a "
-                  f"treatment that runs FEWER steps and from one that runs more but sees "
-                  f"less data per step. Read the step counts against the deltas.")
+            print("    The cause is not asserted: the same epoch gap arises both from a "
+                  "treatment that runs FEWER steps and from one that runs more but sees "
+                  "less data per step. Read the step counts against the deltas.")
             voided = []
         if voided:
             arms = [a for a in arms if a not in voided]
@@ -562,9 +576,9 @@ def main():
                       f"({'WORSE' if m > 0 else 'BETTER'} than control). The magnitude still "
                       f"needs a same-pair swap.")
             else:
-                print(f"  NO COUNTERBALANCED PAIR. Queue the swapped wave ON THE SAME GPU "
-                      f"BLOCKS; a swap on a different pair adds an unmeasured offset instead "
-                      f"of cancelling a measured one.")
+                print("  NO COUNTERBALANCED PAIR. Queue the swapped wave ON THE SAME GPU "
+                      "BLOCKS; a swap on a different pair adds an unmeasured offset instead "
+                      "of cancelling a measured one.")
             print()
             continue
         deltas = [m["delta"] for members in usable.values() for m in members]

@@ -109,11 +109,12 @@ def _counterbalanced_wins(results: list[dict]) -> set:
         if direction.is_platform(r.get("cfg") or {}):
             continue
         key = json.dumps(r.get("cfg") or {}, sort_keys=True)
-        by_cfg.setdefault(key, {}).setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+        by_cfg.setdefault(key, {}).setdefault(
+            direction.device_id(r), []).append(r["metrics"]["val_bpb"])
     ctl = {}
     for r in ok:
         if direction.is_platform(r.get("cfg") or {}):
-            ctl.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+            ctl.setdefault(direction.device_id(r), []).append(r["metrics"]["val_bpb"])
     # Return the winning CONFIGS, not their families. Returning families made every
     # later run from a family that had ever won count as an improvement, so `dry` and
     # `since_improve` froze at zero and STALE/DRY stopped firing for that family
@@ -237,7 +238,10 @@ def candidates(results: list[dict], litst: dict) -> list[dict]:
                     "dry": s["dry"], "best": s["best"], "gap": round(gap, 2),
                     "virgin_levers": virgin, "usable_claims": L.get("usable", 0),
                     "unread": L.get("unread", 0), "fetched": L.get("fetched", 0)})
-    out.sort(key=lambda d: (-d["eligible"], -d["score"]))
+    # When choosing a NEW direction, any literature-eligible family with a never-tested
+    # lever outranks a fully covered family. The numeric score decides only within those
+    # two tiers; otherwise the documented coverage floor would be a suggestion, not a rule.
+    out.sort(key=lambda d: (-d["eligible"], -bool(d["virgin_levers"]), -d["score"]))
     return out
 
 

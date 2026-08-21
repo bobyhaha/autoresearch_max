@@ -6,9 +6,18 @@ import sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "tools"))
-import claims, council, direction, lit, make_variant  # noqa: E402
+import claims  # noqa: E402
+import council  # noqa: E402
+import direction  # noqa: E402
+import lit  # noqa: E402
+import make_variant  # noqa: E402
 
-ok = lambda c, m: print(f"  {'PASS' if c else 'FAIL'}  {m}") or (c or sys.exit(f"FAILED: {m}"))
+
+def ok(condition, message):
+    print(f"  {'PASS' if condition else 'FAIL'}  {message}")
+    if not condition:
+        sys.exit(f"FAILED: {message}")
+    return condition
 TMP = REPO / "lit" / "_test"
 # IDEMPOTENT SETUP. These tests write fixtures into the LIVE corpus, and `ok()` exits the
 # process on the first failure -- so any failure skips the cleanup at the bottom and
@@ -82,15 +91,23 @@ good.write_text(f"""## explorer (ag-1)
 {filler}{filler}
 
 ```queue
-[{{"name":"T_dim768","hypothesis_id":"none","cfg":{{"dbs":128,"tbs":19,"depth":8,"dim":768,"mlp":4,"ve":2,"win":"SSSL","swdiv":2}},
-  "rationale":"width never varied","falsifier":"steps drop >10%","expected":"lower bpb"}}]
+[
+ {{"name":"T_dim768_P1_s0_treat","wave_group":"T_dim768_P1","hypothesis_id":"none","cfg":{{"dbs":128,"tbs":18,"depth":8,"dim":768,"mlp":4,"ve":2,"win":"SSSL","swdiv":2}},
+  "rationale":"width never varied","falsifier":"steps drop >10%","expected":"lower bpb"}},
+ {{"name":"T_dim768_P1_s1_ctrl","wave_group":"T_dim768_P1","cfg":{{"dbs":128,"tbs":18,"depth":8,"dim":512,"mlp":4,"ve":2,"win":"SSSL","swdiv":2}},
+  "rationale":"yoked platform control","falsifier":"concurrent spread is too large","expected":"platform bpb"}},
+ {{"name":"T_dim768_P2_s0_ctrl","wave_group":"T_dim768_P2","cfg":{{"dbs":128,"tbs":18,"depth":8,"dim":512,"mlp":4,"ve":2,"win":"SSSL","swdiv":2}},
+  "rationale":"yoked platform control","falsifier":"concurrent spread is too large","expected":"platform bpb"}},
+ {{"name":"T_dim768_P2_s1_treat","wave_group":"T_dim768_P2","hypothesis_id":"none","cfg":{{"dbs":128,"tbs":18,"depth":8,"dim":768,"mlp":4,"ve":2,"win":"SSSL","swdiv":2}},
+  "rationale":"width never varied","falsifier":"steps drop >10%","expected":"lower bpb"}}
+]
 ```
 """)
 ok(council.validate(good, "round") == [], f"real round valid: {council.validate(good,'round')}")
 
 print("\n6. the queue block parses into an executable, deterministic variant")
 q = council.queue_entries(good.read_text())
-ok(len(q) == 1 and q[0]["cfg"]["dim"] == 768, "queue entry parsed")
+ok(len(q) == 4 and q[0]["cfg"]["dim"] == 768, "counterbalanced queue entries parsed")
 src1 = make_variant.build(q[0]["cfg"])
 src2 = make_variant.build(q[0]["cfg"])
 ok(make_variant.variant_id(src1) == make_variant.variant_id(src2), "variant id is stable")

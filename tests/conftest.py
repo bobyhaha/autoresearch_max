@@ -31,6 +31,11 @@ _SCRIPTS = [
     "test_policy_defects.py",
     "test_rotation.py",
     "test_wave_launch.py",
+    # A script, not a pytest module: it rebinds make_variant.CANDIDATES and $HOME to
+    # scratch trees so the REAL dispatch.py and explore_lane can be exercised. Importing
+    # it into a shared session would leave those rebindings in place for whatever ran
+    # next, which is precisely the poisoning this list exists to prevent.
+    "test_open_action_space.py",
 ]
 
 
@@ -81,7 +86,9 @@ def pytest_collection_modifyitems(config, items):
             f"run only via the subprocess wrapper in test_suite.py.")
     # And the wrapper must still be covering every script that exists.
     on_disk = {p.name for p in here.glob("test_*.py")}
-    missed = on_disk - set(_SCRIPTS) - {"test_suite.py", "test_guards_fire.py"}
+    missed = on_disk - set(_SCRIPTS) - {
+        "test_suite.py", "test_guards_fire.py", "test_review_fixes.py",
+    }
     assert not missed, (
         f"new test file(s) {sorted(missed)} are neither listed as subprocess scripts nor "
         f"known pytest modules; decide which they are rather than letting collection guess")

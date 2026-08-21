@@ -90,7 +90,8 @@ def classify(rows, state, res=None):
             repl.append(r)
         else:
             exploit.append(r)
-        eff = r["metrics"]["val_bpb"] - dm.get(r.get("gpu"), r["metrics"]["val_bpb"])
+        eff = (r["metrics"]["val_bpb"]
+               - dm.get(direction.device_id(r), r["metrics"]["val_bpb"]))
         for a in ax:
             seen_val.setdefault(a, set()).add(cfg.get(a))
             if a not in seen_eff or eff < seen_eff[a]:
@@ -126,7 +127,8 @@ def sweeps(rows, state):
             skipped += 1
             continue
         a = touched[0]
-        eff = r["metrics"]["val_bpb"] - dm.get(r.get("gpu"), r["metrics"]["val_bpb"])
+        eff = (r["metrics"]["val_bpb"]
+               - dm.get(direction.device_id(r), r["metrics"]["val_bpb"]))
         out.setdefault(a, {}).setdefault(cfg.get(a), []).append(eff)
     # Never a silent cap: a ladder that quietly dropped a third of the corpus would read as
     # full coverage while resting on a fraction of it.

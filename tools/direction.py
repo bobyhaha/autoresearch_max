@@ -24,6 +24,8 @@ Axes are per-PARAMETER, not per-family.  Family grouping is exactly what hid `di
 """
 from __future__ import annotations
 
+import re
+
 # --- the reference platform: the strict upstream recipe, resolved -----------------
 # train.py's dataclass defaults (n_layer=12, n_embd=768) are dead code; the resolved
 # upstream configuration on this benchmark is depth 8 / dim 512 / mlp 4.
@@ -97,7 +99,8 @@ def all_mechanisms():
 def known_keys():
     """Computed, not frozen: a mechanism registered after import still counts."""
     return (frozenset(KNOB_AXES) | frozenset(all_mechanisms())
-            | frozenset(PLATFORM) | frozenset(EXTRA_KEYS) | _registered_params())
+            | frozenset(PLATFORM) | frozenset(EXTRA_KEYS) | _registered_params()
+            | {FREEFORM_KEY})
 
 
 def orphan_params(cfg: dict) -> set:
@@ -139,12 +142,37 @@ def _registered_params():
 # Companions of LEGACY inline mechanisms, which predate the registry and declare nothing.
 EXTRA_KEYS = frozenset({"ema_start"})
 
+# --- THE OPEN ACTION SPACE --------------------------------------------------------
+# A cfg carrying this key IS a complete train.py, supplied as a path, rather than a
+# point in the knob registry. It exists because the registry was the campaign's real
+# hypothesis space: 226 runs explored 25 distinct configs and every one of them was
+# depth 8 / dim 512 / mlp 4 / SSSL, because those are the only shapes make_variant
+# could express. An idea outside the registry could not be proposed, ranked, or run --
+# it could only be answered by editing the generator, which stalled the whole fleet
+# while the harness was rewritten. Upstream's rule is "everything is fair game" and
+# the peer harnesses implement it literally: the researcher returns a whole train.py.
+#
+# A freeform candidate is NEVER a control and NEVER a knob. It moves an unknown number
+# of axes by construction, so it is exploration, it may not be pooled into the noise
+# band, and its delta is attributable only to "this source vs the baseline source".
+FREEFORM_KEY = "src"
+
+
+def is_freeform(cfg: dict) -> bool:
+    """Whether this config is a whole-file train.py candidate rather than a knob point."""
+    return bool((cfg or {}).get(FREEFORM_KEY))
+
 KNOWN_KEYS = frozenset(KNOB_AXES) | frozenset(MECHANISMS) | frozenset(PLATFORM)
 
 
 def unknown_keys(cfg: dict) -> set:
     """Config keys no policy rule covers. Never silently ignored."""
     return {k for k in (cfg or {}) if k not in known_keys()}
+
+
+def device_id(result: dict):
+    """Stable physical device identity, falling back for historical result rows."""
+    return result.get("gpu_uuid") or result.get("gpu")
 
 
 def device_means(results: list[dict]) -> dict:
@@ -162,7 +190,7 @@ def device_means(results: list[dict]) -> dict:
     for r in results:
         if (r.get("ok") and is_platform(r.get("cfg") or {})
                 and (r.get("metrics") or {}).get("final_epoch") == 2.0):
-            g = r.get("gpu")
+            g = device_id(r)
             # An UNKNOWN device is not a device. Crash recovery used to stamp gpu:-1, and
             # pooling that as if it were real builds a mean out of runs that share nothing
             # but the fact that nobody recorded where they ran -- then corrects genuine
@@ -197,7 +225,7 @@ def device_resolution(results: list[dict]) -> dict | None:
             continue
         if (r["metrics"].get("final_epoch") or 0) != 2.0:
             continue        # 1-epoch runs are a different operating point (L005_v2)
-        by.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+        by.setdefault(device_id(r), []).append(r["metrics"]["val_bpb"])
     sds = {g: _st.stdev(v) for g, v in by.items() if len(v) > 2}
     if not sds:
         return None
@@ -384,11 +412,46 @@ def is_platform(cfg: dict) -> bool:
     # orphan_params is part of the same fail-safe: a companion setting whose mechanism is
     # absent is understood by the policy but MEANINGLESS to the generator, which is a
     # third way for a non-control cfg to look like a control.
+    # A FREEFORM candidate touches no registry axis and no registry mechanism by
+    # definition -- the whole point is that its change is not expressible here. Without
+    # this clause, opening the action space would have re-created the exact
+    # control-corrupting bug this function was written against, one level up: an
+    # arbitrary rewritten train.py would satisfy "moves no known axis", be labelled
+    # `control`, bypass the decision cutoff, and be pooled into the block that measures
+    # the noise band. Opening a gate without opening its sibling is worse than leaving
+    # both shut, and this is the third time that lesson applies.
+    if is_freeform(cfg):
+        return False
     return (not axes_touched(cfg) and not mechanisms_touched(cfg)
             and not unknown_keys(cfg) and not orphan_params(cfg))
 
 
+def recorded_role(record: dict) -> str:
+    """Return the role assigned when an arm was designed.
+
+    Controls are not necessarily the global platform: an isolating control can carry one
+    factor while its treatment adds another.  Prefer the persisted role, accept the
+    historical anchored name convention, and use platform equivalence only for old rows
+    that predate both.
+    """
+    role = str(record.get("role") or "").strip().lower()
+    if role in {"ctrl", "control"}:
+        return "ctrl"
+    if role in {"treat", "treatment"}:
+        return "treat"
+    name = str(record.get("name") or "")
+    match = re.search(r"_(treat|ctrl|control)$", name, re.IGNORECASE)
+    if match:
+        return "treat" if match.group(1).lower() == "treat" else "ctrl"
+    return "ctrl" if is_platform(record.get("cfg") or {}) else "treat"
+
+
 def label(cfg: dict) -> str:
+    # Checked FIRST, for the reason the comment below gives: is_platform() has just
+    # refused this cfg, and a label that still reads "control" is how a
+    # misclassification survives its own fix.
+    if is_freeform(cfg):
+        return "freeform:" + str(cfg[FREEFORM_KEY])
     ms, ax = sorted(mechanisms_touched(cfg)), sorted(axes_touched(cfg))
     if ms:
         return "mech:" + "+".join(ms) + (("|knob:" + "+".join(ax)) if ax else "")
@@ -428,7 +491,7 @@ def axis_state(results: list[dict]) -> dict:
     for r in results:
         if (r.get("ok") and is_platform(r.get("cfg") or {})
                 and (r.get("metrics") or {}).get("final_epoch") == 2.0):
-            _dev.setdefault(r.get("gpu"), []).append(r["metrics"]["val_bpb"])
+            _dev.setdefault(device_id(r), []).append(r["metrics"]["val_bpb"])
     _devmean = {g: _st.mean(v) for g, v in _dev.items() if v}
     state = {a: {"n": 0, "dry": 0, "best": None, "since_best": 0,
                  "best_eff": None, "best_value": None} for a in KNOB_AXES}
@@ -458,7 +521,7 @@ def axis_state(results: list[dict]) -> dict:
             elif v_here not in s.setdefault("_dry_vals", set()):
                 s["_dry_vals"].add(v_here)
                 s["dry"] = len(s["_dry_vals"])
-            eff = v - _devmean.get(r.get("gpu"), v)
+            eff = v - _devmean.get(device_id(r), v)
             if s["best_eff"] is None or eff < s["best_eff"]:
                 s["best_eff"] = eff
                 s["best_value"] = (r["cfg"] or {}).get(a)
@@ -507,6 +570,11 @@ def blocked_reason(cfg: dict, state: dict) -> str | None:
     """
     if is_platform(cfg):
         return None
+    # The dry/closed-axis rules below reason about KNOB AXES. A freeform candidate moves
+    # none of them in a way this policy can see, so applying them would refuse it for a
+    # property it cannot have. It is screened on its result, not on its coordinates.
+    if is_freeform(cfg):
+        return None
     ax = axes_touched(cfg)
 
     # EXPLOITATION is not exploration, and the dry rule must not conflate them. An axis
@@ -543,6 +611,15 @@ def blocked_reason(cfg: dict, state: dict) -> str | None:
     return None
 
 
+def is_exploration(cfg: dict, state: dict) -> bool:
+    """Whether a treatment pays down the campaign's exploration obligation."""
+    # Freeform is exploration by construction: it is the only arm in the campaign whose
+    # change is not drawn from the set the policy already knows how to rank.
+    return (is_freeform(cfg)
+            or bool(mechanisms_touched(cfg))
+            or any(state["axes"][axis]["n"] <= 1 for axis in axes_touched(cfg)))
+
+
 def explore_debt(results: list[dict], state: dict) -> float:
     """How far below EXPLORE_FLOOR the campaign is running. >0 means the next launch
     should be exploration. Exploitation drifts into a monoculture without this."""
@@ -556,12 +633,21 @@ def explore_debt(results: list[dict], state: dict) -> float:
     # EXPERIMENTS. An audit called that out as instrument-shopping -- two numbers for one
     # question, letting whichever flatters be quoted. They are now measuring the same
     # population, and any remaining gap is unit (runs vs experiments), not definition.
-    ok = [r for r in results if r.get("ok") and not is_platform(r.get("cfg") or {})]
+    ok = [r for r in results if r.get("ok") and recorded_role(r) == "treat"]
     if not ok:
         return 1.0
-    exp = sum(1 for r in ok
-              if mechanisms_touched(r["cfg"] or {})
-              or any(state["axes"][a]["n"] <= 1 for a in axes_touched(r["cfg"] or {})))
+    # Exploration is a fact at DECISION TIME. Classifying every historical run against
+    # today's final coverage erases the first exploratory runs as soon as an axis reaches
+    # n=2, making debt grow retroactively as exploration succeeds. Replay chronologically.
+    seen = {axis: 0 for axis in KNOB_AXES}
+    exp = 0
+    for result in sorted(ok, key=lambda row: row.get("ended") or 0):
+        cfg = result.get("cfg") or {}
+        axes = axes_touched(cfg)
+        if mechanisms_touched(cfg) or any(seen[axis] < 2 for axis in axes):
+            exp += 1
+        for axis in axes:
+            seen[axis] += 1
     return EXPLORE_FLOOR - exp / len(ok)
 
 
@@ -771,7 +857,9 @@ def report(results: list[dict]) -> str:
 
 
 if __name__ == "__main__":
-    import glob, json, pathlib
+    import glob
+    import json
+    import pathlib
     root = pathlib.Path(__file__).resolve().parent.parent
     res = [json.loads(pathlib.Path(f).read_text())
            for f in glob.glob(str(root / "runs" / "sweep" / "results" / "*.json"))]

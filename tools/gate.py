@@ -32,6 +32,7 @@ import agenda    # noqa: E402
 import claims    # noqa: E402
 import coe       # noqa: E402
 import council   # noqa: E402
+import queue_store  # noqa: E402
 
 SWEEP = REPO / "runs" / "sweep"
 HEALTH_MAX_S = 30 * 60      # tools/health.py runs every 20 min; +10 min slack
@@ -104,7 +105,9 @@ def checks() -> list[dict]:
                 f"{k}: {len(v)}" for k, v in a["checks"].items() if v)[:200],
             freezes=True)
     except Exception as exc:                          # noqa: BLE001
-        add("chain of evidence intact", False, False, f"audit failed: {exc}")
+        # An audit crash is not evidence that the chain is intact.  It must freeze from
+        # the last known-good checkpoint just like a negative audit result.
+        add("chain of evidence intact", False, False, f"audit failed: {exc}", freezes=True)
 
     # Council artifacts are SOFT: they move the decision cutoff, they never stop compute.
     # The kind list is read from council.SPECS rather than hardcoded, so adding a cadence
@@ -128,15 +131,30 @@ def decision_cutoff(chk: list[dict]) -> tuple[float, str]:
     if not overdue:
         return time.time(), ""
     ages = []
-    for kind in ("round", "critique"):
-        s = council.status(kind)
-        if not s["ok"]:
+    council_names = {f"{kind} council current" for kind in council.SPECS}
+    for kind in council.SPECS:
+        check_name = f"{kind} council current"
+        if any(c["check"] == check_name for c in overdue):
             f = council.latest(kind)
             # No artifact at all: the campaign has not started its councils yet, so
             # freeze from "the beginning of time" is correct -- but only controls are
             # exempt, and only councils can put us here.
             ages.append(f.stat().st_mtime if f else 0.0)
-    cutoff = min(ages) if ages else time.time()
+    # Evidence checks such as coe.audit() have no artifact mtime of their own.  The old
+    # code therefore left ``ages`` empty and used time.time(), authorising new entries at
+    # the exact moment the evidence chain failed.  Freeze them at the previous gate's
+    # last authorised checkpoint; without one, fail closed from campaign start.
+    if any(c["check"] not in council_names for c in overdue):
+        previous = SWEEP / "GATE_STATUS.json"
+        checkpoint = 0.0
+        try:
+            old = json.loads(previous.read_text())
+            checkpoint = float(old.get("decision_cutoff")
+                               if old.get("decision_cutoff_reason") else old.get("ts", 0.0))
+        except (OSError, ValueError, TypeError):
+            pass
+        ages.append(checkpoint)
+    cutoff = min(ages) if ages else 0.0
     why = "; ".join(f"{c['check']}: {c['detail']}" for c in overdue)
     return cutoff, why
 
@@ -158,7 +176,7 @@ def evaluate() -> dict:
 def main():
     g = evaluate()
     SWEEP.mkdir(parents=True, exist_ok=True)
-    (SWEEP / "GATE_STATUS.json").write_text(json.dumps(g, indent=1))
+    queue_store.atomic_write_json(SWEEP / "GATE_STATUS.json", g)
     if "--json" in sys.argv:
         print(json.dumps(g, indent=1))
         return 0

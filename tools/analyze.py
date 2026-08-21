@@ -90,7 +90,7 @@ def main():
         for r in rows:
             if (r.get("ok") and direction.is_platform(r.get("cfg") or {})
                     and (r.get("metrics") or {}).get("final_epoch") == 2.0):
-                _by[r.get("gpu")].append(r["metrics"]["val_bpb"])
+                _by[direction.device_id(r)].append(r["metrics"]["val_bpb"])
         _sds = [_s.stdev(v) for v in _by.values() if len(v) > 1]
         _pooled = (sum(s * s for s in _sds) / len(_sds)) ** 0.5 if _sds else float("nan")
         print(f"PLATFORM BASELINE  {_s.mean(_plat):.6f}  over {len(_plat)} controls on "
@@ -141,8 +141,8 @@ def main():
         # one that direction.py measures from concurrent controls, printed in the footer
         # below; it is the resolution a yoked pair buys and it is much smaller. Read a
         # yoked treatment-vs-control delta against the footer band, never against this.
-        print(f"  -> this pools across waves and therefore contains host drift; for a "
-              f"YOKED pair use the within-wave band in the footer.\n")
+        print("  -> this pools across waves and therefore contains host drift; for a "
+              "YOKED pair use the within-wave band in the footer.\n")
     else:
         print("CONTROL BAND  unmeasured: fewer than 2 control runs. Until it exists, no "
               "effect size means anything. Queue controls.\n")
@@ -177,7 +177,7 @@ def main():
             b = sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / den
             resid = [y - (my + b * (x - mx)) for x, y in zip(xs, ys)]
             expl = 1 - st.pvariance(resid) / st.pvariance(ys) if st.pvariance(ys) else 0
-            print(f"\nDIAGNOSTIC ONLY (never subtracted from a verdict):")
+            print("\nDIAGNOSTIC ONLY (never subtracted from a verdict):")
             print(f"  val_bpb moves {b:+.5f} per e-fold of steps; step count alone explains "
                   f"{expl:.0%} of all variance.")
             print("  High explained variance means most 'results' are throughput results.")
@@ -205,10 +205,12 @@ def main():
     ls = claims.active_lessons()
     if ls:
         print(f"\nACTIVE LESSONS ({len(ls)}), most severe first:")
-        for l in ls[:5]:
-            blocks = f"  BLOCKS {l['blocks_keys']}" if l.get("blocks_keys") else ""
-            print(f"  [{l['severity']:.2f}] {l['id']} ({l['type']} -> {l['action']})"
-                  f"{blocks}\n        {l['mitigation'][:90]}")
+        for lesson in ls[:5]:
+            blocks = (f"  BLOCKS {lesson['blocks_keys']}"
+                      if lesson.get("blocks_keys") else "")
+            print(f"  [{lesson['severity']:.2f}] {lesson['id']} "
+                  f"({lesson['type']} -> {lesson['action']})"
+                  f"{blocks}\n        {lesson['mitigation'][:90]}")
 
     print()
     print(direction.report(rows))

@@ -26,6 +26,7 @@ Rewritten 2026-08-18. Changes from the v3 dispatcher, each tied to an observed f
 """
 import collections
 import fcntl
+import hashlib
 import json
 import os
 import pathlib
@@ -35,12 +36,15 @@ import subprocess
 import sys
 import time
 
-ROOT = pathlib.Path.home() / "ophis_v3" / "sweep"
+REMOTE_DIR = os.environ.get("OPHIS_REMOTE_DIR", "ophis_v3")
+ROOT = pathlib.Path.home() / REMOTE_DIR / "sweep"
 sys.path.insert(0, str(ROOT))
-from direction import axis_state, blocked_reason, label   # noqa: E402
+from direction import (  # noqa: E402
+    axis_state, blocked_reason, explore_debt, is_exploration, label, recorded_role,
+)
 
-VENV = pathlib.Path.home() / "ophis_v3" / "gpu6" / ".venv" / "bin" / "python"
-PREP = pathlib.Path.home() / "ophis_v3" / "gpu6" / "prepare.py"
+VENV = pathlib.Path.home() / REMOTE_DIR / "gpu6" / ".venv" / "bin" / "python"
+PREP = pathlib.Path.home() / REMOTE_DIR / "gpu6" / "prepare.py"
 DEADLINE = float(sys.argv[1]) if len(sys.argv) > 1 else time.time() + 24 * 3600
 
 MINFREE_MB = 1024
@@ -91,6 +95,23 @@ def log(m):
         f.write(f"{time.strftime('%FT%TZ', time.gmtime())} {m}\n")
 
 
+def write_json_atomic(path, value):
+    """Publish dispatcher state only after the complete JSON is durable."""
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        with temporary.open("w") as stream:
+            json.dump(value, stream, indent=1)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
 def load_queue():
     try:
         return json.loads((ROOT / "queue.json").read_text())
@@ -135,14 +156,92 @@ def gate():
     return True, float(g.get("decision_cutoff") or time.time()), ""
 
 
+def _is_screen(item) -> bool:
+    """A width-1, n=1 screening run: keeps the fleet fed, decides nothing on its own.
+
+    Read from the QUEUE ENTRY, never inferred from the cfg. Inferring role from config
+    shape is the defect class that classified 28 runs named `_control` as treatments in
+    this campaign; a role is a property of what the arm was DESIGNED to be, so it is
+    recorded at queue time and read back.
+    """
+    return bool((item or {}).get("screen")) and not (item or {}).get("wave_group")
+
+
 def _is_control(cfg):
     from direction import is_platform
     return is_platform(cfg or {})
 
 
+def load_device_affinity() -> dict[str, list[str]]:
+    try:
+        value = json.loads((ROOT / "device_affinity.json").read_text())
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def save_device_affinity(value: dict[str, list[str]]) -> None:
+    """Persist before launch, so a dispatcher restart cannot forget the first swap."""
+    path = ROOT / "device_affinity.json"
+    temporary = ROOT / ".device_affinity.tmp"
+    try:
+        with temporary.open("w") as stream:
+            json.dump(value, stream, indent=1)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    except OSError as exc:
+        log(f"DEVICE AFFINITY state write failed: {exc}")
+        raise
+
+
+def counterbalance_key(batch):
+    """Explicit comparison id, with a deterministic fallback for pre-fix queue rows."""
+    declared = {item.get("counterbalance_group") for item in batch
+                if item.get("counterbalance_group")}
+    if declared:
+        if len(declared) != 1 or any(not item.get("counterbalance_group") for item in batch):
+            raise ValueError("a wave mixes counterbalance groups")
+        return next(iter(declared))
+    roles = {recorded_role(item) for item in batch}
+    if roles != {"treat", "ctrl"}:
+        return None
+    signature = sorted(
+        (recorded_role(item), json.dumps(item.get("cfg") or {}, sort_keys=True),
+         item.get("hypothesis_id"), (item.get("rationale") or "").strip(),
+         (item.get("falsifier") or "").strip(), (item.get("expected") or "").strip())
+        for item in batch
+    )
+    digest = hashlib.sha256(json.dumps(signature).encode()).hexdigest()[:16]
+    return f"legacy_cb_{digest}"
+
+
+def order_for_device_affinity(batch, free_gpus, affinity):
+    """Order free GPUs for a counterbalanced wave, or hold until its UUIDs are free."""
+    key = counterbalance_key(batch)
+    if key is None:
+        return list(free_gpus), False
+    wanted = affinity.get(key)
+    by_uuid = {uuid: (gpu, uuid) for gpu, uuid in free_gpus}
+    if wanted:
+        if len(wanted) != len(batch) or any(uuid not in by_uuid for uuid in wanted):
+            return None, False
+        selected = [by_uuid[uuid] for uuid in wanted]
+        wanted_set = set(wanted)
+        rest = [item for item in free_gpus if item[1] not in wanted_set]
+        return selected + rest, False
+    if len(free_gpus) < len(batch):
+        return None, False
+    affinity[key] = [uuid for _gpu, uuid in free_gpus[:len(batch)]]
+    return list(free_gpus), True
+
+
 def runnable(cutoff):
     """Every queue entry eligible to launch right now, in queue order."""
-    state = axis_state(results())
+    rows = results()
+    state = axis_state(rows)
+    debt = explore_debt(rows, state)
     out, frozen, policy = [], 0, 0
     queue = load_queue()
     # WHICH WAVES ARE PURE CONTROL BLOCKS. The exemption below is for the instrument --
@@ -158,10 +257,14 @@ def runnable(cutoff):
     # not idle for prose". A per-entry exemption inside an all-or-nothing wave launcher
     # cannot do anything except strand the wave.
     _pure_ctl = {}
+    _exploratory = {}
     for it in queue:
         g = it.get("wave_group")
         if g:
             _pure_ctl[g] = _pure_ctl.get(g, True) and _is_control(it["cfg"])
+            _exploratory[g] = (_exploratory.get(g, False)
+                               or (recorded_role(it) == "treat"
+                                   and is_exploration(it.get("cfg") or {}, state)))
     for item in queue:
         if (ROOT / "results" / f"{item['name']}.json").exists():
             continue
@@ -173,6 +276,30 @@ def runnable(cutoff):
         # verdict needs. A mixed wave freezes as a unit, because it IS a unit.
         _grp = item.get("wave_group")
         _exempt = _pure_ctl.get(_grp, _is_control(item["cfg"])) if _grp else _is_control(item["cfg"])
+        # SCREENS DO NOT WAIT FOR PROSE. The cutoff exists so that a research DECISION is
+        # not made on stale deliberation. A screen is width-1, n=1, adopts nothing, and
+        # is admissible as evidence for exactly one thing: whether a candidate is worth
+        # running a real yoked comparison on. Freezing it buys no integrity and costs the
+        # whole fleet -- this campaign spent 26.8 of 41.5 wall-hours with ZERO runs in
+        # flight, and the last gate verdict on record froze every new decision because a
+        # critique document was 168 minutes late. Seven idle H200s is the price that was
+        # actually being paid for a late markdown file.
+        #
+        # The per-entry exemption that deadlocked this loop before was for CONTROLS, which
+        # are half of a width-2 pair: releasing one and freezing its treatment stranded
+        # the wave. A screen has no partner to be stranded from, so the trap that made
+        # that exemption unsafe does not exist here. It is enforced, not assumed:
+        # queue_screen refuses to emit a screen carrying a wave_group.
+        if _is_screen(item):
+            _exempt = True
+        explores = (_exploratory.get(
+            _grp, recorded_role(item) == "treat"
+            and is_exploration(item.get("cfg") or {}, state)) if _grp else
+            recorded_role(item) == "treat"
+            and is_exploration(item.get("cfg") or {}, state))
+        if debt > 0 and not _exempt and not explores:
+            policy += 1
+            continue
         if float(item.get("created_at") or 0) > cutoff and not _exempt:
             frozen += 1
             continue
@@ -303,6 +430,7 @@ def tombstone_split_wave(key) -> bool:
         rec = {
             "name": it["name"], "cfg": it.get("cfg"), "gpu": None,
             "role": it.get("role"), "variant": it.get("variant"),
+            "screen": bool(it.get("screen")),
             "hypothesis_id": it.get("hypothesis_id"),
             "started": None, "ended": time.time(), "returncode": None,
             "cotenant_detected": False, "cores": None, "ok": False,
@@ -315,13 +443,13 @@ def tombstone_split_wave(key) -> bool:
                 f"inferred."),
             "error": "",
         }
-        (ROOT / "results" / f"{it['name']}.json").write_text(json.dumps(rec, indent=1))
+        write_json_atomic(ROOT / "results" / f"{it['name']}.json", rec)
         log(f"WAVE RETIRED {key}: {it['name']} stranded unrun and tombstoned "
             f"(its wave-mates already finished; the pairing cannot be reformed)")
     return True
 
 
-def next_batch(cutoff, n_free):
+def next_batch(cutoff, n_free, available_uuids=None, device_affinity=None):
     """Entries to launch on this pass: the largest wave_group that fits in n_free GPUs.
 
     A group launches together or waits. Returning [] with groups pending means we are
@@ -387,6 +515,30 @@ def next_batch(cutoff, n_free):
         return [], (f"every pending wave is split: "
                     f"{', '.join(k for k, _, _ in broken)}") if broken else None
 
+    # Do not let a mapped comparison at the head of the queue starve unrelated work.
+    # Hold only that comparison when its physical devices are busy, then consider the
+    # next intact wave that fits the actually available UUID set.
+    affinity_held = []
+    if available_uuids is not None and device_affinity is not None:
+        available = set(available_uuids)
+        for key, members in list(intact.items()):
+            try:
+                comparison = counterbalance_key(members)
+            except ValueError:
+                continue
+            if comparison is None:
+                continue
+            wanted = device_affinity.get(comparison)
+            if wanted and not set(wanted).issubset(available):
+                affinity_held.append((key, comparison, wanted))
+                del intact[key]
+    if not intact:
+        if affinity_held:
+            _wave, comparison, wanted = affinity_held[0]
+            return [], (f"counterbalance group {comparison} requires physical GPU UUIDs "
+                        f"{wanted}, which are not all free")
+        return [], None
+
     # Largest group that fits, so the box is filled and pairs stay intact.
     fits = sorted([g for g in intact.values() if len(g) <= n_free],
                   key=lambda g: -len(g))
@@ -451,7 +603,8 @@ def recover_orphans():
         if "val_bpb:" not in txt:
             continue
         met = parse(txt)
-        cfg = next((e["cfg"] for e in load_queue() if e["name"] == d.name), None)
+        queue_entry = next((e for e in load_queue() if e["name"] == d.name), None)
+        cfg = (queue_entry or {}).get("cfg")
         # The GPU is RECORDED, not unknown: launch.json sits in this very directory and
         # holds gpu, uuid and started. Writing gpu:-1 here was not a graceful degradation,
         # it was discarding data that was already on disk -- and -1 does not read as
@@ -466,8 +619,11 @@ def recover_orphans():
             _lj = json.loads((d / "launch.json").read_text())
         except (OSError, ValueError):
             pass
-        r.write_text(json.dumps(
+        write_json_atomic(r,
             {"name": d.name, "cfg": cfg or {}, "gpu": _lj.get("gpu", -1),
+             "gpu_uuid": _lj.get("uuid"),
+             "wave_group": (queue_entry or {}).get("wave_group"),
+             "counterbalance_group": (queue_entry or {}).get("counterbalance_group"),
              "started": _lj.get("started", 0),
              # role and variant, recovered from the queue entry alongside the
              # hypothesis. All three result writers must record them or the guarantee is
@@ -475,18 +631,16 @@ def recover_orphans():
              # variant reaching one writer of three, so a RECOVERED run -- exactly the
              # case where provenance matters most, because something already went wrong --
              # came back with neither.
-             "role": next((e.get("role") for e in load_queue()
-                           if e["name"] == d.name), None),
-             "variant": next((e.get("variant") for e in load_queue()
-                              if e["name"] == d.name), None),
-             "hypothesis_id": next((e.get("hypothesis_id") for e in load_queue()
-                                    if e["name"] == d.name), None),
+             "role": (queue_entry or {}).get("role"),
+             "variant": (queue_entry or {}).get("variant"),
+             "screen": bool((queue_entry or {}).get("screen")),
+             "hypothesis_id": (queue_entry or {}).get("hypothesis_id"),
              "ended": (d / "out.log").stat().st_mtime, "returncode": 0, "metrics": met,
              # cfg unresolvable => the run cannot be attributed to any axis, so it is not
              # evidence. v3 wrote ok:true here and silently under-counted three runs.
              "ok": bool(cfg) and "val_bpb" in met,
              "invalid_reason": "" if cfg else "cfg unresolvable from queue",
-             "error": "", "recovered": True}, indent=1))
+             "error": "", "recovered": True})
         log(f"RECOVERED {d.name} val_bpb={met.get('val_bpb')} cfg={'ok' if cfg else 'LOST'}")
 
 
@@ -645,9 +799,9 @@ def main():
         # committed again in the fix for it. Anything that decides how much a device is
         # trusted has to outlive the process that learned it.
         try:
-            QSTATE.write_text(json.dumps(
-                {"quarantine": q, "tainted": sorted(t),
-                 "burns": burn_count if b is None else b}, indent=1))
+            write_json_atomic(QSTATE,
+                              {"quarantine": q, "tainted": sorted(t),
+                               "burns": burn_count if b is None else b})
         except OSError:
             pass
 
@@ -661,6 +815,7 @@ def main():
     burn_count.update({k: int(v) for k, v in (_burns or {}).items()})
     globals()["_TAINTED_AT_ADOPT"] = set(tainted)
     running = adopt_running()
+    device_affinity = load_device_affinity()
     release_stranded_claims()   # claims with neither a result nor a work dir
     # Quarantine and co-tenancy live on DISK, not in process memory.
     #
@@ -729,10 +884,12 @@ def main():
             # failed to engage is indistinguishable from a clean null -- which is the
             # exact failure the activation predicate exists to prevent.
             rec = {"name": job["item"]["name"], "cfg": job["item"]["cfg"], "gpu": g,
+                   "gpu_uuid": job["uuid"],
                    # Carried into the RESULT so analysis never depends on the queue still
                    # holding the entry. A cut queue entry used to erase a completed run
                    # from every verdict.
                    "wave_group": job["item"].get("wave_group"),
+                   "counterbalance_group": job["item"].get("counterbalance_group"),
                    # ROLE, CARRIED FROM THE QUEUE ENTRY THAT ASSIGNED IT. Seven separate
                    # defects in this campaign came from re-deriving a run's role later by
                    # comparing its cfg against direction.PLATFORM, which moves under
@@ -740,6 +897,7 @@ def main():
                    # the baseline that judges treatments. The queue knew the role with
                    # certainty; nothing downstream should have to infer it.
                    "role": job["item"].get("role"),
+                   "screen": bool(job["item"].get("screen")),
                    # THE VARIANT ID, so the result is self-describing. No result record
                    # on disk carries one, which costs twice. First, provenance: a result
                    # whose queue row is later cut has no way to name the code that
@@ -761,7 +919,7 @@ def main():
                    "invalid_reason": ("gpu co-tenancy during the run" if job["cotenant"]
                                       else _crashed(job) or ""),
                    "error": "" if job["proc"].returncode == 0 else txt.strip()[-400:]}
-            (ROOT / "results" / f"{job['item']['name']}.json").write_text(json.dumps(rec, indent=1))
+            write_json_atomic(ROOT / "results" / f"{job['item']['name']}.json", rec)
             log(f"DONE {job['item']['name']} gpu{g} rc={job['proc'].returncode} "
                 f"val_bpb={met.get('val_bpb')} steps={met.get('num_steps')}")
             del running[g]
@@ -825,13 +983,40 @@ def main():
                      and uuid not in quarantine]
         capacity = min(len(free_gpus), len(free_slots), MAX_GPUS - len(running))
 
-        batch, waiting = ([], None) if capacity <= 0 else next_batch(cutoff, capacity)
+        batch, waiting = (([], None) if capacity <= 0 else
+                          next_batch(cutoff, capacity,
+                                     [uuid for _gpu, uuid in free_gpus], device_affinity))
         if waiting or (capacity <= 0 and time.time() < DEADLINE - 500):
             msg = waiting or f"0 of {MAX_GPUS} GPUs free"
             if time.time() - last_wait_log > WAIT_LOG_EVERY_S:
                 log(f"WAITING: {msg}; {len(running)}/{MAX_GPUS} of ours running")
                 last_wait_log = time.time()
-        batch = [b for b in batch if b["name"] not in blocked_launch]
+        blocked_members = [b["name"] for b in batch if b["name"] in blocked_launch]
+        if blocked_members:
+            log(f"WAVE HELD {batch[0].get('wave_group')}: blocked launch member(s) "
+                f"{blocked_members}; refusing to launch the remnant")
+            batch = []
+        if batch:
+            try:
+                ordered_gpus, created_affinity = order_for_device_affinity(
+                    batch, free_gpus, device_affinity)
+            except ValueError as exc:
+                log(f"WAVE HELD {batch[0].get('wave_group')}: {exc}")
+                ordered_gpus, created_affinity = None, False
+            if ordered_gpus is None:
+                key = batch[0].get("counterbalance_group")
+                wanted = device_affinity.get(key, [])
+                waiting = (f"counterbalance group {key} requires physical GPU UUIDs "
+                           f"{wanted}, which are not all free")
+                batch = []
+            else:
+                free_gpus = ordered_gpus
+                comparison = counterbalance_key(batch)
+                if comparison:
+                    for item in batch:
+                        item.setdefault("counterbalance_group", comparison)
+                if created_affinity:
+                    save_device_affinity(device_affinity)
         batch = claim_all(batch)
 
         for item in batch:
@@ -905,9 +1090,10 @@ def main():
             # on two GPUs, which the co-tenancy check does not catch because it only
             # looks for FOREIGN owners. This file is what lets a fresh dispatcher adopt a
             # run it did not start instead of double-booking its GPU.
-            (d / "launch.json").write_text(json.dumps(
-                {"pid": p.pid, "gpu": g, "uuid": uuid, "slot": slot, "cores": cores,
-                 "started": running[g]["started"], "name": item["name"]}))
+            write_json_atomic(d / "launch.json",
+                              {"pid": p.pid, "gpu": g, "uuid": uuid, "slot": slot,
+                               "cores": cores, "started": running[g]["started"],
+                               "name": item["name"]})
             launched += 1
             log(f"LAUNCH {item['name']} gpu{g} cores={cores} [{label(item['cfg'])}]"
                 f"{' wave=' + item['wave_group'] if item.get('wave_group') else ''} "

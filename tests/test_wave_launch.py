@@ -5,13 +5,24 @@ The dispatcher's grouping logic is exercised directly. Launching one GPU at a ti
 capacity trickles in is what produced controls half an hour apart whose spread measured
 host drift rather than resolution.
 """
+import json
 import pathlib
 import sys
+import tempfile
 import types
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "tools"))
-ok = lambda c, m: print(f"  {'PASS' if c else 'FAIL'}  {m}") or (c or sys.exit(f"FAILED: {m}"))
+
+def ok(condition, message):
+    print(f"  {'PASS' if condition else 'FAIL'}  {message}")
+    if not condition:
+        sys.exit(f"FAILED: {message}")
+    return condition
+
+
+def write_json(path, value):
+    path.write_text(json.dumps(value, indent=1))
 
 # Load dispatch.py's pure logic without its host-only module scope (flock, ROOT, nvidia-smi).
 src = (REPO / "host" / "dispatch.py").read_text()
@@ -21,14 +32,50 @@ mod = types.ModuleType("dispatch_logic")
 mod.__dict__.update({"os": __import__("os"), "time": __import__("time"),
                      "json": __import__("json"),
                      "collections": __import__("collections"),
+                     "write_json_atomic": write_json,
                      "log": lambda m: None, "release": lambda it: None})
 exec(compile(src[start:end], "dispatch_logic", "exec"), mod.__dict__)
+# `_is_screen` is defined ABOVE runnable() and so falls outside the slice, but unlike
+# `_is_control` it has no dependency on policy modules -- it reads two fields off a queue
+# entry. Exec the REAL definition rather than stubbing it: the property under test is
+# that a screen bypasses the cutoff while a screen carrying a wave_group does not, and a
+# stub would assert that against a copy of the logic instead of the logic.
+_s0 = src.index("def _is_screen(")
+exec(compile(src[_s0:src.index("def _is_control(")], "dispatch_logic", "exec"), mod.__dict__)
 
 ITEMS = [
     {"name": "T_treat", "wave_group": "w1", "cfg": {}},
     {"name": "T_ctrl",  "wave_group": "w1", "cfg": {}},
     {"name": "S_solo",  "cfg": {}},
 ]
+
+print("0. exploration debt holds exploit waves until the floor is repaid")
+real_runnable = mod.runnable
+with tempfile.TemporaryDirectory() as tmp:
+    root = pathlib.Path(tmp)
+    (root / "results").mkdir()
+    (root / "claims").mkdir()
+    mod.ROOT = root
+    explore_wave = [
+        {"name": "E_treat", "wave_group": "we", "role": "treat", "cfg": {"new": 1}},
+        {"name": "E_ctrl", "wave_group": "we", "role": "ctrl", "cfg": {}},
+    ]
+    exploit_wave = [
+        {"name": "X_treat", "wave_group": "wx", "role": "treat", "cfg": {"old": 1}},
+        {"name": "X_ctrl", "wave_group": "wx", "role": "ctrl", "cfg": {}},
+    ]
+    mod.load_queue = lambda: explore_wave + exploit_wave
+    mod.results = lambda: []
+    mod.axis_state = lambda rows: {}
+    mod.explore_debt = lambda rows, state: 0.35
+    mod.recorded_role = lambda item: item["role"]
+    mod.is_exploration = lambda cfg, state: bool(cfg.get("new"))
+    mod._is_control = lambda cfg: not cfg
+    mod.blocked_reason = lambda cfg, state: None
+    runnable, _frozen, policy = real_runnable(float("inf"))
+    ok({item["name"] for item in runnable} == {"E_treat", "E_ctrl"} and policy == 2,
+       "the exploratory pair is runnable and the exploit pair is held as a unit")
+
 mod.runnable = lambda cutoff: (list(ITEMS), 0, 0)
 
 print("1. a 2-member wave does NOT launch when only 1 GPU is free")
@@ -56,7 +103,6 @@ ok(batch == [] and waiting and "waiting for 2 free GPUs" in waiting,
    f"holds capacity for the wave: {waiting}")
 
 print("\n5. a partial claim never splits a wave")
-import tempfile
 with tempfile.TemporaryDirectory() as tmp:
     root = pathlib.Path(tmp)
     (root / "claims").mkdir()
@@ -109,6 +155,35 @@ batch, _ = mod.next_batch(1000, 4)
 ok(len(batch) == 2, "once the freeze lifts the whole wave goes out together")
 mod.load_queue = lambda: []
 
+print("\n5b-bis. a SCREEN launches through a cutoff freeze; an ordinary treatment does not")
+# THE 89.6%-IDLE FIX, asserted end-to-end through the real runnable(). The campaign's
+# last recorded gate verdict froze every new decision because a critique document was
+# 168 minutes late, and the fleet sat at zero runs in flight for 26.8 of 41.5 hours. A
+# screen is width-1 and n=1, decides nothing, and cannot be half of a stranded pair, so
+# the freeze buys no integrity from it and costs the whole box.
+_scr = {"name": "SCR_x_scr", "cfg": {"src": "x.py"}, "screen": True,
+        "wave_group": None, "created_at": 900, "role": "treat"}
+_ord = {"name": "O_treat", "cfg": {"mlp": 9}, "wave_group": None,
+        "created_at": 900, "role": "treat"}
+_trap = {"name": "SCR_bad_scr", "cfg": {"src": "y.py"}, "screen": True,
+         "wave_group": "wpair", "created_at": 900, "role": "treat"}
+mod.load_queue = lambda: [_scr, _ord, _trap]
+mod._is_control = lambda cfg: not cfg
+mod.blocked_reason = lambda cfg, state: None
+mod.axis_state = lambda rows: {"axes": {}}
+mod.explore_debt = lambda rows, state: 0.0
+mod.is_exploration = lambda cfg, state: False
+mod.recorded_role = lambda it: it.get("role") or "treat"
+mod.results = lambda: []
+# real_runnable, not mod.runnable: earlier cases in this file stub the latter out.
+_names = [i["name"] for i in real_runnable(500)[0]]     # cutoff 500 < created_at 900
+ok("SCR_x_scr" in _names, f"a width-1 screen launches while decisions are frozen (got {_names})")
+ok("O_treat" not in _names, "an ordinary treatment created after the cutoff stays frozen")
+ok("SCR_bad_scr" not in _names,
+   "a screen carrying a wave_group gets NO exemption -- that is the half-of-a-pair trap "
+   "that turned the per-entry control exemption into a total launch block")
+mod.load_queue = lambda: []
+
 print("\n5c-bis. the cutoff exempts a CONTROL BLOCK, not a control inside a pair")
 # The exemption exists for the instrument: a wave of controls run to measure the noise
 # band. Applied per-ENTRY it exempted the control half of every yoked pair and froze the
@@ -138,10 +213,10 @@ print("\n5d. a PERMANENTLY split wave is tombstoned, not refused forever")
 # on presenting them as pending work. Refusing is right; refusing FOREVER is a leak.
 # The stranded members are written as INVALID results so the loss stays in the
 # accounting, rather than deleted, which would make it vanish.
-import json as _json, tempfile as _tf
-with _tf.TemporaryDirectory() as tmp:
+with tempfile.TemporaryDirectory() as tmp:
     root = pathlib.Path(tmp)
-    (root / "results").mkdir(); (root / "claims").mkdir()
+    (root / "results").mkdir()
+    (root / "claims").mkdir()
     mod.ROOT = root
     dead = [{"name": "Z_ctrl0", "wave_group": "zdead", "cfg": {}},
             {"name": "Z_ctrl1", "wave_group": "zdead", "cfg": {}},
@@ -161,7 +236,7 @@ with _tf.TemporaryDirectory() as tmp:
     (root / "claims" / "Z_treat0").rmdir()                 # the claim went away unrun
     ok(mod.tombstone_split_wave("zdead") is True, "the dead wave is retired")
     for n in ("Z_treat0", "Z_treat1"):
-        rec = _json.loads((root / "results" / f"{n}.json").read_text())
+        rec = json.loads((root / "results" / f"{n}.json").read_text())
         ok(rec["ok"] is False and "stranded" in rec["invalid_reason"],
            f"{n} recorded as INVALID, so analyze.py counts the loss")
         ok("val_bpb" not in (rec.get("metrics") or {}),

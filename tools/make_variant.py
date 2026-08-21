@@ -6,6 +6,12 @@ import re
 import sys
 
 BASE = pathlib.Path(__file__).resolve().parent.parent / "baseline" / "train.py"
+CANDIDATES = BASE.parent / "candidates"
+
+# Mirrors direction.FREEFORM_KEY. Imported lazily inside build() there; declared as a
+# literal here because this module is shipped to the host and imported by the
+# dispatcher, and a circular import at generation time would fail closed.
+FREEFORM_KEY = "src"
 
 class VariantEditError(RuntimeError):
     """A requested edit did not apply. Raised instead of silently producing a variant
@@ -68,7 +74,7 @@ def variant_id(src: str) -> str:
 MECHANISM_REGISTRY: dict = {}
 
 
-def mechanism(name, *, family, diagnostic, doc, params=()):
+def mechanism(name, *, family, diagnostic, doc, params=(), screen_value=1):
     """Register a train.py edit as a first-class mechanism.
 
     `fn(src, cfg, sub)` receives the source, the config, and the asserting substitution
@@ -83,7 +89,18 @@ def mechanism(name, *, family, diagnostic, doc, params=()):
                                     # learns them from the code rather than from a
                                     # hand-maintained list, which is the same closed-set
                                     # mistake one level down.
-                                    "params": tuple(params)}
+                                    "params": tuple(params),
+                                    # THE VALUE THAT SCREENS THIS MECHANISM. A mechanism
+                                    # is screened at n=1 by setting its key to something
+                                    # valid, and only its author knows what that is:
+                                    # `precond` takes the string "pre", `embwd` a decay
+                                    # small enough not to be an ablation, and a plain 1
+                                    # raises from inside the mechanism's own validator.
+                                    # Declared HERE so the explore lane learns it from the
+                                    # code, rather than from a hand-maintained table in
+                                    # another file -- which is the closed-set mistake this
+                                    # registry exists to end, one level down again.
+                                    "screen_value": screen_value}
         return fn
     return deco
 
@@ -100,7 +117,99 @@ def implemented():
     return _LEGACY_IMPLEMENTED | set(MECHANISM_REGISTRY)
 
 
+def soft_sub(s: str, old: str, new: str) -> tuple:
+    """Best-effort substitution for FREEFORM candidates only.
+
+    `sub` asserts its target exists, because inside the knob registry an absent target
+    is always a bug -- the caller believed it was editing a line it wrote. That is not
+    true of a freeform candidate: the researcher may legitimately have rewritten or
+    deleted the very loop the instrumentation patches. Refusing to build in that case
+    would close the open action space again through the telemetry, so instrumentation
+    that cannot land is DROPPED and REPORTED rather than fatal. The report matters --
+    a run missing loader_frac must be readable as "not instrumented", never as zero.
+    """
+    if old not in s:
+        return s, False
+    return s.replace(old, new, 1), True
+
+
+# The timing instrumentation, as (target, replacement, metric) triples, so the freeform
+# path and the registry path patch the SAME lines. Two copies of this drifting apart is
+# how a diagnostic comes to mean different things in different arms.
+_TIMING_PATCHES = [
+    ("t_start_training = time.time()",
+     "t_start_training = time.time()\n_t_fwdbwd=0.0;_t_loader=0.0;_t_opt=0.0;_t_wait=0.0;_dts=[]\n"
+     "_ev0=torch.cuda.Event(enable_timing=True);_ev1=torch.cuda.Event(enable_timing=True);_gpu_ms=[]",
+     "clock"),
+]
+
+
+def build_freeform(cfg: dict) -> str:
+    """Build a variant from a COMPLETE train.py supplied by the researcher.
+
+    This is the escape hatch from the mechanism registry. `cfg["src"]` names a file in
+    baseline/candidates/; its contents become the variant, with timing instrumentation
+    injected where the lines still exist.
+
+    Two guards, both of which the campaign has already been burned by in the knob path:
+
+    1. BYTE-IDENTICAL TO BASELINE is refused. That is the silent-control defect -- an
+       experiment that runs the baseline while its record says otherwise. It cost this
+       campaign at least three arms through `str.replace` on absent targets, and a
+       freeform candidate reaches it by a shorter route: a researcher can simply hand
+       back the file they were given.
+
+    2. THE OUTPUT CONTRACT is checked statically. A candidate that never prints
+       `val_bpb:` is scored as a crash 300 seconds later, on a GPU. Checking here costs
+       nothing and turns a wasted run into an immediate, legible refusal.
+    """
+    name = str(cfg[FREEFORM_KEY])
+    if "/" in name or "\\" in name or name.startswith("."):
+        raise VariantEditError(
+            f"freeform candidate {name!r} must be a bare filename in {CANDIDATES}, not a "
+            f"path: a candidate that can be read from anywhere is a candidate whose code "
+            f"cannot be recovered from the repository afterwards")
+    src_path = CANDIDATES / name
+    if not src_path.exists():
+        raise VariantEditError(
+            f"freeform candidate {name!r} not found at {src_path}. Write the complete "
+            f"train.py there first; the queue entry names it, it is not generated.")
+    src = src_path.read_text()
+
+    if src == BASE.read_text():
+        raise VariantEditError(
+            f"freeform candidate {name!r} is BYTE-IDENTICAL to baseline/train.py. That is "
+            f"a control wearing a treatment's name -- the exact silent-control defect the "
+            f"asserting `sub` helper exists to prevent. Queue it as a control or change it.")
+
+    missing = [tok for tok in ("val_bpb:", "evaluate_bpb") if tok not in src]
+    if missing:
+        raise VariantEditError(
+            f"freeform candidate {name!r} does not satisfy the output contract: {missing} "
+            f"absent. The harness parses `val_bpb:` from stdout and `evaluate_bpb` is the "
+            f"ground-truth metric; without them this run is scored as a crash after "
+            f"spending 300 GPU-seconds.")
+
+    landed = []
+    for old, new, metric in _TIMING_PATCHES:
+        src, ok = soft_sub(src, old, new)
+        if ok:
+            landed.append(metric)
+    # Recorded IN THE SOURCE so the result row can say what was measurable. A missing
+    # diagnostic must never be indistinguishable from a diagnostic that read zero.
+    src = (f"# OPHIS-FREEFORM candidate={name}\n"
+           f"# OPHIS-INSTRUMENTED {','.join(landed) if landed else 'none'}\n") + src
+    return src
+
+
 def build(cfg: dict) -> str:
+    # FREEFORM FIRST. The guards below reason about registry keys -- which mechanism has
+    # a branch, which cfg key the policy recognises -- and a whole-file candidate has
+    # neither by construction. Running them against it would refuse the open action space
+    # for failing to be closed.
+    if cfg.get(FREEFORM_KEY):
+        return build_freeform(cfg)
+
     # Every MECHANISM the policy knows about must have a branch here. `prefetch` was
     # listed in direction.MECHANISMS as the only input_pipeline mechanism and had NO
     # branch, so building it returned the control source unchanged: the policy ranked a

@@ -199,6 +199,11 @@ print(f"ve_trainable_params: {_vetr}")"""]
     family="ve_placement",
     diagnostic="emb_wnorm_final",
     params=(),
+    # embwd=1 is an ABLATION, not a regularisation: the mechanism's own validator
+    # computes that it shrinks the identity tables to ~1e-244 of their initial norm over
+    # this budget and refuses. 1e-3 sits an order of magnitude under that validator's
+    # stated ceiling, so the screen measures regularisation rather than deletion.
+    screen_value=1e-3,
     doc="""Apply weight decay to the token-identity tables -- wte, the value embeddings and
     lm_head -- which currently receive none.
 

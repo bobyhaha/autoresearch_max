@@ -19,9 +19,11 @@ REPO = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "tools"))
 
 import council            # noqa: E402
+import admission          # noqa: E402
 import claims             # noqa: E402
 import direction          # noqa: E402
 import make_variant       # noqa: E402
+import queue_store        # noqa: E402
 
 SWEEP = REPO / "runs" / "sweep"
 
@@ -47,9 +49,14 @@ def main():
 
     (SWEEP / "variants").mkdir(parents=True, exist_ok=True)
     queue, skipped = [], []
-    control_src = None
     stamp = path.stat().st_mtime
-    for e in council.queue_entries(path.read_text()):
+    round_entries = council.queue_entries(path.read_text())
+    comparison_ids = {}
+    for group, members in admission.grouped(round_entries).items():
+        comparison_ids[group] = admission.comparison_group(members)
+    expected_per_wave = {group: len(members)
+                         for group, members in admission.grouped(round_entries).items()}
+    for e in round_entries:
         cfg = e["cfg"]
         # A key no policy rule covers counts toward no axis and no family, so it would be
         # invisible to budgeting and rotation. is_platform() already refuses to call it a
@@ -112,7 +119,7 @@ def main():
         # was prose in the protocol and nothing checked it: wd_const=0.4 reached a GPU
         # with hypothesis_id null. Controls are exempt; they are the instrument, not a
         # claim. A deliberate instrument probe may opt out with "hypothesis_id": "none".
-        if not direction.is_platform(cfg) and not e.get("hypothesis_id"):
+        if direction.recorded_role(e) == "treat" and not e.get("hypothesis_id"):
             skipped.append((e["name"], "no hypothesis_id: a treatment must cite a "
                                        "registered hypothesis, or its activation predicate "
                                        "never runs and a null is indistinguishable from "
@@ -139,21 +146,13 @@ def main():
         # notably identical ablation implementations -- BEFORE any execution budget is
         # spent. A treatment whose generated source equals the control's is a no-op that
         # would burn ~500s of exclusive GPU to measure nothing.
-        if not direction.is_platform(cfg):
-            if control_src is None:
-                control_src = make_variant.build(dict(direction.PLATFORM))
-            if src == control_src:
-                skipped.append((e["name"], "generated variant is BYTE-IDENTICAL to the "
-                                           "control: the intervention did not apply"))
-                continue
         vid = make_variant.variant_id(src)
         (SWEEP / "variants" / vid).write_text(src)
         # ROLE RECORDED AT QUEUE TIME -- see the note in tools/queue_quad.py. A round
         # entry names its members <wave>_s<slot>_<role>, so the role is known here; this
         # writes it down instead of leaving it to be re-derived against a platform that
         # moves. Falls back to the name only if a round ever omits the suffix.
-        _role = ("treat" if e["name"].endswith("_treat")
-                 else "ctrl" if e["name"].endswith(("_ctrl", "_control")) else None)
+        _role = direction.recorded_role(e)
         queue.append({"name": e["name"], "cfg": cfg, "variant": vid,
                       **({"role": _role} if _role else {}),
                       "label": direction.label(cfg), "rationale": e["rationale"],
@@ -162,6 +161,9 @@ def main():
                       # GPUs or not at all. This is how a yoked pair is obtained: two
                       # runs launched half an hour apart measure host drift, not effect.
                       "wave_group": e.get("wave_group"),
+                      # Swapped waves in the same comparison must reuse the same physical
+                      # GPU UUIDs.  The dispatcher persists this key after the first wave.
+                      "counterbalance_group": comparison_ids[e["wave_group"]],
                       # Carry the hypothesis forward. The door check above validates
                       # e["hypothesis_id"] on the ROUND entry, but the persisted queue
                       # entry was built without the field -- so 16 validated round-2 runs
@@ -179,9 +181,20 @@ def main():
     # a fake result whose sign depends only on where it landed. The dispatcher assigns
     # slots in queue order within a wave, so a counterbalanced treatment must appear both
     # before and after a control across its two waves.
+    # Never leave an orphan control behind when one member of a wave fails a late build
+    # check.  A yoked wave is the admission unit, not a bag of independently valid rows.
+    actual_per_wave = {}
+    for entry in queue:
+        actual_per_wave[entry["wave_group"]] = actual_per_wave.get(entry["wave_group"], 0) + 1
+    incomplete = {group for group, expected in expected_per_wave.items()
+                  if actual_per_wave.get(group, 0) != expected}
+    for group in sorted(incomplete):
+        skipped.append((group, "entire wave dropped because at least one member was invalid"))
+    queue = [entry for entry in queue if entry["wave_group"] not in incomplete]
+
     slots = {}
     for e in queue:
-        if direction.is_platform(e["cfg"]):
+        if direction.recorded_role(e) == "ctrl":
             continue
         grp = [x for x in queue if x.get("wave_group") == e.get("wave_group")]
         slots.setdefault(json.dumps(e["cfg"], sort_keys=True), []).append(
@@ -198,24 +211,33 @@ def main():
                                 f"offset as its result. Queue it twice with the slot "
                                 f"order swapped: [treatment, control] and "
                                 f"[control, treatment]."))
-    if any("NOT COUNTERBALANCED" in w for _, w in skipped):
-        queue = [e for e in queue
-                 if direction.is_platform(e["cfg"])
-                 or len(set(slots.get(json.dumps(e["cfg"], sort_keys=True), []))) >= 2]
+    bad_cfgs = {cfgkey for cfgkey, positions in slots.items() if len(set(positions)) < 2}
+    if bad_cfgs:
+        bad_groups = {
+            entry["wave_group"] for entry in queue
+            if direction.recorded_role(entry) == "treat"
+            and json.dumps(entry["cfg"], sort_keys=True) in bad_cfgs
+        }
+        queue = [entry for entry in queue if entry["wave_group"] not in bad_groups]
 
-    existing = []
     qf = SWEEP / "queue.json"
-    if qf.exists():
-        existing = json.loads(qf.read_text())
-    have = {q["name"] for q in existing}
-    new = [q for q in queue if q["name"] not in have]
-    qf.write_text(json.dumps(existing + new, indent=1))
+    new = []
+    existing_count = 0
+
+    def merge(existing):
+        nonlocal new, existing_count
+        existing_count = len(existing)
+        have = {item["name"] for item in existing}
+        new = [item for item in queue if item["name"] not in have]
+        return existing + new
+
+    queue_store.update_queue(qf, merge)
 
     print(f"{path.name}: queued {len(new)} new ({len(queue)} valid, "
-          f"{len(existing)} already present)")
+          f"{existing_count} already present)")
     for n, w in skipped:
         print(f"  skipped {n}: {w}")
-    return 0
+    return 0 if queue else 1
 
 
 if __name__ == "__main__":

@@ -44,6 +44,7 @@ sys.path.insert(0, str(REPO / "tools"))
 
 import analyze      # noqa: E402
 import direction    # noqa: E402
+import queue_store  # noqa: E402
 import selector     # noqa: E402
 
 SWEEP = REPO / "runs" / "sweep"
@@ -83,7 +84,7 @@ def decide(rows, queue):
     fx = selector.family_effects(rows)
     out = []
     for g, members in pending(queue).items():
-        treats = [m for m in members if not direction.is_platform(m.get("cfg") or {})]
+        treats = [m for m in members if direction.recorded_role(m) == "treat"]
         best, terms, cfg = None, {}, None
         for m in treats:
             s, t = selector.score(m.get("cfg") or {}, rows, state, fx)
@@ -125,6 +126,9 @@ def main() -> int:
         print("an override must carry --reason; an unexplained override is exactly the "
               "unrecorded tie-break this file exists to remove")
         return 2
+    if a.override and a.override not in {d["wave"] for d in ranked}:
+        print(f"override wave {a.override!r} is not in the pending candidate set")
+        return 2
 
     print(f"=== DECISION over {len(ranked)} pending wave(s)   state {sh} ===")
     for d in ranked:
@@ -142,22 +146,36 @@ def main() -> int:
     order = [d["wave"] for d in ranked]
     if a.override:
         order = [a.override] + [w for w in order if w != a.override]
-    rank = {w: i for i, w in enumerate(order)}
-    done = [e for e in queue if e.get("wave_group") not in rank]
-    todo = sorted((e for e in queue if e.get("wave_group") in rank),
-                  key=lambda e: rank[e["wave_group"]])
-    qf.write_text(json.dumps(done + todo, indent=1))
+    applied_ranked, applied_hash, applied_order = ranked, sh, order
+
+    def reorder(current):
+        nonlocal applied_ranked, applied_hash, applied_order
+        applied_ranked = decide(rows, current)
+        applied_hash = state_hash(rows, current)
+        applied_order = [d["wave"] for d in applied_ranked]
+        if a.override:
+            if a.override not in applied_order:
+                raise ValueError(
+                    f"override wave {a.override!r} stopped being pending during the update")
+            applied_order = [a.override] + [w for w in applied_order if w != a.override]
+        rank = {w: i for i, w in enumerate(applied_order)}
+        done = [e for e in current if e.get("wave_group") not in rank]
+        todo = sorted((e for e in current if e.get("wave_group") in rank),
+                      key=lambda e: rank[e["wave_group"]])
+        return done + todo
+
+    queue_store.update_queue(qf, reorder)
 
     DECISIONS.mkdir(parents=True, exist_ok=True)
     stamp = time.strftime("%Y-%m-%dT%H-%M-%SZ", time.gmtime())
     rec = {
         "at": stamp,
-        "state_hash": sh,
+        "state_hash": applied_hash,
         "n_results": len(rows),
-        "candidate_set": [d["wave"] for d in ranked],
-        "scores": {d["wave"]: d["score"] for d in ranked},
-        "terms": {d["wave"]: d["terms"] for d in ranked},
-        "selected": order[:1],
+        "candidate_set": [d["wave"] for d in applied_ranked],
+        "scores": {d["wave"]: d["score"] for d in applied_ranked},
+        "terms": {d["wave"]: d["terms"] for d in applied_ranked},
+        "selected": applied_order[:1],
         "selection_reason": ("highest selector score among pending waves"
                             if not a.override else f"OPERATOR OVERRIDE: {a.reason}"),
         "operator_override": a.override,
@@ -165,7 +183,7 @@ def main() -> int:
                     "novelty": selector.W_NOVEL, "resolve": selector.W_RESOLVE,
                     "activation_penalty": selector.W_ACTPEN},
     }
-    (DECISIONS / f"{stamp}_decision.json").write_text(json.dumps(rec, indent=1))
+    queue_store.atomic_write_json(DECISIONS / f"{stamp}_decision.json", rec)
     print(f"\napplied; queue reordered and decision recorded at "
           f"runs/sweep/decisions/{stamp}_decision.json")
     return 0

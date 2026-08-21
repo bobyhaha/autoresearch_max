@@ -35,6 +35,7 @@ sys.path.insert(0, str(REPO / "tools"))
 import claims           # noqa: E402
 import direction        # noqa: E402
 import make_variant     # noqa: E402
+import queue_store      # noqa: E402
 
 SWEEP = REPO / "runs" / "sweep"
 
@@ -75,6 +76,12 @@ def main() -> int:
     if direction.is_platform(T):
         print("refusing: that cfg is the control")
         return 1
+
+    if a.hyp != "none":
+        known_hypotheses = {h["id"] for h in claims.hypotheses()}
+        if a.hyp not in known_hypotheses:
+            print(f"refusing: hypothesis_id {a.hyp!r} is not registered")
+            return 1
 
     # The SAME door as queue_from_round.py. A lesson that forbids a value is worth exactly
     # as much as the number of queue paths that honour it, and this one honoured none: the
@@ -156,6 +163,16 @@ def main() -> int:
               f"so the run would count toward no axis and no family and be invisible to "
               f"rotation and budgeting")
         return 1
+    results = []
+    for result in (SWEEP / "results").glob("*.json"):
+        try:
+            results.append(json.loads(result.read_text()))
+        except (OSError, ValueError):
+            continue
+    policy = direction.blocked_reason(T, direction.axis_state(results))
+    if policy:
+        print(f"refusing: {policy}")
+        return 1
     src_t, src_c = make_variant.build(T), make_variant.build(P)
     if src_t == src_c:
         print("refusing: generated variant is byte-identical to the control")
@@ -166,8 +183,6 @@ def main() -> int:
     (SWEEP / "variants" / vc).write_text(src_c)
 
     qf = SWEEP / "queue.json"
-    q = json.loads(qf.read_text()) if qf.exists() else []
-    have = {e["name"] for e in q}
     stamp = time.time()
     if a.width == 4:
         layout = {f"{a.name}_A": ["t", "c", "c", "t"],
@@ -208,43 +223,50 @@ def main() -> int:
         return (json.dumps(e.get("cfg"), sort_keys=True), e.get("hypothesis_id"),
                 (e.get("rationale") or "").strip(), (e.get("falsifier") or "").strip(),
                 (e.get("expected") or "").strip())
-    _prior = {}
-    for e in q:
-        k = _ikey(e)
-        ts = e.get("created_at")
-        if ts and (k not in _prior or ts < _prior[k]):
-            _prior[k] = ts
-
     new = []
-    for grp, roles in layout.items():
-        for i, role in enumerate(roles):
-            nm = f"{grp}_s{i}_{'treat' if role == 't' else 'ctrl'}"
-            if nm in have:
-                continue
-            # ROLE RECORDED AT QUEUE TIME. This campaign has now hit the same defect
-            # seven times (L062, L065, L066, L077, L082, L091 and the _is_ctl fallback):
-            # a run's role was RECOMPUTED later by comparing its cfg against
-            # direction.PLATFORM, which moves under adoption, so completed experiments
-            # silently changed role -- treatments became controls and were pooled into
-            # the baseline that judges treatments, and 28 runs named `_control` were
-            # read as treatments. Name-parsing was the first repair and is better, but
-            # it is still inference. The role is known HERE, with certainty, by the code
-            # that assigns it. Writing it down ends the class rather than the instance.
-            e = {"name": nm, "cfg": T if role == "t" else P,
-                 "role": "treat" if role == "t" else "ctrl",
-                 "variant": vt if role == "t" else vc,
-                 "label": direction.label(T if role == "t" else P),
-                 "rationale": a.rationale, "falsifier": a.falsifier, "expected": a.expected,
-                 "wave_group": grp,
-                 "created_at": _prior.get(
-                     (json.dumps(T if role == "t" else P, sort_keys=True),
-                      a.hyp if (role == "t" and a.hyp != "none") else None,
-                      a.rationale.strip(), a.falsifier.strip(), a.expected.strip()), stamp),
-                 "source_round": "quad-counterbalanced", "vram_est": 50}
-            if role == "t" and a.hyp != "none":
-                e["hypothesis_id"] = a.hyp
-            new.append(e)
-    qf.write_text(json.dumps(q + new, indent=1))
+
+    def merge(q):
+        nonlocal new
+        have = {e["name"] for e in q}
+        prior = {}
+        for e in q:
+            key = _ikey(e)
+            ts = e.get("created_at")
+            if ts and (key not in prior or ts < prior[key]):
+                prior[key] = ts
+        additions = []
+        for grp, roles in layout.items():
+            for i, role in enumerate(roles):
+                nm = f"{grp}_s{i}_{'treat' if role == 't' else 'ctrl'}"
+                if nm in have:
+                    continue
+                # ROLE RECORDED AT QUEUE TIME. This campaign has now hit the same defect
+                # seven times (L062, L065, L066, L077, L082, L091 and the _is_ctl fallback):
+                # a run's role was RECOMPUTED later by comparing its cfg against
+                # direction.PLATFORM, which moves under adoption, so completed experiments
+                # silently changed role -- treatments became controls and were pooled into
+                # the baseline that judges treatments. Persisting it ends the class.
+                e = {"name": nm, "cfg": T if role == "t" else P,
+                     "role": "treat" if role == "t" else "ctrl",
+                     "variant": vt if role == "t" else vc,
+                     "label": direction.label(T if role == "t" else P),
+                     "rationale": a.rationale, "falsifier": a.falsifier,
+                     "expected": a.expected, "wave_group": grp,
+                     # All P1..P4 (or A/B) waves are one comparison and must reuse the
+                     # exact physical GPU UUID tuple in the dispatcher.
+                     "counterbalance_group": a.name,
+                     "created_at": prior.get(
+                         (json.dumps(T if role == "t" else P, sort_keys=True),
+                          a.hyp if (role == "t" and a.hyp != "none") else None,
+                          a.rationale.strip(), a.falsifier.strip(), a.expected.strip()), stamp),
+                     "source_round": "quad-counterbalanced", "vram_est": 50}
+                if role == "t" and a.hyp != "none":
+                    e["hypothesis_id"] = a.hyp
+                additions.append(e)
+        new = additions
+        return q + additions
+
+    queue_store.update_queue(qf, merge)
     print(f"queued {len(new)} entries in {len(layout)} wave(s) of {a.width}; treatment variant {vt}")
     for e in new:
         print(f"  {e['name']:34s} {e['label']:14s} wave={e['wave_group']}")

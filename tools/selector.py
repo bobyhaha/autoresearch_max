@@ -42,6 +42,7 @@ sys.path.insert(0, str(REPO / "tools"))
 import analyze      # noqa: E402
 import claims       # noqa: E402
 import direction    # noqa: E402
+import queue_store  # noqa: E402
 
 # Per-quad cost: two four-wide waves at roughly eight minutes a run.
 GPU_MIN_PER_QUAD = 8 * 8
@@ -50,6 +51,9 @@ GPU_MIN_PER_QUAD = 8 * 8
 # family come out comparable at equal cost -- if one systematically dominates, that is a
 # bug in the weights and the ranking should be read sceptically until they are revised.
 W_GAIN, W_INFO, W_NOVEL, W_RESOLVE, W_ACTPEN = 1.0, 0.6, 0.5, 4.0, 8.0
+# The heuristic orders candidates within a policy tier. It may never outbid the
+# coverage floor merely because one exploited family has a large historical gain.
+POLICY_TIER = 1_000_000.0
 
 
 def _changed(cfg):
@@ -65,6 +69,26 @@ def _changed(cfg):
     and not chased; an external review reproduced it precisely.
     """
     return {k: v for k, v in cfg.items() if direction.PLATFORM.get(k) != v}
+
+
+def exploration_tier(cfg, rows, state) -> tuple[int, str]:
+    """Policy tier: 2=zero coverage, 1=exploration debt, 0=ordinary ranking."""
+    axes = direction.axes_touched(cfg)
+    mechanisms = direction.mechanisms_touched(cfg)
+    mechanism_state = direction.mechanism_state(rows)
+    uncovered_axes = sorted(a for a in axes if state["axes"][a]["n"] == 0)
+    uncovered_mechanisms = sorted(
+        mechanism for mechanism in mechanisms
+        if mechanism_state.get(mechanism, {}).get("n", 0) == 0)
+    if uncovered_axes or uncovered_mechanisms:
+        targets = uncovered_axes + uncovered_mechanisms
+        return 2, f"coverage floor: never-tested lever(s) {targets}"
+
+    exploratory = direction.is_exploration(cfg, state)
+    debt = direction.explore_debt(rows, state)
+    if debt > 0 and exploratory:
+        return 1, f"exploration floor is short by {debt:.2f}"
+    return 0, ""
 
 
 def _families(cfg):
@@ -110,7 +134,8 @@ def family_effects(rows):
         # removes its cause.
         if claims.blocked_values(cfg):
             continue
-        eff = r["metrics"]["val_bpb"] - dm.get(r.get("gpu"), r["metrics"]["val_bpb"])
+        eff = (r["metrics"]["val_bpb"]
+               - dm.get(direction.device_id(r), r["metrics"]["val_bpb"]))
         fams = _families(cfg)
         # A run that moves keys in SEVERAL families measures their JOINT effect, and that
         # joint effect is not attributable to any one of them. Appending the full delta to
@@ -235,11 +260,12 @@ def score(cfg, rows, state, fx):
         # fired, leaving three arms tied -- a scoring term that cannot fire is the same
         # defect as an activation rule the control also passes.
         blob = f"{h.get('rationale','')} {h.get('statement','')}"
-        for l in claims.active_lessons():
-            if l.get("type") not in ("integrity", "non_activation", "overclaim"):
+        for lesson in claims.active_lessons():
+            if lesson.get("type") not in ("integrity", "non_activation", "overclaim"):
                 continue
-            if h["id"] in str(l.get("mitigation", "")) or l["id"].split("_")[0] in blob:
-                resolves.append(l["id"])
+            if (h["id"] in str(lesson.get("mitigation", ""))
+                    or lesson["id"].split("_")[0] in blob):
+                resolves.append(lesson["id"])
     resolve = 1.0 if resolves else 0.0
     if resolves:
         terms["resolves"] = f"decomposes {resolves[0]}"
@@ -274,7 +300,11 @@ def score(cfg, rows, state, fx):
                 act_pen = 1.0
                 terms["activation"] = "REFUSED by pre-check: cannot demonstrate engagement"
 
-    s = (W_GAIN * gain / 0.001
+    tier, policy_reason = exploration_tier(cfg, rows, state)
+    if policy_reason:
+        terms["policy"] = policy_reason
+    s = (tier * POLICY_TIER
+         + W_GAIN * gain / 0.001
          + W_INFO * info / 0.001
          + W_NOVEL * novel
          + W_RESOLVE * resolve
@@ -286,21 +316,26 @@ def batch(cands, rows, state, fx, k):
     """Greedy selection with a family-diversity penalty. Top-k by score alone returns
     five variants of whichever family last paid; halving the score of an already-chosen
     family forces the batch to spread without forbidding a genuine follow-up."""
-    scored = sorted(((score(c, rows, state, fx)[0], c) for c in cands),
-                    key=lambda x: -x[0])
+    scored = []
+    for candidate in cands:
+        candidate_score = score(candidate, rows, state, fx)[0]
+        tier = exploration_tier(candidate, rows, state)[0]
+        scored.append((tier, candidate_score, candidate))
+    scored.sort(key=lambda item: (-item[0], -item[1]))
     picked, used = [], {}
     for _ in range(min(k, len(scored))):
         best, bi = None, None
-        for i, (s, c) in enumerate(scored):
+        for i, (tier, s, c) in enumerate(scored):
             if s == -math.inf or any(c is p for p in picked):
                 continue
             fams = _families(c)
             pen = 0.5 ** sum(used.get(f, 0) for f in fams)
-            if best is None or s * pen > best:
-                best, bi = s * pen, i
+            rank = (tier, s * pen)
+            if best is None or rank > best:
+                best, bi = rank, i
         if bi is None:
             break
-        s, c = scored[bi]
+        _tier, _score, c = scored[bi]
         picked.append(c)
         for f in _families(c):
             used[f] = used.get(f, 0) + 1
@@ -335,12 +370,13 @@ def main() -> int:
         if (REPO / "runs" / "sweep" / "results" / f"{e['name']}.json").exists():
             continue
         cfg = e.get("cfg") or {}
-        if direction.is_platform(cfg):
+        if direction.recorded_role(e) == "ctrl":
             continue
         key = tuple(sorted(cfg.items()))
         if key in seen:
             continue
-        seen.add(key); cands.append(cfg)
+        seen.add(key)
+        cands.append(cfg)
 
     if not cands:
         print("nothing pending to rank.")
@@ -374,38 +410,43 @@ def main() -> int:
         # because member order decides which device a role lands on (queue_quad's
         # counterbalancing depends on it).
         qf = REPO / "runs" / "sweep" / "queue.json"
-        entries = json.loads(qf.read_text())
-        done, pending = [], []
-        for e in entries:
-            if (REPO / "runs" / "sweep" / "results" / f"{e['name']}.json").exists():
-                done.append(e)
-            else:
-                pending.append(e)
-        rank = {}
-        for e in pending:
-            g = e.get("wave_group") or e["name"]
-            cfg = e.get("cfg") or {}
-            if direction.is_platform(cfg):
-                continue                      # a wave is ranked by its TREATMENT
-            sc = score(cfg, rows, state, fx)[0]
-            rank[g] = max(rank.get(g, -math.inf), sc)
-        groups, order = {}, []
-        for e in pending:
-            g = e.get("wave_group") or e["name"]
-            if g not in groups:
-                groups[g] = []; order.append(g)
-        for e in pending:
-            groups[e.get("wave_group") or e["name"]].append(e)
-        # Capture the original position BEFORE sorting: order.index(g) inside the key
-        # looks up a list that the sort is mutating, which raises. The tiebreak must be
-        # a fixed snapshot so equal scores keep their queued order deterministically.
-        _pos = {g: i for i, g in enumerate(order)}
-        order.sort(key=lambda g: (-rank.get(g, -math.inf), _pos[g]))
-        newq = done + [e for g in order for e in groups[g]]
-        assert len(newq) == len(entries), "reorder changed the entry count"
-        assert {e["name"] for e in newq} == {e["name"] for e in entries}
-        qf.write_text(json.dumps(newq, indent=1))
-        print(f"\nreordered {len(pending)} pending entries in {len(order)} wave(s); "
+        pending_count = 0
+        order, rank = [], {}
+
+        def reorder(entries):
+            nonlocal pending_count, order, rank
+            done, pending = [], []
+            for e in entries:
+                if (REPO / "runs" / "sweep" / "results" / f"{e['name']}.json").exists():
+                    done.append(e)
+                else:
+                    pending.append(e)
+            pending_count = len(pending)
+            rank = {}
+            for e in pending:
+                g = e.get("wave_group") or e["name"]
+                cfg = e.get("cfg") or {}
+                if direction.recorded_role(e) == "ctrl":
+                    continue                  # a wave is ranked by its TREATMENT
+                sc = score(cfg, rows, state, fx)[0]
+                rank[g] = max(rank.get(g, -math.inf), sc)
+            groups, order = {}, []
+            for e in pending:
+                g = e.get("wave_group") or e["name"]
+                if g not in groups:
+                    groups[g] = []
+                    order.append(g)
+            for e in pending:
+                groups[e.get("wave_group") or e["name"]].append(e)
+            _pos = {g: i for i, g in enumerate(order)}
+            order.sort(key=lambda g: (-rank.get(g, -math.inf), _pos[g]))
+            newq = done + [e for g in order for e in groups[g]]
+            assert len(newq) == len(entries), "reorder changed the entry count"
+            assert {e["name"] for e in newq} == {e["name"] for e in entries}
+            return newq
+
+        queue_store.update_queue(qf, reorder)
+        print(f"\nreordered {pending_count} pending entries in {len(order)} wave(s); "
               f"launched entries left in place")
         for g in order[:8]:
             print(f"  {rank.get(g, float('-inf')):+7.2f}  {g}")

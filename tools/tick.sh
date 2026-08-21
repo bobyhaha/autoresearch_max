@@ -1,9 +1,11 @@
 #!/bin/bash
-# THE 20-MINUTE TICK. Report-and-sync only: it never launches or kills an experiment.
+# THE 20-MINUTE TICK. It never launches or kills an experiment -- but it does REFILL the
+# queue, because a control loop that can only report is one that watches a fleet idle.
 #
 # One loop does all four things that must happen on a cadence, because splitting them is
 # how v3 ended up with a watchdog running from a DELETED script while its gate check kept
 # passing on that dead process's output:
+#   0. refill the queue                (a drained queue idles every GPU, silently)
 #   1. pull results from the host      (local analysis has something true to read)
 #   2. run the health check            (is Claude working, are OUR GPUs running)
 #   3. evaluate the gate               (what may launch, and the decision cutoff)
@@ -27,6 +29,16 @@ tick() {
   scp -q "${SSHOPT[@]/-p/-P}" "$HOST:~/$OPHIS_REMOTE_DIR/sweep/results/*.json" runs/sweep/results/ 2>/dev/null
   python3 tools/health.py || true          # exit 1 = degraded; the loop must not die on it
   python3 tools/gate.py    || true
+  # REFILL THE QUEUE. This does NOT violate the report-and-sync contract above: the lane
+  # queues work, it never launches or kills anything -- the dispatcher still owns every
+  # launch and the gate still owns admission. What it ends is the failure this loop was
+  # blind to: a drained queue idles the whole fleet, and nothing here could see it because
+  # a queue with zero pending entries and a healthy host look identical to every check
+  # above. The campaign spent 89.6% of its GPU-hours in that state.
+  #
+  # It runs BEFORE the ship/merge block below so anything queued this tick reaches the
+  # host on the same pass, rather than waiting 20 minutes for the next one.
+  python3 tools/explore_lane.py || true
   # HOST POLICY MODULES: ship and VERIFY every tick. host/dispatch.py imports these from
   # the sweep directory, so a fix made locally does nothing until it lands there -- and a
   # stale copy fails SILENTLY, in the direction of refusing work the policy now allows.
@@ -80,13 +92,21 @@ tick() {
     ssh "${SSHOPT[@]}" "$HOST" 'cat > /tmp/ophis_queue_incoming.json' < runs/sweep/queue.json || \
       echo "  WARN: could not ship queue to host"
     ssh -n "${SSHOPT[@]}" "$HOST" "OPHIS_REMOTE_DIR='$OPHIS_REMOTE_DIR' python3 - <<'PYMERGE'
-import json, os, pathlib
+import fcntl, json, os, pathlib
 base = pathlib.Path.home()/os.environ.get('OPHIS_REMOTE_DIR','ophis_v3')/'sweep'
 q = base/'queue.json'
-try: cur = json.loads(q.read_text())
-except Exception: cur = []
-try: inc = json.loads(open('/tmp/ophis_queue_incoming.json').read())
-except Exception: inc = []
+_queue_lock = (base/'queue.lock').open('a+')
+fcntl.flock(_queue_lock, fcntl.LOCK_EX)
+try:
+    cur = json.loads(q.read_text()) if q.exists() else []
+except (OSError, ValueError) as exc:
+    raise SystemExit(f'REFUSING queue merge: host queue is unreadable: {exc}')
+try:
+    inc = json.loads(pathlib.Path('/tmp/ophis_queue_incoming.json').read_text())
+except (OSError, ValueError) as exc:
+    raise SystemExit(f'REFUSING queue merge: incoming queue is unreadable: {exc}')
+if not isinstance(cur, list) or not isinstance(inc, list):
+    raise SystemExit('REFUSING queue merge: both queues must be JSON lists')
 
 def launched(name):
     # These paths MUST be anchored at the sweep directory. They were previously built
@@ -143,7 +163,13 @@ started = [e for e in cur if launched(e['name'])]
 rest = [e for e in cur if not launched(e['name'])]
 rest.sort(key=lambda e: pos.get(e['name'], 10**6))
 cur = started + rest
-q.write_text(json.dumps(cur, indent=1))
+tmp = base/'.queue.json.merge.tmp'
+with tmp.open('w') as stream:
+    json.dump(cur, stream, indent=1)
+    stream.write('\n')
+    stream.flush()
+    os.fsync(stream.fileno())
+os.replace(tmp, q)
 msg = f'queue: {len(cur)} on host, {added} added, {updated} updated in place'
 if removed:
     _names = ', '.join(sorted(removed)[:4])
@@ -168,7 +194,7 @@ PYMERGE"
     # Deadline is refreshed each tick rather than fixed at first launch, so the campaign is
     # bounded by the tick loop stopping rather than running unattended forever.
     _deadline=$(python3 -c 'import time; print(time.time() + 6*3600)')
-    ssh -n "${SSHOPT[@]}" "$HOST" "cd ~/$OPHIS_REMOTE_DIR/sweep && rm -f dispatcher.lock && nohup ~/$OPHIS_REMOTE_DIR/gpu6/.venv/bin/python -u dispatch.py $_deadline >> dispatch.out 2>&1 < /dev/null & sleep 3" \
+    ssh -n "${SSHOPT[@]}" "$HOST" "cd ~/$OPHIS_REMOTE_DIR/sweep && rm -f dispatcher.lock && OPHIS_REMOTE_DIR='$OPHIS_REMOTE_DIR' nohup ~/$OPHIS_REMOTE_DIR/gpu6/.venv/bin/python -u dispatch.py $_deadline >> dispatch.out 2>&1 < /dev/null & sleep 3" \
       && echo "  dispatcher restarted" \
       || echo "  WARN: dispatcher restart FAILED -- GPUs will not be claimed"
   fi
